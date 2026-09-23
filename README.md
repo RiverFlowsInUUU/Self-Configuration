@@ -43,15 +43,11 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/
 https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/profiles/routing_v3.min.yaml
 ```
 
-> 📖 用哪一份、导入前要填什么，见 [`docs/注意事项`](docs/注意事项.md)。
-
 ---
 
 ## 🧭 井然有序
 
 🗂️ *各司其职，各安其序，无隙可乘。*
-
-**分流版按应用与地区分组，两款内核同名同序；懒人版只留必要的几组。**
 
 | 组 | 🪶 懒人版 | 🧭 分流版 |
 |:---|:---:|:---:|
@@ -67,10 +63,6 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 | 💧 `MAX` | - | ✅ |
 | 🌐 `Final` | 只 Egern | ✅ |
 
-> 🪶 分流版两内核逐位对齐；懒人版两侧不同构，差别见
-> [`docs/跨内核差异对照`](docs/跨内核差异对照.md) 第 3、4 节。
-> 🔍 选路、地区筛法与规则顺序见 [`surge/docs/11`](surge/docs/11-分流版设计.md) · [`egern/docs/12`](egern/docs/12-分流顺序.md)。
-
 ---
 
 ## 🌐 隐私至上 · 无 DNS 泄露
@@ -83,12 +75,6 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 | 🧭 规则克制 | IP 类规则一律 `no-resolve` | 一律 `no_resolve`，与域名直连集成对交付 |
 | ✂️ 远端解析 | 代理域名交节点解析，本地不留答案 | `proxy_nameservers` 专用通道、强制直连 |
 | 📋 自检读数 | 4 个审计脚本 + 6 阶段回归 | 9 个审计脚本 + 2 阶段回归 |
-
-> 🔍 五类出口的完整推导见 [`surge/docs/02`](surge/docs/02-DNS为什么会泄露.md) ·
-> [`egern/docs/02`](egern/docs/02-DNS为什么会泄露.md)；审计读数与各条含义见
-> [`surge/docs/08`](surge/docs/08-审计读数.md) · [`egern/docs/08`](egern/docs/08-审计读数.md)。
-> 同一判据在两侧未必同一取舍 —— 例如端点要不要一律写成 IP 字面量，见
-> [`docs/跨内核差异对照`](docs/跨内核差异对照.md) 第 8 节。
 
 ---
 
