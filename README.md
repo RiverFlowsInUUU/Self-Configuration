@@ -85,10 +85,11 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 | 📁 | [`surge/profiles/`](surge/profiles/) | 6 份 `.conf`：懒人版 + 当前分流版 `routing_v3.1` 与上一版 `routing_v3`，各含带注释 / 纯配置 |
 | 📁 | [`egern/profiles/`](egern/profiles/) | 18 份 `.yaml`：lazy + `routing_v1~v3.1` 共 8 版，各含带注释 / 纯配置 |
 | 🖼️ | [`icons/`](icons/) | 26 个策略组图标（两内核共用一份） |
-| 📚 | [`docs/`](docs/) | 共享文档 4 篇：跨内核差异对照 / 规则集与来源 / 注意事项 / 图标与许可 |
+| 📚 | [`docs/`](docs/) | 共享文档 6 篇：跨内核差异对照 / 规则集与来源 / 注意事项 / 图标与许可 / 技能包合并与自包含 / 体检报告 |
 | 📂 | [`surge/docs/`](surge/docs/) · [`egern/docs/`](egern/docs/) | 各内核 9 篇专题（01–08 编号系列 + 分流设计 / 分流顺序） |
 | 📘 | [`surge/DetailsReadme/`](surge/DetailsReadme/) · [`egern/DetailsReadme/`](egern/DetailsReadme/) | 完整技术文档 |
-| 🧪 | [`skill/`](skill/) | 单一入口 `SKILL.md`（按内核分支）+ 审计脚本 + 回归测试：`bash skill/tests/all.sh` 一条命令跑完 |
+| 🧪 | [`skill/`](skill/) | 单一入口 `SKILL.md`（按内核分支）+ 审计脚本 + 回归测试：`bash skill/tests/all.sh` 一条命令跑完四项检查 |
+| 🔁 | [`.gitattributes`](.gitattributes) | 行尾钉成 LF —— 同一个 commit 在任何设备上落盘字节相同，clone 下来直接改、改完直接推 |
 | 🗓️ | [`CHANGELOG.md`](CHANGELOG.md) | 合并成仓记录；各内核迭代史见 [`surge/`](surge/CHANGELOG.md) · [`egern/`](egern/CHANGELOG.md) |
 
 ---
@@ -99,6 +100,8 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 - 📚 [`docs/规则集与来源`](docs/规则集与来源.md) —— 21 份共用规则集的指向 / 作用 / 去向 / 来源
 - ⚠️ [`docs/注意事项`](docs/注意事项.md) —— 使用前必看
 - 🎨 [`docs/图标与许可`](docs/图标与许可.md) —— 图标来源 · MIT 许可 · 第三方版权
+- 🧩 [`docs/技能包合并与自包含`](docs/技能包合并与自包含.md) —— 两份单内核技能包怎么合成一份双分支入口 · 本仓为何完全不依赖其他仓库
+- 🩺 [`docs/体检报告`](docs/体检报告.md) —— 全仓排查快照：每条硬判据是拿什么换的（含三处被实测推翻的原结论）
 - 🧪 [`skill/SKILL.md`](skill/SKILL.md) —— 方法论主干（先判内核，再进 Surge / Egern 分支）
 - 📘 [`surge/DetailsReadme/`](surge/DetailsReadme/) · [`egern/DetailsReadme/`](egern/DetailsReadme/) —— 逐段详解 · 原理推导 · 已知取舍 · FAQ
 - 🗓️ [`CHANGELOG.md`](CHANGELOG.md)

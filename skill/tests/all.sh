@@ -4,12 +4,12 @@
 # 为什么要有这个入口：
 #   本仓刻意不挂 CI（理由见 docs/注意事项.md），可检查项并不止一处 ——
 #   两套内核的回归（Surge 六阶段里已含架构不变量、全仓 markdown 链接与锚点、
-#   全部 profile 的刷新参数）+ 两版形态对拍。分开跑要记三条命令、读三段输出，
-#   串起来一条就能判定"这次改动有没有把什么弄坏"。
+#   全部 profile 的刷新参数）+ 两版形态对拍 + 换设备可移植性。分开跑要记四条命令、
+#   读四段输出，串起来一条就能判定"这次改动有没有把什么弄坏"。
 #
-# 刻意不含的两项（它们不属于日常自检）：
-#   · 与两个前身仓逐字节对账 —— 需要那两个仓的克隆在旁边，属合并工程的一次性验收；
-#   · "旧仓是否被改动"的红线检查 —— 同上，且只对维护者本机有意义。
+# 本仓完全独立：这一条命令跑的所有检查**只看本仓库的文件**，
+# 不需要任何其他仓库在旁边，也不依赖本机路径、盘符、用户名。仓库根由本脚本自身位置反推
+# （$BASH_SOURCE → skill/tests 的上两级），所以 clone 到哪里、叫什么名字都一样能跑。
 #
 # 用法：
 #   bash skill/tests/all.sh                        # 全跑（含联网审计）
@@ -94,12 +94,22 @@ printf '当前推荐版：%s   联网：%s\n\n' "${CURRENT:-routing_v3.1}" "$([ 
 item "Surge 回归（六阶段）"  bash skill/tests/surge/run.sh
 item "Egern 回归（两阶段）"  bash skill/tests/egern/run.sh
 item "两版形态去注释对拍"    "$PY" skill/tests/check_min_pair.py
+item "换设备可移植性"        "$PY" skill/tests/check_portability.py
 
 printf '\n'
 if [ -d "$ROOT/.git" ]; then
-  printf '   ℹ️  未提交 %s 个文件 · HEAD=%s\n' \
+  printf '   ℹ️  未提交 %s 个文件 · HEAD=%s' \
     "$(git -C "$ROOT" status --porcelain | wc -l | tr -d ' ')" \
     "$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo '?')"
+  # 与线上的关系：clone 出来的仓天然有上游，这里顺手报"改完有没有推上去"。
+  # 刻意不配 remote、不写凭据 —— 那是各台机器自己的事，见 docs/注意事项.md。
+  UP="$(git -C "$ROOT" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)"
+  if [ -n "$UP" ]; then
+    set -- $(git -C "$ROOT" rev-list --count --left-right "$UP...HEAD" 2>/dev/null || echo "0 0")
+    printf ' · 上游 %s：落后 %s · 未推送 %s\n' "$UP" "${1:-0}" "${2:-0}"
+  else
+    printf ' · 上游 未配置（clone 后自动有；本仓不代管凭据）\n'
+  fi
 fi
 
 DT=$((SECONDS - T0))
