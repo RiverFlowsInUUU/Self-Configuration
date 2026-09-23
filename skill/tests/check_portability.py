@@ -63,7 +63,17 @@ def tracked_files():
 
 
 def is_text(path):
-    return path.endswith(TEXT_EXT) or os.path.basename(path).startswith(".")
+    """E2/E2b/E3 的判定域：哪些跟踪文件该是 LF 文本。
+
+    无扩展名的跟踪文件（`LICENSE` / `NOTICE` / `README` 之类）**同样是文本** ——
+    早先只按扩展名白名单判，`LICENSE` 落在白名单外，成了字节层的一个盲区。
+    将来若真要放一个无扩展名的二进制，必须在 `.gitattributes` 里显式标 `binary`，
+    并同时加进 BINARY_EXT，别靠"没有扩展名所以不算文本"蒙过去。
+    """
+    if path.endswith(BINARY_EXT):
+        return False
+    name = os.path.basename(path)
+    return "." not in name or name.startswith(".") or path.endswith(TEXT_EXT)
 
 
 def read(path):
