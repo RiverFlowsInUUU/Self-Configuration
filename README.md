@@ -88,7 +88,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 | 📚 | [`docs/`](docs/) | 共享文档 4 篇：跨内核差异对照 / 规则集与来源 / 注意事项 / 图标与许可 |
 | 📂 | [`surge/docs/`](surge/docs/) · [`egern/docs/`](egern/docs/) | 各内核 9 篇专题（01–08 编号系列 + 分流设计 / 分流顺序） |
 | 📘 | [`surge/DetailsReadme/`](surge/DetailsReadme/) · [`egern/DetailsReadme/`](egern/DetailsReadme/) | 完整技术文档 |
-| 🧪 | [`skill/`](skill/) | 单一入口 `SKILL.md`（按内核分支）+ 审计脚本 + 回归测试 |
+| 🧪 | [`skill/`](skill/) | 单一入口 `SKILL.md`（按内核分支）+ 审计脚本 + 回归测试：`bash skill/tests/all.sh` 一条命令跑完 |
 | 🗓️ | [`CHANGELOG.md`](CHANGELOG.md) | 合并成仓记录；各内核迭代史见 [`surge/`](surge/CHANGELOG.md) · [`egern/`](egern/CHANGELOG.md) |
 
 ---

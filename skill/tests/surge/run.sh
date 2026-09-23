@@ -28,7 +28,7 @@
 #   SKIP_NET=1 bash skill/tests/surge/run.sh             # 跳过需要联网的阶段 4
 #
 # 「当前推荐版」是文件里的一个常量 CURRENT（阶段 2 的 --strict 名单、阶段 4、阶段 5 都由它派生）：
-#   CURRENT=routing_v3.2 bash skill/tests/surge/run.sh   # 临时覆盖；长期升版请改那一行
+#   CURRENT=routing_v3 bash skill/tests/surge/run.sh     # 覆盖成任意版本（如存档版）；长期升版改那一行
 
 set -u
 # Windows 中文环境默认 GBK(cp936)：内联 python 一 print emoji 就崩成退出码 1，
@@ -45,7 +45,7 @@ PY="${PY:-python3}"
 # ⚠️ 刻意写成**承诺值**，不去 profiles/ 里推导「最大版本号」——
 #    与 architecture.sh 里 PG_ORDER 明知可推导仍写死是同一立场：
 #    升版必须有人显式动这一行，逼改动者面对「我在改一个对外承诺」。
-#    可用环境变量覆盖：CURRENT=routing_v3.2 bash skill/tests/surge/run.sh
+#    可用环境变量覆盖：CURRENT=routing_v3 bash skill/tests/surge/run.sh
 #    （export ⇒ 阶段 3 调用的 architecture.sh 直接继承；单独跑 Egern 侧 runner 时同一变量同样生效）
 export CURRENT="${CURRENT:-routing_v3.1}"
 
@@ -84,7 +84,7 @@ fi
 #    升版后若忘了改 CURRENT，那两段会静默不跑 —— 输出照样全绿。缺文件必须在这里就炸。
 if [ ! -f "$PROFILES/$CURRENT.conf" ]; then
   printf '\n❌ 前置检查失败：CURRENT=%s 在 %s 里没有对应的 .conf\n' "$CURRENT" "$PROFILES" >&2
-  printf '   现存的分流版：%s\n' "$(ls "$PROFILES" | grep -o 'routing_v[^.]*' | sort -u | tr '\n' ' ')" >&2
+  printf '   现存的分流版：%s\n' "$(ls "$PROFILES" | sed -e 's/[.]min[.]conf$//' -e 's/[.]conf$//' -n -e '/^routing_v/p' | sort -u | tr '\n' ' ')" >&2
   printf '   ⇒ 升版后请改 run.sh / architecture.sh 里的 CURRENT，或用 CURRENT=xxx 覆盖。\n' >&2
   exit 2
 fi

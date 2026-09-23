@@ -28,7 +28,7 @@
 "<venv>/Scripts/python.exe" scripts/weigh_ruleset.py some.list [--sub small.list] [--probe d]  # ★ 规则集"重量"：构成/冗余/深度/加载与匹配耗时/覆盖对比
 
 bash scripts/../tests/run.sh                                       # ★★ 回归测试两阶段（10 + 36 = 46 断言），退出码非 0 即失败
-CURRENT=routing_v3.2 bash scripts/../tests/run.sh                   # 临时覆盖「当前推荐版」常量（默认在 run.sh 里那一行）
+CURRENT=routing_v3 bash scripts/../tests/run.sh                    # 覆盖成任意版本（如历史存档版；默认在 run.sh 里那一行）
 ```
 
 ⭐ **计数口径是「按脚本对账」**：阶段 1 的 5 行 fixture 每行校两个脚本（两条独立判据）⇒ 计 10 条；

@@ -59,7 +59,7 @@ python "$S/audit_routing_coverage.py" surge/profiles/lazy.conf --show-all
 bash ./skill/tests/surge/run.sh
 SKIP_NET=1 bash ./skill/tests/surge/run.sh
 PY=/path/to/python bash ./skill/tests/surge/run.sh
-CURRENT=routing_v3.2 bash ./skill/tests/surge/run.sh   # 临时覆盖「当前推荐版」常量
+CURRENT=routing_v3 bash ./skill/tests/surge/run.sh     # 覆盖成任意版本（如历史存档版）
 ```
 
 ⭐ **「当前推荐版」是一个常量，不是一堆文件名**：`run.sh` 与 `architecture.sh` 各有
