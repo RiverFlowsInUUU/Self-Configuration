@@ -43,11 +43,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/
 https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/profiles/routing_v3.min.yaml
 ```
 
-> ⚙️ 模板不绑定节点与订阅 —— 懒人版的 `Proxy` 自己填节点，分流版导入前填 **1 处订阅槽位**。
-> 📄 每份都有对应的带注释原始版（去掉 `.min`）：改配置改带注释那份，再把改动同步到 `.min`。
-> ⚠️ Surge 读 `.conf`、Egern 读 `.yaml`，**两者的判据不通用**。把一侧结论搬到另一侧前先查
-> [`docs/跨内核差异对照`](docs/跨内核差异对照.md) —— 例如 Egern 的「广告指向 `AD` 组」搬到 Surge 的
-> `pre-matching` 规则上，会让 **Surge 拒绝加载整份配置**。
+> 📖 用哪一份、导入前要填什么，见 [`docs/注意事项`](docs/注意事项.md)。
 
 ---
 
@@ -55,7 +51,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 
 🗂️ *各司其职，各安其序，无隙可乘。*
 
-**分流版 26 组，两内核逐项同名同序。** 自上而下：第一列为分组（每项配图标），第二列懒人版有则 ✅、无则 `-`、只占其中一项则写明，第三列分流版全覆盖 ✅。
+**分流版按应用与地区分组，两款内核同名同序；懒人版只留必要的几组。**
 
 | 组 | 🪶 懒人版 | 🧭 分流版 |
 |:---|:---:|:---:|
@@ -71,18 +67,13 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 | 💧 `MAX` | - | ✅ |
 | 🌐 `Final` | 只 Egern | ✅ |
 
-> 🪶 懒人版两侧**并不逐条对齐**（规则 `Surge 11 条 / Egern 9 条`）：Surge 侧 3 组，兜底由 `FINAL,Proxy` 规则承担；
-> Egern 侧 4 组，多一个隐藏的 `Final`。Surge 侧的 Apple 与 `private.txt` 两条 Egern 懒人版没有，
-> Egern 侧的 `.cn` 后缀兜底 Surge 没有。
-> 🧭 分流版两侧 `26 组 / 24 条规则` 位位对应，仅三处内核能力差异。
-> 🔍 选路、地区筛法与规则顺序见 [`surge/docs/11`](surge/docs/11-分流版设计.md) · [`egern/docs/12`](egern/docs/12-分流顺序.md)；
-> 带注释的原始文件见 [`surge/profiles/`](surge/profiles/) · [`egern/profiles/`](egern/profiles/)。
+> 🪶 分流版两内核逐位对齐；懒人版两侧不同构，差别见
+> [`docs/跨内核差异对照`](docs/跨内核差异对照.md) 第 3、4 节。
+> 🔍 选路、地区筛法与规则顺序见 [`surge/docs/11`](surge/docs/11-分流版设计.md) · [`egern/docs/12`](egern/docs/12-分流顺序.md)。
 
 ---
 
 ## 🌐 隐私至上 · 无 DNS 泄露
-
-同一套防泄露判据，两款内核各自的写法。
 
 | 泄露面 | Surge | Egern |
 |:-------|:------|:------|
