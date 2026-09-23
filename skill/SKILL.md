@@ -253,10 +253,12 @@ FINAL,Proxy,dns-failed
 ### 引用文件与官方文档
 
 - Surge 官方文档：<https://manual.nssurge.com/>
-  - `[General]` DNS 键：<https://manual.nssurge.com/policy/dns.html>
-  - `[Rule]` 类型与选项：<https://manual.nssurge.com/policy/rule.html>
-  - `[Proxy Group]` 类型：<https://manual.nssurge.com/policy/proxy-group.html>
-  - Proxy 类型与参数：<https://manual.nssurge.com/policy/proxy.html>
+  - DNS 服务器与语法：<https://manual.nssurge.com/dns/dns-server.html>
+  - 加密 DNS（`encrypted-dns-server`）：<https://manual.nssurge.com/dns/encrypted-dns.html>
+  - `hijack-dns` / `always-real-ip` / DNS 阶段 REJECT：<https://manual.nssurge.com/dns/advanced.html>
+  - `[Rule]` 类型与选项：<https://manual.nssurge.com/rules/overview.html>
+  - `[Proxy Group]` 类型与参数：<https://manual.nssurge.com/policy-groups/overview.html> · <https://manual.nssurge.com/policy-groups/parameters.html>
+  - Proxy 类型与参数：<https://manual.nssurge.com/policies/overview.html> · <https://manual.nssurge.com/policies/parameters.html>
 
 > ⚠️ Surge 是闭源商业软件，**很多行为没有文档，只能实测**。
 > 本技能里凡是写「实测」的地方都请当作经验值 —— 版本更新后需重新验证。
@@ -585,7 +587,7 @@ Egern profile 常含**超长单行**（`mitm.ca_p12` 的 base64 CA 证书，可�
 - DNS 机制：`https://egernapp.com/docs/configuration/dns`（**核心页**，两条路径 + bootstrap + proxy_nameservers + block_ips + hosts 全在此）
 - 规则字段：`https://egernapp.com/docs/configuration/rules`（`no_resolve` 适用范围、逻辑规则 `and`/`or`/`not`、rule_set 内部字段）
 - 顶层字段全表：`https://egernapp.com/docs/configuration/example`（**注意键名与 DNS 页不一致**）
-- 社区参考实现（中国网络环境的最佳实践，DNS 段写法值得对照）：`https://repcz.github.io/Egern`
+- 社区参考实现（中国网络环境的最佳实践，DNS 段写法值得对照）：`https://doc.repcz.link/egern/`（原 `repcz.github.io/Egern` 已迁至此，旧地址现 404）
 - sitemap（找页面用）：`https://doc.egernapp.com/sitemap.xml`
 
 ⚠️ `https://egernapp.com/zh-CN/docs` 和 `/docs/configuration/general` 是 **404**；顶层字段只能从 `configuration/example` 页获取。DNS 页有中文版 `/zh-CN/docs/configuration/dns`。
