@@ -53,6 +53,8 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 
 ## 🧭 井然有序
 
+🗂️ *各司其职，各安其序，无隙可乘。*
+
 **分流版 26 组，两内核逐项同名同序。** 自上而下：第一列为分组（每项配图标），第二列懒人版有则 ✅、无则 `-`、只占其中一项则写明，第三列分流版全覆盖 ✅。
 
 | 组 | 🪶 懒人版 | 🧭 分流版 |
