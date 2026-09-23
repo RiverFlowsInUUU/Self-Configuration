@@ -6,7 +6,7 @@
 
 ---
 
-## 2026-09-23 · 合并后修订（文档准确性 · 失效外链）
+## 2026-09-23 · 合并后修订（文档准确性 · 失效外链 · 自包含）
 
 合并成仓当天做的一次全仓复核，改动只落在文档层，**profile 与脚本零改动**。
 
@@ -22,16 +22,52 @@
   新址 `doc.repcz.link/egern/` 实测 200，`skill/SKILL.md` 与 `egern/docs/01` 两处一并改指并留旧地址说明。
   > ⚠️ 这两处都在 `skill/SKILL.md` 的内核分支正文里，因此登记为**对「两侧正文逐字保留」的第 2 类刻意修订**，
   > 见 [`docs/跨内核差异对照.md`](docs/跨内核差异对照.md) §8。代码块未受影响，仍与源文件字节一致。
-- ✅ **改后复跑**：相对链接 42 篇全通过、锚点 44 个全存在、slug 自检 6/6；旧地址在本仓**零残留**
-  （仅剩两处刻意保留的「原地址已迁移」说明文字）。
+- 🧱 **内容自包含（切断对前身两仓的一切指向）**：全树扫过，指向 `RiverFlowsInUUU/Surge` 与
+  `/Egern` 的只有 **6 处超链接 + 3 处沿革文字**，且全在文档正文 —— profile / 图标 / 脚本 / fixture
+  从一开始就零依赖（624 处自引用全部指向本仓）。逐处处理：4 处姊妹仓超链接改指同侧目录
+  （`egern/docs/07` 两处、`surge/docs/07`、`surge/docs/11` 各一处），合并条目的两处超链接改为纯文本来源说明，
+  三处「旧仓地址继续可用」的表述改为「前身仓可能转私有，**新写地址一律用本仓**」。
+  改完全树**零条指向两仓的链接**。社区规则集与图标来源（blackmatrix7 / Loyalsoldier / ACL4SSR /
+  AWAvenue / Jinx / Qure 等）属公共资源，**保持引用不动**。这条同时立为约定，写进
+  [`docs/注意事项.md`](docs/注意事项.md) 的通用表。
+- 🧩 **`skill/reference/*/public-repo.md` 的 4 处 `_base/verify_readme_tone.py`** —— 那是装配用的
+  本地闸门脚本、按仓库惯例不进公开仓，读者照路径找不到东西。改为写明它是维护者本地闸门，
+  并把该项到底查什么就地写清（正文本来就已经写了检查内容，只差一个找不到的路径）。
+- 🧹 **`skill/SKILL.md` 只留一份 YAML 头**：两个内核分支的开头各残留着**源技能包的整段头部**
+  （`name` / `description` / `agent_created` 加两条分隔线，各 6 行共 12 行），渲染时是两条压在正文里的假头。
+  删掉它们，但把其中的检索线索全部并进文件头那一条 `description`：两侧原文 705 + 546 = **1251 字符**，
+  逐条拼接会太长，因此按「同名异形合并、共享线索去重」处理 —— `hijack-dns / hijack_dns`、
+  `no-resolve / no_resolve`、`国内域名全落 FINAL` 各一条覆盖两内核，Surge 侧的「`dns.google` 泄露」
+  「引导解析泄露」「`extended-matching`」「Surge 拒绝加载配置」「`proxy-test-url` 泄露」「`gstatic generate_204`」
+  与 Egern 侧的「`Egern dnsleak`」「日志里规则判定正常但 upstream 是 bootstrap」「`ChinaMax_All_No_Resolve`」
+  「`blackmatrix7` No_Resolve 变体」「分流覆盖审计」等同步补入。合并后 **1000 字符 / 56 条**，
+  ⚠️ 语义零丢失、字面写法有合并（例：源仓的「旁路设备明文 53」在本仓写作「明文 :53 旁路」）。
+  ⚠️ **根因不在源仓**：两份源文件各只有一处头部、位置正确 —— 是装配脚本剥头部的正则按 LF 写，
+  而 Windows 的 `core.autocrlf=true` 把工作区 checkout 成 CRLF，正则匹配不上。装配脚本已改为
+  **先归一化换行**，并重跑确认「从干净克隆重跑 == 本仓当前树」逐字节一致。
+- 🔒 **`.gitignore` 补私钥兜底**：`*.p12` / `*.pfx` / `*.pkcs12` / `*.key` / `*.pem` / `.env*`。
+  文档反复警告 Egern 的 `ca_p12` 是私钥容器，此前却没有任何拦截；**刻意不含 `*.crt`**，
+  导出的公钥证书有时需要留档。现有跟踪文件零命中，不影响任何既有内容。
+- 🧪 **环境要求写明**：回归要 Python 3，Egern 侧还需 `PyYAML`，Windows 的 Git Bash 两者都不自带 ——
+  此前只在 `skill/README.md` 里提过一次，现补进通用注意事项与本节，避免「没跑成」被当成「跑绿」。
+- ✅ **改后复跑**（本轮全部改完之后重跑，不是沿用合并时的读数）：
+  相对链接 **42 篇全通过**、锚点 **44 个全存在**、slug 自检 6/6；
+  `SKILL.md` 两分支的**代码块 4 段与源文件逐字一致**；**10 对 `.min`** 去注释后 0 不一致；
+  反解回源形态后逐字节相同的文件 **54 个**（20 profile · 15 Python 脚本 · 9 fixture · `check_links.py` 等）、
+  **26 个图标**与两个源仓同时相同。
+- ✅ **指向前身两仓的超链接 = 0 条**。全树只剩 **5 处纯文字提及**，逐处核过：本 `CHANGELOG` 的
+  合并条目与更正块 3 处（来源说明）、`egern/CHANGELOG.md` 改名条目 1 处（历史原文）、
+  `egern/docs/07` 的 301 跳转说明 1 处（紧跟着已写明「已停止更新、不保证长期可达」）。
+  旧仓地址在本仓**不参与任何内容加载**，两仓转私有后本仓照常可用。
 
 ---
 
 ## 2026-09-23 · 合并成仓
 
-本仓库由 [`RiverFlowsInUUU/Surge`](https://github.com/RiverFlowsInUUU/Surge) 与
-[`RiverFlowsInUUU/Egern`](https://github.com/RiverFlowsInUUU/Egern) **合并**而成。
-两个源仓库**未作任何改动**，其订阅地址与图标 URL 继续可用。
+本仓库由 `RiverFlowsInUUU/Surge` 与 `RiverFlowsInUUU/Egern` **合并**而成（两个前身仓仅作来源说明，
+合并时对它们**未作任何改动**）。⚠️ **本仓自包含**：profile、图标、审计脚本与全部详解都部署在本仓，
+配置里不引用那两个仓的任何地址；它们后续可能转为私有，**新写地址一律用 `RiverFlowsInUUU/Self-Configuration`**。
+唯一的外部依赖是社区规则集与官方文档，与它们无关。
 
 ### 新增
 
@@ -44,8 +80,8 @@
   **21 条两侧逐字相同**，另有各自独有的一条（Surge 内置 `SYSTEM` / 内置 `LAN`，Egern `domain_suffix: cn`）。
 - 📄 [`docs/注意事项.md`](docs/注意事项.md) · [`docs/图标与许可.md`](docs/图标与许可.md) —— 由两侧同主题文档合并。
 - 🧭 **单一技能入口** [`skill/SKILL.md`](skill/SKILL.md)：第 0 节先判内核，再进 A/B 两个内核分支。
-  当前 **593 行**（frontmatter 5 + 共享头部 79 + Surge 分支 189 + Egern 分支 320；合并时为 591 行，
-  上方「合并后修订」的外链修复 +2）；
+  当前 **581 行**（frontmatter 5 + 共享头部 73 + Surge 分支 183 + Egern 分支 320；
+  合并时 591 行 —— 上方「合并后修订」里外链修复 +2、去掉两份内嵌假头 −12）；
   ⚠️ **两侧正文逐字保留**，只做标题降级、路径改写、以及上方登记并在
   [`docs/跨内核差异对照.md`](docs/跨内核差异对照.md) §8 留痕的外链修订 ——
   用代码块抽取比对验证过，两个分支里的**全部代码块与源文件字节一致**。
@@ -89,6 +125,9 @@
   字节还原核对），从干净克隆重跑一遍即得同一棵树。
 - ⚠️ **未跑的部分**：两侧 `*.py` 回归套件**本次未执行** —— 装配环境无可用 Python 解释器，
   且 Egern 侧脚本另需 `PyYAML`。因此本仓库只声明「静态检查通过」，**不声明回归通过**。
+  环境要求已写进 [`docs/注意事项.md`](docs/注意事项.md)：**Python 3 + PyYAML**，
+  Windows 的 Git Bash 两者都不自带（`python` / `python3` 可能是商店占位符，需自行安装）。
+  联网阶段（Surge 侧阶段 4）可用 `SKIP_NET=1` 跳过。
   在具备环境处请按 [`README.md`](README.md) 的命令跑一遍再用于生产。
 - 🚫 **刻意不挂 CI**：两个源仓库都记录了这一决定，合并后沿用。
 
@@ -108,3 +147,8 @@
 [`surge/CHANGELOG.md`](surge/CHANGELOG.md)（Surge `v1`→`routing_v3`）与
 [`egern/CHANGELOG.md`](egern/CHANGELOG.md)（Egern `v0`→`routing_v3`、DNS 加固 `f1`→`f10`），
 **内容逐字未改**，包括其中的旧文件名与旧仓库名表述。
+
+> ⚠️ 按发生时事实保留的代价：内核 `CHANGELOG` 里「新写地址请用 `.../RiverFlowsInUUU/Egern/...`」
+> 这类提示（`egern/CHANGELOG.md` 改名条目）**已经过期** —— 回溯改写历史条目会破坏它的证据价值，
+> 所以只在这里更正一次：**新写地址一律用 `RiverFlowsInUUU/Self-Configuration`**，
+> 前身两仓仅作来源说明、后续可能转为私有。

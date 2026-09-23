@@ -132,7 +132,7 @@ README 是**产品介绍**：读者要知道「这东西是什么、怎么用」
 实测反例二（同日）：Clash README 开头写「与 Surge · Egern 同构」、分流版写「组序与 Egern 对齐」、
 末尾放「可先看两个姐妹仓」。用户同判 —— 「别人看你这个项目，有必要让他知道这句话吗？」
 **判据：这句话对读者『用它』有没有帮助？没有就是自述。**
-闸门见 `_base/verify_readme_tone.py`（`跨仓比对` 三类正则 + 负样本自测）。
+闸门见 `verify_readme_tone.py`（维护者本地的装配闸门，按仓库惯例不进公开仓；`跨仓比对` 三类正则 + 负样本自测）。
 
 #### 2.4.1 README 与 `DetailsReadme` 的分工（层级，不只是题材）
 
@@ -175,7 +175,7 @@ Surge 是 `dns-server` 裸 IP + `hijack-dns` 列举 + 规则层 `no-resolve`；
 Egern 是 `bootstrap` 单通路 + `domain_wildcard: '*'` catch-all + `proxy_nameservers` 独立通道；
 Clash 是 TUN `dns-hijack: any:53` + fake-ip。**照抄等于把不存在的机制写进别人的仓。**
 
-闸门：`_base/verify_readme_tone.py` 的「标题行不得含『原理』」一项
+闸门：`verify_readme_tone.py`（维护者本地的装配闸门，按仓库惯例不进公开仓）的「标题行不得含『原理』」一项
 （只查标题行 —— 正文与链接锚点里的 `#2-防泄露原理…` 是文档导航，不算）。
 实测（2026-09-22）三仓同时改完，闸门 12/12。
 
@@ -200,7 +200,7 @@ Clash 是 TUN `dns-hijack: any:53` + fake-ip。**照抄等于把不存在的机�
 我认为都没必要放在首页的 README 里面。」处理后：新开组件页承接全部规则集信息，
 首页只在「文件结构 / 更多文档」里留一个链接即可。
 
-闸门：`_base/verify_readme_tone.py` 的「首页无规则集文件与来源仓库」一项
+闸门：`verify_readme_tone.py`（维护者本地的装配闸门，按仓库惯例不进公开仓）的「首页无规则集文件与来源仓库」一项
 （匹配 `*.list` / `*.txt` / `*.mmdb` / `*.mrs`、`GEOIP` / `GEOSITE`、来源仓库 owner）。
 ⚠️ 只对**配置模板仓**生效 —— `jinx` 本身是规则集仓，README 讲规则集是它的产品，不适用这条。
 
