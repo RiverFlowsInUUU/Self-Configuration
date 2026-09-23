@@ -59,7 +59,15 @@ python "$S/audit_routing_coverage.py" surge/profiles/lazy.conf --show-all
 bash ./skill/tests/surge/run.sh
 SKIP_NET=1 bash ./skill/tests/surge/run.sh
 PY=/path/to/python bash ./skill/tests/surge/run.sh
+CURRENT=routing_v3.2 bash ./skill/tests/surge/run.sh   # 临时覆盖「当前推荐版」常量
 ```
+
+⭐ **「当前推荐版」是一个常量，不是一堆文件名**：`run.sh` 与 `architecture.sh` 各有
+   一行 `CURRENT="${CURRENT:-routing_v3.1}"`（承诺值，刻意不推导"最大版本号"）。
+   阶段 2 的 `--strict` 名单、阶段 4 的联网审计、阶段 5 的正则对账、`architecture.sh` 的
+   ②-b / ④ 段都由它派生 ⇒ 升版只改那一行。
+   配套前置检查：`$PROFILES/$CURRENT.conf` 不存在 ⇒ **退出码 2** —— 否则阶段 4 / 5 会
+   对不存在的文件 `continue`，**静默少跑一整个阶段**还报绿。
 
 ⚠️ **全部 profile 都要过 `check_surge_dns.py` 与 `audit_ruleset_refresh.py`**（阶段 2 会自动遍历 `profiles/*.conf`）。
 分流版同样要求 `0 high / 0 medium`，标准与 `lazy.conf` 一致。

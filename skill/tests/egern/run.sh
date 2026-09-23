@@ -30,6 +30,8 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPTS="$(cd "$HERE/../../scripts/egern" && pwd)"
 PROFILES="$(cd "$HERE/../../../egern/profiles" 2>/dev/null && pwd || true)"
 PY="${PY:-python3}"
+# 当前推荐版：与 Surge 侧 run.sh 同一个承诺值（阶段 2 的 --strict 名单由它派生）。
+export CURRENT="${CURRENT:-routing_v3.1}"
 
 # ⚠️ Git Bash / MSYS 下 `pwd` 返回 `/c/Users/...` 这种 MSYS 风格路径，
 #    Windows 版 Python 打不开（会报 `can't open file 'C:\\c\\Users\\...'`）。
@@ -76,6 +78,11 @@ if [ -z "$PROFILES" ] || [ ! -d "$PROFILES" ]; then
   printf '   阶段 2 需要它来跑 audit_region_filters.py。\n' >&2
   exit 2
 fi
+# ⚠️ CURRENT 指错 ⇒ 阶段 2 的 --strict 名单一条都套不上，全部按「历史存档版」只查非正值 ⇒ 假绿。
+if [ ! -f "$PROFILES/$CURRENT.yaml" ]; then
+  printf '\n❌ 前置检查失败：CURRENT=%s 没有对应的 .yaml（升版后忘了改 CURRENT）\n' "$CURRENT" >&2
+  exit 2
+fi
 
 # 断言表：fixture 期望退出码（check_egern_dns / audit_dns_forward）
 #   ok_route      : 判据 A 生效 -> 两脚本都应通过（0 / 0）
@@ -104,15 +111,22 @@ for case in $CASES; do
   exp_chk="${rest%%:*}"; exp_adf="${rest##*:}"
   path="$HERE/$f"
   path_w="$HERE_W/$f"
-  [ -f "$path" ] || { printf '%-22s %s\n' "$f" "❌ fixture 缺失"; fail=$((fail+1)); continue; }
+  [ -f "$path" ] || { printf '%-22s %s\n' "$f" "❌ fixture 缺失（两个判据都测不了）"; fail=$((fail+2)); continue; }
 
   "$PY" "$SCRIPTS_W/check_egern_dns.py" "$path_w" >/dev/null 2>&1; got_chk=$?
   "$PY" "$SCRIPTS_W/audit_dns_forward.py" "$path_w" >/dev/null 2>&1; got_adf=$?
 
-  if [ "$got_chk" = "$exp_chk" ] && [ "$got_adf" = "$exp_adf" ]; then
-    res="✅ OK"; pass=$((pass+1))
+  # ⚠️ 计数口径：**按脚本对账计数，不按表格行**。一行 fixture 同时校两个脚本的期望退出码
+  #    （check_egern_dns 与 audit_dns_forward 是两个独立判据，各算一条断言），
+  #    所以 5 行 = 10 条断言 —— 与 README / docs 里「阶段 1 · 10 断言」的口径对齐。
+  #    早先这里每行只 +1，runner 报 5、文档写 10，两边都对不上号。
+  n_ok=0
+  if [ "$got_chk" = "$exp_chk" ]; then n_ok=$((n_ok+1)); fi
+  if [ "$got_adf" = "$exp_adf" ]; then n_ok=$((n_ok+1)); fi
+  if [ "$n_ok" = 2 ]; then
+    res="✅ OK"; pass=$((pass+2))
   else
-    res="❌ 期望 ${exp_chk}/${exp_adf}"; fail=$((fail+1))
+    res="❌ 期望 ${exp_chk}/${exp_adf}（${n_ok}/2 对账成立）"; fail=$((fail + 2 - n_ok))
   fi
   printf '%-22s %-18s %-20s %s\n' "$f" "exit=$got_chk" "exit=$got_adf" "$res"
 done
@@ -157,7 +171,7 @@ for _p in "$PROFILES"/*.yaml; do
   # 规则集刷新参数（离线判定）：当前推荐版与懒人版要求钉到约定值；
   # 历史存档版（`routing_v1` ~ `routing_v2.3` 本就没写这个字段）只查非正值。
   case "$_name" in
-    lazy.yaml|lazy.min.yaml|routing_v3.1.yaml|routing_v3.1.min.yaml) _rf_flag="--strict";; *) _rf_flag="";;
+    lazy.yaml|lazy.min.yaml|$CURRENT.yaml|$CURRENT.min.yaml) _rf_flag="--strict";; *) _rf_flag="";;
   esac
   "$PY" "$SCRIPTS_W/audit_ruleset_refresh.py" "$PROFILES_W/$_name" $_rf_flag --quiet >/dev/null 2>&1
   _rrc=$?
@@ -174,6 +188,11 @@ done
 
 printf '%s\n' "--------------------------------------------------------------------------------"
 printf 'result: %d passed, %d failed\n' "$pass2" "$fail2"
+
+# 两阶段合计的总数（与 Surge 侧 run.sh 的 TOTAL 同格式）：
+#   阶段 1 = fixture 数 × 2 个脚本，阶段 2 = profile 数 × 2 个脚本。
+#   闸门工具直接抓这一行，省得再去两处 result 手工相加。
+printf 'TOTAL: %d passed, %d failed\n' "$((pass + pass2))" "$((fail + fail2))"
 
 [ $((fail + fail2)) = "0" ] || exit 1
 exit 0

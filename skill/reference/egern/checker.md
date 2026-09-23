@@ -28,7 +28,15 @@
 "<venv>/Scripts/python.exe" scripts/weigh_ruleset.py some.list [--sub small.list] [--probe d]  # ★ 规则集"重量"：构成/冗余/深度/加载与匹配耗时/覆盖对比
 
 bash scripts/../tests/run.sh                                       # ★★ 回归测试两阶段（10 + 36 = 46 断言），退出码非 0 即失败
+CURRENT=routing_v3.2 bash scripts/../tests/run.sh                   # 临时覆盖「当前推荐版」常量（默认在 run.sh 里那一行）
 ```
+
+⭐ **计数口径是「按脚本对账」**：阶段 1 的 5 行 fixture 每行校两个脚本（两条独立判据）⇒ 计 10 条；
+   阶段 2 每份 profile 校 `audit_region_filters` 与 `audit_ruleset_refresh` ⇒ 18 × 2 = 36 条；
+   合计 46，runner 末尾的 `TOTAL:` 行就是这个数。
+⭐ **「当前推荐版」是 `run.sh` 里的一行常量 `CURRENT`**：阶段 2 的 `--strict` 名单由它派生。
+   前置检查会在 `$PROFILES/$CURRENT.yaml` 不存在时给**退出码 2** —— 否则那份名单一条都套不上，
+   当前推荐版会被当成"历史存档版"只查非正值，**看着绿、其实没审**。
 
 ⚠️ **运行目录要求**：`check_egern_dns.py` 与 `audit_dns_forward.py` 会 import 同目录的
 `_egern_common.py`（共享工具）。**这三个文件必须在一起**，否则报 `ModuleNotFoundError`。

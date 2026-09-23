@@ -33,6 +33,8 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../../.." && pwd)"
 PROFILES="$ROOT/surge/profiles"
 PY="${PY:-python3}"
+# 当前推荐版：与 run.sh 同一个**承诺值**（run.sh 会 export 下来；单独跑本脚本时用这里的默认值）。
+export CURRENT="${CURRENT:-routing_v3.1}"
 
 # ⚠️ Git Bash / MSYS 下 `pwd` 返回 `/c/Users/...`，Windows 版 Python 打不开。
 if command -v cygpath >/dev/null 2>&1; then
@@ -51,6 +53,11 @@ if [ ! -d "$PROFILES" ]; then
   printf '\n❌ 前置检查失败：找不到 %s\n' "$PROFILES" >&2
   exit 2
 fi
+# ⚠️ CURRENT 指错 ⇒ ②-b 与 ④ 两段会被 isfile 判断整体跳过 ⇒ 静默假绿，必须在这里就炸。
+if [ ! -f "$PROFILES/$CURRENT.conf" ]; then
+  printf '\n❌ 前置检查失败：CURRENT=%s 没有对应的 .conf（升版后忘了改 CURRENT）\n' "$CURRENT" >&2
+  exit 2
+fi
 
 printf '%s\n' "架构不变量检查"
 printf '%s\n' "────────────────────────────────────────────────────────────"
@@ -59,6 +66,9 @@ printf '%s\n' "─────────────────────�
 import os, re, sys
 
 profiles_dir = sys.argv[1]
+# 当前推荐版由 shell 侧 export 下来。刻意不从这里挑「最大版本号」——
+# 版本号是对外承诺（README / docs 指着它），不是可从文件名推导的派生值。
+CURRENT = os.environ.get("CURRENT") or "routing_v3.1"
 files = sorted(f for f in os.listdir(profiles_dir) if f.endswith(".conf"))
 if not files:
     print("❌ profiles/ 里没有 .conf 文件")
@@ -198,7 +208,7 @@ def dns_kv(path):
 
 # ⚠️ 两组形态，各查一遍。routing 与 lazy 的 DNS 段**必须逐字相同** ——
 #    "这份配置是分流版"不构成降低防泄露标准的理由。
-for _stem in ("lazy", "routing_v3.1"):
+for _stem in ("lazy", CURRENT):
     full_p = os.path.join(profiles_dir, f"{_stem}.conf")
     min_p = os.path.join(profiles_dir, f"{_stem}.min.conf")
     if not (os.path.isfile(full_p) and os.path.isfile(min_p)):
@@ -224,7 +234,7 @@ for _stem in ("lazy", "routing_v3.1"):
 
 # ②-b 跨形态：routing 与 lazy 的 DNS 段也必须相同（防泄露结构不因分流粒度而变）
 _lf = os.path.join(profiles_dir, "lazy.conf")
-_rf = os.path.join(profiles_dir, "routing_v3.1.conf")
+_rf = os.path.join(profiles_dir, f"{CURRENT}.conf")
 if os.path.isfile(_lf) and os.path.isfile(_rf):
     a, b = dns_kv(_lf), dns_kv(_rf)
     diff = [k for k in DNS_KEYS if a.get(k) != b.get(k)]
@@ -232,9 +242,9 @@ if os.path.isfile(_lf) and os.path.isfile(_rf):
         for k in diff:
             fails.append(f"lazy 与 routing 的 DNS 段不一致：`{k}`\n"
                          f"        lazy.conf:    {a.get(k)}\n"
-                         f"        routing_v3.1.conf: {b.get(k)}")
+                         f"        {CURRENT}.conf: {b.get(k)}")
     else:
-        oks.append(f"lazy.conf 与 routing_v3.1.conf 的 {len(DNS_KEYS)} 个 DNS 键也逐字相同"
+        oks.append(f"lazy.conf 与 {CURRENT}.conf 的 {len(DNS_KEYS)} 个 DNS 键也逐字相同"
                    f"（防泄露结构不因分流粒度而变）")
 
 # ── ③ 规则顺序铁律 ──────────────────────────────────────────────────────────
@@ -357,12 +367,12 @@ def group_order(path):
             out.append((ln, name))
     return out
 
-_rf_full = os.path.join(profiles_dir, "routing_v3.1.conf")
+_rf_full = os.path.join(profiles_dir, f"{CURRENT}.conf")
 if os.path.isfile(_rf_full):
     got = group_order(_rf_full)
     got_names = [n for _, n in got]
     if got_names == PG_ORDER:
-        oks.append(f"routing_v3.1.conf: [Proxy Group] 的 {len(PG_ORDER)} 个组顺序"
+        oks.append(f"{CURRENT}.conf: [Proxy Group] 的 {len(PG_ORDER)} 个组顺序"
                    f"与 Egern v3.1 对齐 👍")
     else:
         diffs = []
@@ -373,19 +383,19 @@ if os.path.isfile(_rf_full):
                 line = got[i][0] if i < len(got) else None
                 diffs.append(f"        第 {i+1} 位：期望 `{a}`，实际 `{b}`"
                              + (f"（第 {line} 行）" if line else ""))
-        fails.append("routing_v3.1.conf: [Proxy Group] 顺序与 Egern v3.1 不一致\n"
+        fails.append(f"{CURRENT}.conf: [Proxy Group] 顺序与承诺的组顺序表 PG_ORDER 不一致\n"
                      + "\n".join(diffs)
                      + "\n        ⇒ 顺序是对外承诺（README 明写与 Egern 对齐）；"
                        "确实要改就同时更新本文件的 PG_ORDER")
 
     # ④-b min 版必须与完整版组顺序一致（min 是同一份配置去注释，不能各排各的）
-    _rf_min = os.path.join(profiles_dir, "routing_v3.1.min.conf")
+    _rf_min = os.path.join(profiles_dir, f"{CURRENT}.min.conf")
     if os.path.isfile(_rf_min):
         got_min = [n for _, n in group_order(_rf_min)]
         if got_min == got_names:
-            oks.append("routing_v3.1.conf / routing_v3.1.min.conf 的组顺序一致 👍")
+            oks.append(f"{CURRENT}.conf / {CURRENT}.min.conf 的组顺序一致 👍")
         else:
-            fails.append("routing_v3.1.min.conf 的组顺序与 routing_v3.1.conf 不同 —— "
+            fails.append(f"{CURRENT}.min.conf 的组顺序与 {CURRENT}.conf 不同 —— "
                          "min 版应由完整版机械生成，不该各排各的")
 
 # ── 输出 ────────────────────────────────────────────────────────────────────
