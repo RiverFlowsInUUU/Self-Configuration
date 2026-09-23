@@ -6,6 +6,40 @@
 
 ---
 
+## 2026-09-23 · 懒人版接上分流版 v3 的三项 · 陈旧表述订正
+
+本轮**动了 Egern 懒人版的配置本体**（此前几轮里 profile 只在升版时变过）。
+
+- 🧬 **`egern/profiles/lazy.yaml` 补齐分流版 v3 引入的三项**：
+  ① `dns.forward` 由单条 catch-all 扩为四层（白名单 `surge-white-guard.list` → `Domestic-DNS`
+  → Jinx-Ads / AWAvenue 两条 → `reject` → `domain_wildcard: '*'` 兜底），与 `routing_v3.1` 同构；
+  ② `rules` 补 `Private`（`private.txt` → `DIRECT`，`update_interval: 604800`），内网由一条变两条，
+  与 Surge 懒人版的 `LAN` + `private.txt` 对齐。`.min` 按仓内既有配方重新生成（97 → 111 行）。
+  **实际后果**：改前 Egern 懒人版的广告域名照样发出解析查询、只在连接层被拦，而 Surge 懒人版用
+  `pre-matching` 在 DNS 阶段就拒答 —— 两侧"拦在哪一层"并不一致，现在一致了。
+  ⚠️ 懒人版此前停在 `routing_v2` 口径，且文件头写着"dns 段与 routing_v2.4 逐字相同"——那句对 v2.4 成立、
+  对当前分流版不成立，已按现状改写（现基线：去行尾注释后与 `routing_v3.1` 逐字相同）。
+  分流版 v3 的第三项 `flatten: true`（`AI` 组）本轮**一并补上** —— 它决定 smart 组是把 `Proxy`
+  整组当一个成员打分，还是把 `Proxy` 的成员摊开逐个打分。
+- 🔢 **读数复测**：`check_egern_dns.py lazy` 仍 **0 high / 2 low / 24 ok**（防泄露面没有因为新增三层而改变）；
+  `audit_ruleset_noresolve.py` 对 lazy 从 6 个规则集变 **10 个**（`rules` 7 + `dns.forward` 3）；
+  `audit_ruleset_refresh.py --strict` 下 lazy **7 条全部** `604800`。白名单实测 **43 条**
+  （41 `DOMAIN` + 2 `DOMAIN-SUFFIX`）—— Egern 懒人版原写"42 条 DOMAIN 精确匹配"，两处都不对，已改。
+- ✏️ **`surge/profiles/lazy.conf` 一处注释与值矛盾**：`proxy-test-url` 上方原写"延迟测试端点用**国内** 204
+  ……smart 组的评分才有意义"，值却是 `www.gstatic.com`（境外）。分流版 v3.1 同处早已改为境外口径并写明理由，
+  懒人版落后了 —— 照旧注释改的人会主动把打分搞坏。现逐字采用 v3.1 那段（配置本体零改动，注释不进 `.min`）。
+- 🩹 **四处陈旧表述**：`surge/docs/04`（两处）、`surge/docs/06`、`surge/docs/11` 都说 `[Rule]` 段有
+  3 条游戏机 `DOMAIN-SUFFIX` 规则 / lazy 比分流版多这三条 —— 实测**两侧四份 profile 都没有**，
+  这些主机名只在 `always-real-ip` 里。`docs/跨内核差异对照` §8 那条"源仓过时内容"引用的
+  `Surge docs/12` 文件名也已改指实际存在的 `docs/11-分流版设计.md`。
+  ⚠️ `surge/docs/07` 记的"删游戏机主机名 3 条"是**当时发生的事实**，按本仓纪律不回溯改写。
+- 📚 **文档同步 5 篇**：`docs/跨内核差异对照` §4 懒人版对照表（规则 11/10、内网两侧各两条、
+  新增"广告拦在哪一层"一行）、`docs/规则集与来源` 两处、`egern/docs/04`、`egern/docs/07`、
+  `egern/docs/08`（两条审计读数）。
+- ✅ **验收**：`bash skill/tests/all.sh` 四项 **23 / 46 / 12 / 18** 全绿，闸门未被动过。
+
+
+
 ## 2026-09-23 · 本仓完全独立 · 换设备一致性收口
 
 同一天的第三轮。这一轮**只动文档层与检查层**，profile · 图标 · 判据逻辑零改动。
