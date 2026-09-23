@@ -48,10 +48,10 @@ bash skill/tests/all.sh            # 四项检查；离线用 --offline
 | 路径 | 是什么 | 改了它要顺手改什么 |
 |:-----|:-------|:-------------------|
 | `surge/profiles/` · `egern/profiles/` | 订阅文件（`.conf` / `.yaml`，各有 `.min` 形态） | `.min` 与完整版由第 3 项对拍；升版走 §5 |
-| `skill/` | 配置领域技能包：`SKILL.md` + `reference/` + `scripts/` | 触发词表与 `agent_created` 头**别乱动**，是靠它被检索的 |
-| `skill/scripts/` · `skill/tests/` | 审计脚本与回归判据 | 新增判据要写进 `docs/08-审计读数.md` 的读数 |
+| `skill/` | 配置领域技能包：`skill/SKILL.md` + `skill/reference/` + `skill/scripts/` | 触发词表与 `agent_created` 头**别乱动**，是靠它被检索的 |
+| `skill/scripts/` · `skill/tests/` | 审计脚本与回归判据 | 新增判据要把读数写进 `surge/docs/08-审计读数.md` 与 `egern/docs/08-审计读数.md` |
 | `docs/` | 人读的六篇详解（跨设备一致性、差异对照、体检报告…） | 相对链接由 Surge 侧阶段 6 全仓校验 |
-| `icons/` | 26 个策略组图标（两内核共用） | 路径**必须纯 ASCII**（`check_portability.py` 的 `N6`），别新加中文名 |
+| `icons/` | 26 个策略组图标（两内核共用） | 路径**必须纯 ASCII**（`skill/tests/check_portability.py` 的 `N6`），别新加中文名 |
 
 ## 4 · 换到一台新机器只做三件事
 
@@ -77,5 +77,5 @@ git config --global user.email "你的邮箱"
 
 - [`docs/跨内核差异对照.md`](docs/跨内核差异对照.md) §8 —— 本仓相对两个前身仓的全部刻意差异与理由
 - [`docs/体检报告.md`](docs/体检报告.md) —— P1–P11 的问题记录，含**被实测推翻的原结论**
-- [`docs/技能包合并与自包含.md`](docs/技能包合并与自包含.md) —— `SKILL.md` 为什么长这样
+- [`docs/技能包合并与自包含.md`](docs/技能包合并与自包含.md) —— `skill/SKILL.md` 为什么长这样
 - [`docs/注意事项.md`](docs/注意事项.md) —— 动手前读，含改配置 / 改判据 / 换设备的边界
