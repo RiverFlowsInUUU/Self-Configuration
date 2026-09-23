@@ -39,6 +39,9 @@ bash skill/tests/all.sh            # 四项检查；离线用 --offline
 3. **不要为了「行尾对不上」去改任何人的 git 配置。** 字节层由仓根
    [`.gitattributes`](.gitattributes) 的 `* text=auto eol=lf` 钉死，优先级高于 `core.autocrlf`。
    若在 Windows 上 `git status` 干净但磁盘仍是 CRLF ⇒ 那是**老克隆**的一次性问题，解法见 §4。
+   **用脚本写文件时**（agent 最常干这事）：Windows 上 `open(p, 'w')` 默认文本模式会把 `\n` 写成 `\r\n`，
+   落盘即被第 4 项 `E2` 判负。写时给 `newline='\n'`（或写二进制），别指望 `git add` 时的归一化救你 ——
+   它救得了提交，救不了工作树。
 4. **看到某个配置「好像不对」，先在文件里 grep `audit-waive`。** 明知故犯的地方都在 profile 头部
    留了豁免条目和理由，审计脚本的注释里也写了取舍。例：Surge 的 `encrypted-dns-server` 保留
    `dns.google` / `dns.alidns.com` 两条主机名端点是有意的（CDN 就近与 ECS 合规），不是泄露。
@@ -79,5 +82,3 @@ git config --global user.email "你的邮箱"
 - [`docs/体检报告.md`](docs/体检报告.md) —— P1–P11 的问题记录，含**被实测推翻的原结论**
 - [`docs/技能包合并与自包含.md`](docs/技能包合并与自包含.md) —— `skill/SKILL.md` 为什么长这样
 - [`docs/注意事项.md`](docs/注意事项.md) —— 动手前读，含改配置 / 改判据 / 换设备的边界
-
-<!-- 新设备试写一行 -->
