@@ -23,14 +23,14 @@
   **21 条两侧逐字相同**，另有各自独有的一条（Surge 内置 `SYSTEM` / 内置 `LAN`，Egern `domain_suffix: cn`）。
 - 📄 [`docs/注意事项.md`](docs/注意事项.md) · [`docs/图标与许可.md`](docs/图标与许可.md) —— 由两侧同主题文档合并。
 - 🧭 **单一技能入口** [`skill/SKILL.md`](skill/SKILL.md)：第 0 节先判内核，再进 A/B 两个内核分支。
-  合并后 **592 行**（共享头部 79 + Surge 分支 179 + Egern 分支 321）；
+  合并后 **591 行**（frontmatter 5 + 共享头部 79 + Surge 分支 187 + Egern 分支 320）；
   ⚠️ **两侧正文逐字保留**，只做标题降级与路径改写 —— 用代码块抽取比对验证过，
   两个分支里的**全部代码块与源文件字节一致**。
 
 ### 变更
 
 - 🔗 **URL 全量改写**：仓库自身的 raw URL 由两个旧仓名改为本仓名，
-  **618 处**图标引用改指共享根 `icons/`；改写后旧自引用**零残留**（32 个文件、40 类替换规则）。
+  **616 处**图标引用改指共享根 `icons/`；改写后旧自引用**零残留**（32 个文件、40 类替换规则）。
 - 📁 **测试与脚本改道**：`skill/scripts/{surge,egern}/`、`skill/tests/{surge,egern}/`，
   三个 runner（`surge/run.sh`、`surge/architecture.sh`、`egern/run.sh`）里的
   `SCRIPTS` / `ROOT` / `PROFILES` 已重算并**逐个求值确认**可解析。
@@ -46,14 +46,18 @@
   slug 算法不靠猜：逐条移植自仓内 `skill/tests/surge/check_links.py` 的 `gh_slug()`，
   并用它自带的 6 条对拍样例自检通过。
 - ✅ **正文里的路径提及**同步改道（链接之外，读者会直接照抄命令）：
-  23 个文件、**157 处** `skill/scripts/` · `skill/tests/` · `skill/reference/` · `profiles/` 补上内核段；
-  改后**逐条求值**：文档中出现的 14 条 `python` / `bash` 命令全部指向真实脚本，
-  18 个被引用的 `profiles/` 路径中 **15 个真实存在**，另 3 个指向已删除的历史版本名
-  （`routing.conf`、`routing_v2.5(.min).yaml`）—— 那三处本身就是"此地址已 404"的通知，**故意保留**。
+  23 个文件、**157 处** `skill/scripts/` · `skill/tests/` · `skill/reference/` · `profiles/` 补上内核段
+  （现势可复核：带内核段的 `skill/{scripts,tests,reference}/{surge,egern}/` 提及 126 处、分布在 30 个文件）；
+  改后**逐条求值**：文档中出现的 `python` / `bash` 命令（去重 14 条、共 66 处提及）全部指向真实脚本，
+  19 个被引用的 `profiles/` 路径中 **14 个真实存在**，另 5 个指向已删除的历史版本名
+  （`routing.conf`、`routing_v2.5.yaml`、`routing_v2.5.min.yaml`、`v0.yaml`、`v2.5.min.yaml`）
+  —— 那五处本身就是"此地址已 404"的通知，**故意保留**。
   ⚠️ 两份内核 `CHANGELOG.md` **不参与改写** —— 历史条目按发生时的事实保留。
 - ✅ **内容零漂移**（合并最容易出事的地方）：把新仓 URL 反解回源形态后与源文件 `cmp` 比对 ——
-  **20 份 profile**、**26 个图标**（与两个源仓同时相同）、**15 个 Python 脚本**、**9 个测试 fixture**
-  全部**逐字节相同**；其余 24 篇文档的差异**逐行归类**，除两处刻意修订外全部属于既定改写类别
+  **20 份 profile**、**26 个图标**（与两个源仓同时相同）、`skill/scripts/` 下 **15 个 Python 脚本**
+  （另有 `skill/tests/surge/check_links.py`，同样与源仓逐字节相同）、**9 个测试 fixture**
+  全部**逐字节相同**；其余 24 篇文档的差异**逐行归类**，除
+  [`docs/跨内核差异对照.md`](docs/跨内核差异对照.md) §8 记录的修订外全部属于既定改写类别
   （URL / 技能包路径 / `profiles/` 前缀 / 相对链接深度）。
   三个 shell runner 的差异逐行核过，只有 `SCRIPTS` / `ROOT` / `PROFILES` 与用法注释。
 - ✅ **脱敏复核**：全树 `token=` 命中项**只有一种** —— 占位符 `REPLACE_WITH_YOUR_TOKEN`；
