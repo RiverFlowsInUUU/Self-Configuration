@@ -79,3 +79,5 @@ git config --global user.email "你的邮箱"
 - [`docs/体检报告.md`](docs/体检报告.md) —— P1–P11 的问题记录，含**被实测推翻的原结论**
 - [`docs/技能包合并与自包含.md`](docs/技能包合并与自包含.md) —— `skill/SKILL.md` 为什么长这样
 - [`docs/注意事项.md`](docs/注意事项.md) —— 动手前读，含改配置 / 改判据 / 换设备的边界
+
+<!-- 新设备试写一行 -->
