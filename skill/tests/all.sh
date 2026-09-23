@@ -33,6 +33,9 @@ OFFLINE=0
 for a in "$@"; do
   [ "$a" = "--offline" ] && OFFLINE=1
 done
+# 外部已经设了 SKIP_NET（有人直接 `SKIP_NET=1 bash all.sh`）也算离线，
+# 否则头部会印「联网：开」而下面的阶段其实跳过了 —— 读数与事实不符。
+[ "${SKIP_NET:-0}" = "1" ] && OFFLINE=1
 if [ "$OFFLINE" = "1" ]; then
   export SKIP_NET=1
 fi
