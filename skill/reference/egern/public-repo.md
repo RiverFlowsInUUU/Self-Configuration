@@ -18,7 +18,7 @@ docs/                                       # ★ 共享文档层（不再各内
 skill/                                      # 本 skill：SKILL.md（§0 判内核 → 分支 A/B）
   reference/{surge,egern}/ · scripts/{surge,egern}/ · tests/{surge,egern}/
 egern/CHANGELOG.md                          # 本内核更新日志（按时间倒序，README 只留引用）
-egern/profiles/lazy.yaml / lazy.min.yaml          # 懒人版 · 可选（4 组 / 9 条规则，Final 隐藏、AD 只留 REJECT；不挂版本号）
+egern/profiles/lazy.yaml / lazy.min.yaml          # 懒人版 · 可选（3 组 / 10 条规则，AD 只留 REJECT、无 Final 兜底组（policy 直写 Proxy）；不挂版本号）
 egern/profiles/routing_v3.1.yaml / .min.yaml    # 分流版 · 推荐（脱敏模板：无节点、无订阅、无证书；机场槽位 1 个）
 egern/profiles/routing_v2.4.yaml / .min.yaml      # 保留（v3 前一版）
 egern/profiles/routing_v2.3.yaml / .min.yaml      # 保留（与 routing_v2.4 只差 rule_set 的 update_interval）

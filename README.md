@@ -63,7 +63,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 | 🛑 `AD` | ✅ | ✅ |
 | 🇭🇰 `Hong Kong` · 🇺🇸 `USA` · 🇯🇵 `Japan` · 🇨🇳 `Taiwan`<br>🇸🇬 `Singapore` · 🇰🇷 `Korea` · 🇦🇶 `Other Regions` | - | ✅ |
 | 💧 `MAX` | - | ✅ |
-| 🌐 `Final` | 只 Egern | ✅ |
+| 🌐 `Final` | - | ✅ |
 
 ---
 

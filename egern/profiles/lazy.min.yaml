@@ -57,12 +57,6 @@ policy_groups:
     policies:
     - REJECT
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/AdBlock.png
-- select:
-    name: Final
-    policies:
-    - Proxy
-    hidden: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Final.png
 rules:
 - rule_set:
     name: Jinx-CN
@@ -108,5 +102,5 @@ rules:
     no_resolve: true
 - default:
     name: Final
-    policy: Final
+    policy: Proxy
 default_proxy_group: Proxy

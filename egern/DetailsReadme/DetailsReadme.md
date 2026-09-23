@@ -96,8 +96,9 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 
 **服务组**（默认策略与承接的规则集）见 [`docs/规则集与来源.md`](../../docs/规则集与来源.md)。
 
-**`lazy` 的两处专属调整**（只属于它，不同步其他版本）：`AD` 组**只有 `REJECT`**（没有 `DIRECT` 兜底）、
-`Final` 组**被隐藏**（只有一个子策略，没有手动切换的意义）。
+**`lazy` 的一处专属调整**（只属于它，不同步其他版本）：`AD` 组**只有 `REJECT`**（没有 `DIRECT` 兜底）。
+⚠️ 分流版的 `Final` 兜底组，`lazy` **没有** —— 2026-09-23 起它的 `default` 规则 `policy` 直写 `Proxy`，
+与 Surge 懒人版拉平（`Final` 不是 Egern 的内置关键字，内置只有 `DIRECT` / `REJECT`，所以那一层组本就可选）。
 
 ### 1.4 `rules` —— 匹配表与直连规则集
 
@@ -122,7 +123,7 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 
 其中 `Proxy` 那条为 `disabled: true`，**关着、不参与匹配**，仅在文件里占位（位于「应用」与「Apple 服务」之间）。
 
-**默认出口链**：未命中任何规则集的域名 → `default` 规则（`policy: Final`）→ `Final` 组唯一成员是 `Proxy` → 走代理。这类流量由**节点远程解析**，不经过本地 `dns:` 段，日志里表现为 `default → Final → Proxy`。
+**默认出口链**：未命中任何规则集的域名 → `default` 规则（`policy: Final`）→ `Final` 组唯一成员是 `Proxy` → 走代理。这类流量由**节点远程解析**，不经过本地 `dns:` 段，日志里表现为 `default → Final → Proxy`。（`lazy` 无 `Final` 组，`policy` 直写 `Proxy`，日志里是 `default → Proxy`。）
 
 > ⚠️ 关键绑定：`geoip: CN`（`no_resolve: true`）**只对已经是 IP 的连接生效**，国内域名的直连**完全依赖那个纯域名国内规则集（`direct.txt`）**。两者绑定，动一条必须看另一条（详见 2.3 / 清单 17）。
 
