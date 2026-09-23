@@ -4,10 +4,39 @@
 
 > 🏷️ **文件名约定变更（2026-09-23）**：分流版由稳定名 `routing.conf` 改为**带版本号**的
 > `routing_v3.conf`（与姊妹仓 Egern 的 `routing_vN.yaml` 体例对齐）。此后每版新文件独立存在。
+> 现行推荐版是 **`routing_v3.1`**（2026-09-23 升版，只改规则集刷新参数），`routing_v3` 保留为存档。
 > ⚠️ **旧地址 `profiles/routing.conf` / `profiles/routing.min.conf` 已删除**，
-> 订阅端请改用 `profiles/routing_v3.min.conf`。
+> 订阅端请改用 `profiles/routing_v3.1.min.conf`。
 
 ---
+
+## 2026-09-23 · v3.1
+
+### 新增
+
+- 🆕 **`routing_v3.1`（分流版 · 推荐）** —— 相对 `routing_v3` **只改一件事**：
+  20 条远程规则集全部显式带 `"update-interval=604800"`（一周）。组、规则、DNS 段**逐字未动**，
+  因此静态读数与 `routing_v3` 完全相同（`0 high / 0 medium / 3 low / 11 ok / 2 waived`）。
+  `routing_v3{,.min}.conf` **保留为存档** —— 本仓此前不留历史版本，这是第一次留。
+- 🧪 新增 `skill/scripts/surge/audit_ruleset_refresh.py`（第 5 个审计脚本），判据分三档：
+  非正值 → HIGH（Surge 手册：负值即关闭自动更新，这是唯一会真的停在旧版的写法）；
+  缺字段 / 偏离约定值 → 「约定」档，默认不影响退出码；`--strict` 才判负。
+
+### 变更
+
+- 🔁 `lazy{,.min}.conf` **原地覆盖**（保持默认命名）：7 条远程规则集现全部钉在 604800（补 5 · 改 2）。
+- 🧪 回归 `skill/tests/surge/run.sh` 阶段 2 改为**每份 profile 跑两个脚本**，断言 **15 → 23**；
+  联网的阶段 4 与阶段 5 的 profile 参数改指 `routing_v3.1.conf`。
+- 🩹 中文 Windows 的 GBK 崩溃修复：`_surge_common` import 时把 stdout 钉成 UTF-8，
+  `run.sh` / `architecture.sh` 另设 `PYTHONIOENCODING=utf-8` —— 此前脚本会崩成**退出码 1**，
+  而 `bad_*` fixture 期望的正是 1 ⇒ 假绿。
+- 🔢 读数校正（本轮真跑）：分流覆盖 `33/33` → **39/39**、地区正则 `9/9` → **3 项**、
+  `architecture.sh` `11/11` → **17 项**、`check_surge_dns` 的 `ok` 两份是 12 / 11（`lazy` 多一项 `[Proxy]` 成员检查）。
+
+### 注意
+
+- ⚠️ **订阅地址第二次失效**（第一次是 `routing.conf` → `routing_v3.conf`）：
+  请把订阅端改成 `profiles/routing_v3.1.min.conf`。说明见 `docs/07` §3.5。
 
 ## 2026-09-23
 

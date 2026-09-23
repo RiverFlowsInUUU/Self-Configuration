@@ -339,7 +339,7 @@ RULE-SET,LAN,DIRECT,no-resolve
 RULE-SET,<private.txt>,DIRECT,no-resolve
 
 # 4. AI 分流
-RULE-SET,<AI.list>,AI,"update-interval=86400",no-resolve
+RULE-SET,<AI.list>,AI,"update-interval=604800",no-resolve
 
 # 5. Apple 系统
 RULE-SET,SYSTEM,DIRECT
@@ -398,10 +398,16 @@ FINAL,Proxy,dns-failed
 远程 `RULE-SET` 都应带：
 
 ```
-RULE-SET,<url>,<策略>,"update-interval=86400",no-resolve
+RULE-SET,<url>,<策略>,"update-interval=604800",no-resolve
 ```
 
-按天刷新。**这是必须的** —— 上游新收录的广告域名否则会一直命不中。
+一周刷新。
+
+⚠️ **别把这条判据说成"不写就不刷新"** —— Surge 手册写明该键缺省即 `86400`（24 小时），
+只有**负值**才关闭自动更新 ⇒ 漏写只是让周期不可见，不会让规则集停在首次下载的版本。
+真正需要"必须显式写"的是 **Egern**：官方只在示例里出现过 `update_interval`、未文档化缺省值。
+本仓两侧统一钉成 604800：同周期、写法一致、文件里看得见。审计时**只报两件事**：
+出现负值（= 关掉自动更新），或 Egern 的远程 `rule_set` 缺这个字段。
 
 ### 4.7 为什么某些规则集要钉 commit
 

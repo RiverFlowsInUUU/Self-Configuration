@@ -11,9 +11,10 @@
 | 项 | 要求 |
 |:---|:-----|
 | Python | 3.8+，**仅标准库** |
-| 网络 | `check_surge_dns.py` / `architecture.sh` **不需要**；另两个脚本需要 |
+| 网络 | 只有 `audit_ruleset_content.py` / `audit_routing_coverage.py` 需要；其余脚本与两个 `.sh` 全离线 |
 | 操作系统 | Windows（Git Bash）/ macOS / Linux 均可 |
 | 磁盘 | 规则集缓存约 10 MB（`direct.txt` 一份 11 万条） |
+| 输出编码 | 无需设置 —— `_surge_common` 在 import 时把 stdout 钉成 UTF-8（中文 Windows 默认 GBK，emoji 会崩成**退出码 1** ⇒ 判负 fixture 假绿）；`run.sh` / `architecture.sh` 另设 `PYTHONIOENCODING=utf-8` |
 
 ⚠️ **Windows / Git Bash 的路径坑**：`pwd` 返回 `/c/Users/...`，
 Windows 版 Python 打不开（报 `can't open file 'C:\c\Users\...'`）。
@@ -41,24 +42,26 @@ S=./skill/scripts
 python "$S/check_surge_dns.py"  surge/profiles/lazy.conf              # 期望 exit 0
 python "$S/check_surge_dns.py"  surge/profiles/lazy.conf --strict      # medium 也算失败
 python "$S/check_surge_dns.py"  surge/profiles/lazy.conf --quiet       # 只打印计数
-python "$S/audit_region_filters.py" surge/profiles/routing_v3.conf       # 期望 9/9
-python "$S/audit_region_filters.py" surge/profiles/routing_v3.conf -v    # 逐个组的关键词数
+python "$S/audit_region_filters.py" surge/profiles/routing_v3.1.conf       # 期望 3 项全过（出处 / 互斥 / 类型）
+python "$S/audit_region_filters.py" surge/profiles/routing_v3.1.conf -v    # 逐个组的关键词数
+python "$S/audit_ruleset_refresh.py" surge/profiles/routing_v3.1.conf --strict  # 期望 exit 0（全部钉在 604800）
+python "$S/audit_ruleset_refresh.py" surge/profiles/*.conf --quiet           # 逐份计数（历史存档版只查非正值）
 bash   ./skill/tests/surge/architecture.sh                           # 期望 exit 0
 
 # ── 需要联网 ────────────────────────────────────────────────────────
 python "$S/audit_ruleset_content.py"  surge/profiles/lazy.conf         # 期望 exit 0
 python "$S/audit_ruleset_content.py"  surge/profiles/lazy.conf --show-domestic --force
-python "$S/audit_routing_coverage.py" surge/profiles/lazy.conf         # 期望 33/33
-python "$S/audit_routing_coverage.py" surge/profiles/routing_v3.conf      # 期望 33/33（期望表自动切换）
+python "$S/audit_routing_coverage.py" surge/profiles/lazy.conf         # 期望 39/39
+python "$S/audit_routing_coverage.py" surge/profiles/routing_v3.1.conf      # 期望 39/39（期望表自动切换）
 python "$S/audit_routing_coverage.py" surge/profiles/lazy.conf --show-all
 
-# ── 回归测试（6 阶段，15 断言）─────────────────────────────────────
+# ── 回归测试（6 阶段，23 断言）────────────────────────────────────
 bash ./skill/tests/surge/run.sh
 SKIP_NET=1 bash ./skill/tests/surge/run.sh
 PY=/path/to/python bash ./skill/tests/surge/run.sh
 ```
 
-⚠️ **四份 profile 都要过 `check_surge_dns.py`**（阶段 2 会自动遍历 `profiles/*.conf`）。
+⚠️ **全部 profile 都要过 `check_surge_dns.py` 与 `audit_ruleset_refresh.py`**（阶段 2 会自动遍历 `profiles/*.conf`）。
 分流版同样要求 `0 high / 0 medium`，标准与 `lazy.conf` 一致。
 
 规则集缓存目录：
@@ -259,7 +262,7 @@ FOREIGN_PROBES = {
 
 **分流版用另一套期望表**（`FOREIGN_PROBES_ROUTING`），精确到应用组名：
 
-| 探针 | `lazy.conf` 期望 | `routing_v3.conf` 期望 |
+| 探针 | `lazy.conf` 期望 | `routing_v3.1.conf` 期望 |
 |:-----|:-----------------|:--------------------|
 | `chat.openai.com` | `AI` / `PROXY` | **`CHATGPT`** |
 | `api.anthropic.com` | `AI` / `PROXY` | **`CLAUDE`** |
@@ -353,8 +356,8 @@ DNS_KEYS = [
 | 断言 | 比对对象 | 理由 |
 |:-----|:---------|:-----|
 | ②-a | `lazy.conf` ↔ `lazy.min.conf` | `.min.conf` 的定位是「去掉注释」，不是「裁剪配置」 |
-| ②-b | `routing_v3.conf` ↔ `routing_v3.min.conf` | 同上 |
-| ②-c | `lazy.conf` ↔ `routing_v3.conf` | **防泄露标准不因分流粒度而变** |
+| ②-b | `routing_v3.1.conf` ↔ `routing_v3.1.min.conf` | 同上 |
+| ②-c | `lazy.conf` ↔ `routing_v3.1.conf` | **防泄露标准不因分流粒度而变** |
 
 任一键只在一边存在、或值不同 → 失败。
 
@@ -363,7 +366,7 @@ DNS_KEYS = [
 差别只允许出现在 `[Proxy Group]` 与 `[Rule]` 的粒度上。
 
 ⚠️ 改 `DNS_KEYS` 时注意：它同时是 ②-a / ②-b / ②-c 的依据，
-且 `routing_v3.min.conf` 是用脚本从 `routing_v3.conf` 生成的 —— 生成脚本会**丢掉注释**，
+且 `routing_v3.1.min.conf` 是用脚本从 `routing_v3.1.conf` 生成的 —— 生成脚本会**丢掉注释**，
 所以 profile 里的 `# audit-waive:` 行必须**手动补回 min 版**（否则豁免失效、
 审计器会对 min 版报 HIGH）。这是踩过的坑，见 § 退出码约定上方的说明。
 

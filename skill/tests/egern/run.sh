@@ -22,6 +22,9 @@
 #   在仓库根目录执行（脚本会自己定位 skill/tests/ 的上级）。
 
 set -u
+# Windows 中文环境默认 GBK(cp936)：内联 python 一 print emoji 就崩成退出码 1，
+# 而回归里"期望判负"的 fixture 期望的恰恰也是 1 ⇒ 会假绿。统一按 UTF-8 输出。
+export PYTHONIOENCODING=utf-8
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPTS="$(cd "$HERE/../../scripts/egern" && pwd)"
@@ -120,11 +123,14 @@ printf 'result: %d passed, %d failed\n' "$pass" "$fail"
 # ── 阶段 2：地区组 filter 与 Other Regions 负向断言的「两份拷贝」同步 ────────────
 # 断言对象是**仓库里的真实 profile**（不是上面的合成 fixture）。
 # 期望全部 rc=0：
-#   · routing_v1 / routing_v2 / routing_v2.1 / routing_v2.2 / routing_v2.3 / routing_v2.4 / routing_v3 → 6 个地区组的关键词必须逐字出现在负向断言里
+#   · routing_v1 / routing_v2 / routing_v2.1 / routing_v2.2 / routing_v2.3 / routing_v2.4 / routing_v3 / routing_v3.1 → 6 个地区组的关键词必须逐字出现在负向断言里
 #   · lazy 没有该结构 → 脚本打印"无需校验"并 rc=0
 # rc=1 = 有地区关键词漏同步（两组不再互斥）；rc=2 = 解析失败 / 用法错误。两者都算失败。
+#
+# 同一轮循环里再跑 audit_ruleset_refresh.py（离线）：当前推荐版与懒人版（含 .min）
+# 要求钉到约定值 604800，历史存档版只查非正值。
 printf '\n'
-printf '%s\n' "阶段 2 · 地区组 filter 同步回归（跑全部 profiles/*.yaml）"
+printf '%s\n' "阶段 2 · 地区组 filter 同步 + 规则集刷新参数（跑全部 profiles/*.yaml）"
 printf '%-26s %-20s %s\n' "PROFILE" "audit_region_filters" "RESULT"
 printf '%s\n' "--------------------------------------------------------------------------------"
 
@@ -148,6 +154,22 @@ for _p in "$PROFILES"/*.yaml; do
     printf '%s\n' "------------------------"
   fi
   printf '%-26s %-20s %s\n' "$_name" "exit=$_rc" "$_res"
+  # 规则集刷新参数（离线判定）：当前推荐版与懒人版要求钉到约定值；
+  # 历史存档版（`routing_v1` ~ `routing_v2.3` 本就没写这个字段）只查非正值。
+  case "$_name" in
+    lazy.yaml|lazy.min.yaml|routing_v3.1.yaml|routing_v3.1.min.yaml) _rf_flag="--strict";; *) _rf_flag="";;
+  esac
+  "$PY" "$SCRIPTS_W/audit_ruleset_refresh.py" "$PROFILES_W/$_name" $_rf_flag --quiet >/dev/null 2>&1
+  _rrc=$?
+  if [ "$_rrc" = "0" ]; then
+    _rres="✅ OK"; pass2=$((pass2+1))
+  else
+    _rres="❌ 刷新参数"; fail2=$((fail2+1))
+    printf '\n---- %s 的刷新参数输出 ----\n' "$_name"
+    "$PY" "$SCRIPTS_W/audit_ruleset_refresh.py" "$PROFILES_W/$_name" $_rf_flag 2>&1 | sed 's/^/    /'
+    printf '%s\n' "------------------------"
+  fi
+  printf '%-26s %-20s %s\n' "$_name (refresh)" "exit=$_rrc" "$_rres"
 done
 
 printf '%s\n' "--------------------------------------------------------------------------------"

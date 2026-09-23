@@ -22,11 +22,12 @@
 "<venv>/Scripts/python.exe" scripts/audit_dns_forward.py profile.yaml         # ★ forward 单值性（非 reject 去向）/订阅耦合审计（清单 18）
 "<venv>/Scripts/python.exe" scripts/audit_dns_forward.py profile.yaml --drill # ↑ --drill 可选：加合成"未来订阅"域名多演练一遍
 "<venv>/Scripts/python.exe" scripts/audit_region_filters.py profile.yaml      # ★ 地区组 filter 与 Other Regions 负向断言的「两份拷贝」同步校验
+"<venv>/Scripts/python.exe" scripts/audit_ruleset_refresh.py profile.yaml --strict  # ★ 刷新参数：非正值=HIGH，偏离约定值 604800=仅 --strict 判负
 "<venv>/Scripts/python.exe" scripts/probe_doh.py                    # 只测 DoH 线格式
 "<venv>/Scripts/python.exe" scripts/profile_ruleset.py some.list    # 规则集类型分布
 "<venv>/Scripts/python.exe" scripts/weigh_ruleset.py some.list [--sub small.list] [--probe d]  # ★ 规则集"重量"：构成/冗余/深度/加载与匹配耗时/覆盖对比
 
-bash scripts/../tests/run.sh                                       # ★★ 回归测试两阶段（10 + 14 = 24 断言），退出码非 0 即失败
+bash scripts/../tests/run.sh                                       # ★★ 回归测试两阶段（10 + 36 = 46 断言），退出码非 0 即失败
 ```
 
 ⚠️ **运行目录要求**：`check_egern_dns.py` 与 `audit_dns_forward.py` 会 import 同目录的
@@ -71,7 +72,7 @@ f10.2 起（2026-09-20，二次核查报告触发）：⑩ **「靠注释提醒�
    收 `DOMESTIC_RESOLVER_IPS` / `hostpart` / `ip_literal`；两个脚本都 import 它。
    **判据可以有两处调用点，但实现只能有一处。**
 2. ⭐⭐ **fixture 必须喂给"所有"脚本，而不是常跑的那一个。** 新增 `scripts/../tests/run.sh`
-   阶段 1（5 fixture × 2 脚本 = 10 断言），**改脚本 / 改 profile 后手动跑一次**。
+   阶段 1（5 fixture × 2 脚本 = 10 断言）+ 阶段 2（全部 profile × 2 脚本），**改脚本 / 改 profile 后手动跑一次**。
    经验：**"只差一点就能抓到"的 bug，恰恰是因为守卫只覆盖了一半**。加守卫时要问："这条断言有没有在
    **每一个**消费方上跑过？"
 3. ⭐ **文档里给的命令必须逐条照着执行一遍。** 这次崩溃的命令就印在 README / docs/04 / skill/README 里。
@@ -81,7 +82,7 @@ f10.2 起（2026-09-20，二次核查报告触发）：⑩ **「靠注释提醒�
 5. ⭐⭐ **断言对象要选"能真正测到它的那个输入"—— 合成 fixture 测不到的东西，别硬塞进去当绿。**
    （2026-09-21 新增 `audit_region_filters.py` 时发现）该脚本校验的是 `policy_groups` 段的地区组 filter，
    而 `tests/` 那五份 fixture 是 **DNS 面的合成配置、根本没有地区组** —— 喂给它只会走"无需校验"分支，
-   **看着绿，其实一个断言都没执行**。所以 `run.sh` 的阶段 2 单独对**仓库里全部 14 份真实 profile** 跑它。
+   **看着绿，其实一个断言都没执行**。所以 `run.sh` 的阶段 2 单独对**仓库里全部 18 份真实 profile** 跑它。
    判据：**如果一份输入必然走"跳过 / 无此项"分支，那它就不构成断言** —— 加守卫时先问
    "这份输入里，被判的东西**存在**吗？"
 

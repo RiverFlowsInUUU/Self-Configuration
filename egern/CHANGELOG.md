@@ -17,6 +17,31 @@
 > GitHub 对改名仓保留 **301 跳转**，**旧订阅地址与图标 URL 仍然可用**；
 > 仓库内的引用已全部改成新名，新写地址请用 `.../RiverFlowsInUUU/Egern/...`。
 
+### 2026-09-23 · v3.1
+
+### 新增
+
+- 🆕 **`routing_v3.1`（分流版 · 推荐）** —— 相对 `routing_v3` 只改刷新参数：
+  22 条 `rule_set` 全部显式带 `update_interval: 604800`（一周）。分组、规则、`dns` 段逐字未动，
+  静态读数与 `routing_v3` 相同（`0 high / 2 low / 24 ok`）。历代版本 **全部保留**，`profiles/` 现 18 份 / 9 版。
+- 🧪 新增 `skill/scripts/egern/audit_ruleset_refresh.py`（第 10 个脚本）。Egern 侧比 Surge 侧**更需要显式写**：
+  官方 `rules` 页只在示例里出现过 `update_interval: 86400`，字段节只写了 `no_resolve`
+  ⇒ **缺省行为未文档化**，不写就是「会不会刷新、多久刷新都无从断言」。
+  判据分档同 Surge 侧（非正值 HIGH / 缺字段与偏离约定值归「约定」档 / `--strict` 才判负）。
+
+### 变更
+
+- 🔁 `lazy{,.min}.yaml` **原地覆盖**：6 条 `rule_set` 全部钉在 604800（此前一条都没写）。
+- 🧪 回归 `skill/tests/egern/run.sh` 阶段 2 对**全部 18 份 profile** 各跑两个脚本，断言 **24 → 46**
+  （阶段 1 的 10 条不变）。
+- 🩹 中文 Windows 的 GBK 崩溃修复：`_egern_common` import 时把 stdout 钉成 UTF-8，`run.sh` 另设
+  `PYTHONIOENCODING=utf-8`；不 import 共享模块的 6 个脚本逐个接上垫片。
+- 🔢 读数校正：`audit_ruleset_noresolve` 对 `routing_v3` / `v3.1` 实测 **25 个规则集**（`v1`~`v2.4` 21 个）。
+
+### 注意
+
+- ⚠️ 订阅端请改用 `profiles/routing_v3.1.min.yaml`；`routing_v3.min.yaml` 仍在仓内，作为存档继续可订阅。
+
 ### 2026-09-23
 
 ### 新增

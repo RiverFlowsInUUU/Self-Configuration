@@ -120,25 +120,30 @@ rules:
     name: Jinx-CN
     match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-white-guard.list
     policy: DIRECT
+    update_interval: 604800
 # ② 广告拦截 —— 两条并列（先 Jinx，后 AWAvenue），都指向 AD。
 - rule_set:
     name: Jinx-Ads
     match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-ads.list
     policy: AD
+    update_interval: 604800
 - rule_set:
     name: AWAvenue-Ads
     match: https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Surge-RULE-SET.list
     policy: AD
+    update_interval: 604800
 # ③ 内网 / 局域网 —— 必须直连。
 - rule_set:
     name: Lan
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Lan/Lan.list
     policy: DIRECT
+    update_interval: 604800
 # ④ AI 分流 —— 命中即走 AI 组（→ Proxy）。
 - rule_set:
     name: AI
     match: https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/75f0101039d71724b6e998b34604c2e053580e0c/Clash/Ruleset/AI.list
     policy: AI
+    update_interval: 604800
 # ⑤ 直连集合 —— 以下 3 条共同承担「国内流量直连」。
 #    ⚠️ routing_v1 ~ routing_v2.4 在这里还有一条 Apple_All_No_Resolve.list（Apple 全域名直连），
 #    本配置已移除 —— Apple 流量变成「部分直连、部分走代理」，详见文件末尾第 3 条。
@@ -147,6 +152,7 @@ rules:
     name: CN
     match: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/direct.txt
     policy: DIRECT
+    update_interval: 604800
 - domain_suffix:
     match: cn
     policy: DIRECT

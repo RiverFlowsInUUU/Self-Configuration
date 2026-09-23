@@ -32,6 +32,15 @@ import os
 import re
 import sys
 
+# Windows 中文环境（控制台 / 管道重定向）默认 GBK(cp936)：emoji 一 print 就
+# UnicodeEncodeError、进程以退出码 1 结束 —— 而回归里"期望判负"的 fixture 期望的
+# 恰恰是 1 ⇒ 会假绿。统一钉成 UTF-8。
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 # 保留集：ASCII 小写字母、数字、下划线、汉字、假名、谚文、变体选择符 / 键帽组合符
 # （`_` 与 `\ufe0f` 是 2026-09-22 的对拍结论：github-slugger 保留它们）
 _KEEP = re.compile(r"[a-z0-9_\u3400-\u4dbf\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af"

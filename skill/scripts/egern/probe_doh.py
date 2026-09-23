@@ -1,4 +1,8 @@
 import base64, json, socket, ssl, struct, urllib.request, urllib.error, sys
+import os
+# 输出编码垫片：见 _egern_common.force_utf8_stdout —— GBK 控制台下 emoji 会崩成退出码 1
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _egern_common import force_utf8_stdout  # noqa: E402
 
 def wire(name, qtype=1):
     h = struct.pack('>HHHHHH', 0x1234, 0x0100, 1, 0, 0, 0)

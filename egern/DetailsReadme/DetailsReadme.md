@@ -70,7 +70,7 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
   见下方「组清单与要点」；逐段讲解见 `docs/04-模板逐段讲解.md` §4）。
 - **图标**：模板用到的 26 个分流组图标（整合自 RiverFlowsInUUU/Rule、jnlaoshu/MySelf、Koolson/Qure 三个公开仓库）已统一下载进本仓库 `icons/`，全部以 `https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/<file>` 形式引用，**不再跨项目引用任何图标地址**。
 
-#### 组清单与要点（`routing_v3`）
+#### 组清单与要点（`routing_v3.1`）
 
 **节点来源**（2 个订阅槽位）：`Airport-A` / `Airport-B`（后者另带一条 `urls_disabled` 示例）。
 `routing_v2.1` 及更早为 4 个槽位（多出 `Airport-C` / `Airport-Free`）—— `routing_v2.2` 精简掉，选路能力不变。
@@ -262,6 +262,7 @@ forward:
 | `audit_routing_coverage.py` | ✅ 15/15 国内探针 `DIRECT` | 分流正确性不受脱敏影响 |
 | `audit_dns_forward.py --drill` | ✅ 通过（退出码 0） | `forward` value 单值、订阅耦合 0 |
 | `audit_region_filters.py` | ✅ 6 个地区组关键词全部同步（退出码 0） | 负向断言与地区组 filter 逐字一致 |
+| `audit_ruleset_refresh.py --strict` | ✅ 604800 × 22 条全部钉住（退出码 0） | 唯一会**真的**让规则集停在旧版的写法是非正值 |
 
 **f3.1 判据修正（2026-09-20）** —— 曾有一段时间发布模板**过不了** `check_egern_dns.py`：
 
@@ -387,7 +388,7 @@ forward:
 ## 6. 已知代价与取舍
 
 - **`Foreign-DNS` 已删除**：迭代 f10 起它就无任何引用（forward 兜底改国内组后不再需要境外组）；`routing_v1` 曾**整组注释**保留为 A/B 备用，**`routing_v2` 起整段删除**。要恢复境外解析答案，需自行在 `upstreams` 里加回该组。风险提醒：若用它作兜底且代理未就绪，会掉进明文 `:53`。
-- **两条线 × 双形态**：可选只有 `egern/profiles/lazy.yaml`（**懒人版**，4 组 / 9 条规则）与 `egern/profiles/routing_v3.yaml`（**分流版 · 推荐**，26 组 / 24 条）；其余 `routing_v2.4` / `routing_v2.3` / `routing_v2.2` / `routing_v2.1` / `routing_v2` / `routing_v1` 都是分流线的历代旧版、保留以备对照（`routing_v1`~`routing_v2.1` 为 29 组 / 24 条，`routing_v2.2`~`routing_v2.4` 为 27 组 / 24 条）。**各版本逐项差异见 [`docs/07-文件版本沿革.md`](../docs/07-文件版本沿革.md)（权威版本）**。⚠️ 文件名 `routing_v1`…`routing_v3` 是**
+- **两条线 × 双形态**：可选只有 `egern/profiles/lazy.yaml`（**懒人版**，4 组 / 9 条规则）与 `egern/profiles/routing_v3.1.yaml`（**分流版 · 推荐**，26 组 / 24 条）；其余 `routing_v3` / `routing_v2.4` / `routing_v2.3` / `routing_v2.2` / `routing_v2.1` / `routing_v2` / `routing_v1` 都是分流线的历代旧版、保留以备对照（`routing_v1`~`routing_v2.1` 为 29 组 / 24 条，`routing_v2.2`~`routing_v2.4` 为 27 组 / 24 条）。**各版本逐项差异见 [`docs/07-文件版本沿革.md`](../docs/07-文件版本沿革.md)（权威版本）**。⚠️ 文件名 `routing_v1`…`routing_v3.1` 是**
 - **图标整合进本仓库**：26 个图标源自已整合进 `icons/`，模板不再跨项目引用图标地址。来源归属与许可见 [`docs/图标与许可.md`](../../docs/图标与许可.md)（公开仓库署名）。
 - **删除虚拟节点（不保留引用）**：模板 `proxies` 为空，占位节点名引用已从 `policy_groups` 剥除（组间引用保留；`routing_v2.3` 起**已无空组**）。不保留虚假结构，由你自行填写。
 - **与订阅解耦**：forward 不写任何节点 / 订阅域名，换订阅无需改动 DNS 段（清单 18 验证订阅耦合 4 → 0）。
@@ -429,6 +430,7 @@ forward:
   | `audit_routing_coverage.py` | 域名 → 命中规则 → 策略 | 17 |
   | `audit_dns_forward.py` | forward 单值 / 订阅耦合 / 兜底可达 | 18 |
   | `audit_region_filters.py` | 地区组 filter 与 `Other Regions` 负向断言的同步 | 辅助 |
+  | `audit_ruleset_refresh.py` | 远程规则集 `update_interval`（非正值 = 不再更新 → HIGH；偏离约定值 → `--strict` 判负） | 辅助 |
   | `weigh_ruleset.py` | 规则集重量（构成/冗余/耗时/覆盖） | 辅助 |
   | `probe_dns_endpoints.py` | 端点逐个实测（DoH 线格式 / DoT 握手） | 辅助 |
   | `probe_doh.py` | 只测 DoH 线格式 | 辅助 |
@@ -447,7 +449,7 @@ forward:
 
 ### 8.3 本仓库配套脚本（公开）
 
-除 `skill/scripts/egern/` 的 9 个审计 / 探针脚本外，早期发布链路还包含一组构建脚本（位于维护者本地 `outputs/`，**不进公开仓库**，避免暴露构建侧的私人源路径）：
+除 `skill/scripts/egern/` 的 10 个审计 / 探针脚本外，早期发布链路还包含一组构建脚本（位于维护者本地 `outputs/`，**不进公开仓库**，避免暴露构建侧的私人源路径）：
 - `_build_public_template.py` —— 从脱敏基线生成模板（dns 段取自加固版、结构取自基线）。
 - `_transform_template.py` —— 在已脱敏产物上做改写（删占位节点、剥节点引用、图标改指本仓库）。
 - `_make_min.py` —— 由带注释版生成纯配置版（去注释）。
@@ -521,7 +523,7 @@ S="skill/scripts"
 为了避免模板跨项目引用图标地址（你的项目或别人的项目）。26 个图标已整合进 `icons/`，模板全部以本仓库原始地址引用，并保留来源署名。
 
 **Q8：两个模板文件有什么区别？**
-内容完全一致，仅注释差异。`egern/profiles/routing_v3.yaml` 带注释（每段附原理），`egern/profiles/routing_v3.min.yaml` 纯配置。按习惯取用其一（其余版本同理：`lazy` / `routing_v1` / `routing_v2` / `routing_v2.1` / `routing_v2.2` / `routing_v2.3` / `routing_v2.4` / `routing_v3` 各有这两份）。
+内容完全一致，仅注释差异。`egern/profiles/routing_v3.1.yaml` 带注释（每段附原理），`egern/profiles/routing_v3.1.min.yaml` 纯配置。按习惯取用其一（其余版本同理：`lazy` / `routing_v1` / `routing_v2` / `routing_v2.1` / `routing_v2.2` / `routing_v2.3` / `routing_v2.4` / `routing_v3` / `routing_v3.1` 各有这两份）。
 
 **Q9：审计全绿就安全了吗？**
 不。本项目连续 5 次「脚本 0 high、实测仍有问题」，根因是审计维度缺失（没看规则集文件、没看分流覆盖）。必须把每个新维度补成可复跑脚本，而不是重跑同一脚本。详见第 3 节 / 清单 16、17。

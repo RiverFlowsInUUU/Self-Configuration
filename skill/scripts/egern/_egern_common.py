@@ -25,6 +25,7 @@
 """
 
 import re
+import sys
 
 # ⭐ 国内知名公共 DNS 解析器 IP —— 「兜底组直连可达」的第二判据。
 # 在 profile 文本内无法证明任意 IP 是否可直连，但这些 IP 的归属与服务商是公开事实，
@@ -95,3 +96,27 @@ def ip_literal(ep):
 
 # 兼容旧调用名（audit_dns_forward.py 历史上用的是 ep_ip）
 ep_ip = hostpart
+
+
+# ============================================================================
+# 输出编码垫片（import 即生效）
+# ============================================================================
+def force_utf8_stdout():
+    """把 stdout / stderr 钉成 UTF-8。
+
+    Windows 中文环境的控制台编码与管道重定向默认是 **GBK(cp936)** —— 脚本里一个
+    emoji 一 print 就抛 `UnicodeEncodeError`，进程以**退出码 1** 结束。
+    ⚠️ 这比"打印不出来"严重得多：回归测试里 `bad_*` fixture 期望的**恰恰也是 1**
+       ⇒ 解释器坏了会被计成「判负通过」，整轮看着绿、其实一条判据都没执行。
+    Git Bash 与 GitHub Actions 的终端都是 UTF-8，所以统一按 UTF-8 输出；
+    真正的 cp936 控制台下最坏是图形字符显示成 `?`，不影响判据与退出码。
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding='utf-8', errors='replace')
+        except Exception:                                      # noqa: BLE001
+            pass
+
+
+force_utf8_stdout()   # import 本模块即生效，调用方不需要再写一行
+

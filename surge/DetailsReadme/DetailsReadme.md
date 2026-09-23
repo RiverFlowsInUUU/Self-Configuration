@@ -32,8 +32,8 @@ Surge/
 ├── profiles/
 │   ├── lazy.conf        # 懒人配置（带注释）—— 改这份
 │   ├── lazy.min.conf    # 同一个配置（纯配置，注释剥掉）—— 导入用
-│   ├── routing_v3.conf     # 分流配置（带注释）—— 改这份
-│   └── routing_v3.min.conf # 同一个配置（纯配置，注释剥掉）—— 导入用
+│   ├── routing_v3.1.conf     # 分流配置（带注释）—— 改这份
+│   └── routing_v3.1.min.conf # 同一个配置（纯配置，注释剥掉）—— 导入用
 ├── icons/               # 26 个策略组图标（本地，不跨项目引用）
 ├── docs/                # 01–11 专题
 ├── DetailsReadme/       # 本文件
@@ -43,7 +43,7 @@ Surge/
     ├── SKILL.md                  # 方法论
     ├── README.md                 # 脚本用法
     ├── reference/                # 逐条判据
-    ├── scripts/                  # 4 个审计脚本 + 1 个共享模块
+    ├── scripts/                  # 5 个审计脚本 + 1 个共享模块
     └── tests/                    # 6 阶段回归 + 4 个 fixture + 链接检查
 ```
 
@@ -285,7 +285,7 @@ Node-D = https, 203.0.113.20, 443, underlying-proxy="Node-A", skip-cert-verify=t
 | `Node-C` | `https` | 中转链：经 `Node-B` 出去连 CDN 中转域名 |
 | `Node-D` | `https` | 经 `Node-A` 中转 |
 
-**`routing_v3.conf` —— 7 条**，多出的 3 条是地区样本，**名字里带地区关键词**：
+**`routing_v3.1.conf` —— 7 条**，多出的 3 条是地区样本，**名字里带地区关键词**：
 
 ```
 Node-HK-01 / Node-HK-02   # 中国香港
@@ -529,9 +529,14 @@ NAT 类型检测（STUN）、时间同步（NTP）、游戏机配对，都需要
 | `direct.txt` | 111169 | 纯域名 | Loyalsoldier |
 | `SYSTEM` / `LAN` | — | 内置 | Surge |
 
-### 11.2 `update-interval=86400`
+### 11.2 `update-interval=604800`（一周）
 
-远程 `RULE-SET` 都带按天刷新。这是**必须**的 —— 上游新收录的广告域名否则会一直命不中。
+远程 `RULE-SET` 全部显式带一周刷新。
+
+⚠️ **别把这条写成"不写就不刷新"** —— Surge 手册写明该键**缺省即 86400（24 小时）**，
+只有写成**负值**才关闭自动更新。所以漏写不会让规则集停在首次下载的版本，它只是让
+刷新周期**不可见**、并且与 Egern 侧不一致（Egern 才是真正未文档化缺省值的一侧）。
+本仓统一钉成 604800，图的是两侧同周期、文件里看得见。
 
 ⚠️ 同一个键只应该写在一处。源配置里 `update-interval=3600` 曾写在 `[Proxy Group]`
 的 `smart` 组上 —— 那只对订阅型组有意义，写在那里是空转。本模板已移除。
@@ -655,9 +660,9 @@ AD    = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 | `AI` | `smart` | `Node-C` / `Node-D` | `AI.list` |
 | `AD` | `select` | `REJECT` / `DIRECT` | 独立手动开关（不被规则引用，见 §13.3） |
 
-**`routing_v3.conf` —— 26 个组**
+**`routing_v3.1.conf` —— 26 个组**
 
-组序与 Egern v3 **逐位对齐**（由 `skill/tests/surge/architecture.sh` 的 ④ 断言守着）。
+组序与 Egern v3.1 **逐位对齐**（由 `skill/tests/surge/architecture.sh` 的 ④ 断言守着）。
 
 | 层 | 组 | 类型 | 作用 |
 |:---|:---|:----:|:-----|
@@ -687,7 +692,7 @@ AD    = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 >
 > 完整推导见 [`docs/11` §2.2](../docs/11-分流版设计.md)。
 
-**应用组各自的默认取向**（首项即默认，与 Egern v3 对齐）：
+**应用组各自的默认取向**（首项即默认，与 Egern v3.1 对齐）：
 
 | 应用组 | 默认 | 备注 |
 |:-------|:----:|:-----|
@@ -754,16 +759,16 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 | 1 | `RULE-SET,…,surge-white-guard.list` | `DIRECT` | — | **必须**在 REJECT 之前，否则形同虚设。它同时兜住两条黑名单的误杀 |
 | 2 | `RULE-SET,…,surge-ads.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 1 条（Jinx）。必须在 `direct.txt` / `GEOIP,CN` **之前** —— 否则国内广告域名被 `direct.txt` 接走 |
 | 3 | `RULE-SET,…,AWAvenue-Ads-Rule-Surge-RULE-SET.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 2 条（AWAvenue）。顺序与 Egern 对齐，见 §11.4 |
-| 4 | `RULE-SET,…,AI.list` | `AI` | `update-interval=86400,no-resolve` | 纯域名集，显式 `no-resolve` |
+| 4 | `RULE-SET,…,AI.list` | `AI` | `update-interval=604800,no-resolve` | 纯域名集，显式 `no-resolve` |
 | 5 | `RULE-SET,SYSTEM` | `DIRECT` | — | Apple 激活 / 推送 / 配对，内置权威集合，**保底** |
-| 6 | `RULE-SET,…,Apple_All_No_Resolve.list` | `DIRECT` | `update-interval=86400` | Apple 服务主体（覆盖面远大于 `SYSTEM`）。**必须用 No_Resolve 版**，见 §14.1 |
+| 6 | `RULE-SET,…,Apple_All_No_Resolve.list` | `DIRECT` | `update-interval=604800` | Apple 服务主体（覆盖面远大于 `SYSTEM`）。**必须用 No_Resolve 版**，见 §14.1 |
 | 7 | `RULE-SET,LAN` | `DIRECT` | `no-resolve` | 含 IP-CIDR，**必须** `no-resolve` |
 | 8 | `RULE-SET,…,private.txt` | `DIRECT` | `no-resolve` | 内网域名 |
 | 9 | `RULE-SET,…,direct.txt` | `DIRECT` | `no-resolve` | **主承重墙**，11 万条域名。见 §12 |
 | 10 | `GEOIP,CN,DIRECT` | `DIRECT` | `no-resolve` | IP 类规则，放最后 |
 | 11 | `FINAL,Proxy,dns-failed` | `Proxy` | `dns-failed` | 兜底 |
 
-**`routing_v3.conf` —— 24 条（内容与顺序逐行对齐 Egern v3）**
+**`routing_v3.1.conf` —— 24 条（内容与顺序逐行对齐 Egern v3）**
 
 | # | 规则 | 策略 | 与 lazy 的差异 |
 |:-:|:-----|:----:|:---------------|
@@ -784,7 +789,7 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 > 2. **`GitHub.list` 必须排在 `direct.txt` 之前** —— `github.com` 同时被国内直连清单收录，
 >    排到后面就接不到它，"应用的代理取向"直接失效。
 > 3. **内网段排在应用段之前、`WeChat` 排在 `Apple` 之后** —— 这两处位置是**对齐
->    Egern v3 的结果**：内网清单里的域名不在任何应用清单中，IP 段又带 `no-resolve`
+>    Egern v3.1 的结果**：内网清单里的域名不在任何应用清单中，IP 段又带 `no-resolve`
 >    不触发解析 ⇒ 提前与否语义等价，只为两侧顺序逐行一致。
 
 ### 14.1 为什么 Apple 规则集必须用 `No_Resolve` 版
@@ -832,11 +837,12 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 
 ## 15 · 审计体系
 
-### 15.1 四个脚本 + 两个测试
+### 15.1 五个脚本 + 两个测试
 
 | 脚本 | 审什么 | 需要联网 |
 |:-----|:-------|:--------:|
 | `check_surge_dns.py` | 文件内部的**结构**（12 项检查） | ❌ |
+| `audit_ruleset_refresh.py` | 远程规则集的**刷新参数** `update-interval`（非正值 = 关掉自动更新 → HIGH；与约定值 604800 不同 → 仅 `--strict` 判负） | ❌ |
 | `audit_ruleset_content.py` | **远程规则集的内容**（缺 no-resolve 的 IP 条目 / 直连集合的域名体量） | ✅ |
 | `audit_routing_coverage.py` | 拿**真实域名走一遍** `[Rule]`，看最终去哪（期望表按配置自动切换） | ✅ |
 | `audit_region_filters.py` | **地区组正则的一致性**（`Other Regions` 的负向断言有没有漏词、组间有没有重叠） | ❌ |
@@ -857,6 +863,7 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 - `audit_ruleset_content.py`：「它引用的东西里有雷吗？」（profile 里看不见）
 - `audit_routing_coverage.py`：「一个真实请求进来，实际去哪？」（结构全绿也可能错）
 - `audit_region_filters.py`：「两处必须一致的正则，现在一致吗？」（不一致时**静默失效**）
+- `audit_ruleset_refresh.py`：「规则集多久重新下载一次？有没有人被写成**不再更新**？」（唯一会**真的**让规则集停在旧版的那一项）
 
 第三个是 Egern 项目的教训换来的：**两个审计脚本双双通过，分流却整片是坏的。**
 第四个则是"消灭不掉拷贝时怎么办"的答案。
@@ -952,8 +959,8 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 | 断言 | 比对对象 | 理由 |
 |:-----|:---------|:-----|
 | ②-a | `lazy.conf` ↔ `lazy.min.conf` | `.min.conf` 的定位是「去掉注释」，不是「裁剪配置」 |
-| ②-b | `routing_v3.conf` ↔ `routing_v3.min.conf` | 同上 |
-| ②-c | `lazy.conf` ↔ `routing_v3.conf` | **防泄露标准不因分流粒度而变** |
+| ②-b | `routing_v3.1.conf` ↔ `routing_v3.1.min.conf` | 同上 |
+| ②-c | `lazy.conf` ↔ `routing_v3.1.conf` | **防泄露标准不因分流粒度而变** |
 
 比对的是两边共有的 **16 个 DNS 相关键**，逐字相同。改配置时两份都要动，只改一份会被拦下。
 
@@ -963,7 +970,7 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 ### 16.6 兜底：lazy 指 `Proxy`，routing 指 `Final` 组
 
 `lazy.conf` 的 `FINAL,Proxy,dns-failed` **直接**指 `Proxy` 组。
-`routing_v3.conf` 改成 `FINAL,Final,dns-failed`，多挂一层 `select` 组 —— 这样你在面板上
+`routing_v3.1.conf` 改成 `FINAL,Final,dns-failed`，多挂一层 `select` 组 —— 这样你在面板上
 还能改兜底去向，代价是零。
 
 两者都**不做**「分流兜底的境内 / 境外切分」。国内直连靠 `direct.txt` + `GEOIP,CN`
@@ -1018,7 +1025,7 @@ Surge iOS 版不支持本地文件配置，需要把 profile 内容托管到一�
 
 1. **DNS 段不许只改一份，也不许只改一个配置。** 三组比对（`lazy` 两形态 / `routing` 两形态 /
    `lazy` ↔ `routing`）共 16 个键由测试逐字比对。要改就**四份一起改**。
-   ⚠️ 注意 `routing_v3.min.conf` 是从 `routing_v3.conf` 生成的，生成脚本会丢掉注释 ——
+   ⚠️ 注意 `routing_v3.1.min.conf` 是从 `routing_v3.1.conf` 生成的，生成脚本会丢掉注释 ——
    新加 `# audit-waive:` 行后要**手动补回 min 版**，否则审计器会对 min 版报 HIGH。
 2. **规则顺序铁律不许破。** 白名单 → REJECT → 域名类直连 → IP 类 → `FINAL`。
 3. **节点不许提交真实值。** `architecture.sh` 会拦。
@@ -1034,7 +1041,7 @@ Surge iOS 版不支持本地文件配置，需要把 profile 内容托管到一�
 ### 18.3 全部验证都在本地
 
 ```bash
-bash skill/tests/surge/run.sh              # 6 阶段，15 个断言
+bash skill/tests/surge/run.sh              # 6 阶段，23 个断言
 SKIP_NET=1 bash skill/tests/surge/run.sh   # 跳过联网阶段
 ```
 

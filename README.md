@@ -34,13 +34,13 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 **Surge**
 
 ```
-https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/profiles/routing_v3.min.conf
+https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/profiles/routing_v3.1.min.conf
 ```
 
 **Egern**
 
 ```
-https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/profiles/routing_v3.min.yaml
+https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/profiles/routing_v3.1.min.yaml
 ```
 
 ---
@@ -74,7 +74,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 | 🛡️ 明文回退 | `dns-server` 裸 IP、绝不写 `system` | `forward` 兜底指向加密组 |
 | 🧭 规则克制 | IP 类规则一律 `no-resolve` | 一律 `no_resolve`，与域名直连集成对交付 |
 | ✂️ 远端解析 | 代理域名交节点解析，本地不留答案 | `proxy_nameservers` 专用通道、强制直连 |
-| 📋 自检读数 | 4 个审计脚本 + 6 阶段回归 | 9 个审计脚本 + 2 阶段回归 |
+| 📋 自检读数 | 5 个审计脚本 + 6 阶段 · 23 断言 | 10 个审计脚本 + 2 阶段 · 46 断言 |
 
 ---
 
@@ -82,8 +82,8 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 
 | | 路径 | 内容 |
 |:--:|:-----|:-----|
-| 📁 | [`surge/profiles/`](surge/profiles/) | 4 份 `.conf`：懒人版 / 分流版 × 带注释 / 纯配置 |
-| 📁 | [`egern/profiles/`](egern/profiles/) | 16 份 `.yaml`：lazy + `routing_v1~v3`，各含带注释 / 纯配置 |
+| 📁 | [`surge/profiles/`](surge/profiles/) | 6 份 `.conf`：懒人版 + 当前分流版 `routing_v3.1` 与上一版 `routing_v3`，各含带注释 / 纯配置 |
+| 📁 | [`egern/profiles/`](egern/profiles/) | 18 份 `.yaml`：lazy + `routing_v1~v3.1` 共 8 版，各含带注释 / 纯配置 |
 | 🖼️ | [`icons/`](icons/) | 26 个策略组图标（两内核共用一份） |
 | 📚 | [`docs/`](docs/) | 共享文档 4 篇：跨内核差异对照 / 规则集与来源 / 注意事项 / 图标与许可 |
 | 📂 | [`surge/docs/`](surge/docs/) · [`egern/docs/`](egern/docs/) | 各内核 9 篇专题（01–08 编号系列 + 分流设计 / 分流顺序） |

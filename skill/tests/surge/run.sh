@@ -28,6 +28,9 @@
 #   SKIP_NET=1 bash skill/tests/surge/run.sh             # 跳过需要联网的阶段 4
 
 set -u
+# Windows 中文环境默认 GBK(cp936)：内联 python 一 print emoji 就崩成退出码 1，
+# 而回归里"期望判负"的 fixture 期望的恰恰也是 1 ⇒ 会假绿。统一按 UTF-8 输出。
+export PYTHONIOENCODING=utf-8
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPTS="$(cd "$HERE/../../scripts/surge" && pwd)"
@@ -98,7 +101,7 @@ printf '%s\n' "-----------------------------------------------------------------
 printf 'result: %d passed, %d failed\n' "$pass" "$fail"
 
 # ── 阶段 2：真实 profile ────────────────────────────────────────────────────
-printf '\n%s\n' "阶段 2 · 真实 profile 回归（check_surge_dns.py）"
+printf '\n%s\n' "阶段 2 · 真实 profile 回归（check_surge_dns.py + audit_ruleset_refresh.py）"
 printf '%-30s %-14s %s\n' "PROFILE" "EXIT" "RESULT"
 printf '%s\n' "------------------------------------------------------------------"
 
@@ -117,6 +120,23 @@ for _p in "$PROFILES"/*.conf; do
     printf '%s\n' "------------------------"
   fi
   printf '%-30s %-14s %s\n' "$_name" "exit=$_rc" "$_res"
+  # 规则集刷新参数（离线判定，不依赖网络）：当前推荐版与懒人版要求钉到约定值，
+  # 历史存档版只查「非正值 = 关掉自动更新」这一条实质风险。
+  case "$_name" in
+    lazy.conf|lazy.min.conf|routing_v3.1.conf|routing_v3.1.min.conf) _rf_flag="--strict"; _rf_why="偏离约定值即失败";;  # ← 与 --expect 604800 同口径
+    *) _rf_flag=""; _rf_why="仅非正值为失败";;
+  esac
+  "$PY" "$SCRIPTS_W/audit_ruleset_refresh.py" "$PROFILES_W/$_name" $_rf_flag --quiet >/dev/null 2>&1
+  _rrc=$?
+  if [ "$_rrc" = "0" ]; then
+    _rres="✅ OK"; pass2=$((pass2+1))
+  else
+    _rres="❌ 刷新参数（$_rf_why）"; fail2=$((fail2+1))
+    printf '\n---- %s 的刷新参数输出 ----\n' "$_name"
+    "$PY" "$SCRIPTS_W/audit_ruleset_refresh.py" "$PROFILES_W/$_name" $_rf_flag 2>&1 | sed 's/^/    /'
+    printf '%s\n' "------------------------"
+  fi
+  printf '%-30s %-14s %s\n' "$_name (refresh)" "exit=$_rrc" "$_rres"
 done
 printf '%s\n' "------------------------------------------------------------------"
 printf 'result: %d passed, %d failed\n' "$pass2" "$fail2"
@@ -143,7 +163,7 @@ if [ "${SKIP_NET:-0}" != "1" ]; then
   pass4=0; fail4=0
   # ⚠️ 只对**带注释的完整版**跑联网审计：min 版是同一份配置去掉注释，
   #    跑两遍纯属浪费（且两者 DNS 段已被阶段 3 断言为逐字相同）。
-  for _p in "$PROFILES"/lazy.conf "$PROFILES"/routing_v3.conf; do
+  for _p in "$PROFILES"/lazy.conf "$PROFILES"/routing_v3.1.conf; do
     [ -f "$_p" ] || continue
     _name="$(basename "$_p")"
     for _s in audit_ruleset_content.py audit_routing_coverage.py; do
@@ -165,13 +185,13 @@ else
 fi
 
 # ── 阶段 5：地区组正则一致性 ──────────────────────────────────────────────
-# ⚠️ 这是**本项目最容易静默退化的地方**：routing_v3.conf 里 6 个地区组的关键词
+# ⚠️ 这是**本项目最容易静默退化的地方**：routing_v3.1.conf 里 6 个地区组的关键词
 #    在 Other Regions 的负向断言里被逐字抄了一遍（Surge 的 filter 不支持引用变量，
 #    消灭不掉这份拷贝）。漏同步的后果是"两个组的内容不再互斥"，
 #    面板上看不出异常、Surge 也不报错 ⇒ 只能靠脚本守。
 #
 #    3 个断言：
-#      a) 真实 routing_v3.conf 通过（关键词同步完好）
+#      a) 真实 routing_v3.1.conf 通过（关键词同步完好）
 #      b) 合成坏配置 fixtures/bad_region_filter.conf 判负（证明审计器有判别力）
 #      c) 合成坏配置必须**只**因"漏关键词"判负（防它因别的原因假绿）
 printf '\n%s\n' "阶段 5 · 地区组正则一致性（audit_region_filters.py）"
@@ -179,17 +199,17 @@ printf '%-30s %-14s %s\n' "TARGET" "EXIT" "RESULT"
 printf '%s\n' "------------------------------------------------------------------"
 pass5=0; fail5=0
 
-"$PY" "$SCRIPTS_W/audit_region_filters.py" "$PROFILES_W/routing_v3.conf" >/dev/null 2>&1
+"$PY" "$SCRIPTS_W/audit_region_filters.py" "$PROFILES_W/routing_v3.1.conf" >/dev/null 2>&1
 rc=$?
 if [ "$rc" = "0" ]; then
   res="✅ OK"; pass5=$((pass5+1))
 else
   res="❌ 退出码 $rc"; fail5=$((fail5+1))
-  printf '\n---- routing_v3.conf 的详细输出 ----\n'
-  "$PY" "$SCRIPTS_W/audit_region_filters.py" "$PROFILES_W/routing_v3.conf" 2>&1 | sed 's/^/    /'
+  printf '\n---- routing_v3.1.conf 的详细输出 ----\n'
+  "$PY" "$SCRIPTS_W/audit_region_filters.py" "$PROFILES_W/routing_v3.1.conf" 2>&1 | sed 's/^/    /'
   printf '%s\n' "------------------------"
 fi
-printf '%-30s %-14s %s\n' "routing_v3.conf" "exit=$rc" "$res"
+printf '%-30s %-14s %s\n' "routing_v3.1.conf" "exit=$rc" "$res"
 
 if [ -f "$HERE/fixtures/bad_region_filter.conf" ]; then
   "$PY" "$SCRIPTS_W/audit_region_filters.py" "$HERE_W/fixtures/bad_region_filter.conf" >/dev/null 2>&1

@@ -10,8 +10,8 @@ SKILL.md                  单一入口：门面（内核判定 · 五类泄露�
                           + 分支 A · Surge 正文 + 分支 B · Egern 正文
 reference/surge/*.md      深度主题 ×6（Surge 侧）
 reference/egern/*.md      深度主题 ×6（Egern 侧）
-scripts/surge/            4 个审计脚本 + _surge_common.py
-scripts/egern/            9 个审计/探测脚本 + _egern_common.py
+scripts/surge/            5 个审计脚本 + _surge_common.py
+scripts/egern/            10 个审计/探测脚本 + _egern_common.py
 tests/surge/              run.sh · architecture.sh · check_links.py · 3 fixture + fixtures/
 tests/egern/              run.sh · 5 fixture
 ```
@@ -41,14 +41,18 @@ tests/egern/              run.sh · 5 fixture
 脚本接收 profile 路径作为参数，不依赖当前目录，但测试入口按仓库结构定位，**在仓库根目录执行**：
 
 ```bash
-bash skill/tests/surge/run.sh                  # Surge：6 阶段 · 15 断言
+bash skill/tests/surge/run.sh                  # Surge：6 阶段 · 23 断言
 bash skill/tests/surge/architecture.sh         #        占位符 / 凭据 / .conf↔.min 一致性
-bash skill/tests/egern/run.sh                  # Egern：阶段 1 · 5 fixture；阶段 2 · 全部 profile
+bash skill/tests/egern/run.sh                  # Egern：阶段 1 · 5 fixture ×2；阶段 2 · 18 份 profile ×2 = 46 断言
 SKIP_NET=1 bash skill/tests/surge/run.sh       # 跳过需要联网的阶段
 ```
 
 环境要求：Python 3；Egern 侧脚本需要 `PyYAML`（缺失时部分脚本会退化，见 `reference/egern/checker.md`）。
 Windows 的 Git Bash 下脚本会自动用 `cygpath -w` 转换路径，无需干预。
+⚠️ **中文 Windows 必须注意输出编码**：控制台与管道默认是 GBK(cp936)，脚本一 print emoji 就
+`UnicodeEncodeError`、进程以**退出码 1** 结束 —— 而回归里「期望判负」的 fixture 期望的恰恰是 1，
+于是会**假绿**。所有脚本 import 共享模块时即把 stdout 钉成 UTF-8（`_common.force_utf8_stdout`），
+两个 `.sh` 入口另设 `PYTHONIOENCODING=utf-8`；直连调用单个脚本也已覆盖。
 
 > 🔒 本仓库**刻意不挂 CI**。审计的意义在于改动后真跑一遍，而不是让它挂在网页上变绿——
 > 何况「审计全绿 ≠ 配置可用」是这两个项目共同的第一教训。

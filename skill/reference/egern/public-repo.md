@@ -19,7 +19,7 @@ skill/                                      # 本 skill：SKILL.md（§0 判内�
   reference/{surge,egern}/ · scripts/{surge,egern}/ · tests/{surge,egern}/
 egern/CHANGELOG.md                          # 本内核更新日志（按时间倒序，README 只留引用）
 egern/profiles/lazy.yaml / lazy.min.yaml          # 懒人版 · 可选（4 组 / 9 条规则，Final 隐藏、AD 只留 REJECT；不挂版本号）
-egern/profiles/routing_v3.yaml / .min.yaml        # 分流版 · 推荐（脱敏模板：无节点、无订阅、无证书；机场槽位 1 个）
+egern/profiles/routing_v3.1.yaml / .min.yaml    # 分流版 · 推荐（脱敏模板：无节点、无订阅、无证书；机场槽位 1 个）
 egern/profiles/routing_v2.4.yaml / .min.yaml      # 保留（v3 前一版）
 egern/profiles/routing_v2.3.yaml / .min.yaml      # 保留（与 routing_v2.4 只差 rule_set 的 update_interval）
 egern/profiles/routing_v2.2.yaml / .min.yaml      # 保留（与 routing_v2.3 只差 4 处修正）
@@ -33,7 +33,7 @@ egern/docs/04-模板逐段讲解.md                     # 逐段讲模板，含�
 egern/docs/05-分流与no_resolve必须成对交付.md     # f7→f8 事故复盘
 egern/docs/06-实测数据与版本谱系.md               # 端点实测表 / 污染实测表 / f1→f8 谱系
 egern/docs/07-文件版本沿革.md                     # 两条线 + 分流版 routing_v1→v2.4 逐个说明（含四次改名记录）
-egern/docs/08-审计读数.md                         # 5 个审计脚本的读数 / 2 条 LOW 的含义 / 回归测试
+egern/docs/08-审计读数.md                         # 6 个审计脚本的读数 / 2 条 LOW 的含义 / 回归测试
 egern/docs/12-分流顺序.md                         # 分流版 24 条规则的顺序与理由
 egern/DetailsReadme/DetailsReadme.md              # 完整技术文档
 ```
@@ -44,12 +44,12 @@ egern/DetailsReadme/DetailsReadme.md              # 完整技术文档
 > 凡「Egern 的结论搬到 Surge」之类的问题，答案写在那一篇里。
 
 
-> **可选版本只有两个** —— `routing_v3`（分流版 · 推荐）与 `lazy`（懒人版）；
+> **可选版本只有两个** —— `routing_v3.1`（分流版 · 推荐）与 `lazy`（懒人版）；
 > 其余 `routing_v2.x` / `routing_v1` 都是分流线的历代旧版，保留以备对照。
 
 **要更新模板时**：**直接在仓库里改 `profiles/*.yaml` 即可。** 这份模板早已完成脱敏
 （无节点、无订阅、无证书），改它不需要"从自用配置重新生成"。改完跑
-`bash skill/tests/egern/run.sh`（两阶段 26 断言）+ 下面那批审计脚本，再提交推送。
+`bash skill/tests/egern/run.sh`（两阶段 46 断言）+ 下面那批审计脚本，再提交推送。
 
 > 📦 **历史做法（已不再使用）**：早期由维护者本地的 `outputs/` 脚本链生成 ——
 > `_build_public_template.py`（从自用版做**带断言的行级替换** + 38 个敏感串零残留自检）、
@@ -57,13 +57,13 @@ egern/DetailsReadme/DetailsReadme.md              # 完整技术文档
 > `_publish_to_github.py`（Git Data API 单次提交；空仓库需先落初始化提交，
 > 否则 `POST /git/blobs` 报 `409 Git Repository is empty`）。
 > ⚠️ 这些脚本**不在本仓库**（避免暴露构建侧私人路径）—— 2026-09-21 核查时**本机也已找不到**。
-> 换句话说"不要手改仓库里的 yaml"这条老规矩**已作废**：现在的 `routing_v2.1` / `routing_v2.2` / `routing_v2.3` / `routing_v2.4` / `routing_v3`
+> 换句话说"不要手改仓库里的 yaml"这条老规矩**已作废**：现在的 `routing_v2.1` / `routing_v2.2` / `routing_v2.3` / `routing_v2.4` / `routing_v3` / `routing_v3.1`
 > 就是在仓库里直接改出来的。若将来要恢复"从自用配置生成"的流程，方法论见 skill
 > `github-publish-sanitized-repo`，需按它重建脚本。
 
 📌 **全部验证都在本地完成 —— 本仓库刻意不挂 CI / 任何自动化（2026-09-21 决定）。**
 这是个人模板仓库，不会有外部贡献者，"自动验 PR"没有服务对象；而本地跑一次
-`bash skill/tests/egern/run.sh` + 5 个审计脚本只要几十秒。少一个对外暴露的面就少一份事。
+`bash skill/tests/egern/run.sh` + 6 个审计脚本只要几十秒。少一个对外暴露的面就少一份事。
 
 ⇒ 全部验证用本地命令复现：`bash skill/tests/egern/run.sh` + `check_egern_dns.py` /
 `audit_dns_forward.py` / `audit_ruleset_noresolve.py` / `audit_routing_coverage.py` /
