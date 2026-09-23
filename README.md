@@ -1,128 +1,133 @@
 <div align="center">
 
-# 🛡️ 双内核 DNS 防泄露配置模板
+# 🛡️ Surge · Egern 配置模板
 
-*Surge · Egern —— 让 DNS 无处可漏*
+*让 DNS 无处可漏*
 
-[![Surge](https://img.shields.io/badge/Surge-iOS%20%7C%20macOS-1f6feb?style=flat-square)](#-先选内核)
-[![Egern](https://img.shields.io/badge/Egern-iOS%20%7C%20macOS-0969da?style=flat-square)](#-先选内核)
-[![Groups](https://img.shields.io/badge/Groups-26%20%2B%2026%20%E5%B7%B2%E5%AF%B9%E9%BD%90-8250df?style=flat-square)](#-井然有序)
+[![Surge](https://img.shields.io/badge/Surge-iOS%20%7C%20macOS-1f6feb?style=flat-square)](#-两全其美皆合心意)
+[![Egern](https://img.shields.io/badge/Egern-iOS%20%7C%20macOS-0969da?style=flat-square)](#-两全其美皆合心意)
+[![Groups](https://img.shields.io/badge/Groups-26%20%7C%2026-8250df?style=flat-square)](#-井然有序)
+[![Rules](https://img.shields.io/badge/Rules-24%20%7C%2024%20%E5%B7%B2%E5%AF%B9%E9%BD%90-dc3545?style=flat-square)](docs/跨内核差异对照.md)
 [![DNS](https://img.shields.io/badge/DNS-Zero%20Leak-2ea043?style=flat-square)](#-隐私至上--无-dns-泄露)
 [![License](https://img.shields.io/badge/License-MIT-dfb317?style=flat-square)](docs/图标与许可.md)
 
 </div>
 
-同一套分流策略，两款内核的落地版本合在一处。
-**26 个分组同名同序，分流版 24 条规则逐位对应**；因内核实现不同，差异集中在少数几处，全部记录在
-[`docs/跨内核差异对照.md`](docs/跨内核差异对照.md)。
-
----
-
-## 🧩 先选内核
-
-| 你用的是 | 配置格式 | 入口 |
-|:--|:--|:--|
-| **Surge** | `.conf` | [`surge/`](surge/) |
-| **Egern** | `.yaml` | [`egern/`](egern/) |
-
-> ⚠️ 两者判据**不通用**。把一侧的结论照搬到另一侧是本项目记录在案的头号误用来源
-> ——例如 Egern 的「广告指向 `AD` 组」搬到 Surge 的 `pre-matching` 规则上，会让 **Surge 拒绝加载整份配置**。
-> 不确定就读 [`skill/SKILL.md`](skill/SKILL.md) 的第 0 节。
-
 ## 📥 两全其美，皆合心意
 
-🪶 **懒人版** · 至简 · 省心  ｜  🧭 **分流版** · 可控 · 随心
+🪶 **懒人版** · 至简 · 省心
 
 **Surge**
 
 ```
 https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/profiles/lazy.min.conf
-https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/profiles/routing_v3.min.conf
 ```
 
 **Egern**
 
 ```
 https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/profiles/lazy.min.yaml
+```
+
+🧭 **分流版** · 可控 · 随心
+
+**Surge**
+
+```
+https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/profiles/routing_v3.min.conf
+```
+
+**Egern**
+
+```
 https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/profiles/routing_v3.min.yaml
 ```
 
-> 每份都有对应的**带注释原始版**（去掉 `.min`）：改配置改带注释那份，再把改动同步到 `.min`。
-> 模板**不绑定节点与订阅**：懒人版自己填节点，分流版填 1 处订阅槽位。
+> ⚙️ 模板不绑定节点与订阅 —— 懒人版的 `Proxy` 自己填节点，分流版导入前填 **1 处订阅槽位**。
+> 📄 每份都有对应的带注释原始版（去掉 `.min`）：改配置改带注释那份，再把改动同步到 `.min`。
+> ⚠️ Surge 读 `.conf`、Egern 读 `.yaml`，**两者的判据不通用**。把一侧结论搬到另一侧前先查
+> [`docs/跨内核差异对照`](docs/跨内核差异对照.md) —— 例如 Egern 的「广告指向 `AD` 组」搬到 Surge 的
+> `pre-matching` 规则上，会让 **Surge 拒绝加载整份配置**。
 
 ---
 
 ## 🧭 井然有序
 
-分流版 26 组，两内核**逐项同名同序**。自上而下：第一列分组，第二列懒人版有则 ✅，第三列分流版全覆盖。
+**分流版 26 组，两内核逐项同名同序。** 自上而下：第一列为分组（每项配图标），第二列懒人版有则 ✅、无则 `-`、只占其中一项则写明，第三列分流版全覆盖 ✅。
 
 | 组 | 🪶 懒人版 | 🧭 分流版 |
 |:---|:---:|:---:|
 | 🚀 `Proxy` | ✅ | ✅ |
 | ⚡ `Smart` | - | ✅ |
-| 🤖 `ChatGPT` · `Gemini` · `Claude` · `AI` | ✅ | ✅ |
+| 🤖 `ChatGPT` · `Gemini` · `Claude` · `AI` | 只 `AI` | ✅ |
 | 🎵 `Spotify` · 🎶 `YouTubeMusic` · ▶️ `YouTube` | - | ✅ |
 | 🐙 `GitHub` · 🔎 `Google` · 🪟 `Microsoft` | - | ✅ |
 | ✈️ `Telegram` · 🐦 `Twitter` · 💚 `WeChat` | - | ✅ |
+| 🛰️ `Airport`（订阅槽位）| - | ✅ |
 | 🛑 `AD` | ✅ | ✅ |
 | 🇭🇰 `Hong Kong` · 🇺🇸 `USA` · 🇯🇵 `Japan` · 🇨🇳 `Taiwan`<br>🇸🇬 `Singapore` · 🇰🇷 `Korea` · 🇦🇶 `Other Regions` | - | ✅ |
 | 💧 `MAX` | - | ✅ |
-| 🌐 `Final` | ✅ | ✅ |
+| 🌐 `Final` | 只 Egern | ✅ |
+
+> 🪶 懒人版两侧**并不逐条对齐**（规则 `Surge 11 条 / Egern 9 条`）：Surge 侧 3 组，兜底由 `FINAL,Proxy` 规则承担；
+> Egern 侧 4 组，多一个隐藏的 `Final`。Surge 侧的 Apple 与 `private.txt` 两条 Egern 懒人版没有，
+> Egern 侧的 `.cn` 后缀兜底 Surge 没有。
+> 🧭 分流版两侧 `26 组 / 24 条规则` 位位对应，仅三处内核能力差异。
+> 🔍 选路、地区筛法与规则顺序见 [`surge/docs/11`](surge/docs/11-分流版设计.md) · [`egern/docs/12`](egern/docs/12-分流顺序.md)；
+> 带注释的原始文件见 [`surge/profiles/`](surge/profiles/) · [`egern/profiles/`](egern/profiles/)。
 
 ---
 
 ## 🌐 隐私至上 · 无 DNS 泄露
 
-五类明文查询出口，**两侧全部收口**。漏一类，剩下的那类就仍是必然通路。
+同一套防泄露判据，两款内核各自的写法。
 
-| 泄露面 | Surge 的收口 | Egern 的收口 |
-|:--|:--|:--|
-| 引导解析（端点写成域名） | 加密端点全部 IP 字面量 | 同 + `hosts` 钉住 |
-| 回退落到明文 | `dns-server` 绝不写 `system` | `bootstrap` 列 ≥2 国内解析器、不含 `system`，多端点压低「全失败」概率 |
-| 不识 DNS 的旁路设备 | `hijack-dns` 接管明文 `:53` | `hijack_dns: '*'` 全量接管 |
-| IP 规则为判定而解析 | 一律 `no-resolve` | 一律 `no_resolve` |
-| 远程规则集里嵌的裸 IP | 逐个下载数条目，只引 `No_Resolve` 变体 | 同（`audit_ruleset_noresolve.py`） |
+| 泄露面 | Surge | Egern |
+|:-------|:------|:------|
+| 🚫 不识 DNS 的设备 | `hijack-dns` 接管明文 `:53` | `hijack_dns: '*'` 全量接管 |
+| 🔐 引导解析 | 端点尽量写 IP 字面量，主机名端点在文件里显式豁免 | 四条端点全 IP 字面量，启动期无事可做 |
+| 🛡️ 明文回退 | `dns-server` 裸 IP、绝不写 `system` | `forward` 兜底 `'*'` 指向加密组，永不落到 `bootstrap` |
+| 🧭 节点域名 | 交节点远端解析，本地不留答案 | `proxy_nameservers` 专用通道、强制直连 |
+| ✂️ 规则匹配 | IP 类规则一律 `no-resolve` | 一律 `no_resolve`，与域名直连集**成对交付** |
+| 📋 自检 | 4 个审计脚本 + 6 阶段回归 | 9 个审计脚本 + 2 阶段回归 |
 
-另加两条两侧共用的设计原则：
-
-- 🧭 **规则克制** —— IP 类规则只为匹配，不额外发问；`no-resolve` 与「域名条目足够多的国内直连规则集」**成对交付**，否则国内域名整片落默认出口。
-- 🔒 **闭环连接** —— DoH 直连、不跟代理链，启动不成环；代理域名交节点远端解析，本地不留答案。
-
----
-
-## 🗂 目录结构
-
-```
-icons/          26 个分组图标（两内核共用，原本各存一份且逐字节相同）
-docs/           共享文档：跨内核差异对照 · 规则集与来源 · 注意事项 · 图标与许可
-surge/          profiles/  ·  docs/(9 篇)  ·  DetailsReadme/  ·  CHANGELOG.md
-egern/          profiles/  ·  docs/(9 篇)  ·  DetailsReadme/  ·  CHANGELOG.md
-skill/          SKILL.md（单一入口，按内核分支）
-  ├─ reference/surge/ · reference/egern/     六个深度主题各一侧
-  ├─ scripts/surge/   · scripts/egern/       审计脚本（Surge 4 + 公共模块 / Egern 9）
-  └─ tests/surge/     · tests/egern/         回归套件 + fixture
-```
-
-改完在仓库根目录本地跑（**本仓库刻意不挂 CI**）：
-
-```bash
-bash skill/tests/surge/run.sh     # 6 阶段 · 15 断言（联网阶段可 SKIP_NET=1 跳过）
-bash skill/tests/egern/run.sh     # 阶段 1 · 5 fixture；阶段 2 · 全部 profile 通配扫描
-```
+> 🔍 五类出口的完整推导见 [`surge/docs/02`](surge/docs/02-DNS为什么会泄露.md) ·
+> [`egern/docs/02`](egern/docs/02-DNS为什么会泄露.md)；审计读数与各条含义见
+> [`surge/docs/08`](surge/docs/08-审计读数.md) · [`egern/docs/08`](egern/docs/08-审计读数.md)。
+> 同一判据在两侧未必同一取舍 —— 例如端点要不要一律写成 IP 字面量，见
+> [`docs/跨内核差异对照`](docs/跨内核差异对照.md) 第 8 节。
 
 ---
 
-## ⚠️ 已知边界
+## 📁 文件结构
 
-- 🔬 **审计全绿 ≠ 配置可用**：脚本只覆盖静态可判定部分，拦截效果、误杀、节点可用性必须实测。
-- 📦 **Egern 侧本机验证缺口**：合并后两侧的 Python 回归需真实解释器（Egern 脚本另需 `PyYAML`），本次装配未在具备环境处执行，详见 [`CHANGELOG.md`](CHANGELOG.md)。
-- 🧪 **两款都是闭源商业软件**：文档中凡标注「实测」的结论都是特定版本下的经验值，升级后需重新验证。
+| | 路径 | 内容 |
+|:--:|:-----|:-----|
+| 📁 | [`surge/profiles/`](surge/profiles/) | 4 份 `.conf`：懒人版 / 分流版 × 带注释 / 纯配置 |
+| 📁 | [`egern/profiles/`](egern/profiles/) | 16 份 `.yaml`：lazy + `routing_v1~v3`，各含带注释 / 纯配置 |
+| 🖼️ | [`icons/`](icons/) | 26 个策略组图标（两内核共用一份） |
+| 📚 | [`docs/`](docs/) | 共享文档 4 篇：跨内核差异对照 / 规则集与来源 / 注意事项 / 图标与许可 |
+| 📂 | [`surge/docs/`](surge/docs/) · [`egern/docs/`](egern/docs/) | 各内核 9 篇专题（01–08 编号系列 + 分流设计 / 分流顺序） |
+| 📘 | [`surge/DetailsReadme/`](surge/DetailsReadme/) · [`egern/DetailsReadme/`](egern/DetailsReadme/) | 完整技术文档 |
+| 🧪 | [`skill/`](skill/) | 单一入口 `SKILL.md`（按内核分支）+ 审计脚本 + 回归测试 |
+| 🗓️ | [`CHANGELOG.md`](CHANGELOG.md) | 合并成仓记录；各内核迭代史见 [`surge/`](surge/CHANGELOG.md) · [`egern/`](egern/CHANGELOG.md) |
 
 ---
 
-## 📜 许可与出处
+## 📖 更多文档
 
-MIT，见 [`LICENSE`](LICENSE) 与 [`docs/图标与许可.md`](docs/图标与许可.md)。
-本仓库由 [`RiverFlowsInUUU/Surge`](https://github.com/RiverFlowsInUUU/Surge) 与
-[`RiverFlowsInUUU/Egern`](https://github.com/RiverFlowsInUUU/Egern) 合并而成，两个源仓库保持原样未改动，
-其中的订阅地址仍然可用。合并记录见 [`CHANGELOG.md`](CHANGELOG.md)。
+- 🔀 [`docs/跨内核差异对照`](docs/跨内核差异对照.md) —— 语法映射 · 分组与规则的对齐程度 · 哪些结论不能照搬
+- 📚 [`docs/规则集与来源`](docs/规则集与来源.md) —— 21 份共用规则集的指向 / 作用 / 去向 / 来源
+- ⚠️ [`docs/注意事项`](docs/注意事项.md) —— 使用前必看
+- 🎨 [`docs/图标与许可`](docs/图标与许可.md) —— 图标来源 · MIT 许可 · 第三方版权
+- 🧪 [`skill/SKILL.md`](skill/SKILL.md) —— 方法论主干（先判内核，再进 Surge / Egern 分支）
+- 📘 [`surge/DetailsReadme/`](surge/DetailsReadme/) · [`egern/DetailsReadme/`](egern/DetailsReadme/) —— 逐段详解 · 原理推导 · 已知取舍 · FAQ
+- 🗓️ [`CHANGELOG.md`](CHANGELOG.md)
+
+---
+
+<div align="center">
+
+🐈 让 DNS 无处可漏 · MIT License · [图标与许可](docs/图标与许可.md)
+
+</div>
