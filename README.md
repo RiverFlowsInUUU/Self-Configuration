@@ -75,14 +75,14 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 
 ## 🌐 隐私至上 · 无 DNS 泄露
 
-| 泄露面 | Surge | Egern |
-|:-------|:------|:------|
-| 🚫 不识 DNS 的设备 | `hijack-dns` 接管明文 `:53` | `hijack_dns: '*'` 全量接管 |
-| 🔐 引导解析 | 端点尽量写 IP 字面量，主机名端点在文件里显式豁免 | 四条端点全 IP 字面量，启动期无事可做 |
-| 🛡️ 明文回退 | `dns-server` 裸 IP、绝不写 `system` | `forward` 兜底 `'*'` 指向加密组，永不落到 `bootstrap` |
-| 🧭 节点域名 | 交节点远端解析，本地不留答案 | `proxy_nameservers` 专用通道、强制直连 |
-| ✂️ 规则匹配 | IP 类规则一律 `no-resolve` | 一律 `no_resolve`，与域名直连集**成对交付** |
-| 📋 自检 | 4 个审计脚本 + 6 阶段回归 | 9 个审计脚本 + 2 阶段回归 |
+| | Surge | Egern |
+|:--|:------|:------|
+| 🚫 盲区设备 | `hijack-dns` 接管明文 `:53` | `hijack_dns: '*'` 全量接管 |
+| 🔐 加密通道 | 端点尽量写 IP 字面量，主机名端点显式豁免 | 四条端点全是 IP 字面量 |
+| 🛡️ 明文回退 | `dns-server` 裸 IP、绝不写 `system` | `forward` 兜底指向加密组 |
+| 🧭 规则克制 | IP 类规则一律 `no-resolve` | 一律 `no_resolve`，与域名直连集成对交付 |
+| ✂️ 远端解析 | 代理域名交节点解析，本地不留答案 | `proxy_nameservers` 专用通道、强制直连 |
+| 📋 自检读数 | 4 个审计脚本 + 6 阶段回归 | 9 个审计脚本 + 2 阶段回归 |
 
 > 🔍 五类出口的完整推导见 [`surge/docs/02`](surge/docs/02-DNS为什么会泄露.md) ·
 > [`egern/docs/02`](egern/docs/02-DNS为什么会泄露.md)；审计读数与各条含义见
