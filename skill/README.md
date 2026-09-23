@@ -4,7 +4,7 @@
 内部按内核分支，共享的判定纪律收在门面里。
 
 > 🤖 要改的是**这个仓本身**（profile / 脚本 / 文档）而不是替用户排查设备时，先读仓根
-> [`AGENTS.md`](../AGENTS.md) —— 改完必跑的 `bash skill/tests/all.sh` 与四条硬约束写在里面。
+> [`AGENTS.md`](../AGENTS.md) —— 改完必跑的 `bash skill/tests/all.sh` 与五条硬约束写在里面。
 
 ## 结构
 

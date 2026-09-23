@@ -28,7 +28,7 @@ bash skill/tests/all.sh            # 四项检查；离线用 --offline
 四项分别守：Surge 六阶段回归 · Egern 两阶段回归 · `.min` 与完整版去注释对拍 ·
 换设备可移植性（行尾 / BOM / 命名 / 单机残留，**固定 18 条规则**）。
 
-## 2 · 四条硬约束（agent 最常在这里犯错）
+## 2 · 五条硬约束（agent 最常在这里犯错）
 
 1. **不要加 CI / GitHub Actions / workflow。** 这是维护者的决定，记录在
    [`docs/跨内核差异对照.md`](docs/跨内核差异对照.md) 与 [`docs/注意事项.md`](docs/注意事项.md)：
@@ -45,6 +45,26 @@ bash skill/tests/all.sh            # 四项检查；离线用 --offline
 4. **看到某个配置「好像不对」，先在文件里 grep `audit-waive`。** 明知故犯的地方都在 profile 头部
    留了豁免条目和理由，审计脚本的注释里也写了取舍。例：Surge 的 `encrypted-dns-server` 保留
    `dns.google` / `dns.alidns.com` 两条主机名端点是有意的（CDN 就近与 ECS 合规），不是泄露。
+5. **下面 9 个文件是「闸」，动它们之前必须先请示维护者。** 它们是判定对错的东西 ——
+   改坏它们，全套检查会**看着全绿而其实失效**，比 profile 里写错一条规则严重得多。
+
+   ```
+   .gitattributes                             skill/tests/all.sh
+   skill/tests/check_portability.py           skill/tests/check_min_pair.py
+   skill/tests/bump_version.py                skill/tests/surge/run.sh
+   skill/tests/surge/architecture.sh          skill/tests/surge/check_links.py
+   skill/tests/egern/run.sh
+   ```
+
+   **请示时要带什么**：① 不改它会漏掉或误判**哪一个具体文件**（能给个反例最好）；
+   ② 改完能抓住什么（跑一遍 `all.sh`，必要时造个 fixture 证明改前会漏）。
+   这两条把"顺手加固一下"变成有成本的事，目的就在这。
+
+   **两条豁免**：`skill/tests/*/run.sh` 与 `architecture.sh` 里 `CURRENT=` 那一行由
+   `bump_version.py` 改写，属升版机械动作，不算越界；`docs/`、`README`、profile 与审计脚本
+   （`skill/scripts/`）**不在冻结名单内**，按 §3 的常规连带范围改。
+
+   `all.sh` 每次跑完会在末尾回一句「本轮闸门有没有被触碰」，你不用翻 diff。
 
 ## 3 · 目录速查
 

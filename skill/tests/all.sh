@@ -113,6 +113,68 @@ if [ -d "$ROOT/.git" ]; then
   else
     printf ' · 上游 未配置（clone 后自动有；本仓不代管凭据）\n'
   fi
+
+  # ── 闸门自检：本轮有没有动到「检查器自己」────────────────────────────
+  # 见 AGENTS.md §2 第 5 条。这里**只报不判负** —— 越界与否由人裁决，
+  # 但必须让人在下图腾一眼看见，而不是翻 diff 才发现。
+  # 注意：不往子进程传 $ROOT —— 那是 bash 形式的 `/c/...`，Windows 原生 Python 不认。
+  # 本脚本上面已经 `cd "$ROOT"`，Python 继承 cwd 即可。
+  "$PY" - <<'PYEOF'
+import os, subprocess
+
+GATE = (".gitattributes", "skill/tests/all.sh", "skill/tests/check_portability.py",
+        "skill/tests/check_min_pair.py", "skill/tests/bump_version.py",
+        "skill/tests/surge/run.sh", "skill/tests/surge/architecture.sh",
+        "skill/tests/surge/check_links.py", "skill/tests/egern/run.sh")
+
+if not os.path.isdir(".git"):
+    raise SystemExit                      # 非 git 环境（如打包后的归档）：这一栏跳过
+
+
+def git(*a):
+    # 首参必须是可执行文件名：`subprocess.run(["rev-parse", ...])` 会 FileNotFoundError。
+    return subprocess.run(["git", *a], capture_output=True, text=True,
+                          encoding="utf-8", errors="replace").stdout
+
+
+def paths(out, status_form=False):
+    """把 git status --porcelain / diff --name-only 的输出还原成路径。"""
+    res = []
+    for line in out.splitlines():
+        if not line.strip():
+            continue
+        if status_form and len(line) > 3 and line[2] == " ":
+            line = line[3:]                            # 剥掉 XY<空格> 前缀
+        line = line.split(" -> ")[-1].strip().strip('"')   # 重命名取新名
+        if line:
+            res.append(line)
+    return res
+
+
+up = git("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}").strip()
+if up:
+    src, changed = "未推送的提交", git("diff", "--name-only", "%s...HEAD" % up)
+else:
+    # 没有上游时退一步：至少看最近一次提交（agent 常常先 commit 再跑检查）
+    src, changed = "最近一次提交", git("diff", "--name-only", "HEAD^", "HEAD")
+
+hits, seen = [], set()
+for tag, lst in (("未提交", paths(git("status", "--porcelain"), True)),
+                 (src, paths(changed))):
+    for p in lst:
+        if p in GATE and p not in seen:
+            seen.add(p)
+            hits.append((tag, p))
+
+if hits:
+    print("\n   ⚠️  闸门被改动 %d 处 —— AGENTS.md §2 第 5 条：改前先请示维护者，"
+          "并附「不改会漏掉什么」的反例" % len(hits))
+    for tag, p in hits:
+        print("      · %-12s %s" % (tag, p))
+    print("      例外：`CURRENT=` 那一行由 skill/tests/bump_version.py 改写，不算越界。")
+else:
+    print("\n   ✅  闸门未被动过（冻结 %d 个文件 · 名单见 AGENTS.md §2 第 5 条）" % len(GATE))
+PYEOF
 fi
 
 DT=$((SECONDS - T0))
