@@ -363,6 +363,31 @@
   T5 判不到它（那是"绑了没人用"，方向相反），T1 也判不到（语法完好），而闸永远不执行这个脚本 ⇒
   要判这一类得再加一条"用了没绑"。粗扫 26 个 `.py`：剔掉 `__file__` 这类隐式名之后**只有这一个文件**中招。
 - ✅ 验收（本批改完后重跑）：`bash skill/tests/all.sh` → **19 · 18 · 18 · 18 · 11 · 6 · 4**，七项全绿 · 11s。
+- 📥 **三份手抄的取件逻辑收编成一处**：`skill/scripts/egern/_egern_common.py` 新增 `fetch_cached()`
+  （窗口判据本体 **35 行一处**），三个消费方各留一层薄适配器（13 / 7 / 23 行，只负责自己那套出声措辞
+  和行内标签），UA 与超时按原样传进去（`egern-routing-audit/1.0` · 90s / `egern-dns-audit/1.0` · 60s ×2）。
+  改前三份分别长 34 / 26 / 21 行、各抄各的：`audit_routing_coverage.py:78` · `audit_ruleset_noresolve.py:61` ·
+  `profile_ruleset.py:56`。行数几乎没省（81 → 78），省的是**口径**：三份共用同一个缓存目录
+  （`egern-ruleset-cache`）却两套判法——前两份判 7 天窗口，第三份只判"文件在不在"。
+- 🎯 这个混读的具体面，拿同一份陈旧缓存跑过对照（把 `%TEMP%\egern-ruleset-cache\x.list` 的 mtime 改成
+  10 天前，再用 `git show HEAD:` 取改前的脚本原样跑一遍）：
+  改前 `profile_ruleset.py` 印 `取法: 缓存 …`（判成命中、不出任何声）⇒ 改后印
+  `取法: ⚠️ 缓存已过 7 天窗口（重下失败：…）⇒ 以上按陈旧那份判 …`。
+  ⇒ 从前"条目类型分布 / 有没有裸 IP"这类结论可以整个落在一份没人知道多久的清单上。
+  三条实现约束按原样搬，没借收编偷偷改行为：**存在且非空**才算命中、过窗**先试重下**失败才退回、写盘固定 LF。
+- 🔀 顺手修一处**说错成因**的措辞：`audit_ruleset_noresolve.py` 的过期那行从前一律写"且重下失败"，
+  而 `--offline` 档根本没尝试重下 ⇒ 现在按 `a.offline` 分开印，实测
+  `⚠️ 缓存已过 7 天窗口，--offline 不重下 ⇒ 以上按陈旧那份判`（同一条 `stale` 有两种成因，只报一种就是假信号）。
+- 🧪 六条来源分支逐条实跑：`fresh`（联网重下）· `cache`（窗口内直用）· `stale`（离线不重下）·
+  `stale`（重下失败退回）· `miss`（离线无缓存 ⇒ `缓存未命中（--offline）`）· `error`（连不上 ⇒
+  noresolve 侧仍译成 `FAIL <原因>`、行内印「取失败」）；`profile_ruleset.py` 的本地路径分支照旧（`本地文件`）。
+  整份 profile 的联网读数回归：`audit_routing_coverage.py egern/profiles/routing.yaml --offline` ⇒
+  22 个规则集 —— 窗口内直用 21 · 过期退回 1 · 取不到 0。
+- 🚪 **本轮触碰闸门 0 个文件**（全非冻结）。**没动**：surge 侧 `audit_ruleset_content.py` 那份 fetch
+  （它多三个开关 —— `--max-age-days` 可调窗口 / `force` 强重下 / `cache_dir` 入参，把 Egern 写死 7 天的
+  口径套上去是削能力，跨内核共用一份是另一件事）· 任何 profile 与规则集内容 · `config_old/` 归档 ·
+  `GATE` 名单。`_egern_common.py` 122 → 186 行。
+- ✅ 验收（本批改完后重跑）：`bash skill/tests/all.sh` → **19 · 18 · 18 · 18 · 11 · 6 · 4**，七项全绿 · 13s。
 
 ---
 

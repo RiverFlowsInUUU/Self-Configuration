@@ -39,11 +39,33 @@ import re
 import sys
 # 输出编码垫片：见 _egern_common.force_utf8_stdout —— GBK 控制台下 emoji 会崩成退出码 1
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _egern_common import force_utf8_stdout  # noqa: E402
-import tempfile
-import urllib.request
+from _egern_common import CACHE_MAX_AGE, fetch_cached, force_utf8_stdout  # noqa: E402
 
-CACHE = os.path.join(tempfile.gettempdir(), "egern-ruleset-cache")
+
+def fetch(src, offline=False):
+    """返回 (内容, 来源说明)。src 可以是 URL 或本地路径。
+
+    2026-09-24 收编：这里从前只判"缓存在不在"，而同目录两份审计对**同一个缓存目录**
+    （`egern-ruleset-cache`）判 7 天窗口 ⇒ 同一份陈旧文件，一个脚本出声报"按陈旧那份判"，
+    另一个把它当"缓存命中"直接拿去数条目。窗口判据现在只在 `_egern_common.fetch_cached` 一处。
+    """
+    if not src.startswith("http"):
+        if not os.path.exists(src):
+            return None, "文件不存在"
+        return io.open(src, encoding="utf-8", errors="replace").read(), "本地文件"
+    body, path, source, detail = fetch_cached(src, offline,
+                                              user_agent="egern-dns-audit/1.0", timeout=60)
+    if source == "fresh":
+        return body, f"已下载并缓存 {path}"
+    if source == "cache":
+        return body, f"缓存 {path}"
+    if source == "stale":
+        return body, ("⚠️ 缓存已过 %d 天窗口（%s）⇒ 以上按陈旧那份判 %s"
+                      % (CACHE_MAX_AGE // 86400, detail, path))
+    if source == "miss":
+        return None, "缓存未命中（--offline）"
+    return None, f"下载失败: {detail}"
+
 
 # Surge / Clash / QuantumultX 常见条目类型
 DOMAIN_TYPES = {
@@ -51,29 +73,6 @@ DOMAIN_TYPES = {
     "HOST", "HOST-SUFFIX", "HOST-KEYWORD", "HOST-WILDCARD", "DOMAIN-WILDCARD",
 }
 IP_TYPES = {"IP-CIDR", "IP-CIDR6", "IP-ASN", "GEOIP", "SRC-IP-CIDR", "IP6-CIDR"}
-
-
-def fetch(src, offline=False):
-    """返回 (内容, 来源说明)。src 可以是 URL 或本地路径。"""
-    if not src.startswith("http"):
-        if not os.path.exists(src):
-            return None, "文件不存在"
-        return io.open(src, encoding="utf-8", errors="replace").read(), "本地文件"
-    os.makedirs(CACHE, exist_ok=True)
-    name = re.sub(r"[^A-Za-z0-9._-]", "_", src.rstrip("/").split("/")[-1]) or "ruleset"
-    path = os.path.join(CACHE, name)
-    if os.path.exists(path) and os.path.getsize(path) > 0:
-        return io.open(path, encoding="utf-8", errors="replace").read(), f"缓存 {path}"
-    if offline:
-        return None, "缓存未命中（--offline）"
-    req = urllib.request.Request(src, headers={"User-Agent": "egern-dns-audit/1.0"})
-    try:
-        with urllib.request.urlopen(req, timeout=60) as r:
-            body = r.read().decode("utf-8", "replace")
-    except Exception as e:  # noqa: BLE001
-        return None, f"下载失败: {e}"
-    io.open(path, "w", encoding="utf-8", newline="\n").write(body)
-    return body, f"已下载并缓存 {path}"
 
 
 def split_entries(body):

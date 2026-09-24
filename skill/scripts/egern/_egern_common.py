@@ -22,10 +22,16 @@
     import os, sys
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from _egern_common import DOMESTIC_RESOLVER_IPS, ep_ip, ip_literal, hostpart
+    from _egern_common import fetch_cached          # 远程规则集取件（缓存 + 7 天窗口）
 """
 
+import io
+import os
 import re
 import sys
+import tempfile
+import time
+import urllib.request
 
 # ⭐ 国内知名公共 DNS 解析器 IP —— 「兜底组直连可达」的第二判据。
 # 在 profile 文本内无法证明任意 IP 是否可直连，但这些 IP 的归属与服务商是公开事实，
@@ -96,6 +102,64 @@ def ip_literal(ep):
 
 # 兼容旧调用名（audit_dns_forward.py 历史上用的是 ep_ip）
 ep_ip = hostpart
+
+
+# ============================================================================
+# 远程规则集取件（缓存 + 新鲜度窗口）—— 三份手抄收编到这一处
+# ============================================================================
+# 背景（2026-09-24 实测）：`audit_routing_coverage.py` / `audit_ruleset_noresolve.py` /
+# `profile_ruleset.py` 各自抄了一份 fetch，**同一个缓存目录名**（`egern-ruleset-cache`）
+# 互吃对方落的文件，却两套口径混读：前两份判 7 天窗口，`profile_ruleset.py` 只判
+# "文件在不在" ⇒ 同一份陈旧缓存在一个脚本里会出声报"按陈旧那份判"，在另一个脚本里
+# 被当成"缓存命中"直接拿去判条目数。这正是本模块开头那条结论的同一个形状：
+# **靠注释提醒同步两份拷贝是不可靠的。** 窗口判据从此只有一份。
+CACHE_DIR_NAME = "egern-ruleset-cache"
+CACHE_MAX_AGE = 7 * 86400          # 秒；与 surge 侧 audit_ruleset_content.py 同一条口径
+CACHE_DIR = os.path.join(tempfile.gettempdir(), CACHE_DIR_NAME)
+
+
+def cache_path_for(url, cache_dir=None):
+    """URL → 缓存文件路径（文件名规则沿用三份手抄里那一式：末段路径消毒）。"""
+    name = re.sub(r"[^A-Za-z0-9._-]", "_", url.rstrip("/").split("/")[-1]) or "ruleset"
+    return os.path.join(cache_dir or CACHE_DIR, name)
+
+
+def fetch_cached(url, offline=False, user_agent="egern-audit/1.0", timeout=60, cache_dir=None):
+    """取规则集正文，带缓存新鲜度窗口。**只取不印** —— 出声留给调用方，三处措辞不同。
+
+    → `(body, path, source, detail)`
+      · `fresh`  本次下载并落盘                 · `cache`  窗口内直接用缓存
+      · `stale`  过了窗口后退回的那份（**调用方必须出声**：离线不重下，或重下失败）
+      · `miss`   离线且没有缓存 ⇒ `body` 为 None  · `error`  取不到也没有旧份 ⇒ `body` 为 None
+    `detail` 是给人看的短句（异常文本 / "离线不重下"），要不要用、怎么拼由调用方定。
+
+    ⚠️ 三条实现约束，都是这份合并前逐字抄着的：文件**存在且非空**才算命中（0 字节的
+       半成品不能当"缓存里有"）；过窗口时**先试重下**，失败才退回旧那份；写盘固定 LF。
+    """
+    cache_dir = cache_dir or CACHE_DIR
+    os.makedirs(cache_dir, exist_ok=True)
+    path = cache_path_for(url, cache_dir)
+    stale = False
+    if os.path.exists(path) and os.path.getsize(path) > 0:
+        if time.time() - os.path.getmtime(path) <= CACHE_MAX_AGE:
+            return io.open(path, encoding="utf-8", errors="replace").read(), path, "cache", ""
+        stale = True
+    if offline:
+        if stale:
+            return io.open(path, encoding="utf-8", errors="replace").read(), path, "stale", "离线不重下"
+        return None, path, "miss", ""
+    req = urllib.request.Request(url, headers={"User-Agent": user_agent})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            body = r.read().decode("utf-8", "replace")
+    except Exception as exc:                                      # noqa: BLE001
+        if stale:
+            return io.open(path, encoding="utf-8", errors="replace").read(), \
+                path, "stale", "重下失败：%s" % exc
+        return None, path, "error", str(exc)
+    io.open(path, "w", encoding="utf-8", newline="\n").write(body)
+    return body, path, "fresh", ""
+
 
 
 # ============================================================================

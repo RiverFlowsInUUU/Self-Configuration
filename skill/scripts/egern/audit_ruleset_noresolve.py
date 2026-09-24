@@ -36,14 +36,10 @@ blackmatrix7 的命名约定（可直接换用等价文件）
 import argparse
 import io
 import os
-import re
 import sys
 # 输出编码垫片：见 _egern_common.force_utf8_stdout —— GBK 控制台下 emoji 会崩成退出码 1
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _egern_common import force_utf8_stdout  # noqa: E402
-import tempfile
-import time
-import urllib.request
+from _egern_common import CACHE_MAX_AGE, fetch_cached, force_utf8_stdout  # noqa: E402
 
 try:
     import yaml
@@ -51,39 +47,17 @@ except ImportError:
     print("需要 PyYAML：<venv>/Scripts/python -m pip install pyyaml", file=sys.stderr)
     sys.exit(2)
 
-# 缓存放到系统临时目录（20 个规则集约 5MB，别往 skills 目录里塞）
-CACHE = os.path.join(tempfile.gettempdir(), "egern-ruleset-cache")
-# 新鲜度窗口：从前只看文件在不在 ⇒ 半年前落下的缓存也能拿来判"没有未带 no-resolve 的条目"。
-# 与 surge 侧 audit_ruleset_content.py、同目录 audit_routing_coverage.py 同一条口径。
-CACHE_MAX_AGE = 7 * 86400
+# 新鲜度窗口与取件本体都在 `_egern_common.fetch_cached`（2026-09-24 三份手抄收编到那一处）；
+# 这里只把它的 `error` 翻成本脚本行内一直在用的 `FAIL <原因>` 标签。
 
 
 def fetch(url, offline=False):
     """取规则集正文。返回 `(text, path, source)`，source ∈ `fresh`（本次下载）·
-    `cache`（窗口内命中）· `stale`（过了窗口且重下失败 ⇒ 退回旧那份，调用方要出声）。
+    `cache`（窗口内命中）· `stale`（过了窗口退回旧那份，调用方要出声）· `miss` · `FAIL <原因>`。
     """
-    os.makedirs(CACHE, exist_ok=True)
-    name = re.sub(r"[^A-Za-z0-9._-]", "_", url.rstrip("/").split("/")[-1]) or "ruleset"
-    path = os.path.join(CACHE, name)
-    stale = False
-    if os.path.exists(path) and os.path.getsize(path) > 0:
-        if time.time() - os.path.getmtime(path) <= CACHE_MAX_AGE:
-            return io.open(path, encoding="utf-8", errors="replace").read(), path, "cache"
-        stale = True
-    if offline:
-        if stale:
-            return io.open(path, encoding="utf-8", errors="replace").read(), path, "stale"
-        return None, path, "miss"
-    req = urllib.request.Request(url, headers={"User-Agent": "egern-dns-audit/1.0"})
-    try:
-        with urllib.request.urlopen(req, timeout=60) as r:
-            body = r.read().decode("utf-8", "replace")
-    except Exception as e:  # noqa: BLE001
-        if stale:
-            return io.open(path, encoding="utf-8", errors="replace").read(), path, "stale"
-        return None, path, f"FAIL {e}"
-    io.open(path, "w", encoding="utf-8", newline="\n").write(body)
-    return body, path, "fresh"
+    body, path, source, detail = fetch_cached(url, offline,
+                                              user_agent="egern-dns-audit/1.0", timeout=60)
+    return body, path, ("FAIL " + detail) if source == "error" else source
 
 
 def parse(body):
@@ -167,7 +141,9 @@ def main():
             goods.append(name)
         print(f"{name:34s} {len(entries):>7d} {len(ip):>6d} {len(missing):>13d}  {status:6s} {policy}{flag}")
         if how == "stale":
-            print(f"{'':34s} ⚠️ 缓存已过 {CACHE_MAX_AGE // 86400} 天窗口且重下失败 ⇒ 以上按陈旧那份判")
+            # 两种"退回陈旧那份"的成因不一样，话要说对：离线档根本没尝试重下。
+            why = "，--offline 不重下" if a.offline else "且重下失败"
+            print(f"{'':34s} ⚠️ 缓存已过 {CACHE_MAX_AGE // 86400} 天窗口{why} ⇒ 以上按陈旧那份判")
         if missing and not disabled:
             print(f"{'':34s} 样例: " + " | ".join(missing[:3]))
         if section == "dns.forward":

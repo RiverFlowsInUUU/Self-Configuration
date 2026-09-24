@@ -35,10 +35,11 @@ import re
 import sys
 # 输出编码垫片：见 _egern_common.force_utf8_stdout —— GBK 控制台下 emoji 会崩成退出码 1
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _egern_common import force_utf8_stdout  # noqa: E402
-import tempfile
-import time
-import urllib.request
+from _egern_common import (  # noqa: E402
+    CACHE_MAX_AGE,
+    fetch_cached,
+    force_utf8_stdout,
+)
 from fnmatch import fnmatch
 
 try:
@@ -47,10 +48,8 @@ except ImportError:
     print("需要 PyYAML：<venv>/Scripts/python -m pip install pyyaml", file=sys.stderr)
     sys.exit(2)
 
-CACHE = os.path.join(tempfile.gettempdir(), "egern-ruleset-cache")
-# 缓存新鲜度窗口（秒）。从前 fetch 只看文件在不在，缓存**永不过期** ⇒ 这份审计可能拿
-# 半年前的规则集判"国内域名有覆盖"。与 surge 侧 audit_ruleset_content.py 同一条口径。
-CACHE_MAX_AGE = 7 * 86400
+# 缓存目录与 7 天新鲜度窗口的**本体**都在 _egern_common.fetch_cached（2026-09-24 三份手抄收编到那一处）；
+# CACHE_MAX_AGE 只留给末尾那行人读的窗口读数。
 
 # 国内探针：全部是 .com/.net 等**不以 .cn 结尾**的常见站，专门用来暴露
 # 「.cn 兜底掩盖了国内域名无覆盖」这种假象。
@@ -76,38 +75,17 @@ def _note(url, source):
 
 
 def fetch(url, offline=False):
-    """取规则集正文，带缓存新鲜度窗口。缓存过窗口时**先试着重下**，重下失败才退回旧那份
-    并出声（`stale`）—— 静默拿陈旧规则集判"国内域名有覆盖"是本脚本最坏的一种假绿。
+    """取规则集正文，带缓存新鲜度窗口 —— 窗口判据本体在 `_egern_common.fetch_cached`。
+    缓存过窗口时**先试着重下**，重下失败才退回旧那份并出声（`stale`）——
+    静默拿陈旧规则集判"国内域名有覆盖"是本脚本最坏的一种假绿。
     """
-    os.makedirs(CACHE, exist_ok=True)
-    name = re.sub(r"[^A-Za-z0-9._-]", "_", url.rstrip("/").split("/")[-1]) or "ruleset"
-    path = os.path.join(CACHE, name)
-    stale = False
-    if os.path.exists(path) and os.path.getsize(path) > 0:
-        if time.time() - os.path.getmtime(path) <= CACHE_MAX_AGE:
-            _note(url, "cache")
-            return io.open(path, encoding="utf-8", errors="replace").read()
-        stale = True
-    if offline:
-        if stale:
-            _note(url, "stale")
-            print(f"⚠️  {name}：缓存已过 {CACHE_MAX_AGE // 86400} 天窗口，--offline 不重下 ⇒ 按陈旧那份判")
-            return io.open(path, encoding="utf-8", errors="replace").read()
-        _note(url, "miss")
-        return None
-    req = urllib.request.Request(url, headers={"User-Agent": "egern-routing-audit/1.0"})
-    try:
-        with urllib.request.urlopen(req, timeout=90) as r:
-            body = r.read().decode("utf-8", "replace")
-    except Exception:  # noqa: BLE001
-        if stale:
-            _note(url, "stale")
-            print(f"⚠️  {name}：缓存已过 {CACHE_MAX_AGE // 86400} 天窗口且重下失败 ⇒ 退回过期那份")
-            return io.open(path, encoding="utf-8", errors="replace").read()
-        _note(url, "fail")
-        return None
-    io.open(path, "w", encoding="utf-8", newline="\n").write(body)
-    _note(url, "fresh")
+    body, path, source, _detail = fetch_cached(url, offline,
+                                               user_agent="egern-routing-audit/1.0", timeout=90)
+    if source == "stale":
+        name = os.path.basename(path)
+        print(f"⚠️  {name}：缓存已过 {CACHE_MAX_AGE // 86400} 天窗口"
+              + ("，--offline 不重下 ⇒ 按陈旧那份判" if offline else "且重下失败 ⇒ 退回过期那份"))
+    _note(url, "fail" if source == "error" else source)
     return body
 
 
