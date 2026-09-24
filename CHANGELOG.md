@@ -26,6 +26,19 @@
 - 🩹 同款头注修正：`audit_ruleset_refresh.py` 的 `routing_v3.2.yaml` → `routing.yaml`。配置零改动。
 - 🔢 `docs/04` 的分项读数「10/10 + 40/40」→「10/10 + 8/8」（40 是 20 份 profile 时代的口径）。
 
+### Surge
+
+- 🔒 冻结文件 `architecture.sh` 两处（本轮授权）：
+  ① 补一条**存在性**判据（②-0）：16 个 DNS 键必须在四份形态里都出现 —— ② 与 ②-b 都是成对比较，
+  对"两侧同缺"天然免疫；实测把 `encrypted-dns-follow-outbound-mode` / `allow-dns-svcb` /
+  `ipv6 = true` 从四份 profile 一起删掉，改前**整个闸 6 项判据全过、退出码 0**（而文档 7 处都写着
+  「16 个 DNS 键逐字相同」），改后 architecture.sh 判负 rc=1 并逐份点名缺哪几个键。
+  内部 oks 13 → 17；阶段 3 仍是 1 条断言 ⇒ Surge 总数与文档读数不变。
+  ② 五处 `v3.2` 字面量去掉（`:86` / `:328` / `:334` / `:337` / `:376`）—— 其中 `:337` 原先指着一份
+  **已不存在**的 `egern/profiles/routing_v3.2.yaml`；文案改为不带版本号，并写明"哪一版看头注、
+  由 `check_min_pair.py` 判"（写死的版本号在下一次升版后就会变成假话，而断言照旧通过）。
+  配置与 `PG_ORDER` 承诺值零改动。
+
 ### 共享层
 
 - 🔒 冻结文件 `check_portability.py` 两处（本轮授权）：

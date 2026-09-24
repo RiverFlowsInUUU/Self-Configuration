@@ -83,7 +83,7 @@ DOC_NETS = ("192.0.2.", "198.51.100.", "203.0.113.")
 # 允许出现在模板里的域名（占位域名 + 公开规则集/测试端点域名）
 ALLOWED_DOMAINS = (
     "example.com", "example.net", "example.org",
-    "sub.example.com",                 # 订阅 URL 的占位域名（routing_v3.2.conf）
+    "sub.example.com",                 # 订阅 URL 的占位域名（routing.conf）
     "cdn-relay.example.com",
     "connect.rom.miui.com",            # 连通性测试端点
     "www.gstatic.com",                 # TCP 测速端点（性能探针，刻意境外）
@@ -206,6 +206,25 @@ def dns_kv(path):
             d[k.strip()] = v.strip()
     return d
 
+# ── ②-0 存在性：16 个 DNS 键必须在四份形态里都出现 ───────────────────────────
+# ⚠️ 为什么必须有这一条（2026-09-25 实测）：② 与 ②-b 都是**成对比较**，对"两侧同缺"
+#    天然免疫 —— 把任意一个键从四份 profile 里一起删掉，两段都照样通过。
+#    实测：删 `encrypted-dns-follow-outbound-mode` / `allow-dns-svcb` / `ipv6 = true`
+#    × 四份 ⇒ 整个闸 6 项判据全过、退出码 0，而文档 7 处都写着「16 个 DNS 键逐字相同」。
+#    ⚠️ 其中 `ipv6 = true` **不是**官方默认值（官方 default: false）⇒ 删它是静默改行为，
+#    不是"回到默认"。所以存在性判据覆盖全部 16 个键，不按"是否等于默认值"分类。
+FOUR_FORMS = [f"{s}.{ext}" for s in ("lazy", CURRENT) for ext in ("conf", "min.conf")]
+for _form in FOUR_FORMS:
+    _fp = os.path.join(profiles_dir, _form)
+    if not os.path.isfile(_fp):
+        continue          # 缺文件由 ② 的"两份形态必须同时存在"点名，这里不重复判
+    _miss = [k for k in DNS_KEYS if k not in dns_kv(_fp)]
+    if _miss:
+        fails.append(f"{_form}: DNS 段缺 {len(_miss)} 个键 —— " + " / ".join(_miss)
+                     + "  ⇒ 与文档承诺的「16 个键」不符；删键等于改变行为")
+    else:
+        oks.append(f"{_form}: {len(DNS_KEYS)} 个 DNS 相关键齐全")
+
 # ⚠️ 两组形态，各查一遍。routing 与 lazy 的 DNS 段**必须逐字相同** ——
 #    "这份配置是分流版"不构成降低防泄露标准的理由。
 for _stem in ("lazy", CURRENT):
@@ -325,16 +344,18 @@ for f in files:
 
     oks.append(f"{f}: {len(rs)} 条规则，顺序与 no-resolve 均符合铁律")
 
-# ── ④ routing_v3.2.conf 的组顺序必须与 Egern v3.2 对齐 ───────────────────────────
+# ── ④ routing.conf 的组顺序必须与 Egern 侧的承诺表对齐 ───────────────────────────
 #
 # ⚠️ 为什么必须有这一条（这是**踩过两次**的坑）：
 #    [Proxy Group] 的**先后顺序**此前没有任何断言守着 —— 改一个组、挪一段注释，
 #    顺序就可能悄悄漂走，而所有其它断言（成员可解析、规则可解析、地区正则一致）
 #    **照样全绿**。老板两次发现"分流组前后顺序又错了"，两次都是靠肉眼。
-#    ⇒ 顺序是**被承诺过的对外特征**（README / docs 明写"与 Egern v3.2 对齐"），
+#    ⇒ 顺序是**被承诺过的对外特征**（README / docs 明写"与 Egern 对齐"），
 #      就必须有机械对账。
 #
-# 顺序来源（唯一真值）：本仓 `egern/profiles/routing_v3.2.yaml` 的 26 个 `policy_groups`。
+# 顺序来源（唯一真值）：本仓 `egern/profiles/routing.yaml` 的 26 个 `policy_groups`
+#（当前是哪一版只看该文件头注 `#! version=`，由 check_min_pair.py 判 —— 这里**不写版本号**：
+#  写死的版本号在下一次升版之后就会变成假话，而断言照旧通过）。
 # ⚠️ 明知可以从那个文件运行时推导，仍然**把顺序写死在这里**：它是承诺值，
 #    不是派生值。改顺序 = 必须同时改这里，这正是我们想要的 ——
 #    逼改动者显式面对"我在改一个对外承诺"（两侧同步见差异对照 §2）。
@@ -373,7 +394,7 @@ if os.path.isfile(_rf_full):
     got_names = [n for _, n in got]
     if got_names == PG_ORDER:
         oks.append(f"{CURRENT}.conf: [Proxy Group] 的 {len(PG_ORDER)} 个组顺序"
-                   f"与 Egern v3.2 对齐 👍")
+                   f"与 Egern 侧的承诺表对齐 👍")
     else:
         diffs = []
         for i in range(max(len(got_names), len(PG_ORDER))):
