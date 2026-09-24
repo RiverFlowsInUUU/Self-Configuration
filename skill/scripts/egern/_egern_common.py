@@ -25,6 +25,7 @@
     from _egern_common import fetch_cached          # 远程规则集取件（缓存 + 7 天窗口）
 """
 
+import hashlib
 import io
 import os
 import re
@@ -125,10 +126,24 @@ def _slurp(path):
         return f.read()
 
 
+def cache_key(url):
+    """URL → 缓存文件名：`<末段消毒名（截 60）>__<全 URL 的 sha1 前 12 位>`。
+
+    ⚠️ 早先**只取 URL 末段**（`split("/")[-1]`）⇒ 不同仓库的同名文件会**互相覆盖**。
+    实测（2026-09-25）：当前 profile 引用的 64 条 URL 里 `dns-query` 同名 5 条、
+    `generate_204` 同名 4 条（这两类不进缓存，所以还没出事）；但规则集本身已引用
+    6 个上游 owner，一旦出现同名规则集，审计就会**拿别的仓库的内容判通过**。
+    前半给人读、后半保证唯一。Surge 侧 `audit_ruleset_content.py` 用**同一形状** ——
+    两侧缓存目录本就不同（`surge-ruleset-cache` / `egern-ruleset-cache`），所以这不是
+    "跨内核共用一份实现"，只是口径一致（并存两套才是隐患）。
+    """
+    tail = re.sub(r"[^A-Za-z0-9._-]", "_", url.rstrip("/").split("/")[-1])[:60] or "ruleset"
+    return "%s__%s" % (tail, hashlib.sha1(url.encode("utf-8")).hexdigest()[:12])
+
+
 def cache_path_for(url, cache_dir=None):
-    """URL → 缓存文件路径（文件名规则沿用三份手抄里那一式：末段路径消毒）。"""
-    name = re.sub(r"[^A-Za-z0-9._-]", "_", url.rstrip("/").split("/")[-1]) or "ruleset"
-    return os.path.join(cache_dir or CACHE_DIR, name)
+    """URL → 缓存文件路径。键的算法见 `cache_key()`。"""
+    return os.path.join(cache_dir or CACHE_DIR, cache_key(url))
 
 
 def fetch_cached(url, offline=False, user_agent="egern-audit/1.0", timeout=60, cache_dir=None):

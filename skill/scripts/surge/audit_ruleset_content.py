@@ -27,6 +27,7 @@
 """
 
 import argparse
+import hashlib
 import os
 import re
 import sys
@@ -69,8 +70,13 @@ def fetch(url, cache_dir, timeout=45, force=False, max_age=CACHE_MAX_AGE_DAYS * 
     一份半年前落下的规则集判"通过"，而输出里那个（缓存）看不出新陈 ——
     与 `bump_version.py` 头注讲的「当前版」同一条罪：读数说得出名字、说不出事实。
     """
-    key = re.sub(r"[^A-Za-z0-9._-]", "_", url)[-120:]
-    path = os.path.join(cache_dir, key)
+    # ⚠️ 键的形状与 Egern 侧 `_egern_common.cache_key()` 一致：末段消毒名（可读）+
+    #    全 URL 的 sha1 前 12 位（唯一）。早先这里取"整 URL 消毒后末 120 字符"，与 Egern 侧
+    #    "只取末段"并存 —— 两种口径各自都只是"够用"，并存的隐患是没人知道哪个才是约定
+    #    （2026-09-25 统一）。两侧缓存目录本就不同，所以这不是跨内核共用，只是口径一致。
+    _tail = re.sub(r"[^A-Za-z0-9._-]", "_", url.rstrip("/").split("/")[-1])[:60] or "ruleset"
+    path = os.path.join(cache_dir, "%s__%s" % (
+        _tail, hashlib.sha1(url.encode("utf-8")).hexdigest()[:12]))
     stale = False
     if os.path.isfile(path) and not force:
         if max_age is None or time.time() - os.path.getmtime(path) <= max_age:
