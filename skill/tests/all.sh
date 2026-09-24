@@ -125,6 +125,7 @@ import os, subprocess
 
 GATE = (".gitattributes", "skill/tests/all.sh", "skill/tests/check_portability.py",
         "skill/tests/check_min_pair.py", "skill/tests/bump_version.py",
+        "skill/tests/check_doc_readings.py",
         "skill/tests/surge/run.sh", "skill/tests/surge/architecture.sh",
         "skill/tests/surge/check_links.py", "skill/tests/egern/run.sh")
 

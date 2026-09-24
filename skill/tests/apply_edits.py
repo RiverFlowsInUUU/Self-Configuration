@@ -16,7 +16,7 @@
   · 整批先在内存里算完再写盘（唯一的落盘入口是 `commit()`，且只在校验零失败后才允许调用）；
     写盘用 `newline='\n'`，不碰行尾、不补尾换行。
   · 目标含 `\\r` 直接判负 —— 本工具只写 LF，CRLF 文件要先单独归一（AGENTS.md §2 第 3 条）。
-  · 冻结闸门文件（AGENTS.md §2 第 5 条那 9 个）默认拒绝，必须显式 `--allow-gate`；
+  · 冻结闸门文件（AGENTS.md §2 第 5 条那份名单，现 10 个）默认拒绝，必须显式 `--allow-gate`；
     拒绝消息里就写着请示要附哪两条。
 
 用法：
@@ -42,6 +42,7 @@ ROOT = os.path.dirname(os.path.dirname(HERE))                    # → skill →
 # 与 AGENTS.md §2 第 5 条同源；--selftest 的 A9 拿 it 跟 all.sh 里的 GATE 逐字对拍，防两处漂移。
 GATE = (".gitattributes", "skill/tests/all.sh", "skill/tests/check_portability.py",
         "skill/tests/check_min_pair.py", "skill/tests/bump_version.py",
+        "skill/tests/check_doc_readings.py",
         "skill/tests/surge/run.sh", "skill/tests/surge/architecture.sh",
         "skill/tests/surge/check_links.py", "skill/tests/egern/run.sh")
 
