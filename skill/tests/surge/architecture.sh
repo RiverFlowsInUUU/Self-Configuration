@@ -34,7 +34,7 @@ ROOT="$(cd "$HERE/../../.." && pwd)"
 PROFILES="$ROOT/surge/profiles"
 PY="${PY:-python3}"
 # 当前推荐版：与 run.sh 同一个**承诺值**（run.sh 会 export 下来；单独跑本脚本时用这里的默认值）。
-export CURRENT="${CURRENT:-routing_v3.1}"
+export CURRENT="${CURRENT:-routing_v3.2}"
 
 # ⚠️ Git Bash / MSYS 下 `pwd` 返回 `/c/Users/...`，Windows 版 Python 打不开。
 if command -v cygpath >/dev/null 2>&1; then
@@ -68,7 +68,7 @@ import os, re, sys
 profiles_dir = sys.argv[1]
 # 当前推荐版由 shell 侧 export 下来。刻意不从这里挑「最大版本号」——
 # 版本号是对外承诺（README / docs 指着它），不是可从文件名推导的派生值。
-CURRENT = os.environ.get("CURRENT") or "routing_v3.1"
+CURRENT = os.environ.get("CURRENT") or "routing_v3.2"
 files = sorted(f for f in os.listdir(profiles_dir) if f.endswith(".conf"))
 if not files:
     print("❌ profiles/ 里没有 .conf 文件")
@@ -83,7 +83,7 @@ DOC_NETS = ("192.0.2.", "198.51.100.", "203.0.113.")
 # 允许出现在模板里的域名（占位域名 + 公开规则集/测试端点域名）
 ALLOWED_DOMAINS = (
     "example.com", "example.net", "example.org",
-    "sub.example.com",                 # 订阅 URL 的占位域名（routing_v3.1.conf）
+    "sub.example.com",                 # 订阅 URL 的占位域名（routing_v3.2.conf）
     "cdn-relay.example.com",
     "connect.rom.miui.com",            # 连通性测试端点
     "www.gstatic.com",                 # TCP 测速端点（性能探针，刻意境外）
@@ -325,16 +325,16 @@ for f in files:
 
     oks.append(f"{f}: {len(rs)} 条规则，顺序与 no-resolve 均符合铁律")
 
-# ── ④ routing_v3.1.conf 的组顺序必须与 Egern v3.1 对齐 ───────────────────────────
+# ── ④ routing_v3.2.conf 的组顺序必须与 Egern v3.2 对齐 ───────────────────────────
 #
 # ⚠️ 为什么必须有这一条（这是**踩过两次**的坑）：
 #    [Proxy Group] 的**先后顺序**此前没有任何断言守着 —— 改一个组、挪一段注释，
 #    顺序就可能悄悄漂走，而所有其它断言（成员可解析、规则可解析、地区正则一致）
 #    **照样全绿**。老板两次发现"分流组前后顺序又错了"，两次都是靠肉眼。
-#    ⇒ 顺序是**被承诺过的对外特征**（README / docs 明写"与 Egern v3.1 对齐"），
+#    ⇒ 顺序是**被承诺过的对外特征**（README / docs 明写"与 Egern v3.2 对齐"），
 #      就必须有机械对账。
 #
-# 顺序来源（唯一真值）：本仓 `egern/profiles/routing_v3.1.yaml` 的 26 个 `policy_groups`。
+# 顺序来源（唯一真值）：本仓 `egern/profiles/routing_v3.2.yaml` 的 26 个 `policy_groups`。
 # ⚠️ 明知可以从那个文件运行时推导，仍然**把顺序写死在这里**：它是承诺值，
 #    不是派生值。改顺序 = 必须同时改这里，这正是我们想要的 ——
 #    逼改动者显式面对"我在改一个对外承诺"（两侧同步见差异对照 §2）。
@@ -373,7 +373,7 @@ if os.path.isfile(_rf_full):
     got_names = [n for _, n in got]
     if got_names == PG_ORDER:
         oks.append(f"{CURRENT}.conf: [Proxy Group] 的 {len(PG_ORDER)} 个组顺序"
-                   f"与 Egern v3.1 对齐 👍")
+                   f"与 Egern v3.2 对齐 👍")
     else:
         diffs = []
         for i in range(max(len(got_names), len(PG_ORDER))):

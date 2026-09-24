@@ -42,9 +42,9 @@ S=./skill/scripts
 python "$S/check_surge_dns.py"  surge/profiles/lazy.conf              # 期望 exit 0
 python "$S/check_surge_dns.py"  surge/profiles/lazy.conf --strict      # medium 也算失败
 python "$S/check_surge_dns.py"  surge/profiles/lazy.conf --quiet       # 只打印计数
-python "$S/audit_region_filters.py" surge/profiles/routing_v3.1.conf       # 期望 3 项全过（出处 / 互斥 / 类型）
-python "$S/audit_region_filters.py" surge/profiles/routing_v3.1.conf -v    # 逐个组的关键词数
-python "$S/audit_ruleset_refresh.py" surge/profiles/routing_v3.1.conf --strict  # 期望 exit 0（全部钉在 604800）
+python "$S/audit_region_filters.py" surge/profiles/routing_v3.2.conf       # 期望 3 项全过（出处 / 互斥 / 类型）
+python "$S/audit_region_filters.py" surge/profiles/routing_v3.2.conf -v    # 逐个组的关键词数
+python "$S/audit_ruleset_refresh.py" surge/profiles/routing_v3.2.conf --strict  # 期望 exit 0（全部钉在 604800）
 python "$S/audit_ruleset_refresh.py" surge/profiles/*.conf --quiet           # 逐份计数（历史存档版只查非正值）
 bash   ./skill/tests/surge/architecture.sh                           # 期望 exit 0
 
@@ -52,10 +52,10 @@ bash   ./skill/tests/surge/architecture.sh                           # 期望 ex
 python "$S/audit_ruleset_content.py"  surge/profiles/lazy.conf         # 期望 exit 0
 python "$S/audit_ruleset_content.py"  surge/profiles/lazy.conf --show-domestic --force
 python "$S/audit_routing_coverage.py" surge/profiles/lazy.conf         # 期望 39/39
-python "$S/audit_routing_coverage.py" surge/profiles/routing_v3.1.conf      # 期望 39/39（期望表自动切换）
+python "$S/audit_routing_coverage.py" surge/profiles/routing_v3.2.conf      # 期望 39/39（期望表自动切换）
 python "$S/audit_routing_coverage.py" surge/profiles/lazy.conf --show-all
 
-# ── 回归测试（6 阶段，23 断言）────────────────────────────────────
+# ── 回归测试（6 阶段，27 断言）────────────────────────────────────
 bash ./skill/tests/surge/run.sh
 SKIP_NET=1 bash ./skill/tests/surge/run.sh
 PY=/path/to/python bash ./skill/tests/surge/run.sh
@@ -63,7 +63,7 @@ CURRENT=routing_v3 bash ./skill/tests/surge/run.sh     # 覆盖成任意版本�
 ```
 
 ⭐ **「当前推荐版」是一个常量，不是一堆文件名**：`run.sh` 与 `architecture.sh` 各有
-   一行 `CURRENT="${CURRENT:-routing_v3.1}"`（承诺值，刻意不推导"最大版本号"）。
+   一行 `CURRENT="${CURRENT:-routing_v3.2}"`（承诺值，刻意不推导"最大版本号"）。
    阶段 2 的 `--strict` 名单、阶段 4 的联网审计、阶段 5 的正则对账、`architecture.sh` 的
    ②-b / ④ 段都由它派生 ⇒ 升版只改那一行。
    配套前置检查：`$PROFILES/$CURRENT.conf` 不存在 ⇒ **退出码 2** —— 否则阶段 4 / 5 会
@@ -270,7 +270,7 @@ FOREIGN_PROBES = {
 
 **分流版用另一套期望表**（`FOREIGN_PROBES_ROUTING`），精确到应用组名：
 
-| 探针 | `lazy.conf` 期望 | `routing_v3.1.conf` 期望 |
+| 探针 | `lazy.conf` 期望 | `routing_v3.2.conf` 期望 |
 |:-----|:-----------------|:--------------------|
 | `chat.openai.com` | `AI` / `PROXY` | **`CHATGPT`** |
 | `api.anthropic.com` | `AI` / `PROXY` | **`CLAUDE`** |
@@ -364,8 +364,8 @@ DNS_KEYS = [
 | 断言 | 比对对象 | 理由 |
 |:-----|:---------|:-----|
 | ②-a | `lazy.conf` ↔ `lazy.min.conf` | `.min.conf` 的定位是「去掉注释」，不是「裁剪配置」 |
-| ②-b | `routing_v3.1.conf` ↔ `routing_v3.1.min.conf` | 同上 |
-| ②-c | `lazy.conf` ↔ `routing_v3.1.conf` | **防泄露标准不因分流粒度而变** |
+| ②-b | `routing_v3.2.conf` ↔ `routing_v3.2.min.conf` | 同上 |
+| ②-c | `lazy.conf` ↔ `routing_v3.2.conf` | **防泄露标准不因分流粒度而变** |
 
 任一键只在一边存在、或值不同 → 失败。
 
@@ -374,7 +374,7 @@ DNS_KEYS = [
 差别只允许出现在 `[Proxy Group]` 与 `[Rule]` 的粒度上。
 
 ⚠️ 改 `DNS_KEYS` 时注意：它同时是 ②-a / ②-b / ②-c 的依据，
-且 `routing_v3.1.min.conf` 是用脚本从 `routing_v3.1.conf` 生成的 —— 生成脚本会**丢掉注释**，
+且 `routing_v3.2.min.conf` 是用脚本从 `routing_v3.2.conf` 生成的 —— 生成脚本会**丢掉注释**，
 所以 profile 里的 `# audit-waive:` 行必须**手动补回 min 版**（否则豁免失效、
 审计器会对 min 版报 HIGH）。这是踩过的坑，见 § 退出码约定上方的说明。
 

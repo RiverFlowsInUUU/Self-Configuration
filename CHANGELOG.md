@@ -12,6 +12,21 @@
 
 ## 2026-09-24
 
+### Surge
+
+- 🧬 **分流版升版 `routing_v3.2`**（新建四份形态，`routing_v3.1` 转为存档，`profiles/` 现 8 份 `.conf`）。
+  相对 `v3.1` 只动一处实质内容：**规则级 `no-resolve` 按「实测零 IP 就不写」重排** —— 9 条零 IP 的规则集
+  （`private.txt` / `Gemini` / `Anthropic` / `Claude` / `AI.list` / `YouTubeMusic` / `GitHub` / `Microsoft` / `direct.txt`）
+  去掉开关，9 条真含 IP 的保留（内置 `LAN` · `OpenAI` · `Spotify` · `YouTube` · `Google` · `Telegram` · `Twitter` · `WeChat` · `GEOIP`）。
+  分组、规则条数（24）、顺序、DNS 段**逐字未动**。
+- ✂️ **`lazy.conf` 两处**：删掉远程 Apple 全量集（只留内置 `SYSTEM`，规则 11 → 10 条）；
+  段序统一为 白名单 → 广告 ×2 → 内网 ×2 → `SYSTEM` → `AI.list` → `direct.txt` → `GEOIP,CN` → `FINAL`，
+  与 Egern 懒人版同位；同样去掉 3 条零 IP 规则的 `no-resolve`。`.min` 形态按新 `[Rule]` 段重建。
+- 🚫 **未动**：`[General]` 的 16 个 DNS 键、`[Proxy Group]` 组序、图标、占位凭据 —— 防泄露面与分流能力都没碰。
+- 🔢 读数：`check_surge_dns` `lazy` 0 high / 3 low / 12 ok / 2 waived、`routing_v3.2` 同判据面 11 ok；
+  `audit_ruleset_refresh --strict` 20 条 + 6 条全部钉在 604800；`audit_routing_coverage`
+  `lazy` **37/37** · `routing_v3.2` **39/39**。回归 23 → **27 断言**（阶段 2 的 profile 数 6 → 8）。
+
 ### Egern
 
 - 🩹 订正 2026-09-23 查出未改的那处文档错误：`default_proxy_group` 按官方定义写作「添加代理时自动加入的策略组名称」
@@ -23,6 +38,20 @@
   存在的理由是 `docs/规则集与来源.md` §2 那条「`SYSTEM` 仅 Surge 有、Egern 无对应内置集」—— 懒人版用它补上 `SYSTEM` 位。
   本文件先落仓，**profile 还没引用**（raw URL 得先存在，否则联网审计只是静默跳过）；引用与读数同步在懒人版那一批里做。
   配置零改动。
+- 🧬 **分流版升版 `routing_v3.2`**（新建两份形态，`routing_v1`~`v3.1` **八版全部保留**，`profiles/` 现 20 份 `.yaml`）。
+  相对 `v3.1` 两处：① 位 ⑲ 补 `apple_system.list → DIRECT`，与 Surge 内置 `SYSTEM` 同位同策略；
+  ② `Proxy.list` 由 `disabled: true` 改成**纯注释块** —— Surge 侧没有禁用开关、只有注释，`disabled` 仍占一个
+  `rules` 数组位，注释化才是两侧同写法。规则 24 条、分组 26 个、`dns` 段**逐字未动**。
+- ✂️ **`lazy.yaml` 两处**：删掉内联 `domain_suffix: cn`（`direct.txt` 第 23,829 行本来就是 `DOMAIN-SUFFIX,cn`，
+  属重复）；补上 `apple_system.list → DIRECT`。规则一增一减仍 10 条，编号 ①–⑦ 重排，
+  文件末尾关于 `push.apple.com` / `real_ip_domains` 的两处说明按现状改正。`.min` 重新生成。
+- 🚫 **未动**：`dns` 段四层 `forward`、26 个分组、`AD` 只留 `REJECT` 的懒人版特例、兜底 `default → Proxy`。
+  规则级 `no-resolve` 那条原则**在 Egern 侧不落成规则行开关** —— `no_resolve` 只适用 `geoip`/`ip_cidr`/`ip_cidr6`/`asn`，
+  写在 `rule_set` 上不生效，同层防线仍在规则集文件里（条目级 `,no-resolve`）。
+- 🔢 读数：`check_egern_dns routing_v3.2` / `lazy` 均 0 high / 2 low / 24 ok；
+  `audit_ruleset_noresolve` `lazy` 10 → **11 个**规则集（`rules` 8 + `dns.forward` 3）、`routing_v3.2` **25 个**
+  （与 `v3.1` 同数不同组成：进 `apple_system.list`、出 `Proxy.list`）；
+  `audit_ruleset_refresh --strict` 22 条 + 8 条全部钉在 604800。回归 46 → **50 断言**（阶段 2 覆盖 20 份 profile）。
 
 ### 共享层
 
@@ -36,6 +65,23 @@
   重写前的原文归档在 [`docs/日志旧版原文.md`](docs/日志旧版原文.md)（只读存档，超链接已摊平以免断链）；
   体例同步写进两份 `skill/reference/*/public-repo.md`。配置、脚本、判据零改动。
 - ✅ 两轮各自跑过 `all.sh`，四项全绿。
+- 🧪 `skill/scripts/surge/audit_routing_coverage.py`（非冻结）补上内置集合的判定面：`SYSTEM` 过去没有内容快照，
+  模拟匹配时**永远不命中**，懒人版删掉远程 Apple 全量集后就有探针必然判负。现在它按本仓
+  `egern/apple_system.list` 近似内置 `SYSTEM`（联网取不到时静默退回旧行为，并打一行 `ℹ️` 说明是快照近似）；
+  Apple 探针同时**分两套**：分流版 6 条、懒人版 4 条 —— 懒人版按设计不再接住 `developer.apple.com` /
+  `gateway.icloud.com`，让它们走节点，不是把它们从断言里删掉。
+- 📚 文档读数与活指向同步：两份 `docs/07-文件版本沿革`（升版段 + 历代版本表 + 懒人版段）、
+  两份 `docs/08-审计读数`、`docs/规则集与来源` / `跨内核差异对照` / `注意事项`、`README` / `skill/README`、
+  两份 `skill/reference/*/checker.md` 与 `public-repo.md`、两份 `DetailsReadme`、`surge/docs/04`·`06`·`11`、
+  `egern/docs/04`·`05`。顺带修掉三处早已陈旧的读数（Egern 懒人版"4 组 / 9 条"、两处"23 个断言"、
+  `audit_ruleset_refresh` 读数的 21/22 之差）。
+- 🚪 **本轮触碰闸门 4 个文件**（`all.sh` · `surge/run.sh` · `surge/architecture.sh` · `egern/run.sh`）：
+  其中 `CURRENT=` 那一行属 `bump_version.py` 的既定豁免；**超出豁免的还有三处纯注释 / 提示文案**
+  —— `all.sh` 打印默认版本号、`architecture.sh` 里 3 条注释与断言消息里的版本号、`egern/run.sh:140` 的
+  版本清单注释。**判定逻辑与断言条数未改**，但按 §2 第 5 条这属于要报备的部分，故在此写明。
+- ⚠️ **订阅端要改地址**：`.../surge/profiles/routing_v3.2.min.conf` 与 `.../egern/profiles/routing_v3.2.min.yaml`。
+  `v3.1` / `v3` 的文件仍在仓内可达，但已不是推荐版 —— 这是本项目**第三次**因升版让旧订阅地址指向旧内容。
+- ✅ `bash skill/tests/all.sh` 复测：Surge **27** · Egern **50** · `.min` 对拍 **14** · 可移植性 **18**，四项全绿。
 
 ---
 

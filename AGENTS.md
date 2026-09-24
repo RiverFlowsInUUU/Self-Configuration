@@ -93,7 +93,7 @@ git config --global user.email "你的邮箱"
 
 ## 5 · 升版只改一行 + 一个脚本
 
-「当前推荐版」在三处 runner 里是**承诺值** `CURRENT="${CURRENT:-routing_v3.1}"`，不靠推导最大版本号。
+「当前推荐版」在三处 runner 里是**承诺值** `CURRENT="${CURRENT:-routing_v3.2}"`，不靠推导最大版本号。
 机械部分交给 `python skill/tests/bump_version.py <旧> <新>`（默认只出计划，`--apply` 才写盘，`--gate` 跑 §1）。
 散文（根 `CHANGELOG.md` 的升版说明、各篇「版本沿革」里的历史表述、写死的断言数）由它列成清单交给人，**脚本不猜**。
 

@@ -84,6 +84,11 @@ rules:
     policy: DIRECT
     update_interval: 604800
 - rule_set:
+    name: System
+    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/apple_system.list
+    policy: DIRECT
+    update_interval: 604800
+- rule_set:
     name: AI
     match: https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/75f0101039d71724b6e998b34604c2e053580e0c/Clash/Ruleset/AI.list
     policy: AI
@@ -93,9 +98,6 @@ rules:
     match: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/direct.txt
     policy: DIRECT
     update_interval: 604800
-- domain_suffix:
-    match: cn
-    policy: DIRECT
 - geoip:
     match: CN
     policy: DIRECT

@@ -126,7 +126,8 @@ comm -23 dA.txt dB.txt | wc -l    # 期望 0
 `audit_routing_coverage.py` 就是干这个的。它的设计有两个关键点：
 
 1. **探针域名必须"不以 `.cn` 结尾"。**
-   如果探针全是 `xx.cn`，那么 `domain_suffix: cn` 这条兜底会把它们全部救成 `DIRECT`，从而**掩盖"规则集没有域名覆盖"这个事实**。
+   如果探针全是 `xx.cn`，那么一条 `domain_suffix: cn` 兜底就会把它们全部救成 `DIRECT`，从而**掩盖"规则集没有域名覆盖"这个事实**。
+   （懒人版原先正是这条兜底的存在地 —— 2026-09-24 已删，理由同上：`direct.txt` 本身含 `DOMAIN-SUFFIX,cn`。）
    所以脚本用的是 `jd.com` / `zhihu.com` / `163.com` / `qq.com` / `douyin.com` / `meituan.com` / `xiaohongshu.com` 这类**国内但非 `.cn`** 的域名。
 2. **同时跑境外探针**，确认没有把境外域名误判成直连。
 

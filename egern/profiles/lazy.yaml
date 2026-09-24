@@ -5,9 +5,9 @@
 # （白名单 / 广告拦截 / 内网直连 / 国内直连 / AI 分流 / 兜底）。
 # 全部流量走一个出口。
 #
-# ⚠️ 它与「分流版」routing_v3.1 的关系：**不是"精简"，是"裁剪"**
+# ⚠️ 它与「分流版」routing_v3.2 的关系：**不是"精简"，是"裁剪"**
 #     砍的是功能本身（地区组、订阅组、各类 App 分组及其规则全部移除）。
-#     保留部分的防泄露结构与分流版**同构**：dns 段去掉行尾注释后与 routing_v3.1 逐字相同
+#     保留部分的防泄露结构与分流版**同构**：dns 段去掉行尾注释后与 routing_v3.2 逐字相同
 #     （四层 Forward · bootstrap / upstreams / proxy_nameservers / block_ips 全部一致），
 #     规则段同样带 Lan + Private 两条内网。
 #
@@ -22,7 +22,7 @@
 #     依据 Egern 官方文档：规则 `policy` 字段可填**内置策略 / 代理服务器名 / 策略组名**，
 #     内置策略只有 `DIRECT` 与 `REJECT` 两个 —— **`Final` 不是关键字**，它一直只是组名，
 #     所以这一层组纯属可选，删掉它不改变任何流量的去向。
-#     分流版（routing_v1 ~ v3.1）**保留** `Final` 组且不隐藏：那里它有真实作用
+#     分流版（routing_v1 ~ v3.2）**保留** `Final` 组且不隐藏：那里它有真实作用
 #     （面板上可把兜底切到某个地区组 / 订阅组），与懒人版的前提不同。
 #
 # 📌 本文件**没有版本号**，是长期沿用的「懒人版」入口。
@@ -46,7 +46,7 @@ real_ip_domains:
 - '*.local'
 - '*.push.apple.com'
 # ============================================================================
-# dns 段 —— 去掉行尾注释后与 routing_v3.1 逐字相同（防泄露结构完整保留）
+# dns 段 —— 去掉行尾注释后与 routing_v3.2 逐字相同（防泄露结构完整保留）
 #
 # 判据：删掉某一项，会不会多出一条明文 UDP:53 的通路？不会 → 冗余。
 # 明文通路只有 bootstrap 一条，官方规定它只有两个用途：① 解析 upstreams 中
@@ -137,8 +137,8 @@ policy_groups:
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/AdBlock.png
 # ============================================================================
 # 规则：顺序就是一切（自上而下第一条命中即决定去向）
-#   ① 白名单   ② 广告拦截   ③ 内网直连   ④ AI 分流
-#   ⑤ 直连集合（国内域名 / cn 后缀 / geoip CN）   ⑥ 兜底
+#   ① 白名单   ② 广告拦截   ③ 内网直连   ④ Apple 系统服务
+#   ⑤ AI 分流  ⑥ 直连集合（国内域名 / geoip CN）   ⑦ 兜底
 # ============================================================================
 rules:
 # ① 白名单 —— **必须放最前面**：这些域名要抢在广告规则之前放行，
@@ -171,31 +171,43 @@ rules:
     match: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/private.txt
     policy: DIRECT
     update_interval: 604800
-# ④ AI 分流 —— 命中即走 AI 组（→ Proxy）。
+# ④ Apple 系统服务直连 —— 对齐 Surge 懒人版的内置 `SYSTEM`。Egern 没有内置系统集，
+#    这里引用本仓自托管的时点快照：内容 = Surge 官方内置 `SYSTEM` 在 2026-09-24 的清单，
+#    删掉了 Egern 不支持的两条 `PROCESS-NAME`（`trustd` / `netbiosd`）。
+#    ⚠️ 本仓自己维护 ⇒ 没有第三方刷新审计，Surge 大版本更新时人工比对一次。
+#    18 条里 10 条下面的 `CN`(direct.txt) 已经接住，另 8 条是它独有的增量（APNs 推送 /
+#    定位 / CDN 定位那几类）；重复无害 —— 两条规则同为 DIRECT。
+- rule_set:
+    name: System
+    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/apple_system.list
+    policy: DIRECT
+    update_interval: 604800
+# ⑤ AI 分流 —— 命中即走 AI 组（→ Proxy）。
 - rule_set:
     name: AI
     match: https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/75f0101039d71724b6e998b34604c2e053580e0c/Clash/Ruleset/AI.list
     policy: AI
     update_interval: 604800
-# ⑤ 直连集合 —— 以下 3 条共同承担「国内流量直连」。
+# ⑥ 直连集合 —— 以下 2 条共同承担「国内流量直连」。
 #    ⚠️ routing_v1 ~ routing_v2.4 在这里还有一条 Apple_All_No_Resolve.list（Apple 全域名直连），
 #    本配置已移除 —— Apple 流量变成「部分直连、部分走代理」，详见文件末尾第 3 条。
+#    （2026-09-24 ④ 位补了 System 快照，系统级主机那部分恢复直连；全量 Apple 集仍未引用。）
 #    Loyalsoldier direct.txt：11 万条纯域名，是国内直连的主承重墙。
 - rule_set:
     name: CN
     match: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/direct.txt
     policy: DIRECT
     update_interval: 604800
-- domain_suffix:
-    match: cn
-    policy: DIRECT
+#    （原先这里还有一条 `domain_suffix: cn`，2026-09-24 删：`direct.txt` 本身含
+#     `DOMAIN-SUFFIX,cn`（实测在该清单第 23,829 行），它接不住的那部分正是规则集覆盖
+#     缺口 —— 留着反而会把缺口掩盖成「cn 域名直连正常」。分流版 v3 删它是同一条理由。）
 #    geoip CN 是 IP 类规则，**必须带 no_resolve** —— 否则每个走到它的域名
 #    都会被强制本地解析一次，那正是泄露来源。
 - geoip:
     match: CN
     policy: DIRECT
     no_resolve: true
-# ⑥ 兜底 —— 所有未命中规则的流量直接走 `Proxy`（不再有 `Final` 中间组，
+# ⑦ 兜底 —— 所有未命中规则的流量直接走 `Proxy`（不再有 `Final` 中间组，
 #     与 Surge 懒人版 `FINAL,Proxy,dns-failed` 一跳对一跳）。
 #     `name` 只是日志标签（官方：用于日志和调试），保留 `Final` 这个名字
 #     是为了历代日志读得通；真正决定去向的只有 `policy`。
@@ -230,10 +242,11 @@ default_proxy_group: Proxy
 #   3. 移除 Apple_All_No_Resolve 后，Apple 流量变成「一部分直连、一部分走代理」。
 #      实测依据（direct.txt 共 110,607 条 DOMAIN-SUFFIX + 553 条 DOMAIN）：
 #      · **走代理**：icloud.com 及全部 iCloud 子域（gateway / setup / p01-* 等）、
-#        apple.com 裸域、appstore.com、push.apple.com。
+#        apple.com 裸域、appstore.com。
+#        （push.apple.com 原本也在这里 —— 2026-09-24 起由 ④ 的 System 快照接回直连。）
 #        ⚠️ iCloud 系在 direct.txt 里**一条都没有** —— 这是影响最大的部分。
-#        ⚠️ push.apple.com 虽然在 real_ip_domains 里，但那只是「DNS 返回真实 IP、
-#           不做 fake-ip」，**不改变路由去向**，所以它仍走代理。
+#        ⚠️ push.apple.com 在 real_ip_domains 里那层只是「DNS 返回真实 IP、不做 fake-ip」，
+#           本来不改变去向（代理）；现在改直连是因为 ④ 那条规则，不是因为 real_ip_domains。
 #      · **仍直连**：direct.txt 里那 257 条 Apple 精确条目 —— www.apple.com /
 #        mesu.apple.com / swcdn.apple.com / gs-loc.apple.com /
 #        amp-api.apps.apple.com / *.mzstatic.com 等（**全是 DOMAIN 精确匹配**，

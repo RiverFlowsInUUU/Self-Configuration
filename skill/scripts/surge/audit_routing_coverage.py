@@ -17,6 +17,11 @@
           这条兜底，而不是真的接住了国内域名。
     B. **境外探针**（OpenAI / GitHub / Google …）必须命中代理或 AI 组，
        且**绝不能被广告规则误杀**（提前发现误杀比等用户报障好）。
+    C. **误杀探针**：广告清单不能把功能域（GitHub / iCloud / Apple 那 8 个）拦掉。
+    D. **Apple 探针**：Apple 系统服务域必须直连 —— 懒人版与分流版两套期望
+       （懒人版 2026-09-24 起不引用 Apple 全量集，`developer` / `icloud` 那两条归分流版）。
+       内置 `SYSTEM` 的内容按本仓快照近似（见 `BUILTIN_SET_SNAPSHOTS`）：早先它是
+       "内容不可得 ⇒ 视作不命中"，等于那条规则在审计里根本不存在 —— 现在补上了。
 
 退出码：0 = 全部符合预期；1 = 有探针落错；2 = 用法 / 网络错误。
 
@@ -40,6 +45,10 @@ from _surge_common import (  # noqa: E402
 )
 from audit_ruleset_content import fetch, parse_ruleset  # noqa: E402
 
+# 本文件位于 <仓库根>/skill/scripts/surge/ ⇒ 上溯三级即仓库根（不假设 cwd，也不出本仓取文件）
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+
 # ── 探针清单 ────────────────────────────────────────────────────────────────
 # ⭐ 国内探针刻意混入**非 .cn** 的域名 —— 这是本脚本的核心判据之一。
 #    只靠 `DOMAIN-SUFFIX,cn` 兜住的配置会在这些域名上暴露。
@@ -59,7 +68,7 @@ DOMESTIC_PROBES = [
 #    期望值必须精确到**组名**，才能证明「按应用分流」真的接住了对应域名。
 #
 #    两套期望的差别只在于组名：lazy.conf 只有一个 AI 组，
-#    routing_v3.1.conf 把它拆成了 ChatGPT / Gemini / Claude / AI 四个组，
+#    routing_v3.2.conf 把它拆成了 ChatGPT / Gemini / Claude / AI 四个组，
 #    并把 Spotify / YouTube / GitHub / Google / Microsoft / Telegram / Twitter /
 #    WeChat 这些也各自单列。
 #    ⚠️ 这不是"顺手放宽"—— 它是**分流版新增能力**的验收条件：
@@ -76,7 +85,7 @@ FOREIGN_PROBES = {
     "x.com": {"PROXY"},
 }
 
-# 分流版（routing_v3.1.conf）—— 精确到应用组名。
+# 分流版（routing_v3.2.conf）—— 精确到应用组名。
 #
 # ⚠️ 这张表的作用是**反向证明「按应用分流」真的接住了域名**：
 #    每个探针必须落进它**专属**的那个组，落到兜底（Final）就算失败。
@@ -126,15 +135,41 @@ FALSE_POSITIVE_PROBES = [
 ]
 
 # ⭐ Apple 探针：这些是**必须直连**的 Apple 服务域。
-#    它们不在 `SYSTEM` 内置集合里（SYSTEM 只管激活 / 推送 / 配对的核心主机），
-#    靠的是那份 Apple_All_No_Resolve.list。
 #    ⚠️ 判据意义：Apple 流量走代理**不会报错**，只会「变慢 + 偶尔推送延迟」——
 #       属于用户不会主动报障、但体验确实变差的一类。所以要靠审计钉住。
 #       当年 Egern 把这条规则集写成不带 no-resolve 的版本，泄露就是从这类"看不见的解析"来的。
-APPLE_PROBES = [
+#    两套期望的差别只在**懒人版 2026-09-24 起不引用 Apple 全量集**：
+#      · `courier.push.apple.com` 与 `gs-loc.apple.com` 由内置 `SYSTEM` 接住
+#        （`push.apple.com` 是后缀条目、`gs-loc` 是精确条目 —— 见 BUILTIN_SET_SNAPSHOTS）；
+#      · `www.apple.com` / `swcdn.apple.com` 由 `direct.txt` 的 Apple 精确条目接住；
+#      · `developer.apple.com` / `gateway.icloud.com` **只有** Apple 全量集里有 ⇒ 归分流版。
+#        懒人版按设计让这两类走代理（写进 lazy.conf §4 的取舍里），所以不进懒人版期望。
+APPLE_PROBES_ROUTING = [
     "www.apple.com", "swcdn.apple.com", "gs-loc.apple.com",
     "courier.push.apple.com", "developer.apple.com", "gateway.icloud.com",
 ]
+APPLE_PROBES_LAZY = [
+    "www.apple.com", "swcdn.apple.com", "gs-loc.apple.com", "courier.push.apple.com",
+]
+APPLE_PROBES = APPLE_PROBES_ROUTING          # 兼容旧提法：全量那份就是分流版的期望
+
+
+def apple_probes_for(path):
+    """按 profile 里实际定义了哪些组，选 Apple 探针表（判据在文件里，不在文件名里）。"""
+    return APPLE_PROBES_LAZY if foreign_expectations(path) is FOREIGN_PROBES else APPLE_PROBES_ROUTING
+
+
+# ── 内置规则集的本地时点快照 ────────────────────────────────────────────────
+# Surge 的内置集合（`SYSTEM` / `LAN`）没有可下载的 URL，早先的模拟器只能"视作不命中"
+# —— 那是**已知的仿真盲区**：`RULE-SET,SYSTEM,DIRECT` 这条规则在审计里等于不存在。
+# 现在 `SYSTEM` 的内容有了一份本仓自维护的快照（给 Egern 用的那份，两者内容同源），
+# 借它把这个盲区补上：SYSTEM 参与的判定从此可测。
+# ⚠️ 快照是**时点**内容，Surge 内置集会随版本变；对不上时以 Surge 客户端里的实际列表为准。
+#    找不到快照时退回旧行为（视作不命中）并打印一行提示，不静默。
+BUILTIN_SET_SNAPSHOTS = {
+    "SYSTEM": os.path.join(REPO_ROOT, "egern", "apple_system.list"),
+}
+
 
 IP_RULE_TYPES = {"IP-CIDR", "IP-CIDR6", "IP-ASN", "GEOIP", "IP-GEOIP", "SRC-IP", "DEST-IP"}
 
@@ -168,14 +203,22 @@ class Matcher:
         store = {"DOMAIN": set(), "DOMAIN-SUFFIX": set(), "DOMAIN-KEYWORD": set(),
                  "DOMAIN-WILDCARD": set()}
         if "/" not in ident and "." not in ident:
-            self._sets[ident] = store      # 内置集合：内容不可得，视作不命中
-            return store
-        try:
-            text, _ = fetch(ident, self.cache)
-        except (urllib.error.URLError, urllib.error.HTTPError, OSError) as e:
-            print(f"   ⚠️  规则集下载失败 {ident.split('/')[-1]}：{e}", file=sys.stderr)
-            self._sets[ident] = store
-            return store
+            snap = BUILTIN_SET_SNAPSHOTS.get(ident.upper())
+            if not (snap and os.path.isfile(snap)):
+                # 内置集合：无快照可用 ⇒ 退回旧行为（视作不命中）。不打印：`LAN` 一直是
+                # 这个口径，探针集里也没有需要 LAN 才成立的期望，加一行 ⚠️ 只会变噪音。
+                self._sets[ident] = store
+                return store
+            with open(snap, encoding="utf-8", errors="replace") as f:
+                text = f.read()
+            print(f"   ℹ️  内置集合 {ident} 按本仓快照近似判定：{os.path.relpath(snap, REPO_ROOT)}")
+        else:
+            try:
+                text, _ = fetch(ident, self.cache)
+            except (urllib.error.URLError, urllib.error.HTTPError, OSError) as e:
+                print(f"   ⚠️  规则集下载失败 {ident.split('/')[-1]}：{e}", file=sys.stderr)
+                self._sets[ident] = store
+                return store
         for ln, line in enumerate(text.splitlines(), 1):
             s = line.strip()
             if not s or s.startswith("#") or s.startswith(";") or s.startswith("//"):
@@ -316,7 +359,8 @@ def main():
     # ── D. Apple 探针必须 DIRECT ────────────────────────────────────────────
     print("── D · Apple 探针（期望命中 DIRECT）")
     ok_ap = 0
-    for d in APPLE_PROBES:
+    apple_probes = apple_probes_for(a.profile)
+    for d in apple_probes:
         r = m.match(d)
         pol = r["policy"] if r else "（无规则命中）"
         if pol.strip().upper() == "DIRECT":
@@ -326,11 +370,11 @@ def main():
         else:
             fails.append((d, pol, r))
             print(f"   ❌ {d:<32} → {pol}（Apple 服务应直连）")
-    print(f"   {ok_ap}/{len(APPLE_PROBES)} 命中 DIRECT\n")
+    print(f"   {ok_ap}/{len(apple_probes)} 命中 DIRECT\n")
 
     print("─" * 62)
     total = (len(DOMESTIC_PROBES) + len(expectations)
-             + len(FALSE_POSITIVE_PROBES) + len(APPLE_PROBES))
+             + len(FALSE_POSITIVE_PROBES) + len(apple_probes))
     print(f"result: {total - len(fails)} passed, {len(fails)} failed")
     if fails:
         print("❌ 未通过")

@@ -47,7 +47,7 @@ PY="${PY:-python3}"
 #    升版必须有人显式动这一行，逼改动者面对「我在改一个对外承诺」。
 #    可用环境变量覆盖：CURRENT=routing_v3 bash skill/tests/surge/run.sh
 #    （export ⇒ 阶段 3 调用的 architecture.sh 直接继承；单独跑 Egern 侧 runner 时同一变量同样生效）
-export CURRENT="${CURRENT:-routing_v3.1}"
+export CURRENT="${CURRENT:-routing_v3.2}"
 
 # ⚠️ Git Bash / MSYS 下 `pwd` 返回 `/c/Users/...`，Windows 版 Python 打不开
 #    （会报 `can't open file 'C:\\c\\Users\\...'`）。用 cygpath -w 转换；

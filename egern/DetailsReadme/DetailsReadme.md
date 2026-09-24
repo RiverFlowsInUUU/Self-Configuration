@@ -73,7 +73,7 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
   见下方「组清单与要点」；逐段讲解见 `docs/04-模板逐段讲解.md` §4）。
 - **图标**：模板用到的 26 个分流组图标（整合自 RiverFlowsInUUU/Rule、jnlaoshu/MySelf、Koolson/Qure 三个公开仓库）已统一下载进本仓库 `icons/`，全部以 `https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/<file>` 形式引用，**不再跨项目引用任何图标地址**。
 
-#### 组清单与要点（`routing_v3.1`）
+#### 组清单与要点（`routing_v3.2`）
 
 **节点来源**（2 个订阅槽位）：`Airport-A` / `Airport-B`（后者另带一条 `urls_disabled` 示例）。
 `routing_v2.1` 及更早为 4 个槽位（多出 `Airport-C` / `Airport-Free`）—— `routing_v2.2` 精简掉，选路能力不变。
@@ -117,7 +117,9 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 1. `Lan.list` —— 局域网。
 2. `Apple_All_No_Resolve.list` —— Apple 域名 + 带 `no-resolve` 的 IP，既做直连判定又不重新触发解析。
 3. **国内域名规则集（Loyalsoldier `direct.txt`）** —— 约 **11.1 万条纯域名**（`DOMAIN-SUFFIX` 约 11.06 万 + `DOMAIN` 553，**零 IP 条目**；上游每次更新都会变动，故这里用约数），是「国内域名直连」的主力。纯域名规则只做字符串匹配、不触发解析，因此无需 `no_resolve`；「已经是 IP 的连接」由下方 `geoip: CN` 兜住。
-> 另有一条 `domain_suffix: cn` —— 把整个 `.cn` TLD 再钉一次，**不依赖规则集是否加载成功**
+> （历史上这里还有一条 `domain_suffix: cn` —— 把整个 `.cn` TLD 再钉一次，**不依赖规则集是否加载成功**；
+> 2026-09-24 起分流版与懒人版都不再需要：`direct.txt` 本身含 `DOMAIN-SUFFIX,cn`。）
+> 另有一条本仓自托管的 `apple_system.list` —— 位 ⑲ 的系统域名集，补 Egern 没有内置 `SYSTEM` 的缺口。
 > （`direct.txt` 已覆盖绝大多数国内域名）。它与上面 3 条规则集合起来，构成 `rules` 的全部直连来源。
 
 **规则的实际匹配顺序**（`rules` 按声明顺序求值，第一条命中即决定去向）：
@@ -392,7 +394,7 @@ forward:
 ## 6. 已知代价与取舍
 
 - **`Foreign-DNS` 已删除**：迭代 f10 起它就无任何引用（forward 兜底改国内组后不再需要境外组）；`routing_v1` 曾**整组注释**保留为 A/B 备用，**`routing_v2` 起整段删除**。要恢复境外解析答案，需自行在 `upstreams` 里加回该组。风险提醒：若用它作兜底且代理未就绪，会掉进明文 `:53`。
-- **两条线 × 双形态**：可选只有 `egern/profiles/lazy.yaml`（**懒人版**，4 组 / 9 条规则）与 `egern/profiles/routing_v3.1.yaml`（**分流版 · 推荐**，26 组 / 24 条）；其余 `routing_v3` / `routing_v2.4` / `routing_v2.3` / `routing_v2.2` / `routing_v2.1` / `routing_v2` / `routing_v1` 都是分流线的历代旧版、保留以备对照（`routing_v1`~`routing_v2.1` 为 29 组 / 24 条，`routing_v2.2`~`routing_v2.4` 为 27 组 / 24 条）。**各版本逐项差异见 [`docs/07-文件版本沿革.md`](../docs/07-文件版本沿革.md)（权威版本）**。⚠️ 文件名 `routing_v1`…`routing_v3.1` 是**
+- **两条线 × 双形态**：可选只有 `egern/profiles/lazy.yaml`（**懒人版**，3 组 / 10 条规则）与 `egern/profiles/routing_v3.2.yaml`（**分流版 · 推荐**，26 组 / 24 条）；其余 `routing_v3` / `routing_v2.4` / `routing_v2.3` / `routing_v2.2` / `routing_v2.1` / `routing_v2` / `routing_v1` 都是分流线的历代旧版、保留以备对照（`routing_v1`~`routing_v2.1` 为 29 组 / 24 条，`routing_v2.2`~`routing_v2.4` 为 27 组 / 24 条）。**各版本逐项差异见 [`docs/07-文件版本沿革.md`](../docs/07-文件版本沿革.md)（权威版本）**。⚠️ 文件名 `routing_v1`…`routing_v3.2` 是**
 - **图标整合进本仓库**：26 个图标源自已整合进 `icons/`，模板不再跨项目引用图标地址。来源归属与许可见 [`docs/图标与许可.md`](../../docs/图标与许可.md)（公开仓库署名）。
 - **删除虚拟节点（不保留引用）**：模板 `proxies` 为空，占位节点名引用已从 `policy_groups` 剥除（组间引用保留；`routing_v2.3` 起**已无空组**）。不保留虚假结构，由你自行填写。
 - **与订阅解耦**：forward 不写任何节点 / 订阅域名，换订阅无需改动 DNS 段（清单 18 验证订阅耦合 4 → 0）。
@@ -515,7 +517,7 @@ S="skill/scripts"
 
 一句话：**`no-resolve` 是「IP 规则的开关」，与域名规则无关。** 判据是「这条规则能不能匹配 IP」，而不是「别人的配置里写了没写」。代价见 Q3：给 IP 规则关掉解析判定后，必须用域名规则补回来。
 
-> **实证（本模板）**：profile 里 `no_resolve` **只出现 1 次**（`geoip: CN`）。模板引用的 **21 个**远程规则集中，**11 个是纯域名**（`direct.txt` / Gemini / Claude / Anthropic / AI / GitHub / Microsoft / YouTubeMusic / AWAvenue-Ads / **Jinx white-guard** / **Jinx ads**，无需 `no-resolve`）、**10 个含 IP 条目**（Lan / ChatGPT / Spotify / YouTube / Google / Telegram / Twitter / WeChat / Apple、以及 disabled 的 Proxy），而这 10 个的 IP 条目**已在上游 `.list` 内全部自带 `,no-resolve`**（逐条核对：14/14、2/2、6+5、13/13、97/97 …）。所以「看起来到处是 `no-resolve`」是**上游规则集自带的**，不是 profile 在堆 —— profile 只需管好自己那一条 `geoip: CN`。
+> **实证（本模板）**：profile 里 `no_resolve` **只出现 1 次**（`geoip: CN`）。模板引用的 **21 个**远程规则集中，**12 个是纯域名**（多出本仓自托管的 `apple_system.list`，18 条全域名）（`direct.txt` / Gemini / Claude / Anthropic / AI / GitHub / Microsoft / YouTubeMusic / AWAvenue-Ads / **Jinx white-guard** / **Jinx ads**，无需 `no-resolve`）、**9 个含 IP 条目**（Lan / ChatGPT / Spotify / YouTube / Google / Telegram / Twitter / WeChat / Apple；`Proxy.list` 已改纯注释、不再被引用），而这 9 个的 IP 条目**已在上游 `.list` 内全部自带 `,no-resolve`**（逐条核对：14/14、2/2、6+5、13/13、97/97 …）。所以「看起来到处是 `no-resolve`」是**上游规则集自带的**，不是 profile 在堆 —— profile 只需管好自己那一条 `geoip: CN`。
 
 **Q5：`Foreign-DNS` 组去哪了？我还能用吗？**
 `routing_v2` 起已整段删除（迭代 f10 起它就无引用，`routing_v1` 曾注释保留为 A/B 备用）。想用境外解析答案，需自行在 `upstreams` 里加回该组（6 个境外 DoH/DoT 端点），并把 forward 兜底 `value` 改过去。但注意：若它作兜底且代理未就绪，会掉进明文 `:53` —— 迭代 f10 默认用国内组兜底正是为了避免这条路径。
@@ -527,7 +529,7 @@ S="skill/scripts"
 为了避免模板跨项目引用图标地址（你的项目或别人的项目）。26 个图标已整合进 `icons/`，模板全部以本仓库原始地址引用，并保留来源署名。
 
 **Q8：两个模板文件有什么区别？**
-内容完全一致，仅注释差异。`egern/profiles/routing_v3.1.yaml` 带注释（每段附原理），`egern/profiles/routing_v3.1.min.yaml` 纯配置。按习惯取用其一（其余版本同理：`lazy` / `routing_v1` / `routing_v2` / `routing_v2.1` / `routing_v2.2` / `routing_v2.3` / `routing_v2.4` / `routing_v3` / `routing_v3.1` 各有这两份）。
+内容完全一致，仅注释差异。`egern/profiles/routing_v3.2.yaml` 带注释（每段附原理），`egern/profiles/routing_v3.2.min.yaml` 纯配置。按习惯取用其一（其余版本同理：`lazy` / `routing_v1` / `routing_v2` / `routing_v2.1` / `routing_v2.2` / `routing_v2.3` / `routing_v2.4` / `routing_v3` / `routing_v3.2` 各有这两份）。
 
 **Q9：审计全绿就安全了吗？**
 不。本项目连续 5 次「脚本 0 high、实测仍有问题」，根因是审计维度缺失（没看规则集文件、没看分流覆盖）。必须把每个新维度补成可复跑脚本，而不是重跑同一脚本。详见第 3 节 / 清单 16、17。

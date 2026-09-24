@@ -27,7 +27,7 @@
 "<venv>/Scripts/python.exe" scripts/profile_ruleset.py some.list    # 规则集类型分布
 "<venv>/Scripts/python.exe" scripts/weigh_ruleset.py some.list [--sub small.list] [--probe d]  # ★ 规则集"重量"：构成/冗余/深度/加载与匹配耗时/覆盖对比
 
-bash scripts/../tests/run.sh                                       # ★★ 回归测试两阶段（10 + 36 = 46 断言），退出码非 0 即失败
+bash scripts/../tests/run.sh                                       # ★★ 回归测试两阶段（10 + 40 = 50 断言），退出码非 0 即失败
 CURRENT=routing_v3 bash scripts/../tests/run.sh                    # 覆盖成任意版本（如历史存档版；默认在 run.sh 里那一行）
 ```
 
@@ -90,7 +90,7 @@ f10.2 起（2026-09-20，二次核查报告触发）：⑩ **「靠注释提醒�
 5. ⭐⭐ **断言对象要选"能真正测到它的那个输入"—— 合成 fixture 测不到的东西，别硬塞进去当绿。**
    （2026-09-21 新增 `audit_region_filters.py` 时发现）该脚本校验的是 `policy_groups` 段的地区组 filter，
    而 `tests/` 那五份 fixture 是 **DNS 面的合成配置、根本没有地区组** —— 喂给它只会走"无需校验"分支，
-   **看着绿，其实一个断言都没执行**。所以 `run.sh` 的阶段 2 单独对**仓库里全部 18 份真实 profile** 跑它。
+   **看着绿，其实一个断言都没执行**。所以 `run.sh` 的阶段 2 单独对**仓库里全部 20 份真实 profile** 跑它。
    判据：**如果一份输入必然走"跳过 / 无此项"分支，那它就不构成断言** —— 加守卫时先问
    "这份输入里，被判的东西**存在**吗？"
 

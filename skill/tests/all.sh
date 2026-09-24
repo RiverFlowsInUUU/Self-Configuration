@@ -92,7 +92,7 @@ item() {
 }
 
 printf '仓库根：%s\n' "$ROOT"
-printf '当前推荐版：%s   联网：%s\n\n' "${CURRENT:-routing_v3.1}" "$([ "$OFFLINE" = "1" ] && echo 跳过 || echo 开)"
+printf '当前推荐版：%s   联网：%s\n\n' "${CURRENT:-routing_v3.2}" "$([ "$OFFLINE" = "1" ] && echo 跳过 || echo 开)"
 
 item "Surge 回归（六阶段）"  bash skill/tests/surge/run.sh
 item "Egern 回归（两阶段）"  bash skill/tests/egern/run.sh
