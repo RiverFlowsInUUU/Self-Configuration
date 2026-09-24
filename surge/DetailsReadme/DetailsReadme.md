@@ -32,8 +32,8 @@ Surge/
 ├── profiles/
 │   ├── lazy.conf        # 懒人配置（带注释）—— 改这份
 │   ├── lazy.min.conf    # 同一个配置（纯配置，注释剥掉）—— 导入用
-│   ├── routing_v3.2.conf     # 分流配置（带注释）—— 改这份
-│   └── routing_v3.2.min.conf # 同一个配置（纯配置，注释剥掉）—— 导入用
+│   ├── routing.conf     # 分流配置（带注释）—— 改这份
+│   └── routing.min.conf # 同一个配置（纯配置，注释剥掉）—— 导入用
 ├── icons/               # 26 个策略组图标（本地，不跨项目引用）
 ├── docs/                # 01–11 专题（07 末节存着本内核合并前的迭代史）
 ├── DetailsReadme/       # 本文件
@@ -284,7 +284,7 @@ Node-D = https, 203.0.113.20, 443, underlying-proxy="Node-A", skip-cert-verify=t
 | `Node-C` | `https` | 中转链：经 `Node-B` 出去连 CDN 中转域名 |
 | `Node-D` | `https` | 经 `Node-A` 中转 |
 
-**`routing_v3.2.conf` —— 7 条**，多出的 3 条是地区样本，**名字里带地区关键词**：
+**`routing.conf` —— 7 条**，多出的 3 条是地区样本，**名字里带地区关键词**：
 
 ```
 Node-HK-01 / Node-HK-02   # 中国香港
@@ -659,7 +659,7 @@ AD    = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 | `AI` | `smart` | `Node-C` / `Node-D` | `AI.list` |
 | `AD` | `select` | `REJECT` / `DIRECT` | 独立手动开关（不被规则引用，见 §13.3） |
 
-**`routing_v3.2.conf` —— 26 个组**
+**`routing.conf` —— 26 个组**
 
 组序与 Egern v3.2 **逐位对齐**（由 `skill/tests/surge/architecture.sh` 的 ④ 断言守着）。
 
@@ -766,7 +766,7 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 | 9 | `GEOIP,CN,DIRECT` | `DIRECT` | `no-resolve` | IP 类规则，放最后 |
 | 10 | `FINAL,Proxy,dns-failed` | `Proxy` | `dns-failed` | 兜底 |
 
-**`routing_v3.2.conf` —— 24 条（内容与顺序逐行对齐 Egern v3）**
+**`routing.conf` —— 24 条（内容与顺序逐行对齐 Egern v3）**
 
 | # | 规则 | 策略 | 与 lazy 的差异 |
 |:-:|:-----|:----:|:---------------|
@@ -960,8 +960,8 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 | 断言 | 比对对象 | 理由 |
 |:-----|:---------|:-----|
 | ②-a | `lazy.conf` ↔ `lazy.min.conf` | `.min.conf` 的定位是「去掉注释」，不是「裁剪配置」 |
-| ②-b | `routing_v3.2.conf` ↔ `routing_v3.2.min.conf` | 同上 |
-| ②-c | `lazy.conf` ↔ `routing_v3.2.conf` | **防泄露标准不因分流粒度而变** |
+| ②-b | `routing.conf` ↔ `routing.min.conf` | 同上 |
+| ②-c | `lazy.conf` ↔ `routing.conf` | **防泄露标准不因分流粒度而变** |
 
 比对的是两边共有的 **16 个 DNS 相关键**，逐字相同。改配置时两份都要动，只改一份会被拦下。
 
@@ -971,7 +971,7 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 ### 16.6 兜底：lazy 指 `Proxy`，routing 指 `Final` 组
 
 `lazy.conf` 的 `FINAL,Proxy,dns-failed` **直接**指 `Proxy` 组。
-`routing_v3.2.conf` 改成 `FINAL,Final,dns-failed`，多挂一层 `select` 组 —— 这样你在面板上
+`routing.conf` 改成 `FINAL,Final,dns-failed`，多挂一层 `select` 组 —— 这样你在面板上
 还能改兜底去向，代价是零。
 
 两者都**不做**「分流兜底的境内 / 境外切分」。国内直连靠 `direct.txt` + `GEOIP,CN`
@@ -1026,7 +1026,7 @@ Surge iOS 版不支持本地文件配置，需要把 profile 内容托管到一�
 
 1. **DNS 段不许只改一份，也不许只改一个配置。** 三组比对（`lazy` 两形态 / `routing` 两形态 /
    `lazy` ↔ `routing`）共 16 个键由测试逐字比对。要改就**四份一起改**。
-   ⚠️ 注意 `routing_v3.2.min.conf` 是从 `routing_v3.2.conf` 生成的，生成脚本会丢掉注释 ——
+   ⚠️ 注意 `routing.min.conf` 是从 `routing.conf` 生成的，生成脚本会丢掉注释 ——
    新加 `# audit-waive:` 行后要**手动补回 min 版**，否则审计器会对 min 版报 HIGH。
 2. **规则顺序铁律不许破。** 白名单 → REJECT → 域名类直连 → IP 类 → `FINAL`。
 3. **节点不许提交真实值。** `architecture.sh` 会拦。
@@ -1042,7 +1042,7 @@ Surge iOS 版不支持本地文件配置，需要把 profile 内容托管到一�
 ### 18.3 全部验证都在本地
 
 ```bash
-bash skill/tests/surge/run.sh              # 6 阶段，27 个断言
+bash skill/tests/surge/run.sh              # 6 阶段，19 个断言
 SKIP_NET=1 bash skill/tests/surge/run.sh   # 跳过联网阶段
 ```
 

@@ -27,8 +27,9 @@
 #   PY=/path/to/python bash skill/tests/surge/run.sh     # 指定解释器
 #   SKIP_NET=1 bash skill/tests/surge/run.sh             # 跳过需要联网的阶段 4
 #
-# 「当前推荐版」是文件里的一个常量 CURRENT（阶段 2 的 --strict 名单、阶段 4、阶段 5 都由它派生）：
-#   CURRENT=routing_v3 bash skill/tests/surge/run.sh     # 覆盖成任意版本（如存档版）；长期升版改那一行
+# 订阅地址固定化（2026-09-24）之后：当前版恒为 `routing.conf` / `routing.min.conf`，
+# 「哪一版」只看 profile 头注 `#! version=routing_vX.Y`，由 skill/tests/check_min_pair.py 判。
+# 要复核存档版：带着路径直接调对应脚本（见 docs/注意事项.md），runner 不再接受版本覆盖。
 
 set -u
 # Windows 中文环境默认 GBK(cp936)：内联 python 一 print emoji 就崩成退出码 1，
@@ -41,13 +42,11 @@ ROOT="$(cd "$HERE/../../.." && pwd)"
 PROFILES="$ROOT/surge/profiles"
 PY="${PY:-python3}"
 
-# ── 当前推荐版：一个常量，升版只改这一行 ────────────────────────────────────
-# ⚠️ 刻意写成**承诺值**，不去 profiles/ 里推导「最大版本号」——
-#    与 architecture.sh 里 PG_ORDER 明知可推导仍写死是同一立场：
-#    升版必须有人显式动这一行，逼改动者面对「我在改一个对外承诺」。
-#    可用环境变量覆盖：CURRENT=routing_v3 bash skill/tests/surge/run.sh
-#    （export ⇒ 阶段 3 调用的 architecture.sh 直接继承；单独跑 Egern 侧 runner 时同一变量同样生效）
-export CURRENT="${CURRENT:-routing_v3.2}"
+# ── 当前版词干：固定名，不随版本变 ──────────────────────────────────────────
+# 阶段 2 的 --strict 名单、阶段 4、阶段 5 仍由它派生，但它恒等于 routing。
+# 留这一行只为把文件名集中一处；赋值不带 `:-` ⇒ **环境变量覆盖不进来**（从前那种
+# `CURRENT=routing_v3` 指向存档版的用法已作废，存档版根本不在检查路径上）。
+export CURRENT="routing"
 
 # ⚠️ Git Bash / MSYS 下 `pwd` 返回 `/c/Users/...`，Windows 版 Python 打不开
 #    （会报 `can't open file 'C:\\c\\Users\\...'`）。用 cygpath -w 转换；
@@ -80,12 +79,12 @@ if [ -z "$PROFILES" ] || [ ! -d "$PROFILES" ]; then
   printf '\n❌ 前置检查失败：找不到 profiles/ 目录\n' >&2
   exit 2
 fi
-# ⚠️ 这一条是 CURRENT 变量化的**前提**：阶段 4 / 5 对不存在的文件是 `continue` 跳过的，
-#    升版后若忘了改 CURRENT，那两段会静默不跑 —— 输出照样全绿。缺文件必须在这里就炸。
+# ⚠️ 固定名是「永久地址」，也是阶段 4 / 5 的入口：那两段对不存在的文件是 `continue` 跳过的，
+#    文件一旦不见了会静默不跑 —— 输出照样全绿。缺文件必须在这里就炸。
 if [ ! -f "$PROFILES/$CURRENT.conf" ]; then
-  printf '\n❌ 前置检查失败：CURRENT=%s 在 %s 里没有对应的 .conf\n' "$CURRENT" "$PROFILES" >&2
-  printf '   现存的分流版：%s\n' "$(ls "$PROFILES" | sed -e 's/[.]min[.]conf$//' -e 's/[.]conf$//' -n -e '/^routing_v/p' | sort -u | tr '\n' ' ')" >&2
-  printf '   ⇒ 升版后请改 run.sh / architecture.sh 里的 CURRENT，或用 CURRENT=xxx 覆盖。\n' >&2
+  printf '\n❌ 前置检查失败：%s 在 %s 里不存在（订阅地址是永久承诺，这个名字不能被挪走或改名）\n' "$CURRENT.conf" "$PROFILES" >&2
+  printf '   顶层现存：%s\n' "$(ls "$PROFILES" | tr '\n' ' ')" >&2
+  printf '   ⇒ 存档版在 %s/config_old/ 里，不参与检查；要恢复当前版就从那里放回固定名。\n' "$PROFILES" >&2
   exit 2
 fi
 

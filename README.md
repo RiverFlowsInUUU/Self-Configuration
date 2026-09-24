@@ -36,13 +36,13 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 **Surge**
 
 ```
-https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/profiles/routing_v3.2.min.conf
+https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/profiles/routing.min.conf
 ```
 
 **Egern**
 
 ```
-https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/profiles/routing_v3.2.min.yaml
+https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/profiles/routing.min.yaml
 ```
 
 ---
@@ -76,7 +76,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 | 🛡️ 明文回退 | `dns-server` 裸 IP、绝不写 `system` | `forward` 兜底指向加密组 |
 | 🧭 规则克制 | IP 类规则一律 `no-resolve`，零 IP 的规则集不写（实测判定） | 同一原则写在规则集文件里（`no_resolve` 对 `rule_set` 不生效） |
 | ✂️ 远端解析 | 代理域名交节点解析，本地不留答案 | `proxy_nameservers` 专用通道、强制直连 |
-| 📋 自检读数 | 5 个审计脚本 + 6 阶段 · 27 断言 | 10 个审计脚本 + 2 阶段 · 50 断言 |
+| 📋 自检读数 | 5 个审计脚本 + 6 阶段 · 19 断言 | 10 个审计脚本 + 2 阶段 · 18 断言 |
 
 ---
 
@@ -84,15 +84,17 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 
 | | 路径 | 内容 |
 |:--:|:-----|:-----|
-| 📁 | [`surge/profiles/`](surge/profiles/) | 8 份 `.conf`：懒人版 + 当前分流版 `routing_v3.2` 与存档 `routing_v3` / `routing_v3.1`，各含带注释 / 纯配置 |
-| 📁 | [`egern/profiles/`](egern/profiles/) | 20 份 `.yaml`：lazy + `routing_v1~v3.2` 共 9 版，各含带注释 / 纯配置 |
+| 📁 | [`surge/profiles/`](surge/profiles/) | 固定名四件 `.conf`：`routing` 分流版 · `lazy` 懒人版，各含带注释 / 纯配置 |
+| 📂 | [`surge/profiles/config_old/`](surge/profiles/config_old/) | 被替代的旧版按版本号留档，不参与检查 |
+| 📁 | [`egern/profiles/`](egern/profiles/) | 固定名四件 `.yaml`：与 Surge 侧同名同序 |
+| 📂 | [`egern/profiles/config_old/`](egern/profiles/config_old/) | 同上，`routing_v1` 起到 `v3.1` 的完整沿革 |
 | 📄 | [`egern/apple_system.list`](egern/apple_system.list) | 本仓**自托管**的第一份规则集：Surge 内置 `SYSTEM` 的时点快照，只给 Egern 引用 |
 | 🖼️ | [`icons/`](icons/) | 26 个策略组图标（两内核共用一份） |
 | 📚 | [`docs/`](docs/) | 共享文档 6 篇：跨内核差异对照 / 规则集与来源 / 注意事项 / 图标与许可 / 技能包合并与自包含 / 体检报告 |
 | 📂 | [`surge/docs/`](surge/docs/) · [`egern/docs/`](egern/docs/) | 各内核 9 篇专题（01–08 编号系列 + 分流设计 / 分流顺序） |
 | 📘 | [`surge/DetailsReadme/`](surge/DetailsReadme/) · [`egern/DetailsReadme/`](egern/DetailsReadme/) | 完整技术文档 |
 | 🧪 | [`skill/`](skill/) | 单一入口 `SKILL.md`（按内核分支）+ 审计脚本 + 回归测试：`bash skill/tests/all.sh` 一条命令跑完五项检查 |
-| 🤖 | [`AGENTS.md`](AGENTS.md) | 给 AI agent 的开工说明：改完的固定动作 · 五条硬约束 · 换设备三件事 · 升版一行常量 |
+| 🤖 | [`AGENTS.md`](AGENTS.md) | 给 AI agent 的开工说明：改完的固定动作 · 五条硬约束 · 换设备三件事 · 升版不改订阅地址 |
 | 🔁 | [`.gitattributes`](.gitattributes) | 行尾钉成 LF —— 同一个 commit 在任何设备上落盘字节相同，clone 下来直接改、改完直接推 |
 | 🗓️ | [`CHANGELOG.md`](CHANGELOG.md) | **唯一一份**改动记录：装配层与两个内核的迭代都按日期写在这里；合并前的内核迭代史见 [`surge/docs/07`](surge/docs/07-文件版本沿革.md) · [`egern/docs/07`](egern/docs/07-文件版本沿革.md) 末节 |
 

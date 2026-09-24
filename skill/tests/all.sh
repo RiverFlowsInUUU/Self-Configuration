@@ -14,10 +14,13 @@
 # 用法：
 #   bash skill/tests/all.sh                        # 全跑（含联网审计）
 #   bash skill/tests/all.sh --offline              # 跳过联网项（离线机器 / 无外网时）
-#   CURRENT=routing_v3 bash skill/tests/all.sh     # 覆盖成任意版本（如历史存档版）
+#
+# 检查对象恒为 profiles/ 顶层的固定名四件（routing / lazy 各两形态）。存档版在
+# profiles/config_old/ 里，**不参与任何检查**（2026-09-24 定：丢掉历史包袱、加快速度）；
+# 要复核旧版本，带着路径直接调对应脚本。
 #
 # 退出码：0 全绿 · 1 有判负 · 2 前置环境不达标
-#   （2 = 缺 Python 或缺 PyYAML，或 $CURRENT 指向的 profile 不存在 —— 后者刻意不静默）
+#   （2 = 缺 Python 或缺 PyYAML，或固定名 profile 不存在 —— 后者刻意不静默）
 
 set -u
 
@@ -92,7 +95,10 @@ item() {
 }
 
 printf '仓库根：%s\n' "$ROOT"
-printf '当前推荐版：%s   联网：%s\n\n' "${CURRENT:-routing_v3.2}" "$([ "$OFFLINE" = "1" ] && echo 跳过 || echo 开)"
+# 「当前是哪一版」只剩一个来源：profile 头注 `#! version=routing_vX.Y`（形状由 check_min_pair.py 判）。
+printf '订阅地址固定名 · 当前版：%s   联网：%s\n\n' \
+  "$(sed -n '1s/^#! version=//p' surge/profiles/routing.conf 2>/dev/null)" \
+  "$([ "$OFFLINE" = "1" ] && echo 跳过 || echo 开)"
 
 item "Surge 回归（六阶段）"  bash skill/tests/surge/run.sh
 item "Egern 回归（两阶段）"  bash skill/tests/egern/run.sh
@@ -173,7 +179,6 @@ if hits:
           "并附「不改会漏掉什么」的反例" % len(hits))
     for tag, p in hits:
         print("      · %-12s %s" % (tag, p))
-    print("      例外：`CURRENT=` 那一行由 skill/tests/bump_version.py 改写，不算越界。")
 else:
     print("\n   ✅  闸门未被动过（冻结 %d 个文件 · 名单见 AGENTS.md §2 第 5 条）" % len(GATE))
 PYEOF

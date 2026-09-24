@@ -17,14 +17,12 @@ docs/                                       # ★ 共享文档层（不再各内
   跨内核差异对照.md · 规则集与来源.md · 注意事项.md · 图标与许可.md
 skill/                                      # 本 skill：SKILL.md（§0 判内核 → 分支 A/B）
   reference/{surge,egern}/ · scripts/{surge,egern}/ · tests/{surge,egern}/
-egern/profiles/lazy.yaml / lazy.min.yaml          # 懒人版 · 可选（3 组 / 10 条规则，AD 只留 REJECT、无 Final 兜底组（policy 直写 Proxy）；不挂版本号）
-egern/profiles/routing_v3.2.yaml / .min.yaml    # 分流版 · 推荐（脱敏模板：无节点、无订阅、无证书；机场槽位 1 个）
-egern/profiles/routing_v2.4.yaml / .min.yaml      # 保留（v3 前一版）
-egern/profiles/routing_v2.3.yaml / .min.yaml      # 保留（与 routing_v2.4 只差 rule_set 的 update_interval）
-egern/profiles/routing_v2.2.yaml / .min.yaml      # 保留（与 routing_v2.3 只差 4 处修正）
-egern/profiles/routing_v2.1.yaml / .min.yaml      # 保留（与 routing_v2.2 只差机场槽位：4 个 vs 2 个）
-egern/profiles/routing_v2.yaml / .min.yaml        # 保留原样（比 routing_v2.1 多 52 行「值等于默认值」的冗余行）
-egern/profiles/routing_v1.yaml / .min.yaml        # 分流线起点，保留不删（dns 段较冗长，功能等价）
+egern/profiles/lazy.yaml / lazy.min.yaml          # 懒人版 · 可选（3 组 / 10 条规则，AD 只留 REJECT、无 Final 兜底组（policy 直写 Proxy））
+egern/profiles/routing.yaml / .min.yaml           # 分流版 · 推荐（脱敏模板：无节点、无订阅、无证书；机场槽位 1 个）
+egern/profiles/config_old/                        # 历代版本按号留档、各含 `.min`，不参与检查：
+                                                  #   v2.4（v3 前一版）· v2.3（与 v2.4 只差 rule_set 的 update_interval）
+                                                  #   v2.2（4 处修正）· v2.1（机场槽位 4 vs 2）· v2（多 52 行「值等于默认值」的冗余行）
+                                                  #   v1（分流线起点，dns 段较冗长、功能等价）· lazy_v1.0（懒人版快照）
 egern/docs/01-DNS是怎么工作的.md                  # 递归解析 / 加密 DNS / Fake IP / Egern 双轨模型
 egern/docs/02-DNS为什么会泄露.md                  # 5 个真实案例（每个：现象→机制→修法）
 egern/docs/03-加固清单-18项.md                    # 清单 + no_resolve 三层级 + 验收 6 条
@@ -45,12 +43,12 @@ egern/DetailsReadme/DetailsReadme.md              # 完整技术文档
 > 本内核合并前的迭代史存档在 [`docs/07-文件版本沿革.md`](../../../egern/docs/07-文件版本沿革.md) 末节。
 
 
-> **可选版本只有两个** —— `routing_v3.2`（分流版 · 推荐）与 `lazy`（懒人版）；
-> 其余 `routing_v2.x` / `routing_v1` 都是分流线的历代旧版，保留以备对照。
+> **可选版本只有两个** —— `routing`（分流版 · 推荐）与 `lazy`（懒人版），文件名不带版本号；
+> 当前是第哪一版写在头注 `#! version=routing_v3.2` 里。历代旧版在 `profiles/config_old/` 备对照。
 
 **要更新模板时**：**直接在仓库里改 `profiles/*.yaml` 即可。** 这份模板早已完成脱敏
 （无节点、无订阅、无证书），改它不需要"从自用配置重新生成"。改完跑
-`bash skill/tests/egern/run.sh`（两阶段 50 断言）+ 下面那批审计脚本，再提交推送。
+`bash skill/tests/egern/run.sh`（两阶段 18 断言）+ 下面那批审计脚本，再提交推送。
 
 > 📦 **历史做法（已不再使用）**：早期由维护者本地的 `outputs/` 脚本链生成 ——
 > `_build_public_template.py`（从自用版做**带断言的行级替换** + 38 个敏感串零残留自检）、

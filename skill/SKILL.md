@@ -211,7 +211,7 @@ FINAL,Proxy,dns-failed
 
 #### 验收判据（7 条，全过才算可用）
 
-- [ ] `check_surge_dns.py` 退出码 0（无 HIGH）—— **全部** `surge/profiles/*.conf` 都要过
+- [ ] `check_surge_dns.py` 退出码 0（无 HIGH）—— `surge/profiles/*.conf` **顶层固定名四件**都要过
 - [ ] `audit_ruleset_content.py` 通过（远程规则集无缺 `no-resolve` 的 IP 条目；直连集合域名条目 ≥1000）
 - [ ] `audit_routing_coverage.py` 通过（国内探针全部 DIRECT、境外探针**命中预期的组**、误杀探针不被 REJECT）
 - [ ] `audit_region_filters.py` 通过（仅分流配置：关键词同步 / 互斥 / 类型 smart）

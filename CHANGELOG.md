@@ -26,6 +26,11 @@
 - 🔢 读数：`check_surge_dns` `lazy` 0 high / 3 low / 12 ok / 2 waived、`routing_v3.2` 同判据面 11 ok；
   `audit_ruleset_refresh --strict` 20 条 + 6 条全部钉在 604800；`audit_routing_coverage`
   `lazy` **37/37** · `routing_v3.2` **39/39**。回归 23 → **27 断言**（阶段 2 的 profile 数 6 → 8）。
+- 🏷️ **订阅地址固定化**（同日第二轮）：`profiles/` 顶层只剩 `routing.conf` · `routing.min.conf` · `lazy.conf` · `lazy.min.conf`
+  四件，被替代的 `routing_v3` / `v3.1` 连同各自 `.min` 逐字节进 `profiles/config_old/`（4 份）；当前版 `v3.2`
+  不再占版本号文件名，就住在 `routing.conf` 里，只在第一行留一句 `#! version=routing_v3.2`（懒人版同形）。
+  懒人版从此也有了归档：`lazy_v1.0` 是当前 `lazy.conf` 的逐字节快照。**配置正文零改动** ——
+  分组、规则、DNS 段、图标都没碰，动的只有文件名与那一行头注。
 
 ### Egern
 
@@ -52,6 +57,10 @@
   `audit_ruleset_noresolve` `lazy` 10 → **11 个**规则集（`rules` 8 + `dns.forward` 3）、`routing_v3.2` **25 个**
   （与 `v3.1` 同数不同组成：进 `apple_system.list`、出 `Proxy.list`）；
   `audit_ruleset_refresh --strict` 22 条 + 8 条全部钉在 604800。回归 46 → **50 断言**（阶段 2 覆盖 20 份 profile）。
+- 🏷️ **订阅地址固定化**（同日第二轮）：顶层只剩 `routing.yaml` · `routing.min.yaml` · `lazy.yaml` · `lazy.min.yaml` 四件，
+  `routing_v1` → `v3.1` **八版全部**连同 `.min` 逐字节进 `profiles/config_old/`（16 份），再加懒人版快照
+  `lazy_v1.0` ×2 ⇒ 该目录 18 份。当前版 `v3.2` 住在 `routing.yaml`，头注 `#! version=routing_v3.2`；
+  `lazy.yaml` 头注 `lazy_v1.0`。**配置正文零改动**，20 份 `.yaml` 收成 4 份只是"当前版换固定名 + 其余进归档"。
 
 ### 共享层
 
@@ -123,6 +132,34 @@
   `v3.1` / `v3` 的文件仍在仓内可达，但已不是推荐版 —— 这是本项目**第三次**因升版让旧订阅地址指向旧内容。
 - ✅ `bash skill/tests/all.sh` 复测：Surge **27** · Egern **50** · `.min` 对拍 **14** · 可移植性 **18** ·
   文档读数对拍 **10**，五项全绿。
+- 📌 **订阅地址固定化**（同日第三轮，本轮的主改动；两内核各跟着一条，见上面两段）。`profiles/` 顶层从此**恒为固定名四件**，
+  被替代的版本进 `profiles/config_old/`。「哪一版」这个承诺也从三处收成一处：从前 `surge/run.sh` ·
+  `surge/architecture.sh` · `egern/run.sh` 各写一行 `CURRENT=routing_vX.Y`（改一漏二），现在只剩 profile
+  第一行的 `#! version=routing_vX.Y`；`all.sh` 抬头那句「当前版」直接读 `routing.conf` 的头注，不再打印常量。
+- 🗂 **归档不参与任何检查**：检查路径上的 glob 全是非递归 ⇒ `config_old/` 天然在场外，断言数**不再随版本累积**。
+  读数随之变化：Surge 27 → **19**、Egern 50 → **18**、形态对拍 14 → **18**（4 对逐字相同 + 固定 14 条归档判据：
+  V1–V6 ×2 + 跨侧 2 条，条数与归档份数无关）。可移植性 18 · 文档读数 10 不变。**判据含义一条没改**，少的只是存档版。
+- 🔧 `skill/tests/bump_version.py` 重写为「归档 + 原地升号」：`--family routing|lazy` 先读两内核头注（缺一条或
+  两边不一致就直接停），当前版四件**逐字节**复制进 `config_old/<家族>_v<旧号>.*`，两份完整版原地自增版本号
+  （3.2 → 3.3，到 `x.9` 进位成 `(x+1).0`，只保留一位小数）并钉刷新秒数，再改全仓活指向。**订阅端从此不用换地址。**
+  归档里已有同名文件时只承认一种情形：与当前版**逐字节相同**的升版前快照 ⇒ 复用不重复复制（本轮 lazy 的起点就是这样）；
+  内容不同即「同号不同内容」，拒写并要求显式 `--to`。
+- 🧷 `check_doc_readings.py` 两条判据跟着换口径：D8 允许 raw URL 落在 `profiles/`（必须是固定名四件之一）或
+  `config_old/`；D9 从「三处 `CURRENT=` 一致」改成「头注即当前版 · 同族跨内核一致 · 固定名四件齐」。
+- ⚠️ **一次性的代价**：带版本号的旧订阅地址（`.../profiles/routing_v3.2.min.conf` 那一批）从这次提交起 **404**，
+  维护者已确认接受 —— 断这一次，换此后每升一版都不再断链。本段上一条「订阅端要改地址」从此作废。
+- 🚪 **本轮触碰闸门 7 个文件**：`all.sh`（抬头改成读头注、删 `CURRENT=` 用法行）· `bump_version.py`（上一条的重写）·
+  `check_min_pair.py`（接管固定名与归档的 14 条判据）· `check_doc_readings.py`（D8/D9 换口径）·
+  `surge/run.sh` · `surge/architecture.sh` · `egern/run.sh`（`CURRENT=` 那三行退役）。
+  不改会漏掉什么，逐条带实测反例：三个 runner 继续按 `routing_v3.2.conf` 找文件 ⇒ 固定名一落地就有整个阶段
+  对不存在的文件 `continue`、静默少跑还报绿（正是这套检查自己防的那类假绿）。改后实测：把 `routing.conf` 挪走
+  ⇒ `surge/run.sh` **退出码 2**；头注写成 `routing_v3.2.1` ⇒ V2 与跨侧一致两条同时判负；两内核头注一个 `v3.2`
+  一个 `v3.9` ⇒ 跨侧那条判负；归档里删掉一份 `.min` ⇒ V5 判负；塞进一份高于当前版的归档 ⇒ V6 判负。
+  `check_doc_readings.py` 若沿用旧版：拿它对拍本轮改后的树，**前置就退出码 2**（那句"三处 `CURRENT=` 找不到"），
+  连读数都不再产出 —— 它必须跟着换口径，不是可选的同步。
+- ✅ 验收：在临时副本里跑过**两轮真实升版**（`routing_v3.2 → v3.3`、`lazy_v1.0 → v1.1`），副本内 `all.sh` 五项全绿，
+  顶层仍是四件固定名、`config_old/` 各多一版、头注自增到位、`.min` 对拍未被误伤；本仓 `bash skill/tests/all.sh`
+  （含联网项）Surge **19** · Egern **18** · 形态对拍 **18** · 可移植性 **18** · 文档读数 **10**，五项全绿。
 
 ---
 

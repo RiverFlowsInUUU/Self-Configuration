@@ -22,11 +22,12 @@ Self-Configuration/
 │   └── tests/{surge,egern}/     # 回归套件 + fixture
 └── surge/                       ── 本内核的全部产品物 ──
     ├── README → 见根 README      # 不再各自一份首页
-    ├── profiles/                 # 4 份配置 = 2 种分工 × 2 种形态
+    ├── profiles/                 # 顶层固定名四件 = 2 种分工 × 2 种形态（订阅地址永久不变）
     │   ├── lazy.conf             # 懒人版（带注释）—— 改这份
     │   ├── lazy.min.conf         # 懒人版（纯配置）—— 导入用
-    │   ├── routing_v3.2.conf     # 分流版（带注释）—— 改这份
-    │   └── routing_v3.2.min.conf # 分流版（纯配置）—— 导入用
+    │   ├── routing.conf          # 分流版（带注释）—— 改这份
+    │   ├── routing.min.conf      # 分流版（纯配置）—— 导入用
+    │   └── config_old/           # 被替代的旧版按版本号留档，不参与检查
     ├── docs/                     # 01–08 编号系列 + 11-分流版设计（07 末节 = 本内核合并前的迭代史）
     └── DetailsReadme/
         └── DetailsReadme.md      # 完整技术文档（18 节）
@@ -224,7 +225,7 @@ Clash 是 TUN `dns-hijack: any:53` + fake-ip。**照抄等于把不存在的机�
 
 这是**模板**不是软件。使用者关心的是「结构是什么样」，不是「补丁号」。
 
-本仓库有**两份配置**：`lazy.conf`（懒人版）与 `routing_v3.2.conf`（分流版）。
+本仓库有**两份配置**：`lazy.conf`（懒人版）与 `routing.conf`（分流版）。
 **这是分工关系，不是版本关系** —— 像"基础款"和"进阶款"，
 而不是 v1 和 v2。选一份用，不要叠加。
 
@@ -302,7 +303,7 @@ grep -rn -iE '<你的私有域名|你的密码片段|你的用户名>' . \
 ## 5 · 全部验证都在本地 —— 刻意不挂 CI
 
 ```bash
-bash skill/tests/surge/run.sh              # 6 阶段，27 个断言
+bash skill/tests/surge/run.sh              # 6 阶段，19 个断言
 SKIP_NET=1 bash skill/tests/surge/run.sh   # 跳过联网阶段
 ```
 
@@ -325,8 +326,8 @@ SKIP_NET=1 bash skill/tests/surge/run.sh   # 跳过联网阶段
 ```
 1. bash skill/tests/surge/run.sh                      → 15 passed, 0 failed
 2. python skill/scripts/surge/check_surge_dns.py  surge/profiles/lazy.conf     → exit 0
-3. python skill/scripts/surge/check_surge_dns.py  surge/profiles/routing_v3.2.conf  → exit 0
-4. （改了地区关键词时）python skill/scripts/surge/audit_region_filters.py surge/profiles/routing_v3.2.conf  → 9 passed
+3. python skill/scripts/surge/check_surge_dns.py  surge/profiles/routing.conf  → exit 0
+4. （改了地区关键词时）python skill/scripts/surge/audit_region_filters.py surge/profiles/routing.conf  → 9 passed
 5. （改了规则集引用时）python skill/scripts/surge/audit_ruleset_content.py  profiles/{lazy,routing}.conf
 6. （改了规则时）      python skill/scripts/surge/audit_routing_coverage.py profiles/{lazy,routing}.conf
 7. （改了标题时）重算所有锚点，检查相对链接

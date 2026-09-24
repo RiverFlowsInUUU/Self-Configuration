@@ -30,8 +30,9 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPTS="$(cd "$HERE/../../scripts/egern" && pwd)"
 PROFILES="$(cd "$HERE/../../../egern/profiles" 2>/dev/null && pwd || true)"
 PY="${PY:-python3}"
-# 当前推荐版：与 Surge 侧 run.sh 同一个承诺值（阶段 2 的 --strict 名单由它派生）。
-export CURRENT="${CURRENT:-routing_v3.2}"
+# 当前版词干：与 Surge 侧 run.sh 同一个固定名（阶段 2 的 --strict 名单由它派生）。
+# 「哪一版」由 egern/profiles/routing.yaml 的头注说了算，两侧版本一致性由 check_min_pair.py 判。
+export CURRENT="routing"
 
 # ⚠️ Git Bash / MSYS 下 `pwd` 返回 `/c/Users/...` 这种 MSYS 风格路径，
 #    Windows 版 Python 打不开（会报 `can't open file 'C:\\c\\Users\\...'`）。
@@ -78,9 +79,9 @@ if [ -z "$PROFILES" ] || [ ! -d "$PROFILES" ]; then
   printf '   阶段 2 需要它来跑 audit_region_filters.py。\n' >&2
   exit 2
 fi
-# ⚠️ CURRENT 指错 ⇒ 阶段 2 的 --strict 名单一条都套不上，全部按「历史存档版」只查非正值 ⇒ 假绿。
+# ⚠️ 固定名不在 ⇒ 阶段 2 的 --strict 名单一条都套不上，全部按「历史存档版」只查非正值 ⇒ 假绿。
 if [ ! -f "$PROFILES/$CURRENT.yaml" ]; then
-  printf '\n❌ 前置检查失败：CURRENT=%s 没有对应的 .yaml（升版后忘了改 CURRENT）\n' "$CURRENT" >&2
+  printf '\n❌ 前置检查失败：%s 不存在（固定名是永久订阅地址，不能被改名或挪走）\n' "$CURRENT.yaml" >&2
   exit 2
 fi
 

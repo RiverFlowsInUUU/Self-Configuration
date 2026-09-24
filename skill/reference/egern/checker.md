@@ -27,16 +27,19 @@
 "<venv>/Scripts/python.exe" scripts/profile_ruleset.py some.list    # 规则集类型分布
 "<venv>/Scripts/python.exe" scripts/weigh_ruleset.py some.list [--sub small.list] [--probe d]  # ★ 规则集"重量"：构成/冗余/深度/加载与匹配耗时/覆盖对比
 
-bash scripts/../tests/run.sh                                       # ★★ 回归测试两阶段（10 + 40 = 50 断言），退出码非 0 即失败
-CURRENT=routing_v3 bash scripts/../tests/run.sh                    # 覆盖成任意版本（如历史存档版；默认在 run.sh 里那一行）
+bash scripts/../tests/run.sh                                       # ★★ 回归测试两阶段（10 + 8 = 18 断言），退出码非 0 即失败
 ```
 
 ⭐ **计数口径是「按脚本对账」**：阶段 1 的 5 行 fixture 每行校两个脚本（两条独立判据）⇒ 计 10 条；
-   阶段 2 每份 profile 校 `audit_region_filters` 与 `audit_ruleset_refresh` ⇒ 18 × 2 = 36 条；
-   合计 46，runner 末尾的 `TOTAL:` 行就是这个数。
-⭐ **「当前推荐版」是 `run.sh` 里的一行常量 `CURRENT`**：阶段 2 的 `--strict` 名单由它派生。
-   前置检查会在 `$PROFILES/$CURRENT.yaml` 不存在时给**退出码 2** —— 否则那份名单一条都套不上，
+   阶段 2 每份 profile 校 `audit_region_filters` 与 `audit_ruleset_refresh` ⇒ 顶层固定名四件 × 2 = 8 条；
+   合计 18，runner 末尾的 `TOTAL:` 行就是这个数。归档版不在检查路径上 ⇒ 这个数**不随版本累积**。
+⭐ **「当前版」是固定名，不是一堆版本号**（2026-09-24 起）：顶层恒为 `routing` / `lazy`
+   四个文件名，阶段 2 的 `--strict` 名单由 `run.sh` 里那一行 `CURRENT="routing"` 派生。
+   「哪一版」只剩 profile 头注 `#! version=routing_vX.Y`，形状与两内核一致性由
+   `check_min_pair.py` 判（V1–V6 ×2 + 跨侧 2 条）。前置检查会在 `$PROFILES/$CURRENT.yaml`
+   不存在时给**退出码 2** —— 否则那份名单一条都套不上，
    当前推荐版会被当成"历史存档版"只查非正值，**看着绿、其实没审**。
+   要复核归档版：带着路径直接调对应脚本（归档在 `profiles/config_old/`，不进检查路径）。
 
 ⚠️ **运行目录要求**：`check_egern_dns.py` 与 `audit_dns_forward.py` 会 import 同目录的
 `_egern_common.py`（共享工具）。**这三个文件必须在一起**，否则报 `ModuleNotFoundError`。
@@ -90,7 +93,7 @@ f10.2 起（2026-09-20，二次核查报告触发）：⑩ **「靠注释提醒�
 5. ⭐⭐ **断言对象要选"能真正测到它的那个输入"—— 合成 fixture 测不到的东西，别硬塞进去当绿。**
    （2026-09-21 新增 `audit_region_filters.py` 时发现）该脚本校验的是 `policy_groups` 段的地区组 filter，
    而 `tests/` 那五份 fixture 是 **DNS 面的合成配置、根本没有地区组** —— 喂给它只会走"无需校验"分支，
-   **看着绿，其实一个断言都没执行**。所以 `run.sh` 的阶段 2 单独对**仓库里全部 20 份真实 profile** 跑它。
+   **看着绿，其实一个断言都没执行**。所以 `run.sh` 的阶段 2 单独对**顶层固定名四件真实 profile** 跑它（归档版在 `config_old/`，不在通配里）。
    判据：**如果一份输入必然走"跳过 / 无此项"分支，那它就不构成断言** —— 加守卫时先问
    "这份输入里，被判的东西**存在**吗？"
 

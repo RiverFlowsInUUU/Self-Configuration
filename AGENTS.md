@@ -62,9 +62,9 @@ bash skill/tests/all.sh            # 五项检查；离线用 --offline
    ② 改完能抓住什么（跑一遍 `all.sh`，必要时造个 fixture 证明改前会漏）。
    这两条把"顺手加固一下"变成有成本的事，目的就在这。
 
-   **两条豁免**：`skill/tests/*/run.sh` 与 `architecture.sh` 里 `CURRENT=` 那一行由
-   `bump_version.py` 改写，属升版机械动作，不算越界；`docs/`、`README`、profile 与审计脚本
-   （`skill/scripts/`）**不在冻结名单内**，按 §3 的常规连带范围改。
+   **一条豁免**：升版脚本 `bump_version.py` 改写的 profile 头注与文档活指向属机械动作，不算越界
+   （它不碰冻结名单里的任何一个文件 —— runner 里的版本常量已于 2026-09-24 随固定订阅地址退役）；
+   `docs/`、`README`、profile 与审计脚本（`skill/scripts/`）**不在冻结名单内**，按 §3 的常规连带范围改。
 
    `all.sh` 每次跑完会在末尾回一句「本轮闸门有没有被触碰」，你不用翻 diff。
 
@@ -72,7 +72,7 @@ bash skill/tests/all.sh            # 五项检查；离线用 --offline
 
 | 路径 | 是什么 | 改了它要顺手改什么 |
 |:-----|:-------|:-------------------|
-| `surge/profiles/` · `egern/profiles/` | 订阅文件（`.conf` / `.yaml`，各有 `.min` 形态） | `.min` 与完整版由第 3 项对拍；升版走 §5 |
+| `surge/profiles/` · `egern/profiles/` | 订阅文件：顶层固定名四件 + `config_old/` 归档 | `.min` 与完整版由第 3 项对拍；升版走 §5 |
 | `skill/` | 配置领域技能包：`skill/SKILL.md` + `skill/reference/` + `skill/scripts/` | 触发词表与 `agent_created` 头**别乱动**，是靠它被检索的 |
 | `skill/scripts/` · `skill/tests/` | 审计脚本与回归判据（批量改文档走 `skill/tests/apply_edits.py`：锚点不唯一就整批拒写） | 新增判据要把读数写进 `surge/docs/08-审计读数.md` 与 `egern/docs/08-审计读数.md` |
 | `docs/` | 人读的六篇详解（跨设备一致性、差异对照、体检报告…） | 相对链接由 Surge 侧阶段 6 全仓校验 |
@@ -93,10 +93,13 @@ git config --global user.email "你的邮箱"
 （而 `git status` 干净，属隐形差异）。一次修好：`git rm -r --cached . && git reset --hard`，
 或直接删掉重 clone。详见 [`docs/注意事项.md`](docs/注意事项.md) 的「换设备 / 双端一致」。
 
-## 5 · 升版只改一行 + 一个脚本
+## 5 · 升版：订阅地址不动，旧版进归档
 
-「当前推荐版」在三处 runner 里是**承诺值** `CURRENT="${CURRENT:-routing_v3.2}"`，不靠推导最大版本号。
-机械部分交给 `python skill/tests/bump_version.py <旧> <新>`（默认只出计划，`--apply` 才写盘，`--gate` 跑 §1）。
+订阅地址是**永久**的：当前版恒为 `routing.conf` / `routing.min.conf` / `lazy.*`，升版**不改文件名**。
+「哪一版」只写在 profile 头注 `#! version=routing_vX.Y` 里（从前是三处 runner 各一行 `CURRENT=`，改一漏二）。
+机械部分交给 `python skill/tests/bump_version.py`（默认只出计划，`--apply` 才写盘，`--gate` 跑 §1）：
+它把当前版**逐字节复制**进 `profiles/config_old/`（按头注版本号命名），再按「小数点后一位、`x.9` 进位到 `(x+1).0`」
+把头注自增，最后改全仓活指向。归档不参与检查，要复核旧版就带着路径直接调脚本。
 散文（根 `CHANGELOG.md` 的升版说明、各篇「版本沿革」里的历史表述、写死的断言数）由它列成清单交给人，**脚本不猜**。
 
 ## 6 · 想知道「为什么是这样」

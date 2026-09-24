@@ -42,34 +42,35 @@ S=./skill/scripts
 python "$S/check_surge_dns.py"  surge/profiles/lazy.conf              # 期望 exit 0
 python "$S/check_surge_dns.py"  surge/profiles/lazy.conf --strict      # medium 也算失败
 python "$S/check_surge_dns.py"  surge/profiles/lazy.conf --quiet       # 只打印计数
-python "$S/audit_region_filters.py" surge/profiles/routing_v3.2.conf       # 期望 3 项全过（出处 / 互斥 / 类型）
-python "$S/audit_region_filters.py" surge/profiles/routing_v3.2.conf -v    # 逐个组的关键词数
-python "$S/audit_ruleset_refresh.py" surge/profiles/routing_v3.2.conf --strict  # 期望 exit 0（全部钉在 604800）
-python "$S/audit_ruleset_refresh.py" surge/profiles/*.conf --quiet           # 逐份计数（历史存档版只查非正值）
+python "$S/audit_region_filters.py" surge/profiles/routing.conf       # 期望 3 项全过（出处 / 互斥 / 类型）
+python "$S/audit_region_filters.py" surge/profiles/routing.conf -v    # 逐个组的关键词数
+python "$S/audit_ruleset_refresh.py" surge/profiles/routing.conf --strict  # 期望 exit 0（全部钉在 604800）
+python "$S/audit_ruleset_refresh.py" surge/profiles/*.conf --quiet           # 逐份计数（顶层固定名四件；归档不在通配里）
 bash   ./skill/tests/surge/architecture.sh                           # 期望 exit 0
 
 # ── 需要联网 ────────────────────────────────────────────────────────
 python "$S/audit_ruleset_content.py"  surge/profiles/lazy.conf         # 期望 exit 0
 python "$S/audit_ruleset_content.py"  surge/profiles/lazy.conf --show-domestic --force
 python "$S/audit_routing_coverage.py" surge/profiles/lazy.conf         # 期望 39/39
-python "$S/audit_routing_coverage.py" surge/profiles/routing_v3.2.conf      # 期望 39/39（期望表自动切换）
+python "$S/audit_routing_coverage.py" surge/profiles/routing.conf      # 期望 39/39（期望表自动切换）
 python "$S/audit_routing_coverage.py" surge/profiles/lazy.conf --show-all
 
-# ── 回归测试（6 阶段，27 断言）────────────────────────────────────
+# ── 回归测试（6 阶段，19 断言）────────────────────────────────────
 bash ./skill/tests/surge/run.sh
 SKIP_NET=1 bash ./skill/tests/surge/run.sh
 PY=/path/to/python bash ./skill/tests/surge/run.sh
-CURRENT=routing_v3 bash ./skill/tests/surge/run.sh     # 覆盖成任意版本（如历史存档版）
 ```
 
-⭐ **「当前推荐版」是一个常量，不是一堆文件名**：`run.sh` 与 `architecture.sh` 各有
-   一行 `CURRENT="${CURRENT:-routing_v3.2}"`（承诺值，刻意不推导"最大版本号"）。
-   阶段 2 的 `--strict` 名单、阶段 4 的联网审计、阶段 5 的正则对账、`architecture.sh` 的
-   ②-b / ④ 段都由它派生 ⇒ 升版只改那一行。
-   配套前置检查：`$PROFILES/$CURRENT.conf` 不存在 ⇒ **退出码 2** —— 否则阶段 4 / 5 会
-   对不存在的文件 `continue`，**静默少跑一整个阶段**还报绿。
+⭐ **「当前版」是固定名，不是一堆版本号**（2026-09-24 起）：顶层恒为 `routing` / `lazy`
+   四个文件名，阶段 2 的 `--strict` 名单、阶段 4 的联网审计、阶段 5 的正则对账、
+   `architecture.sh` 的 ②-b / ④ 段都由 `run.sh` 里那一行 `CURRENT="routing"` 派生。
+   「哪一版」只剩 profile 头注 `#! version=routing_vX.Y`，形状与两内核一致性由
+   `check_min_pair.py` 判（V1–V6 ×2 + 跨侧 2 条）。配套前置检查：固定名文件不存在 ⇒
+   **退出码 2** —— 否则阶段 4 / 5 会对不存在的文件 `continue`，**静默少跑一整个阶段**还报绿。
+   要复核归档版：带着路径直接调对应脚本（归档在 `profiles/config_old/`，不进检查路径）。
 
-⚠️ **全部 profile 都要过 `check_surge_dns.py` 与 `audit_ruleset_refresh.py`**（阶段 2 会自动遍历 `profiles/*.conf`）。
+⚠️ **顶层固定名四件都要过 `check_surge_dns.py` 与 `audit_ruleset_refresh.py`**
+   （阶段 2 自动遍历 `profiles/*.conf`，`config_old/` 不在其中）。
 分流版同样要求 `0 high / 0 medium`，标准与 `lazy.conf` 一致。
 
 规则集缓存目录：
@@ -270,7 +271,7 @@ FOREIGN_PROBES = {
 
 **分流版用另一套期望表**（`FOREIGN_PROBES_ROUTING`），精确到应用组名：
 
-| 探针 | `lazy.conf` 期望 | `routing_v3.2.conf` 期望 |
+| 探针 | `lazy.conf` 期望 | `routing.conf` 期望 |
 |:-----|:-----------------|:--------------------|
 | `chat.openai.com` | `AI` / `PROXY` | **`CHATGPT`** |
 | `api.anthropic.com` | `AI` / `PROXY` | **`CLAUDE`** |
@@ -364,8 +365,8 @@ DNS_KEYS = [
 | 断言 | 比对对象 | 理由 |
 |:-----|:---------|:-----|
 | ②-a | `lazy.conf` ↔ `lazy.min.conf` | `.min.conf` 的定位是「去掉注释」，不是「裁剪配置」 |
-| ②-b | `routing_v3.2.conf` ↔ `routing_v3.2.min.conf` | 同上 |
-| ②-c | `lazy.conf` ↔ `routing_v3.2.conf` | **防泄露标准不因分流粒度而变** |
+| ②-b | `routing.conf` ↔ `routing.min.conf` | 同上 |
+| ②-c | `lazy.conf` ↔ `routing.conf` | **防泄露标准不因分流粒度而变** |
 
 任一键只在一边存在、或值不同 → 失败。
 
@@ -374,7 +375,7 @@ DNS_KEYS = [
 差别只允许出现在 `[Proxy Group]` 与 `[Rule]` 的粒度上。
 
 ⚠️ 改 `DNS_KEYS` 时注意：它同时是 ②-a / ②-b / ②-c 的依据，
-且 `routing_v3.2.min.conf` 是用脚本从 `routing_v3.2.conf` 生成的 —— 生成脚本会**丢掉注释**，
+且 `routing.min.conf` 是用脚本从 `routing.conf` 生成的 —— 生成脚本会**丢掉注释**，
 所以 profile 里的 `# audit-waive:` 行必须**手动补回 min 版**（否则豁免失效、
 审计器会对 min 版报 HIGH）。这是踩过的坑，见 § 退出码约定上方的说明。
 

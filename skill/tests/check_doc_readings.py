@@ -17,13 +17,16 @@
     D5 图标数        —— 「N 个策略组图标」== `icons/` 文件数
     D6 检查项数      —— 与 `all.sh` 同行的「N 项检查」== `all.sh` 里 `item` 调用的个数（中文数词也认）
     D7 自托管落点    —— profile 里写出的 `Self-Configuration/main/<路径>` 必须真在仓里
-    D8 不悬空指向    —— 文档里写出的 `routing_v*.conf|yaml`（含 `.min`）必须真在 `profiles/` 里
-    D9 当前版四件齐  —— 三处 `CURRENT=` 必须一致，且当前版的 `.conf` / `.min.conf` / `.yaml` / `.min.yaml` 都在
+    D8 引用不悬空    —— 文档里写出的 profile 文件名（含 `.min`）必须真在 `profiles/` 或
+                      `profiles/config_old/` 里；而**订阅 URL** 一律必须是固定名 —— 带版本号的
+                      订阅地址正是这次要根治的东西，写回去就等于把永久地址弄坏
+    D9 头注即当前版  —— 四份 profile 头注 `#! version=` 必须齐全一致（两内核、routing/lazy 各一对），
+                      且顶层固定名四件都在。从前"哪一版"是三处 `CURRENT=` 各写一遍，改一漏二。
 
 **刻意不判的东西**（判了会误伤，交给人）：
   · 判据/回归的断言数（27 / 50 / 14 / 18）—— 那要真跑测试才有值，递归且不划算。
   · 正文里出现的旧版本号 —— 一行常常同时写"当前 v3.2 + 存档 v3 / v3.1"，判它必误伤；
-    版本漂移由 D8 / D9 这两条结构性判据兜住（存档被删 ⇒ D8 红；`CURRENT=` 忘改 ⇒ D9 红）。
+    版本漂移由 D8 / D9 这两条结构性判据兜住（引用了不存在的文件 ⇒ D8 红；头注与固定名脱节 ⇒ D9 红）。
   · 历史沿革类文件（`docs/07-*`、`日志旧版原文`、`CHANGELOG`、`体检报告`）整篇不扫 —— 旧数字在那儿是对的。
   · 一行里同一类数字出现多次又判不出形态（既没说 lazy 也没说分流）⇒ 跳过不判，
     并在末尾报「跳过 N 处」，让"没判到"这件事本身可见。
@@ -49,6 +52,11 @@ LIVE = ["README.md", "AGENTS.md", "docs/注意事项.md", "docs/规则集与来�
         "skill/reference/surge/public-repo.md", "skill/reference/egern/public-repo.md"]
 # 排除关键词：文件路径里含这些片段的整篇不扫（历史记录，旧数字是对的）
 HISTORY = ("日志旧版原文", "CHANGELOG", "体检报告", "/docs/07-")
+# 固定名四件 = 永久订阅地址；头注所在 = 这四件（.min 形态由对拍器保证与完整版同内容，不再单独钉版本）
+FIXED_NAMES = {"routing.conf", "routing.min.conf", "lazy.conf", "lazy.min.conf",
+               "routing.yaml", "routing.min.yaml", "lazy.yaml", "lazy.min.yaml"}
+HEAD_FILES = ("surge/profiles/routing.conf", "surge/profiles/lazy.conf",
+              "egern/profiles/routing.yaml", "egern/profiles/lazy.yaml")
 CN_NUM = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7,
           "八": 8, "九": 9, "十": 10}
 
@@ -108,31 +116,43 @@ def measure():
                       if os.path.isfile(p)])
     allsh = open(os.path.join(ROOT, "skill/tests/all.sh"), encoding="utf-8").read()
     m["items"] = len(re.findall(r"^item ", allsh, re.M))
-    cur = {}
-    for rel in ("skill/tests/surge/run.sh", "skill/tests/surge/architecture.sh",
-                "skill/tests/egern/run.sh"):
-        mm = re.search(r'CURRENT:-([A-Za-z0-9._\-]+)',
-                       open(os.path.join(ROOT, rel), encoding="utf-8").read())
-        if mm:
-            cur[rel] = mm.group(1)
-    if len(set(cur.values())) != 1:
-        sys.stderr.write("❌ 前置：三处 CURRENT= 不一致或找不到：%s\n" % cur)
+    # 「当前是哪一版」自 2026-09-24 起只有一个来源：profile 头注 `#! version=routing_vX.Y`
+    #（订阅地址固定化之后，三处 runner 里的 CURRENT 常量已退役）。
+    heads = {}
+    for rel in HEAD_FILES:
+        p = os.path.join(ROOT, rel.replace("/", os.sep))
+        first = ""
+        try:
+            with open(p, encoding="utf-8", newline="") as f:
+                first = f.readline()
+        except OSError:
+            pass
+        mm = re.match(r"^#! version=((?:routing|lazy)_v[0-9]+\.[0-9])\s*$", first.rstrip("\r\n"))
+        heads[rel] = mm.group(1) if mm else None
+    m["heads"] = heads
+    rout = [heads[f] for f in HEAD_FILES if "routing." in f]
+    if len(set(rout)) != 1 or rout[0] is None:
+        sys.stderr.write("❌ 前置：两内核 routing 头注读不出或不一致：%s\n" % heads)
         sys.exit(2)
-    m["version"] = sorted(set(cur.values()))[0]
-    m["current_version_num"] = m["version"].split("_")[-1].lstrip("v")
-    want = ["surge/profiles/%s.conf" % m["version"],
-            "surge/profiles/%s.min.conf" % m["version"],
-            "egern/profiles/%s.yaml" % m["version"],
-            "egern/profiles/%s.min.yaml" % m["version"]]
-    m["current_missing"] = [w for w in want if not os.path.isfile(os.path.join(ROOT, w))]
-    m["current_ok"] = len(cur) == 3 and not m["current_missing"]
+    m["version"] = rout[0]
+    m["current_version_num"] = m["version"].split("_v")[-1]
+    m["fixed_missing"] = [r for r in HEAD_FILES if not os.path.isfile(os.path.join(ROOT, r.replace("/", os.sep)))]
+    # 只要求**同族跨内核相同**：routing 一对、lazy 一对，两族本来就各有版本号
+    fams = {f: sorted({heads[r] or "（读不出）" for r in HEAD_FILES if "/%s." % f in r.replace(os.sep, "/")})
+            for f in ("routing", "lazy")}
+    m["family_drift"] = ["%s 两侧不一致：%s" % (f, v) for f, v in fams.items() if len(v) > 1]
+    m["heads_note"] = " · ".join("%s=%s" % (f, "/".join(v)) for f, v in fams.items())
+    m["current_ok"] = not m["fixed_missing"] and not m["family_drift"]
+    m["current_missing"] = m["fixed_missing"] or m["family_drift"]
     asl = os.path.join(ROOT, "egern", "apple_system.list")
     m["apple_system"] = len([l for l in open(asl, encoding="utf-8").read().splitlines()
                              if l.strip() and not l.startswith("#")]) if os.path.isfile(asl) else -1
     # 本仓自托管的规则集 URL：profile 里写了 `Self-Configuration/main/<路径>`，那个路径必须真实存在
     self_urls = set()
     for p in glob.glob(os.path.join(ROOT, "*/profiles/*")):
-        if ".min." in os.path.basename(p):
+        # 只看当前版（顶层固定名四件）；config_old/ 是目录，整段跳过 —— 归档里的 URL
+        # 随着旧订阅地址一起作废，不再对外承诺
+        if ".min." in os.path.basename(p) or not os.path.isfile(p):
             continue
         for mm in re.finditer(r"Self-Configuration/main/([A-Za-z0-9._/\-]+)",
                               open(p, encoding="utf-8", errors="replace").read()):
@@ -245,13 +265,23 @@ def scan(docs, m):
                     if str(want).isdigit() and int(g) != int(want):
                         bad.append("%s:%d [%s] 文档写 %s，实测 %s ｜ %s"
                                    % (rel, i, kind, g, want, line.strip()[:70]))
-            # 悬空指向：文档里写出的 profile 文件名必须真在 profiles/ 里
-            for mm in re.finditer(r"\b(routing_v[A-Za-z0-9.]*|lazy)\.((?:min\.)?)(conf|yaml)\b", line):
+            # 引用不悬空：写出的 profile 文件名要么在当前版固定名里，要么在 config_old/ 归档里；
+            # 但**订阅 URL**（Self-Configuration/main/…/profiles/xxx）只准用固定名 —— 那是永久地址。
+            for mm in re.finditer(r"\b(routing[A-Za-z0-9._]*|lazy)\.((?:min\.)?)(conf|yaml)\b", line):
                 name = "%s.%s%s" % (mm.group(1), mm.group(2), mm.group(3))
                 hits["deadref"] = hits.get("deadref", 0) + 1
-                d = os.path.join(ROOT, "surge" if mm.group(3) == "conf" else "egern", "profiles")
-                if not os.path.isfile(os.path.join(d, name)):
-                    bad.append("%s:%d [deadref] 文档指向 %s，profiles/ 里没有这个文件 ｜ %s"
+                side = "surge" if mm.group(3) == "conf" else "egern"
+                d = os.path.join(ROOT, side, "profiles")
+                if not (os.path.isfile(os.path.join(d, name))
+                        or os.path.isfile(os.path.join(d, "config_old", name))):
+                    bad.append("%s:%d [deadref] 文档指向 %s，profiles/ 与 profiles/config_old/ 里都没有 ｜ %s"
+                               % (rel, i, name, line.strip()[:70]))
+            for mm in re.finditer(r"Self-Configuration/main/[A-Za-z0-9._/\-]*?profiles/"
+                                  r"([A-Za-z0-9._\-]+?\.(?:min\.)?(?:conf|yaml))", line):
+                name = mm.group(1)
+                hits["deadref"] = hits.get("deadref", 0) + 1
+                if name not in FIXED_NAMES:
+                    bad.append("%s:%d [deadref] 订阅 URL 用了非固定名 %s（永久地址只认这四个）｜ %s"
                                % (rel, i, name, line.strip()[:70]))
     return hits, bad, skipped
 
@@ -289,15 +319,16 @@ def main():
     ck("D0 两内核逐位对齐（实测 %d 对）" % len(pairs), not off, "\n      " + "\n      ".join(off))
     NAMES = {"groups": "D1 策略组数", "rules": "D2 规则条数", "rulesets": "D3 规则集条数",
              "files": "D4 订阅文件份数", "icons": "D5 图标数", "items": "D6 检查项数",
-             "deadref": "D8 profile 文件名不悬空"}
+             "deadref": "D8 profile 引用不悬空·订阅 URL 用固定名"}
     for kind in ("groups", "rules", "rulesets", "files", "icons", "items", "deadref"):
         sub = [b for b in bad if "[%s]" % kind in b]
         n = hits.get(kind, 0)
         ck("%s（命中 %d 处声明）" % (NAMES[kind], n), not sub, "\n      " + "\n      ".join(sub[:6]))
     ck("D7 本仓自托管 URL 的落点存在（%d 个）" % len(m["self_urls"]), not m["self_missing"],
        "\n      缺文件：%s" % ", ".join(m["self_missing"]))
-    ck("D9 三处 CURRENT= 一致且当前版四件齐：%s" % m["version"],
-       m["current_ok"], "缺文件：%s" % ", ".join(m["current_missing"]))
+    ck("D9 头注即当前版·同族跨内核一致且固定名四件齐：%s" % m["version"],
+       m["current_ok"], "问题：%s ｜ 头注：%s"
+       % (", ".join(m["current_missing"]), m["heads_note"]))
 
     print("\n对拍 %d 处声明 ｜ 判据 %d 条 ｜ 无法判定跳过 %d 处"
           % (sum(hits.values()), len(checks), len(skipped)))

@@ -33,8 +33,8 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../../.." && pwd)"
 PROFILES="$ROOT/surge/profiles"
 PY="${PY:-python3}"
-# 当前推荐版：与 run.sh 同一个**承诺值**（run.sh 会 export 下来；单独跑本脚本时用这里的默认值）。
-export CURRENT="${CURRENT:-routing_v3.2}"
+# 当前版词干：与 run.sh 同一个固定名（run.sh 会 export 下来；单独跑本脚本时也用同一个值）。
+export CURRENT="routing"
 
 # ⚠️ Git Bash / MSYS 下 `pwd` 返回 `/c/Users/...`，Windows 版 Python 打不开。
 if command -v cygpath >/dev/null 2>&1; then
@@ -53,9 +53,9 @@ if [ ! -d "$PROFILES" ]; then
   printf '\n❌ 前置检查失败：找不到 %s\n' "$PROFILES" >&2
   exit 2
 fi
-# ⚠️ CURRENT 指错 ⇒ ②-b 与 ④ 两段会被 isfile 判断整体跳过 ⇒ 静默假绿，必须在这里就炸。
+# ⚠️ 固定名不在 ⇒ ②-b 与 ④ 两段会被 isfile 判断整体跳过 ⇒ 静默假绿，必须在这里就炸。
 if [ ! -f "$PROFILES/$CURRENT.conf" ]; then
-  printf '\n❌ 前置检查失败：CURRENT=%s 没有对应的 .conf（升版后忘了改 CURRENT）\n' "$CURRENT" >&2
+  printf '\n❌ 前置检查失败：%s 不存在（固定名是永久订阅地址，不能被改名或挪走）\n' "$CURRENT.conf" >&2
   exit 2
 fi
 
@@ -66,9 +66,9 @@ printf '%s\n' "─────────────────────�
 import os, re, sys
 
 profiles_dir = sys.argv[1]
-# 当前推荐版由 shell 侧 export 下来。刻意不从这里挑「最大版本号」——
-# 版本号是对外承诺（README / docs 指着它），不是可从文件名推导的派生值。
-CURRENT = os.environ.get("CURRENT") or "routing_v3.2"
+# 当前版词干由 shell 侧 export 下来；固定名 ⇒ 不随版本变，「哪一版」写在 profile 头注里
+# （#! version=routing_vX.Y），由 skill/tests/check_min_pair.py 判形状与两侧一致。
+CURRENT = os.environ.get("CURRENT") or "routing"
 files = sorted(f for f in os.listdir(profiles_dir) if f.endswith(".conf"))
 if not files:
     print("❌ profiles/ 里没有 .conf 文件")
