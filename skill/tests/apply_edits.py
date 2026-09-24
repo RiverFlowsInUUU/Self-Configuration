@@ -17,6 +17,8 @@
     写盘用 `newline='\n'`，不碰行尾、不补尾换行。
   · 目标含 `\\r` 直接判负 —— 本工具只写 LF，CRLF 文件要先单独归一（AGENTS.md §2 第 3 条）。
   · 冻结闸门文件（AGENTS.md §2 第 5 条那份名单，现 12 个）默认拒绝，必须显式 `--allow-gate`；
+    拒写名单**现读 `all.sh` 里那份真相**（fail-closed：读不到 / 解析失败 / 空名单 ⇒ 退回
+    本模块副本并出声）—— 绕过拒写从此必须先动一个冻结文件；
     拒绝消息里就写着请示要附哪两条。
 
 用法：
@@ -59,6 +61,42 @@ GATE_DOC_PATTERNS = (
     ("docs/注意事项.md 浓缩句", r"(\d+)\s*[个份条]\s*[「『]?闸门"),
     ("apply_edits.py 头注", r"现\s*(\d+)\s*个"),
 )
+
+
+def parse_gate_src(text):
+    """all.sh 里那份 `GATE = (…)` → 名单元组。没匹配 / 解析失败 / **空名单** 都返回 None。
+
+    空名单算"读不到"（fail-closed）：那一行被手改成 `GATE = ()` 时，拒写面**不许**跟着静默
+    全放开 —— 退回本模块副本并出声，让该被拒的文件照旧被拒，漂移交给 A9 去点名判负。
+    """
+    import ast as _ast
+    import re as _re
+    m = _re.search(r"GATE = \((.*?)\)", text, _re.S)
+    if not m:
+        return None
+    try:
+        names = tuple(_ast.literal_eval("(" + m.group(1) + ")"))
+    except (ValueError, SyntaxError):
+        return None
+    return names or None
+
+
+def gate_truth():
+    """⇒ (拒写名单, 来源说明)。**真相 = 冻结文件 all.sh 里现读的那份**，不是本模块副本。
+
+    为什么值得从"降冗余"升级成"变严"来交底：`apply_edits.py` 自己不在冻结名单 ——
+    从前掏空 :GATE 那份副本就能静默放开全部闸门文件的写入，A9 的红要等自测跑起才算，
+    而拒写发生在跑闸**之前**。改成读 all.sh 之后，绕开拒写必须先动一个冻结文件。
+    读不到（仓外单跑、文件被挪）或解析出空 ⇒ 退回副本 + 出声，方向仍是拒得更严不是放得更开。
+    """
+    try:
+        with open(os.path.join(ROOT, "skill/tests/all.sh"), encoding="utf-8") as f:
+            names = parse_gate_src(f.read())
+    except OSError:
+        names = None
+    if names is None:
+        return GATE, "⚠️ 读不到 all.sh 名单（文件缺失 / 解析失败 / 空名单）⇒ 拒写退回本模块副本"
+    return names, "all.sh 现读名单（%d 个）" % len(names)
 
 
 def gate_block_names(agents_text):
@@ -148,6 +186,9 @@ def plan(edits, root):
     files = {}                                    # rel -> 已应用前序替换的当前内容
     done = 0
     fails = []
+    gate_rej, gate_src = gate_truth()             # 拒写名单现读 all.sh（口径见 gate_truth 注）
+    if gate_src.startswith("⚠️"):
+        sys.stderr.write(gate_src + " ⇒ 先查 all.sh 是否被挪动/改坏；漂移由 A9 点名\n")
 
     for i, e in enumerate(edits, 1):
         tag = "#%d" % i
@@ -168,7 +209,7 @@ def plan(edits, root):
         rel = norm_rel(path, root)
         full = os.path.join(root, rel)
 
-        if rel in GATE and "--allow-gate" not in sys.argv:
+        if rel in gate_rej and "--allow-gate" not in sys.argv:
             fails.append("%s 目标是冻结闸门文件：%s ⇒ 按 AGENTS.md §2 第 5 条先请示，"
                          "要附「不改会漏掉哪个具体文件」+「改完能抓住什么」；批了就加 --allow-gate"
                          % (tag, rel))
@@ -373,6 +414,16 @@ def selftest():
            not errs and any("槽位" in x for x in pos) and any("重复" in x for x in pos)
            and not neg,
            "实测 %s · 正例 %s · 反例 %s" % (errs, pos, neg))
+
+    # A14：拒写名单的现读解析 fail-closed —— 空名单 / 没匹配都算"读不到"，不许读成"名单为空"。
+    # 判别自证两向：正常名单必须原样解析出来；三种坏法（`()` / 无 GATE 行 / 半截元组）全落 None，
+    # 由调用方退回副本。少这一条，"手改 all.sh 那行为 GATE = ()" 会把拒写面静默清零。
+    okp = parse_gate_src('X = 1\nGATE = ("a.py", "b/c.sh")\nY = 2') == ("a.py", "b/c.sh")
+    okn = (parse_gate_src("GATE = ()") is None and parse_gate_src("no tuple here") is None
+           and parse_gate_src('GATE = ("a"') is None)
+    ck("A14 拒写现读 fail-closed（空名单 = 读不到 ⇒ 退回副本，不是全放开）", okp and okn,
+       "%s / %s" % (parse_gate_src('GATE = ("a.py", "b/c.sh")'),
+                    [parse_gate_src(s) for s in ("GATE = ()", "no tuple here")]))
 
     # A11：越出仓根的路径要判越界（norm_rel 会 die，这里只验判定分支）
     rel = os.path.relpath(os.path.abspath("/etc/passwd"), os.getcwd()).replace("\\", "/")

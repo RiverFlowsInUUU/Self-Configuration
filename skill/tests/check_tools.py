@@ -58,7 +58,7 @@ walrus 都算绑；内建名与 `__` 围裹的隐式名（`__file__` / `__name__
 
 三套自测的"过法"各不相同，所以各判各的（实测）：
     make_min.py    →  ALL GREEN · 自带回归 7 条        （无 TOTAL 行）
-    apply_edits.py →  TOTAL: 13 passed, 0 failed
+    apply_edits.py →  TOTAL: 14 passed, 0 failed
     check_links.py →  ✅ 自检通过                       （只有一行，条数不可读 ⇒ 只认退出码）
   `surge/check_links.py` 在冻结名单里，**不改它的输出形状**去迁就这里的解析。
 
