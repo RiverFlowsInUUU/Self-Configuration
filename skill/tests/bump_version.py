@@ -7,6 +7,7 @@
     python skill/tests/bump_version.py --apply               # 落盘（不跑检查）
     python skill/tests/bump_version.py --apply --gate        # 落盘后再跑一遍 skill/tests/all.sh
     python skill/tests/bump_version.py --to routing_v4.0     # 显式指定新版本号（默认按进位规则自增）
+    python skill/tests/bump_version.py --changelog-stub      # 末尾附一段可粘贴的 CHANGELOG 骨架
 
 为什么长这样（2026-09-24 订阅地址固定化之后）：
     订阅地址是**永久**的 —— 顶层恒为 `routing` / `lazy` 四个文件名，升版**不改文件名**。
@@ -25,8 +26,9 @@
 它**不**做：CHANGELOG、各篇「版本沿革」与两份读数快照（`docs/体检报告.md`、`docs/日志旧版原文.md`）
     里的历史表述（那是当时的口径记录，改了就是篡改）；裸版本号提法（`v3.2` 这种没带家族前缀的，
     可能指版本、可能指段落标题，机器判不了）。这些都只**列清单**，交给人。
-它也不做 `.min`：`.min` 是完整版去掉注释，仓内没有生成器，只有对拍器
-    `check_min_pair.py`。改了完整版的**配置本体**之后，`.min` 要手工同步，第 3 项检查会抓到不一致。
+它也不做 `.min`：本脚本只搬完整版，`.min` 由 `skill/tests/make_min.py` 从完整版重算
+    （判据仍由对拍器 `check_min_pair.py` 兜）。改了完整版的**配置本体**之后的顺序是
+    `make_min.py --apply` → `bump_version.py --apply`，两步都不动 `config_old/`。
 
 排除口径（默认）：
     CHANGELOG.md            历史条目不改（根那一份；2026-09-24 起它是唯一的日志）
@@ -52,6 +54,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 
 # 本文件位于 <仓库根>/skill/tests/ ⇒ 上溯两级即仓库根；检查入口同目录。
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -89,6 +92,37 @@ def same_bytes(a, b):
         return io.open(a, "rb").read() == io.open(b, "rb").read()
     except OSError:
         return False
+
+
+def at(root, p):
+    """绝对路径 ⇒ 仓内相对名（正斜杠）。给人看的是仓内地址，本机绝对路径不出口。"""
+    return os.path.relpath(p, root).replace(os.sep, "/")
+
+
+def changelog_stub(fam, old, new, date):
+    """升版说明的骨架：确定的部分（家族 · 号 · 订阅地址 · 归档去向）写全，正文留空给人。
+
+    只出文本、**不写文件** —— `CHANGELOG.md` 是文案，机器不代笔（见开头"它**不**做"）。
+    根文件那三条体例里，脚本能钉的只有「一天一段」和「句首单 emoji」，
+    段落归属（`Surge` / `Egern` / `共享层`）与正文由人定 —— 升版两核都动，通常落在各自段里。
+    """
+    label = {"routing": "分流版", "lazy": "懒人版"}[fam]
+    urls = []
+    for rel in FULL[fam]:
+        d, base = rel.rsplit("/", 1)
+        stem, ext = base.rsplit(".", 1)
+        urls.append("`" + d + "/" + stem + ".{,.min}." + ext + "`")
+    return NL.join([
+        "## " + date + "    ← 一天只有一段：仓里已有今天的段就把下面几条并进去，别开第二段",
+        "",
+        "- 🏷️ **" + label + "升版 `" + old + "` → `" + new + "`**：订阅地址不变（"
+        + " · ".join(urls) + "），旧内容逐字节进各侧 `profiles/config_old/`。"
+          "这一轮实际改了什么：＿＿",
+        "- 🧷 `.min` 由 `python skill/tests/make_min.py --family " + fam + " --apply` 同步"
+          "（生成器不碰归档；同号快照存在时它只点名提醒）",
+        "- 🔢 验收：`bash skill/tests/all.sh` 五项 TOTAL ＿＿ · ＿＿ · ＿＿ · ＿＿ · ＿＿；"
+          "这轮若动了判据，README / 两侧 docs/08 / 两份 checker.md 的读数要同步",
+    ])
 
 
 def head_of(root, rel):
@@ -185,6 +219,8 @@ def main():
     ap.add_argument("--keep", action="append", default=[], help="额外排除的路径子串（可多次）")
     ap.add_argument("--apply", action="store_true", help="真正写盘（默认只出计划）")
     ap.add_argument("--gate", action="store_true", help="写完后跑一次 skill/tests/all.sh")
+    ap.add_argument("--changelog-stub", action="store_true",
+                    help="末尾打一段可粘贴的 CHANGELOG 骨架（只出文本，不写文件）")
     a = ap.parse_args()
 
     root, fam = a.root, a.family
@@ -224,31 +260,39 @@ def main():
           + "（订阅地址不变，仍是 " + " / ".join(FULL[fam]) + "）" + NL)
 
     # ── 1) 逐字节归档当前版（四件形态全进：对拍器 V5 要求每版"完整版 + .min"成对）
-    plan_copy, reuse = [], []
+    plan_copy, reuse, keep = [], [], []
     for rel in FORMS[fam]:
         # 归档名 = <家族>_v<旧号> + 原后缀：routing.conf → routing_v3.2.conf
         #                                     routing.min.conf → routing_v3.2.min.conf
         suffix = os.path.basename(rel)[len(fam):]
-        dst = os.path.dirname(rel) + "/" + OLD_DIR + "/" + old + suffix
+        # dst 必须是 `--root` 下的绝对路径 —— 早先这里存的是仓内相对路径，于是 isfile / copyfile
+        # 全按**当前工作目录**解析：从仓外跑一次，"同号快照"这条守卫根本不会触发，`--apply` 还会
+        # 把归档写到仓外去。打印仍用仓内相对名（给人看的是地址，不是本机路径）。
+        dst = os.path.join(root, os.path.dirname(rel).replace("/", os.sep), OLD_DIR, old + suffix)
         src = os.path.join(root, *rel.split("/"))
         if not os.path.isfile(src):
             raise SystemExit("❌ 当前版不在了，先跑 all.sh 看第 3 项：" + rel)
         if os.path.isfile(dst):
-            # 只允许一种同名：**升版前那份逐字节相同的快照**（与对拍器 V6 同一口径）。
-            # 本轮 lazy 的起点就是这样来的 —— `config_old/lazy_v1.0.*` 是当前 lazy 的快照，
-            # 从 v1.0 往上滚时不该被判成"版本号撞车"。内容不同才是真撞车。
-            if not same_bytes(src, dst):
-                raise SystemExit("❌ 归档里的 " + os.path.basename(dst)
-                                 + " 与当前版不是同一份：同号不同内容，先定该用哪个版本号，再带 --to")
-            reuse.append(dst)
+            # 同号快照只允许两种正当情形，都**不覆盖**归档（config_old 是只读历史）：
+            #   · 逐字节相同 ⇒ 升版前刚打的照（本轮 lazy 的起点就是这样），不重复复制；
+            #   · 内容不同 ⇒ 这个版本已发布过、之后线上又改了没升版 ⇒ 保留已发布那一份，
+            #     线上这份未发布的改动随 new 出厂，下次退休时才归档成 <new>。V6 的告警随升号自动消解
+            #     （归档号 < new）。从前这里直接拒走，而 --to 改的是新号、动不了归档名 ⇒ 死路一条。
+            if same_bytes(src, dst):
+                reuse.append(dst)
+            else:
+                keep.append((dst, rel))
             continue
         plan_copy.append((src, dst, rel))
     for dst in reuse:
-        print("快照已就位 " + dst + "  ←  与当前版逐字节相同，不重复复制")
+        print("快照已就位 " + at(root, dst) + "  ←  与当前版逐字节相同，不重复复制")
+    for dst, rel in keep:
+        print("⚠️ 保留已发布快照 " + at(root, dst) + "（与线上 " + rel + " 不同）"
+              "  ←  不覆盖归档；线上这份改动随 " + new + " 出厂，下次退休才归档 " + new)
     for src, dst, rel in plan_copy:
-        print("归档 " + dst + "  ←  " + rel + "（逐字节复制）")
+        print("归档 " + at(root, dst) + "  ←  " + rel + "（逐字节复制）")
         if a.apply:
-            os.makedirs(os.path.dirname(dst).replace("/", os.sep), exist_ok=True)
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.copyfile(src, dst)
 
     # ── 2) 当前版原地升号：头注 + 自称 + 刷新秒数 ──────────────────────────
@@ -293,11 +337,13 @@ def main():
 
     # ── 4) 脚本故意不碰的东西：列给人看 ───────────────────────────────────
     print(NL + "本脚本**不**改，需要你手工处理的：")
-    print("   · CHANGELOG.md（根那一份）新章节 —— 升版说明是人写的文案")
+    print("   · CHANGELOG.md（根那一份）新章节 —— 升版说明是人写的文案"
+          + ("（要骨架：加 --changelog-stub）" if not a.changelog_stub else ""))
     print("   · docs 里的「版本沿革」类记述 —— 历史口径，改了就是篡改")
     print("     （`docs/体检报告.md` 与 `docs/日志旧版原文.md` 同属此列；若确实有活指向混在中间，"
           "按下面「排除路径里仍有旧名」逐条人工确认）")
-    print("   · `.min` 形态：改了完整版**配置本体**就要手工同步（仓内没有 `.min` 生成器），"
+    print("   · `.min` 形态：改了完整版**配置本体**要跑 "
+          "`python skill/tests/make_min.py --family " + fam + " --apply`（生成器，不碰归档），"
           "all.sh 第 3 项实测逐字相同")
     print("   · 断言数**不随版本累积**（归档不进检查路径），但若你这轮动了判据，"
           "README / 两侧 docs/08 / checker.md 的读数要同步")
@@ -325,6 +371,11 @@ def main():
     print("   · 归档是新文件：`git add surge/profiles/config_old egern/profiles/config_old`，"
           "别让它们以 untracked 状态漏在提交外")
     print("   · 新建的头注与文档改写都由 `.gitattributes` 钉成 LF；提交前 `bash skill/tests/all.sh`")
+
+    # ── 4-b) CHANGELOG 骨架（要了才给；只出文本，不碰文件）───────────────────
+    if a.changelog_stub:
+        print(NL + "── CHANGELOG 骨架（贴进根 CHANGELOG.md，正文自己写）──" + NL + NL
+              + changelog_stub(fam, old, new, time.strftime("%Y-%m-%d")))
 
     # ── 5) 验收 ───────────────────────────────────────────────────────────
     if a.apply and a.gate:

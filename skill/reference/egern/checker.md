@@ -40,6 +40,9 @@ bash scripts/../tests/run.sh                                       # ★★ 回�
    不存在时给**退出码 2** —— 否则那份名单一条都套不上，
    当前推荐版会被当成"历史存档版"只查非正值，**看着绿、其实没审**。
    要复核归档版：带着路径直接调对应脚本（归档在 `profiles/config_old/`，不进检查路径）。
+   `.min` **不手工同步**：改完完整版跑 `python skill/tests/make_min.py --family routing|lazy|all`
+   （默认只出计划，`--apply` 才写盘）—— Egern 侧它是纯函数（去注释 + 规范空白，与 `check_min_pair.py`
+   共用同一套判据 ⇒ 生成即过拍）。
 
 ⚠️ **运行目录要求**：`check_egern_dns.py` 与 `audit_dns_forward.py` 会 import 同目录的
 `_egern_common.py`（共享工具）。**这三个文件必须在一起**，否则报 `ModuleNotFoundError`。

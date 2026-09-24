@@ -72,7 +72,7 @@ bash skill/tests/all.sh            # 五项检查；离线用 --offline
 
 | 路径 | 是什么 | 改了它要顺手改什么 |
 |:-----|:-------|:-------------------|
-| `surge/profiles/` · `egern/profiles/` | 订阅文件：顶层固定名四件 + `config_old/` 归档 | `.min` 与完整版由第 3 项对拍；升版走 §5 |
+| `surge/profiles/` · `egern/profiles/` | 订阅文件：顶层固定名四件 + `config_old/` 归档 | 改了完整版跑 `make_min.py` 生成 `.min`（见 §5），对拍是第 3 项；升版走 §5 |
 | `skill/` | 配置领域技能包：`skill/SKILL.md` + `skill/reference/` + `skill/scripts/` | 触发词表与 `agent_created` 头**别乱动**，是靠它被检索的 |
 | `skill/scripts/` · `skill/tests/` | 审计脚本与回归判据（批量改文档走 `skill/tests/apply_edits.py`：锚点不唯一就整批拒写） | 新增判据要把读数写进 `surge/docs/08-审计读数.md` 与 `egern/docs/08-审计读数.md` |
 | `docs/` | 人读的六篇详解（跨设备一致性、差异对照、体检报告…） | 相对链接由 Surge 侧阶段 6 全仓校验 |
@@ -97,10 +97,18 @@ git config --global user.email "你的邮箱"
 
 订阅地址是**永久**的：当前版恒为 `routing.conf` / `routing.min.conf` / `lazy.*`，升版**不改文件名**。
 「哪一版」只写在 profile 头注 `#! version=routing_vX.Y` 里（从前是三处 runner 各一行 `CURRENT=`，改一漏二）。
-机械部分交给 `python skill/tests/bump_version.py`（默认只出计划，`--apply` 才写盘，`--gate` 跑 §1）：
+**改完完整版先跑生成器，再谈别的**：`python skill/tests/make_min.py --family routing|lazy|all`
+（默认只出计划，`--apply` 才写盘，`--selftest` 跑它自己的 7 条回归）。`.min` 不是手工同步的：
+它按 `check_min_pair.py` 的同一套规则重算，注释按锚点继承（`# audit-waive:` 与两条「怎么加节点」）——
+**判据与生成器共用一份代码，不存在"生成器自己跑歪 yet 对拍放行"**。它不碰完整版、不碰 `config_old/`。
+机械升版交给 `python skill/tests/bump_version.py`（默认只出计划，`--apply` 才写盘，`--gate` 跑 §1，
+`--changelog-stub` 出一条贴得进根日志的骨架）：
 它把当前版**逐字节复制**进 `profiles/config_old/`（按头注版本号命名），再按「小数点后一位、`x.9` 进位到 `(x+1).0`」
 把头注自增，最后改全仓活指向。归档不参与检查，要复核旧版就带着路径直接调脚本。
 散文（根 `CHANGELOG.md` 的升版说明、各篇「版本沿革」里的历史表述、写死的断言数）由它列成清单交给人，**脚本不猜**。
+⚠️ **同号归档只读**：改了已发布版、`config_old/` 里已有同号快照 ⇒ 脚本**保留快照不覆盖**、警告一句、照常升号
+   （线上那份改动随新版本出厂，下次退休才归档）。这时对拍器的 `V6` 会判负一句"改了没升版"，
+   **那是设计出来的告警**，处置就是升版 —— 别手改归档。
 
 ## 6 · 想知道「为什么是这样」
 

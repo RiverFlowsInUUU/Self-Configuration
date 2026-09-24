@@ -15,7 +15,7 @@ reference/surge/*.md      深度主题 ×6（Surge 侧）
 reference/egern/*.md      深度主题 ×6（Egern 侧）
 scripts/surge/            5 个审计脚本 + _surge_common.py
 scripts/egern/            10 个审计/探测脚本 + _egern_common.py
-tests/                    all.sh（一条命令跑完全部本地检查）· check_min_pair.py · check_portability.py · check_doc_readings.py · bump_version.py · apply_edits.py（批量编辑执行器，见下）
+tests/                    all.sh（一条命令跑完全部本地检查）· check_min_pair.py · make_min.py（`.min` 生成器，与对拍共用判据）· check_portability.py · check_doc_readings.py · bump_version.py · apply_edits.py（批量编辑执行器，见下）
 tests/surge/              run.sh · architecture.sh · check_links.py · 3 fixture + fixtures/
 tests/egern/              run.sh · 5 fixture
 ```

@@ -68,6 +68,9 @@ PY=/path/to/python bash ./skill/tests/surge/run.sh
    `check_min_pair.py` 判（V1–V6 ×2 + 跨侧 2 条）。配套前置检查：固定名文件不存在 ⇒
    **退出码 2** —— 否则阶段 4 / 5 会对不存在的文件 `continue`，**静默少跑一整个阶段**还报绿。
    要复核归档版：带着路径直接调对应脚本（归档在 `profiles/config_old/`，不进检查路径）。
+   `.min` **不手工同步**：改完完整版跑 `python skill/tests/make_min.py --family routing|lazy|all`
+   （默认只出计划，`--apply` 才写盘）—— 它 import 本文件的判据函数，正文重算、注释按锚点继承，
+   所以 `# audit-waive:` 那行不用补回去。
 
 ⚠️ **顶层固定名四件都要过 `check_surge_dns.py` 与 `audit_ruleset_refresh.py`**
    （阶段 2 自动遍历 `profiles/*.conf`，`config_old/` 不在其中）。
