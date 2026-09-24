@@ -48,7 +48,7 @@ egern/DetailsReadme/DetailsReadme.md              # 完整技术文档
 
 **要更新模板时**：**直接在仓库里改 `profiles/*.yaml` 即可。** 这份模板早已完成脱敏
 （无节点、无订阅、无证书），改它不需要"从自用配置重新生成"。改完跑
-`bash skill/tests/egern/run.sh`（两阶段 18 断言）+ 下面那批审计脚本，再提交推送。
+`bash skill/tests/egern/run.sh`（两阶段 22 断言）+ 下面那批审计脚本，再提交推送。
 
 > 📦 **历史做法（已不再使用）**：早期由维护者本地的 `outputs/` 脚本链生成 ——
 > `_build_public_template.py`（从自用版做**带断言的行级替换** + 38 个敏感串零残留自检）、

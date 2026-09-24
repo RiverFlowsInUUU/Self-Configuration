@@ -39,6 +39,19 @@
   由 `check_min_pair.py` 判"（写死的版本号在下一次升版后就会变成假话，而断言照旧通过）。
   配置与 `PG_ORDER` 承诺值零改动。
 
+### Egern
+
+- 🔒 冻结文件 `run.sh` 两处（本轮授权）：
+  ① **阶段 2 补跑 DNS 面**：真实 profile（`routing.yaml` / `lazy.yaml` 及两份 `.min`）此前在闸内
+  **零覆盖** —— `check_egern_dns.py` 只在阶段 1 的 5 个合成 fixture 上跑过，而 Surge 侧对应物
+  一直在阶段 2 对全部 `profiles/*.conf` 跑。`docs/08` 里 `0 high / 2 low / 24 ok` 那几行
+  此前一直是**闸外手工读数**。⇒ 阶段 2 每份 profile 跑 3 个脚本，**Egern 总数 18 → 22**。
+  ② 阶段 2 注释里那份带版本号的文件名清单（`routing_v1 … v3.2`）改成"顶层固定名四件" ——
+  循环本来就只扫顶层、`config_old/` 不参与，旧写法是固定化之前的残留。
+- 📚 连带同步：C2 自己点名 6 处（`README` · `docs/跨内核差异对照` · `egern/docs/08`（含阶段分项
+  8 → 12）· `skill/README` · `skill/reference/egern/checker.md` · `skill/reference/egern/public-repo.md`），
+  另 `AGENTS.md:38` 那条判据判不到（无阶段总数标记 ⇒ 只报不判），手工改；一律 18 → 22。
+
 ### 共享层
 
 - 🔒 冻结文件 `check_assert_counts.py` 一处（本轮授权）：C4 的两份自证样本原先**写死**了

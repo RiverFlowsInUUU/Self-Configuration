@@ -5,11 +5,17 @@
 #     把 skill/tests/ 的 5 个 fixture 同时喂给 check_egern_dns.py 与 audit_dns_forward.py
 #     （5 × 2 = 10 个断言）。
 #
-#   阶段 2 · 地区组 filter 同步回归
-#     对仓库里**全部** profiles/*.yaml 跑 audit_region_filters.py，期望全部 rc=0。
+#   阶段 2 · 真实 profile 回归（DNS 面 + 地区组 filter 同步 + 规则集刷新参数）
+#     对仓库里**全部** profiles/*.yaml 跑三件事，期望全部 rc=0：
+#       · check_egern_dns.py（DNS 面）—— 2026-09-25 补：此前真实 profile 的 DNS 面在闸内
+#         **零覆盖**，check_egern_dns 只在阶段 1 的合成 fixture 上跑过；而 Surge 侧对应物
+#         一直在阶段 2 对全部 profiles/*.conf 跑。`docs/08` 里那几行
+#         `check_egern_dns … 0 high / 2 low / 24 ok` 此前一直是**闸外手工读数**。
+#       · audit_region_filters.py（地区组 filter 与 Other Regions 负向断言的同步）
+#       · audit_ruleset_refresh.py（刷新参数，离线判定）
 #     ⚠️ 为什么不并进阶段 1：阶段 1 的 fixture 是 DNS 面的合成配置，**没有地区组**，
 #        喂给 audit_region_filters.py 只会走"无需校验"分支 —— 看着绿，其实什么都没测。
-#        这个脚本的断言对象必须是**真实 profile**。
+#        这两个脚本的断言对象都必须是**真实 profile**。
 #
 # 为什么需要阶段 1（2026-09-20 二次核查报告 P1 #3）：
 #   此前 fixture 只手工喂给 check_egern_dns.py，audit_dns_forward.py 那一半从没跑过，
@@ -138,15 +144,16 @@ printf 'result: %d passed, %d failed\n' "$pass" "$fail"
 # ── 阶段 2：地区组 filter 与 Other Regions 负向断言的「两份拷贝」同步 ────────────
 # 断言对象是**仓库里的真实 profile**（不是上面的合成 fixture）。
 # 期望全部 rc=0：
-#   · routing_v1 / routing_v2 / routing_v2.1 / routing_v2.2 / routing_v2.3 / routing_v2.4 / routing_v3 / routing_v3.1 / routing_v3.2 → 6 个地区组的关键词必须逐字出现在负向断言里
+#   · 顶层固定名四件里带地区组的那几份 → 6 个地区组的关键词必须逐字出现在负向断言里
+#     （循环只扫顶层，`config_old/` 的归档版不参与 —— 早先这里列的是带版本号的文件名，固定化后已不存在）
 #   · lazy 没有该结构 → 脚本打印"无需校验"并 rc=0
 # rc=1 = 有地区关键词漏同步（两组不再互斥）；rc=2 = 解析失败 / 用法错误。两者都算失败。
 #
 # 同一轮循环里再跑 audit_ruleset_refresh.py（离线）：当前推荐版与懒人版（含 .min）
 # 要求钉到约定值 604800，历史存档版只查非正值。
 printf '\n'
-printf '%s\n' "阶段 2 · 地区组 filter 同步 + 规则集刷新参数（跑全部 profiles/*.yaml）"
-printf '%-26s %-20s %s\n' "PROFILE" "audit_region_filters" "RESULT"
+printf '%s\n' "阶段 2 · DNS 面 + 地区组 filter 同步 + 规则集刷新参数（跑全部 profiles/*.yaml）"
+printf '%-26s %-20s %s\n' "PROFILE" "检查项" "RESULT"
 printf '%s\n' "--------------------------------------------------------------------------------"
 
 pass2=0; fail2=0
@@ -169,6 +176,18 @@ for _p in "$PROFILES"/*.yaml; do
     printf '%s\n' "------------------------"
   fi
   printf '%-26s %-20s %s\n' "$_name" "exit=$_rc" "$_res"
+  # DNS 面（2026-09-25 补）：真实 profile 此前在闸内零覆盖（check_egern_dns 只喂过合成 fixture）。
+  "$PY" "$SCRIPTS_W/check_egern_dns.py" "$PROFILES_W/$_name" >/dev/null 2>&1
+  _drc=$?
+  if [ "$_drc" = "0" ]; then
+    _dres="✅ OK"; pass2=$((pass2+1))
+  else
+    _dres="❌ 有 high"; fail2=$((fail2+1))
+    printf '\n---- %s 的 DNS 面输出 ----\n' "$_name"
+    "$PY" "$SCRIPTS_W/check_egern_dns.py" "$PROFILES_W/$_name" 2>&1 | sed 's/^/    /'
+    printf '%s\n' "------------------------"
+  fi
+  printf '%-26s %-20s %s\n' "$_name (dns)" "exit=$_drc" "$_dres"
   # 规则集刷新参数（离线判定）：当前推荐版与懒人版要求钉到约定值；
   # 历史存档版（`routing_v1` ~ `routing_v2.3` 本就没写这个字段）只查非正值。
   case "$_name" in
@@ -191,7 +210,7 @@ printf '%s\n' "-----------------------------------------------------------------
 printf 'result: %d passed, %d failed\n' "$pass2" "$fail2"
 
 # 两阶段合计的总数（与 Surge 侧 run.sh 的 TOTAL 同格式）：
-#   阶段 1 = fixture 数 × 2 个脚本，阶段 2 = profile 数 × 2 个脚本。
+#   阶段 1 = fixture 数 × 2 个脚本，阶段 2 = profile 数 × 3 个脚本（DNS 面 / 地区组 / 刷新参数）。
 #   闸门工具直接抓这一行，省得再去两处 result 手工相加。
 printf 'TOTAL: %d passed, %d failed\n' "$((pass + pass2))" "$((fail + fail2))"
 
