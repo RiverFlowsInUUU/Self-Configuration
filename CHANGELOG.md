@@ -1,8 +1,44 @@
 # 📝 更新日志
 
-> 本仓库的**装配史**在这里；**模板内容**的迭代史在两个内核各自的 CHANGELOG 里：
-> [`surge/CHANGELOG.md`](surge/CHANGELOG.md) · [`egern/CHANGELOG.md`](egern/CHANGELOG.md)。
+> 本仓库**只有一份改动记录**，就是下面这些。跨内核与装配层面的改动、以及两个内核各自的模板迭代，
+> 都按日期写在同一处，日期段内再分 `Surge` / `Egern` 小块。
+> 合并前的内核迭代史**不再单列文件**（2026-09-24 起），逐字并进了各自内核的沿革文档末节：
+> [`surge/docs/07`](surge/docs/07-文件版本沿革.md) · [`egern/docs/07`](egern/docs/07-文件版本沿革.md)。
 > 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
+
+---
+
+## 2026-09-24 · 改动记录收成一份 · 两份内核 `CHANGELOG` 并入各自 `docs/07`
+
+维护者拍板：三本日志是一套要人肉判断归属的系统，判一次错一次。**从今往后只有根 `CHANGELOG.md` 一份**，
+两个内核目录里不再各留日志；今后每次改动在日期段内按内核分小块（单内核专属的改动，标题里就写该内核，不再切块）。
+
+- 🗑 **删除** `surge/CHANGELOG.md`（286 行）与 `egern/CHANGELOG.md`（254 行），**正文整段并入**各自内核已有的
+  [`surge/docs/07-文件版本沿革.md`](surge/docs/07-文件版本沿革.md)（226 → 523 行）与
+  [`egern/docs/07-文件版本沿革.md`](egern/docs/07-文件版本沿革.md)（223 → 488 行）末节的「更新日志」一节。
+  选沿革文档而不是搬进根文件，是为了让根文件不因一次合并膨胀近三倍 —— 它只承载**从今往后**。
+- 📜 **历史条目一字未改**（纪律：历史条目不回溯改写）。只做了两类归一化，先例见
+  [`docs/跨内核差异对照.md`](docs/跨内核差异对照.md) 的「标题降级与路径改写」：
+  **标题降级一层**、**相对链接按新位置改写**（新位置比原文件深一层目录）。
+  Egern 侧另有 5 行**标题层级**归一（原文件把两个 2026-09-23 条目写成 `###`、其余写成 `##`，并入后统一按 `###` 记日期）。
+  并入块顶部留了一段 📌 出处说明，讲清"这两件事发生过、正文没动"。
+- 🔗 **活链接 8 处改道**（`check_links.py` 会抓这一类，所以是安全的）：本文件头部与「历史」小节 4 处、
+  `README.md` 文件结构表 1 处、`surge/docs/07` 头部 1 处、`egern/docs/07` 改名记录 2 处、
+  `skill/reference/egern/public-repo.md` 的「该放哪」1 处。
+- 🔍 **闸门抓不到的纯文字提法 6 处**（`check_links.py` 明确跳过代码围栏，围栏里的目录树和表格不会报）——
+  靠 `grep -rn CHANGELOG --include="*.md" .` 逐处过：`skill/reference/surge/public-repo.md` 的目录树与职责表、
+  `skill/reference/egern/public-repo.md` 的目录树、`surge/DetailsReadme` 的目录树各删掉一行 `CHANGELOG.md`，
+  `AGENTS.md` §3 新增一行说明"唯一一份"、§5 把「散文」的指向写实。
+  ⚠️ 两处**刻意未动**：`docs/体检报告.md` P5 与 `docs/跨内核差异对照.md` §里对旧仓失效锚点的记述 ——
+  它们是当时的事实记录。前者已在其下补一条 2026-09-24 后记说明"原文仍在，位置变了，按条目名查"。
+- 🚪 **动了 1 个冻结文件**：`skill/tests/bump_version.py` —— 维护者本轮显式授权（"新建初期要摆脱历史包袱"）。
+  改的是两处**文案**：`本脚本不改，需要你手工处理的` 清单里那句「CHANGELOG（根 / surge / egern 三处）」→
+  「根那一份，2026-09-24 起是唯一的一份」；头部「排除口径」里给「沿革」一条补明**现在靠它排除并入后的历史条目**。
+  ✅ **判定逻辑零改动**：排除正则 `(^|/)CHANGELOG\.md$` 按文件名匹配，删两份不影响；
+  并入后的历史条目落在文件名含「沿革」的文件里，由既有的 `沿革` 一条排除 —— 脚本本身不写 CHANGELOG，
+  所以这一处不影响任何断言，`all.sh` 四项读数与改动前一致。
+- ✅ **验收**：`bash skill/tests/all.sh` 四项全绿（Surge 23 / Egern 46 / `.min` 对拍 12 / 可移植性 18），
+  末行报告闸门被触碰（就是上面那个 `bump_version.py`）。
 
 ---
 
@@ -328,12 +364,13 @@
 
 ## 历史
 
-合并前的完整迭代史按内核分别保存在
-[`surge/CHANGELOG.md`](surge/CHANGELOG.md)（Surge `v1`→`routing_v3`）与
-[`egern/CHANGELOG.md`](egern/CHANGELOG.md)（Egern `v0`→`routing_v3`、DNS 加固 `f1`→`f10`），
-**内容逐字未改**，包括其中的旧文件名与旧仓库名表述。
+合并前的完整迭代史原先按内核分别保存在 `surge/CHANGELOG.md`（Surge `v1`→`routing_v3`）与
+`egern/CHANGELOG.md`（Egern `v0`→`routing_v3`、DNS 加固 `f1`→`f10`），**内容逐字未改**，
+包括其中的旧文件名与旧仓库名表述。2026-09-24 这两份文件删除，全文并入各自内核的沿革文档末节：
+[`surge/docs/07`](surge/docs/07-文件版本沿革.md) · [`egern/docs/07`](egern/docs/07-文件版本沿革.md)。
 
-> ⚠️ 按发生时事实保留的代价：内核 `CHANGELOG` 里「新写地址请用 `.../RiverFlowsInUUU/Egern/...`」
-> 这类提示（`egern/CHANGELOG.md` 改名条目）**已经过期** —— 回溯改写历史条目会破坏它的证据价值，
+> ⚠️ 按发生时事实保留的代价：内核日志里「新写地址请用 `.../RiverFlowsInUUU/Egern/...`」
+> 这类提示（原 `egern/CHANGELOG.md` 的改名条目，现见 `egern/docs/07` 末「更新日志」一节）
+> **已经过期** —— 回溯改写历史条目会破坏它的证据价值，
 > 所以只在这里更正一次：**新写地址一律用 `RiverFlowsInUUU/Self-Configuration`**，
 > 前身两仓仅作来源说明、后续可能转为私有。

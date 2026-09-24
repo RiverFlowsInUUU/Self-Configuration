@@ -10,14 +10,13 @@
 
 ```
 README.md                                   # 门面：内核选择 + 四份订阅地址 + 五类泄露面
-CHANGELOG.md                                # 合并成仓的装配史（Egern 内容的迭代史在下面那份）
+CHANGELOG.md                                # **唯一一份**改动记录：装配史 + 两内核的迭代都写在这里
 LICENSE · .gitignore
 icons/                                      # 26 个 PNG —— 两内核共用（原各存一份且逐字节相同）
 docs/                                       # ★ 共享文档层（不再各内核一份）
   跨内核差异对照.md · 规则集与来源.md · 注意事项.md · 图标与许可.md
 skill/                                      # 本 skill：SKILL.md（§0 判内核 → 分支 A/B）
   reference/{surge,egern}/ · scripts/{surge,egern}/ · tests/{surge,egern}/
-egern/CHANGELOG.md                          # 本内核更新日志（按时间倒序，README 只留引用）
 egern/profiles/lazy.yaml / lazy.min.yaml          # 懒人版 · 可选（3 组 / 10 条规则，AD 只留 REJECT、无 Final 兜底组（policy 直写 Proxy）；不挂版本号）
 egern/profiles/routing_v3.1.yaml / .min.yaml    # 分流版 · 推荐（脱敏模板：无节点、无订阅、无证书；机场槽位 1 个）
 egern/profiles/routing_v2.4.yaml / .min.yaml      # 保留（v3 前一版）
@@ -32,16 +31,18 @@ egern/docs/03-加固清单-18项.md                    # 清单 + no_resolve 三
 egern/docs/04-模板逐段讲解.md                     # 逐段讲模板，含「必须替换的清单」（routing_v2.3 起只需 1 处）
 egern/docs/05-分流与no_resolve必须成对交付.md     # f7→f8 事故复盘
 egern/docs/06-实测数据与版本谱系.md               # 端点实测表 / 污染实测表 / f1→f8 谱系
-egern/docs/07-文件版本沿革.md                     # 两条线 + 分流版 routing_v1→v2.4 逐个说明（含四次改名记录）
+egern/docs/07-文件版本沿革.md                     # 两条线 + 分流版 routing_v1→v2.4 逐个说明（含四次改名记录）；末节 = 本内核合并前的迭代史（原 egern/CHANGELOG.md 全文并入）
 egern/docs/08-审计读数.md                         # 6 个审计脚本的读数 / 2 条 LOW 的含义 / 回归测试
 egern/docs/12-分流顺序.md                         # 分流版 24 条规则的顺序与理由
 egern/DetailsReadme/DetailsReadme.md              # 完整技术文档
 ```
 
-> ⚠️ **合并带来的三处职责变化**：① 首页只有根目录那**一份**；② 「注意事项 / 图标与许可 /
+> ⚠️ **合并带来的四处职责变化**：① 首页只有根目录那**一份**；② 「注意事项 / 图标与许可 /
 > 规则集与来源」三篇升到共享 `docs/`，要改这三件事去那一份，**不要**在内核目录里另起一篇；
 > ③ 新增 [`docs/跨内核差异对照.md`](../../../docs/跨内核差异对照.md) ——
-> 凡「Egern 的结论搬到 Surge」之类的问题，答案写在那一篇里。
+> 凡「Egern 的结论搬到 Surge」之类的问题，答案写在那一篇里；
+> ④ **改动记录只有根 `CHANGELOG.md` 一份**（2026-09-24 起，内核目录里不再各留一份日志）——
+> 本内核合并前的迭代史存档在 [`docs/07-文件版本沿革.md`](../../../egern/docs/07-文件版本沿革.md) 末节。
 
 
 > **可选版本只有两个** —— `routing_v3.1`（分流版 · 推荐）与 `lazy`（懒人版）；
@@ -84,7 +85,7 @@ README 是**产品介绍** —— 读者要知道「这东西是什么、怎么�
 - 🚫 **与评审 / 工单的对话** —— 「原写 X 属误标，已按功能拆开」。
 - 🚫 **内部判据与断言名** —— 「由 `architecture.sh` ④ 断言守着」。
 
-该放哪：**改动记录 → [`CHANGELOG.md`](../../../egern/CHANGELOG.md)；判据与原理 → [`DetailsReadme/`](../../../egern/DetailsReadme/DetailsReadme.md) 或 [`docs/`](../../../egern/docs/)。**
+该放哪：**改动记录 → 根 [`CHANGELOG.md`](../../../CHANGELOG.md)（唯一一份）；判据与原理 → [`DetailsReadme/`](../../../egern/DetailsReadme/DetailsReadme.md) 或 [`docs/`](../../../egern/docs/)。**
 
 **自查**：README 里出现「为什么…」「不算」「误标」「判据」「原写」「上面是…顺序」，
 八成就是改动记录漏出来了。**挪走，别只删** —— 判据必须仍能在 `DetailsReadme` 里查到。

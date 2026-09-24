@@ -35,9 +35,8 @@ Surge/
 │   ├── routing_v3.1.conf     # 分流配置（带注释）—— 改这份
 │   └── routing_v3.1.min.conf # 同一个配置（纯配置，注释剥掉）—— 导入用
 ├── icons/               # 26 个策略组图标（本地，不跨项目引用）
-├── docs/                # 01–11 专题
+├── docs/                # 01–11 专题（07 末节存着本内核合并前的迭代史）
 ├── DetailsReadme/       # 本文件
-├── CHANGELOG.md
 ├── LICENSE
 └── skill/
     ├── SKILL.md                  # 方法论

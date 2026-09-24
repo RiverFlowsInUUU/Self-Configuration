@@ -93,7 +93,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 | 🧪 | [`skill/`](skill/) | 单一入口 `SKILL.md`（按内核分支）+ 审计脚本 + 回归测试：`bash skill/tests/all.sh` 一条命令跑完四项检查 |
 | 🤖 | [`AGENTS.md`](AGENTS.md) | 给 AI agent 的开工说明：改完的固定动作 · 五条硬约束 · 换设备三件事 · 升版一行常量 |
 | 🔁 | [`.gitattributes`](.gitattributes) | 行尾钉成 LF —— 同一个 commit 在任何设备上落盘字节相同，clone 下来直接改、改完直接推 |
-| 🗓️ | [`CHANGELOG.md`](CHANGELOG.md) | 合并成仓记录；各内核迭代史见 [`surge/`](surge/CHANGELOG.md) · [`egern/`](egern/CHANGELOG.md) |
+| 🗓️ | [`CHANGELOG.md`](CHANGELOG.md) | **唯一一份**改动记录：装配层与两个内核的迭代都按日期写在这里；合并前的内核迭代史见 [`surge/docs/07`](surge/docs/07-文件版本沿革.md) · [`egern/docs/07`](egern/docs/07-文件版本沿革.md) 末节 |
 
 ---
 
@@ -107,7 +107,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 - 🩺 [`docs/体检报告`](docs/体检报告.md) —— 全仓排查快照：每条硬判据是拿什么换的（含三处被实测推翻的原结论）
 - 🧪 [`skill/SKILL.md`](skill/SKILL.md) —— 方法论主干（先判内核，再进 Surge / Egern 分支）
 - 📘 [`surge/DetailsReadme/`](surge/DetailsReadme/) · [`egern/DetailsReadme/`](egern/DetailsReadme/) —— 逐段详解 · 原理推导 · 已知取舍 · FAQ
-- 🗓️ [`CHANGELOG.md`](CHANGELOG.md)
+- 🗓️ [`CHANGELOG.md`](CHANGELOG.md) —— 本仓唯一的改动记录，两个内核都写在这一份里
 
 ---
 
