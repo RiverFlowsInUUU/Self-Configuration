@@ -10,15 +10,25 @@
   治的是这类漂移：runner 加了一条断言（23 → 27 那种），十来篇文档一处没跟，
   而仓里**没有任何检查会因为"断言数变了"而报错** —— 只能一轮轮 grep 反查。
 
-四条判据（**固定条数**，不随文档数 / 声明数增长 —— 与其余判据同一口径）：
+五条判据（**固定条数**，不随文档数 / 声明数增长 —— 与其余判据同一口径）：
   C1 Surge 侧总数声明 == 本轮 Surge 实测（且**至少有一处**在声明它，否则判据空转）
   C2 Egern 侧总数声明 == 本轮 Egern 实测（同上）
   C3 认不出内核的并排声明（表行里没有表头、格子里又没写内核名）里的数，都要是本轮某个实测值
   C4 判别自证：同一串数字换措辞**不红** · 数字改一个**必红** · 三种写法都认得下来 ·
      无表头可依那一类也真的判得到（四条缺一条 ⇒ C4 红）
+  C5 文档写给 `check_tools.py` 的「固定 N 条判据」== 本轮 tools 实测（同样不许空转；
+     判别自证随条内置 —— 改一个数必红 · 同数换措辞不红 · 别的脚本名行不许归进来）
 
 归属怎么认（决定红在哪一侧）：先按**表格列**问表头「这一列在说哪一侧」，再退到格子文本里的
 内核名、整行的内核名、文件路径（`surge/` / `egern/`）。全落空才交 C3。
+
+C5 治的是复测出来的一个洞（2026-09-24 定）：`all.sh` 早把 `tools=$LAST_NUM` 传了进来，
+但 `KERNEL_KEYS` 只有两侧内核 —— 文档写给 `check_tools.py` 的「固定 6 条判据」没有任何判据
+拿它比本轮实测，T6 一加（6→7）那个数就静默陈旧。锚点**按行取**：数字与 `check_tools.py`
+必须同在一行 —— 宁可在文档重排 wrapping 时"命中 0 处 ⇒ 判负"出声，也不拿 ±1 行的窗口
+去猜归属（`AGENTS.md` §1 那两句「固定 6 条」「固定 4 条」恰好上下相邻，放宽窗口就是串台）。
+本数的口径：它**不钉自己的 5**（判据判自己的条数是递归，`all.sh` 里"判据的判据会递归"那句
+同样管这里）；`portability` 的 18 与 `doc_readings` 的 11 是同类未钉，留维护者拍。
 
 只判**总数**，不判分项表（`surge/docs/08` 那张逐阶段表、`run.sh` 注释里的"3 个断言"）：
   分项数要么随 fixture 数漂、要么一行只覆盖一个阶段，把它们钉成死数会让每次加断言都要改表格；
@@ -61,6 +71,10 @@ _STAGE_TAIL = re.compile(r"阶段\s*$")
 _NUM_TAIL = re.compile(r"(?:[0-9]|[%s])\s*个?\s*$" % _CN)
 # 历史记录类整篇不扫：那里的旧数字是**那一轮**的观测值，改成现在的数才是错。
 HISTORY = ("CHANGELOG", "体检报告", "日志旧版原文", "/docs/07-", "/.git/")
+
+# C5：写给 check_tools.py 的判据条数。行级锚点 —— 数字与脚本名不同行就不算（见头注）。
+TOOL_DECL = re.compile(r"固定\s*(\d+)\s*条判据")
+TOOL_ANCHOR = "check_tools.py"
 
 KERNEL_KEYS = ("surge", "egern")
 MEASURED_KEYS = KERNEL_KEYS + ("min_pair", "portability", "doc_readings", "tools")
@@ -148,6 +162,43 @@ def find_decls(text, rel):
     return decls, skipped
 
 
+def find_tool_decls(text, rel):
+    """C5 取数：含 `check_tools.py` 的行上的「固定 N 条判据」→ [(行号, N)]。"""
+    out = []
+    for i, line in enumerate(text.splitlines(), 1):
+        if TOOL_ANCHOR in line:
+            out.extend((i, int(m.group(1))) for m in TOOL_DECL.finditer(line))
+    return out
+
+
+# C5 的判别样本（内存，不碰仓文件）—— 按 C4 先例立"红的是数、不是措辞"，
+# 外加两条**归属门**的反例：光有"条判据"三个字不许归进来（那是别的脚本的数）。
+TOOL_FIX_SAME = (
+    ("x", "**固定 %d 条判据**，见 `skill/tests/check_tools.py`）·"),
+    ("y", "`skill/tests/check_tools.py`（**固定 %d 条判据**）由 all.sh 第 6 项串跑"),
+)
+TOOL_FIX_OTHER_SCRIPT = "回归断言数对拍（**固定 4 条判据**，见 `skill/tests/check_assert_counts.py`）"
+TOOL_FIX_NO_ANCHOR = "本模块**固定 9 条判据**，不随文档数增长"
+
+
+def selfproof_tool(measured):
+    """→ (通过?, 说明)。四条：同数换措辞取数一致 · 改一个数必被抓 · 别的脚本名行不归 · 无锚点行不归。"""
+    errs = []
+    n = measured["tools"]
+    got = [x for _ln, x in find_tool_decls(TOOL_FIX_SAME[0][1] % n, "AGENTS.md")]
+    got2 = [x for _ln, x in find_tool_decls(TOOL_FIX_SAME[1][1] % n, "skill/README.md")]
+    if got != [n] or got2 != [n]:
+        errs.append("同数换措辞取数不稳 %s/%s（应各 [%d]）" % (got, got2, n))
+    drift = [x for _ln, x in find_tool_decls(TOOL_FIX_SAME[0][1] % (n + 1), "AGENTS.md")]
+    if drift != [n + 1]:
+        errs.append("样本里的 %d 没被提出来 ⇒ C5 对数字不敏感" % (n + 1))
+    if find_tool_decls(TOOL_FIX_OTHER_SCRIPT, "AGENTS.md"):
+        errs.append("写着 check_assert_counts.py 的行被归给了 tools ⇒ 归属门漏（串台到别人的数）")
+    if find_tool_decls(TOOL_FIX_NO_ANCHOR, "docs/x.md"):
+        errs.append("无脚本名的「固定 9 条判据」被归进来 ⇒ 锚点是措辞不是脚本名")
+    return (not errs), "；".join(errs)
+
+
 def parse_measured(argv):
     """`all.sh` 传进来的 `k=v`；缺键或值不是整数 ⇒ 前置不达标（没跑成不等于跑绿）。"""
     got = {}
@@ -168,6 +219,11 @@ def parse_measured(argv):
     if missing:
         sys.stderr.write("❌ 前置：缺少 %s 的实测值 ⇒ 无法对拍（给全 %s）\n"
                          % (" ".join(missing), " ".join(MEASURED_KEYS)))
+        sys.exit(2)
+    if "tools" not in got:
+        # C5 的比数来源是第 6 项的 TOTAL。缺它不是"少判一条"，是拿缺失值空转 —— 按前置算，
+        # 与"上一项没跑出 TOTAL"同一条罪（没跑成不等于跑绿）。
+        sys.stderr.write("❌ 前置：缺少 tools 的实测值 ⇒ C5 无从对拍（第 7 项需要第 6 项的 TOTAL）\n")
         sys.exit(2)
     return got
 
@@ -228,7 +284,7 @@ def main(argv):
     if not files:
         sys.stderr.write("❌ 前置：一篇 .md 都没找到 ⇒ 扫描面空了，不算跑过\n")
         return 2
-    all_decls, all_skipped = [], []
+    all_decls, all_skipped, all_tool = [], [], []
     for rel, p in files:
         try:
             text = open(p, encoding="utf-8", errors="replace").read()
@@ -238,6 +294,7 @@ def main(argv):
         d, sk = find_decls(text, rel)
         all_decls.extend((rel, ln, k, ns) for ln, k, ns in d)
         all_skipped.extend(sk)
+        all_tool.extend((rel, ln, n) for ln, n in find_tool_decls(text, rel))
 
     print("实测：%s · 扫描 %d 篇 .md（历史类整篇不扫）· 总数声明 %d 处 / %d 个数 · 跳过 %d 处"
           % (" · ".join("%s=%s" % (k, measured[k]) for k in MEASURED_KEYS if k in measured),
@@ -268,6 +325,13 @@ def main(argv):
     ok4, why4 = selfproof(measured)
     ck("C4 判别自证（同数换措辞不红 · 改一个数必红 · 三式写法都认 · 无表头表行也判得到）",
        ok4, why4)
+    tbad = ["%s:%d 文档写 %s，实测 tools=%s" % (rel, ln, n, measured["tools"])
+            for rel, ln, n in all_tool if n != measured["tools"]]
+    ok5, why5 = selfproof_tool(measured)
+    why5_parts = (["一处声明都没有 ⇒ 判据空转"] if not all_tool else []) + tbad[:6]
+    ck("C5 check_tools 的文档写死判据条数与本轮实测一致（命中 %d 处 · 含判别自证）" % len(all_tool),
+       bool(all_tool) and not tbad and ok5,
+       "；".join(why5_parts) + (("；自证不通过：" + why5) if not ok5 else ""))
 
     for s in all_skipped[:8]:
         print("   ↷ " + s)
