@@ -12,6 +12,13 @@
 
 ## 2026-09-24
 
+### Egern
+
+- 🩹 订正 2026-09-23 查出未改的那处文档错误：`default_proxy_group` 按官方定义写作「添加代理时自动加入的策略组名称」
+  （顶层字段全表 `egernapp.com/docs/configuration/example`），不再叫"默认出口组 / 默认策略组"，并写明它与兜底无关 ——
+  兜底只有 `rules` 末尾那条 `default`。改的是 `DetailsReadme` §1.1（这条同时从「C. DNS 与默认出口」挪进「A. 全局开关 /
+  辅助项」）与 `docs/04` §6。配置零改动，`Proxy` 这个取值保留（懒人版 `Proxy` 组为空，正靠它接住手动添加的节点）。
+
 ### 共享层
 
 - 🗑 删除 `surge/CHANGELOG.md` 与 `egern/CHANGELOG.md`，正文整段并入各自 `docs/07` 末节；本文件是唯一日志。

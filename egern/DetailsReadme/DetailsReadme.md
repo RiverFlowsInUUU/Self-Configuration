@@ -36,15 +36,18 @@
 - `geoip_db_url` / `asn_db_url` —— `geoip` / `asn` 规则依赖的地理库（远程 `.mmdb`，非图标，保留原引用）。
 - `proxy_latency_test_url` / `direct_latency_test_url` —— 延迟测试的 HTTP 端点（决定测速走代理还是直连）。
 - `real_ip_domains` —— 不做 Fake IP 映射的域名白名单（APNs / 内网发现走的是「隧道外」链路，用 Fake IP 会异常）。
+- `default_proxy_group` —— **添加代理时自动加入的策略组名称**（官方：*Policy group to automatically add
+  proxies to*，默认值为空；本模板写 `Proxy`）。⚠️ 它与兜底**无关** —— 未命中任何规则时走的是 `rules`
+  最后那条 `default`（见 1.4）。它的用处是：你手动加一个节点，Egern 自动把它放进这个组，不用回来编辑
+  `policy_groups` —— 懒人版 `Proxy` 组为空，正靠这一行接住手动添加的节点。
 
 **B. 核心三段**
 - `proxies` —— 节点定义（**模板为空 `[]`**，由你填写）。
 - `policy_groups` —— 分流组（见 1.3）。
 - `rules` —— 匹配表（见 1.4）。
 
-**C. DNS 与默认出口**
+**C. DNS**
 - `dns` —— 双 DNS 模型核心（见 1.5）。
-- `default_proxy_group` —— 默认出口组（本模板为 `Proxy`）。
 
 ### 1.2 `proxies` —— 空模板，由你填写
 
