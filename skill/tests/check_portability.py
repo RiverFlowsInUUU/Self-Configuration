@@ -10,6 +10,7 @@
     E1 .gitattributes 在场，且把 `*` 钉成 `text=auto eol=lf`   —— 系统级 autocrlf=true 会被它覆盖
     E2 工作树文本文件零 CRLF                                   —— 磁盘字节 == 提交字节 == raw 字节的前提
     E2b 工作树文本文件零孤立 CR（老 Mac 行尾，同样破坏按 `\n` 写的正则）
+    （前置）被跟踪文件全部存在于工作树 —— 缺任何一个即退回退出码 2，不静默跳过
     E3 工作树文本文件零 BOM                                   —— BOM 会让 shebang 与 YAML 头解析当场失效
     N1 所有路径为 Unicode NFC                                 —— macOS 会以 NFD 落盘，同一名字变两个文件
     N2 无 Windows/macOS 非法字符 `\\ / : * ? " < > |`
@@ -42,7 +43,15 @@ ROOT = os.path.dirname(os.path.dirname(HERE))               # → skill → 仓�
 ILLEGAL = set('\\:*?"<>|')
 WIN_RESERVED = {"CON", "PRN", "AUX", "NUL"}
 WIN_RESERVED |= {"COM%d" % i for i in range(1, 10)}
-WIN_RESERVED |= {"LPT%d" for i in range(1, 10)}
+WIN_RESERVED |= {"LPT%d" % i for i in range(1, 10)}
+# ⚠️ 自检：清单里不许留下**未格式化**的模板串。
+#    2026-09-25 实测：上面那行原本写成 `{"LPT%d" for i in ...}`（漏了 `% i`），
+#    于是加进去的是字面量 `LPT%d` 而不是 `LPT1`…`LPT9` —— N3 声称覆盖 LPTn，实际一个都不判。
+#    这类"集合内容写错"`check_tools.py` 的 T5/T6 都判不到（它们只判绑定与引用），
+#    所以在源头立一条 fail-loud 自检：带 `%` 的名字一定是漏了格式化。
+if any("%" in n for n in WIN_RESERVED):
+    raise SystemExit("❌ 前置：WIN_RESERVED 里有未格式化的模板串 %s ⇒ 检查集合推导式是不是漏了 `%% i`"
+                     % sorted(n for n in WIN_RESERVED if "%" in n))
 TEXT_EXT = (".md", ".py", ".sh", ".conf", ".yaml", ".yml", ".txt", ".list",
             ".json", ".js", ".html", ".gitignore", ".gitattributes")
 BINARY_EXT = (".png", ".jpg", ".jpeg", ".gif", ".ico", ".icns", ".mmdb", ".pcap",
@@ -86,6 +95,22 @@ def main():
     if files is None:
         print("❌ 前置不达标：这里不是 git 仓库，拿不到 tracked 清单")
         print("   仓库根按本文件定位：%s" % ROOT)
+        return 2
+    # ⚠️ 前置：被跟踪文件必须都在工作树里。
+    #    少任何一个（`git rm` 未提交 / 改到一半 / 误删）时，下面的 read() 会抛
+    #    FileNotFoundError ⇒ traceback + **退出码 1 + 没有 TOTAL 行**：既让后面 18 条判据
+    #    一条都不跑，又把"没跑成"伪装成"判负"（本仓最忌的那种假绿的反面）。
+    #    2026-09-25 实测：`rm icons/grok.png` 就是这个表现。
+    #    ⇒ 归到退出码 2（前置/环境不达标），与"不是 git 仓库"同一档。
+    missing = [p for p in files if not os.path.exists(os.path.join(ROOT, p))]
+    if missing:
+        print("❌ 前置不达标：%d 个被跟踪文件在工作树里不存在" % len(missing))
+        for p in missing[:6]:
+            print("     · %s" % p)
+        if len(missing) > 6:
+            print("     · …另有 %d 个" % (len(missing) - 6))
+        print("   ⇒ 先 `git status` 看清是删除还是改名；本项不判内容，退回退出码 2"
+              "（没跑成 ≠ 跑绿）")
         return 2
     print("仓库根：%s" % ROOT)
     print("tracked 文件：%d 个" % len(files))
