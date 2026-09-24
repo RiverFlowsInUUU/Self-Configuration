@@ -6,8 +6,10 @@
 #   两套内核的回归（Surge 六阶段里已含架构不变量、全仓 markdown 链接与锚点、
 #   全部 profile 的刷新参数）+ 两版形态对拍 + 换设备可移植性 + 文档读数与实测对拍
 #   + 工具自检（三套自带回归与"全部被跟踪 .py 可编译"，见 check_tools.py 头注：
-#     生成器与六个从不被闸执行的脚本都属于"还没坏"，不是"有防护"）。
-#   分开跑要记六条命令、读六段输出，串起来一条就能判定"这次改动有没有把什么弄坏"。
+#     生成器与六个从不被闸执行的脚本都属于"还没坏"，不是"有防护"）
+#   + 回归断言数与本轮实测 TOTAL 对拍（见 check_assert_counts.py 头注：文档写死的
+#     「19 断言 / 18 断言」此前没有任何检查会因为 runner 加了断言而报错）。
+#   分开跑要记七条命令、读七段输出，串起来一条就能判定"这次改动有没有把什么弄坏"。
 #
 # 本仓完全独立：这一条命令跑的所有检查**只看本仓库的文件**，
 # 不需要任何其他仓库在旁边，也不依赖本机路径、盘符、用户名。仓库根由本脚本自身位置反推
@@ -101,6 +103,13 @@ item() {
   local dt=$((SECONDS - t0))
   local total
   total="$(grep -o 'TOTAL: [0-9]* passed, [0-9]* failed' "$log" | tail -1)"
+  # 把通过数交给调用方：第 7 项拿这六个数去对文档里写死的断言数（check_assert_counts.py）。
+  # 没有 TOTAL 行时置空 —— 第 7 项据此判"前置不达标"，而不是拿一个缺失值当 0 去对拍。
+  if [ -n "$total" ]; then
+    LAST_NUM="${total#TOTAL: }"; LAST_NUM="${LAST_NUM%% passed*}"
+  else
+    LAST_NUM=""
+  fi
   case "$rc" in
     0)
       printf '   %-2s ✅ %-30s · %s · %ss\n' "$n" "$name" "${total:-通过}" "$dt"
@@ -134,12 +143,25 @@ printf '订阅地址固定名 · 当前版：%s   联网：%s   档位：%s\n\n'
   "$([ "$OFFLINE" = "1" ] && echo 跳过 || echo 开)" \
   "$([ "$LANDED" = "1" ] && echo '落地复核（三数计入判负）' || echo '默认（三数只报不判）')"
 
-item "Surge 回归（六阶段）"  bash skill/tests/surge/run.sh
-item "Egern 回归（两阶段）"  bash skill/tests/egern/run.sh
-item "两版形态去注释对拍"    "$PY" skill/tests/check_min_pair.py
-item "换设备可移植性"        "$PY" skill/tests/check_portability.py
-item "文档读数与实测对拍"    "$PY" skill/tests/check_doc_readings.py
-item "工具自检（自测+可编译）"  "$PY" skill/tests/check_tools.py
+# MEASURED：本轮前 6 项的通过数，按 key 交给第 7 项去和文档里写死的断言数对拍。
+# key 就写在各条命令旁边（不另立一张位置表）—— 位置表会跟着调顺序漂，键不会。
+MEASURED=()
+item "Surge 回归（六阶段）"  bash skill/tests/surge/run.sh;      MEASURED+=("surge=$LAST_NUM")
+item "Egern 回归（两阶段）"  bash skill/tests/egern/run.sh;      MEASURED+=("egern=$LAST_NUM")
+item "两版形态去注释对拍"    "$PY" skill/tests/check_min_pair.py;  MEASURED+=("min_pair=$LAST_NUM")
+item "换设备可移植性"        "$PY" skill/tests/check_portability.py; MEASURED+=("portability=$LAST_NUM")
+item "文档读数与实测对拍"    "$PY" skill/tests/check_doc_readings.py; MEASURED+=("doc_readings=$LAST_NUM")
+item "工具自检（自测+可编译）"  "$PY" skill/tests/check_tools.py;  MEASURED+=("tools=$LAST_NUM")
+
+# 第 7 项：文档写死的断言数 ↔ 上面这六个实测 TOTAL。它自己不跑测试（判据的判据会递归）。
+# ⚠️ 离线档**不调它**：离线时 Surge 侧少跑 4 条联网断言（实测 15），与文档的联网口径是两个数
+#    ⇒ 比了必假红；而"跳过"也不能算成一条通过（那正是本仓忌的假绿），所以只出声、不进项数。
+if [ "$OFFLINE" = "0" ]; then
+item "断言数与文档对拍"      "$PY" skill/tests/check_assert_counts.py "${MEASURED[@]}"
+else
+  printf '   %-2s ↷ %-30s · 跳过：离线档 Surge 侧实测 %s，与文档写死的联网口径不是一个数\n' \
+    "$((n + 1))" "断言数与文档对拍" "${MEASURED[0]#surge=}"
+fi
 
 printf '\n'
 # 「落地状态」三个数：默认档只报（下面末行据它换措辞），--landed 档才判负。

@@ -93,7 +93,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 | 📚 | [`docs/`](docs/) | 共享文档 6 篇：跨内核差异对照 / 规则集与来源 / 注意事项 / 图标与许可 / 技能包合并与自包含 / 体检报告 |
 | 📂 | [`surge/docs/`](surge/docs/) · [`egern/docs/`](egern/docs/) | 各内核 9 篇专题（01–08 编号系列 + 分流设计 / 分流顺序） |
 | 📘 | [`surge/DetailsReadme/`](surge/DetailsReadme/) · [`egern/DetailsReadme/`](egern/DetailsReadme/) | 完整技术文档 |
-| 🧪 | [`skill/`](skill/) | 单一入口 `SKILL.md`（按内核分支）+ 审计脚本 + 回归测试：`bash skill/tests/all.sh` 一条命令跑完六项检查 |
+| 🧪 | [`skill/`](skill/) | 单一入口 `SKILL.md`（按内核分支）+ 审计脚本 + 回归测试：`bash skill/tests/all.sh` 一条命令跑完七项检查 |
 | 🤖 | [`AGENTS.md`](AGENTS.md) | 给 AI agent 的开工说明：改完的固定动作 · 五条硬约束 · 换设备三件事 · 升版不改订阅地址 |
 | 🔁 | [`.gitattributes`](.gitattributes) | 行尾钉成 LF —— 同一个 commit 在任何设备上落盘字节相同，clone 下来直接改、改完直接推 |
 | 🗓️ | [`CHANGELOG.md`](CHANGELOG.md) | **唯一一份**改动记录：装配层与两个内核的迭代都按日期写在这里；合并前的内核迭代史见 [`surge/docs/07`](surge/docs/07-文件版本沿革.md) · [`egern/docs/07`](egern/docs/07-文件版本沿革.md) 末节 |

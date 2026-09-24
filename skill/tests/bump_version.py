@@ -120,8 +120,9 @@ def changelog_stub(fam, old, new, date):
           "这一轮实际改了什么：＿＿",
         "- 🧷 `.min` 由 `python skill/tests/make_min.py --family " + fam + " --apply` 同步"
           "（生成器不碰归档；同号快照存在时它只点名提醒）",
-        "- 🔢 验收：`bash skill/tests/all.sh` 六项 TOTAL ＿＿ · ＿＿ · ＿＿ · ＿＿ · ＿＿ · ＿＿；"
-          "这轮若动了判据，README / 两侧 docs/08 / 两份 checker.md 的读数要同步",
+        "- 🔢 验收：`bash skill/tests/all.sh` 七项 TOTAL ＿＿ · ＿＿ · ＿＿ · ＿＿ · ＿＿ · ＿＿ · ＿＿；"
+          "这轮若动了判据，README / 两侧 docs/08 / 两份 checker.md 的读数要同步"
+          "（**总数**由 `all.sh` 第 7 项对拍，逐阶段分项仍要手工同步）",
     ])
 
 

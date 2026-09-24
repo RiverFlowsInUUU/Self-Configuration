@@ -1,0 +1,292 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""回归断言数对拍（`all.sh` 第 7 项）：文档里写死的「19 断言 / 18 断言」↔ 本轮实测的 TOTAL。
+
+为什么单独立一项，而不是并进 `check_doc_readings.py` 的 D 规则：
+  D1–D3 对拍的是**解析 profile 就能算出来**的读数（组数 / 规则条数 / 规则集条数）。
+  而那个脚本的头注里明写着**不判**"判据 / 回归的断言数 —— 那要真跑测试才有值，递归且不划算"。
+  这一项不推翻那个判断，而是把它缺的那个输入从外面喂进来：`all.sh` 刚跑完前 6 项，
+  手里正有本轮的六个 TOTAL ⇒ 本脚本只做"文档数 ↔ 实测数"的比对，**自己不跑任何测试**（不递归）。
+  治的是这类漂移：runner 加了一条断言（23 → 27 那种），十来篇文档一处没跟，
+  而仓里**没有任何检查会因为"断言数变了"而报错** —— 只能一轮轮 grep 反查。
+
+四条判据（**固定条数**，不随文档数 / 声明数增长 —— 与其余判据同一口径）：
+  C1 Surge 侧总数声明 == 本轮 Surge 实测（且**至少有一处**在声明它，否则判据空转）
+  C2 Egern 侧总数声明 == 本轮 Egern 实测（同上）
+  C3 认不出内核的并排声明（表行里没有表头、格子里又没写内核名）里的数，都要是本轮某个实测值
+  C4 判别自证：同一串数字换措辞**不红** · 数字改一个**必红** · 三种写法都认得下来 ·
+     无表头可依那一类也真的判得到（四条缺一条 ⇒ C4 红）
+
+归属怎么认（决定红在哪一侧）：先按**表格列**问表头「这一列在说哪一侧」，再退到格子文本里的
+内核名、整行的内核名、文件路径（`surge/` / `egern/`）。全落空才交 C3。
+
+只判**总数**，不判分项表（`surge/docs/08` 那张逐阶段表、`run.sh` 注释里的"3 个断言"）：
+  分项数要么随 fixture 数漂、要么一行只覆盖一个阶段，把它们钉成死数会让每次加断言都要改表格；
+  总数是文档对外承诺的那个数，也正是"改了 runner 忘同步"最容易漏的那个。
+  这类"没判到"不静默：末尾照 `check_doc_readings.py` 的口径报「跳过 N 处」。
+
+一行算不算"总数声明"，看它有没有**阶段总数标记** = 数字出现在「阶段」二字**前面**
+（`6 阶段` / `六个阶段` / `两阶段`）。这一条同时把四种写法挡在外面：
+  · `阶段 1（… = 10 断言）+ 阶段 2（…）`   —— 数字挂在单个阶段上 ⇒ 数字在「阶段」**后面** ⇒ 不判
+  · `把五份同时喂给两个脚本、共 10 个断言` —— 同上，无阶段总数标记 ⇒ 不判
+  · `共 3 条断言` / `16 键一致性断言`      —— 单位不是「(个)断言」⇒ 不判
+  · `DNS 段已被阶段 3 断言为逐字相同`      —— 「断言」在这儿是**动词**：看「阶段」前面有没有
+                                            数词（`两阶段 18` 有 ⇒ 是条数；`被阶段 3` 没有 ⇒ 不判）
+
+用法：python skill/tests/check_assert_counts.py surge=19 egern=18 min_pair=18 ...
+      （由 `all.sh` 第 7 项自动带上本轮六个 TOTAL；`--offline` 档 all.sh **不调本脚本**，
+       因为离线时 Surge 侧少跑 4 条联网断言（实测 15），与文档的联网口径是两个数 ——
+       拿它比对必然假红，而把它算成一条通过更是假绿。）
+退出码：0 全过 · 1 有判负 · 2 前置不达标（没给实测值 / 值不是整数 / 一篇文档都没找到）
+"""
+
+import glob
+import os
+import re
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))              # <仓根>/skill/tests
+ROOT = os.path.dirname(os.path.dirname(HERE))                   # → skill → 仓根
+
+# 阶段总数标记：`6 阶段` / `六个阶段` / `两阶段`（数字在「阶段」前面才算总数）
+_CN = "一二三四五六七八九十两"
+MARKER = re.compile(r"(?:[0-9]+|[%s])\s*个?\s*阶段" % _CN)
+# 总数声明本体：`19 断言` / `19 个断言` / `… = 18 断言`。
+# `(?<!\d)` 挡的是"从 18 里截一个 8 出来"这种回退匹配（实测撞在 `两阶段 18 断言` 上）。
+DECL = re.compile(r"(?<!\d)(\d+)\s*(?:个\s*)?断言")
+# 「阶段 3 断言为逐字相同」里的「断言」是**动词**（实测在 surge/docs/08:81），不是条数。
+# 分不开形状、只看「阶段」前面是什么：跟着数词 ⇒ 那是阶段总数标记、后面的数是条数；
+# 跟着别的字 ⇒ 那是"第 N 阶段" + 动词，不判。
+_STAGE_TAIL = re.compile(r"阶段\s*$")
+_NUM_TAIL = re.compile(r"(?:[0-9]|[%s])\s*个?\s*$" % _CN)
+# 历史记录类整篇不扫：那里的旧数字是**那一轮**的观测值，改成现在的数才是错。
+HISTORY = ("CHANGELOG", "体检报告", "日志旧版原文", "/docs/07-", "/.git/")
+
+KERNEL_KEYS = ("surge", "egern")
+MEASURED_KEYS = KERNEL_KEYS + ("min_pair", "portability", "doc_readings", "tools")
+
+
+def docs():
+    out = []
+    for p in sorted(glob.glob(os.path.join(ROOT, "**", "*.md"), recursive=True)):
+        rel = os.path.relpath(p, ROOT).replace("\\", "/")
+        if any(h in "/" + rel for h in HISTORY):
+            continue
+        out.append((rel, p))
+    return out
+
+
+def cell_kernel(text):
+    """这一格里只出现一侧的内核名时，它就在说那一侧。"""
+    low = text.lower()
+    found = tuple(k for k in KERNEL_KEYS if re.search(r"\b%s\b" % k, low))
+    return found[0] if len(found) == 1 else None
+
+
+def col_kernels(lines, idx):
+    """表格行：往上找表头，认「哪一列在说哪一侧」→ {列号: 内核}。
+
+    为什么要这一层：README 的门面表与 `docs/跨内核差异对照.md` 的脚本表把两侧的断言数写在
+    **同一行的两格里**，格子里只有数字、内核名在表头。光看格子与整行都认不出归属 ⇒ 那一行
+    的 19 与 18 只能退成"是本轮某个实测值就行"。实测：把两格的 19/18 整整齐齐互换，
+    不认列的判据**照样绿**（两个数都还在实测里）；认了列之后互换必红（18 落进 Surge 列）。
+    找不到表头就返回空 ⇒ 退回逐格判断，不硬猜。
+    """
+    if not lines[idx].strip().startswith("|"):
+        return {}
+    rows, i = [], idx - 1
+    while i >= 0 and lines[i].strip().startswith("|"):
+        rows.append(i)
+        i -= 1
+    for j in reversed(rows):                       # 从上往下，第一个能把两侧分开的就算表头
+        cells = lines[j].split("|")
+        km = dict((n, cell_kernel(c)) for n, c in enumerate(cells) if cell_kernel(c))
+        if len(set(km.values())) == 2:
+            return km
+    return {}
+
+
+def kernel_of(cell, line, rel):
+    """这一处声明属于哪一侧？格子里没有就到整行，行里没有就到路径；再没有就交 C3。"""
+    for text in (cell, line, rel):
+        low = text.lower()
+        found = tuple(k for k in KERNEL_KEYS if re.search(r"\b%s\b" % k, low))
+        if len(found) == 1:
+            return found[0]
+    return None                      # 认不出 ⇒ 交给 C3（只要求是本轮某个实测值）
+
+
+def _is_verb(text, start):
+    """「…被阶段 3 断言为逐字相同」里的数是阶段号，不是条数 —— 看「阶段」前面有没有数词。"""
+    m = _STAGE_TAIL.search(text[:start])
+    return bool(m) and not _NUM_TAIL.search(text[:m.start()])
+
+
+def decl_nums(text):
+    """一段文本里的**总断言数**声明（已过动词过滤）。"""
+    return [int(m.group(1)) for m in DECL.finditer(text) if not _is_verb(text, m.start())]
+
+
+def find_decls(text, rel):
+    """→ (decls, skipped)。decls = [(行号, 内核 or None, [数, ...])]；skipped = 有「断言」无总数标记的行。"""
+    decls, skipped = [], []
+    lines = text.splitlines()
+    for i, line in enumerate(lines, 1):
+        if "断言" not in line:
+            continue
+        if not MARKER.search(line):
+            m = DECL.search(line)
+            if m and not _is_verb(line, m.start()):
+                skipped.append("%s:%d [%s] `%s`（分项 / 无阶段总数标记，只报不判）"
+                               % (rel, i, "/".join(str(x) for x in decl_nums(line)), line.strip()[:60]))
+            continue
+        kmap = col_kernels(lines, i - 1)
+        for n, cell in enumerate(line.split("|")):
+            nums = decl_nums(cell)
+            if nums:
+                decls.append((i, kmap.get(n) or kernel_of(cell, line, rel), nums))
+    return decls, skipped
+
+
+def parse_measured(argv):
+    """`all.sh` 传进来的 `k=v`；缺键或值不是整数 ⇒ 前置不达标（没跑成不等于跑绿）。"""
+    got = {}
+    for a in argv:
+        if "=" not in a:
+            sys.stderr.write("❌ 前置：实测值写法应为 key=value，收到 `%s`\n" % a)
+            sys.exit(2)
+        k, v = a.split("=", 1)
+        if k not in MEASURED_KEYS:
+            sys.stderr.write("❌ 前置：不认识的 key %s（本脚本认：%s）\n"
+                             % (k, " ".join(MEASURED_KEYS)))
+            sys.exit(2)
+        if not re.fullmatch(r"-?\d+", v.strip()):
+            sys.stderr.write("❌ 前置：%s 的实测值不是整数：%s ⇒ 上一项没跑出 TOTAL？\n" % (k, v))
+            sys.exit(2)
+        got[k] = int(v)
+    missing = [k for k in KERNEL_KEYS if k not in got]
+    if missing:
+        sys.stderr.write("❌ 前置：缺少 %s 的实测值 ⇒ 无法对拍（给全 %s）\n"
+                         % (" ".join(missing), " ".join(MEASURED_KEYS)))
+        sys.exit(2)
+    return got
+
+
+# ── 判别自证用的三份内存样本（不碰仓里任何文件） ────────────────────────────
+# 为什么要在判据里带样本：解析式一旦过度贴合"今天这几个文件的措辞"，下一次改文档的人会拿到
+# 一次红给左手的失败，最省事的处置是放宽正则 —— 那是 CHANGELOG 里点名过的作弊路径。
+# 立住"同数换措辞不红 / 改一个数必红"，才说明红的是**数**、不是**措辞**。
+FIX_SAME_NUMBER = (
+    ("a", "两阶段共 **18 个断言**，退出码非 0 即失败："),
+    ("b", "两阶段 · 18 断言（阶段 1 · 5 fixture ×2；阶段 2 · 四件 ×2）"),
+)
+FIX_WRONG_NUMBER = "| 自检读数 | 5 个审计脚本 + 6 阶段 · 20 断言 | 10 个审计脚本 + 2 阶段 · 18 断言 |"
+FIX_THREE_SPELLINGS = (
+    ("6 阶段 · 19 断言", [19]),
+    ("6 阶段 · 19 个断言", [19]),
+    ("回归测试两阶段（10 + 8 = 18 断言）", [18]),
+)
+# ④ 认不出内核的那一类（C3）也要有反例：不认列的表行里塞一个不存在的数 ⇒ 必须判出来。
+#    不立这一条，C3 在"当前仓里恰好没有无表头的表行"时就是一条**永远不会红**的判据
+#    —— 与本轮刚修掉的 `check_min_pair.py:115` 同一种罪。
+FIX_UNATTRIBUTED = "| 回归规模 | 6 阶段 · 77 断言 · 3 fixture | 2 阶段 · 18 断言 · 5 fixture |"
+
+
+def selfproof(measured):
+    """→ (通过?, 说明)。四条都要立：同数换措辞不红、改数必红、三式都认、无表头表行也判得到。"""
+    errs = []
+    # ① 同一串数字换措辞 ⇒ 提取结果必须一样，且都不红
+    got = []
+    for _, line in FIX_SAME_NUMBER:
+        d, _sk = find_decls(line, "egern/docs/x.md")
+        got.append(d[0][2] if d else None)
+    if got[0] != got[1] or got[0] != [measured["egern"]]:
+        errs.append("同数换措辞提取不一致 %s（应 %s）" % (got, [measured["egern"]]))
+    # ② 把 19 改成 20 ⇒ 必须红（这里 red = 该数不在实测里）
+    d2, _sk2 = find_decls(FIX_WRONG_NUMBER, "README.md")
+    nums2 = [x for _, _k, ns in d2 for x in ns]
+    if not (nums2 and max(nums2) not in set(measured.values())):
+        errs.append("样本里的 20 没被判成漂移（%s）⇒ 解析式对数字不敏感" % nums2)
+    # ③ 三种写法都认得下来
+    for text, want in FIX_THREE_SPELLINGS:
+        d3, _sk3 = find_decls(text, "docs/x.md")
+        have = [x for _, _k, ns in d3 for x in ns]
+        if have != want:
+            errs.append("`%s` 应提取 %s，实测 %s" % (text, want, have))
+    # ④ 认不出内核归属时（无表头的表行），C3 那条"数要落在实测值里"确实会判
+    d4, _sk4 = find_decls(FIX_UNATTRIBUTED, "docs/x.md")
+    if any(k for _l, k, _n in d4):
+        errs.append("样本本该认不出内核（交 C3），却归属成了 %s" % [k for _l, k, _n in d4])
+    if not any(77 in ns for _l, _k, ns in d4):
+        errs.append("样本里的 77 没被提出来 ⇒ C3 那一类其实判不到（%s）" % d4)
+    return (not errs), "；".join(errs)
+
+
+def main(argv):
+    measured = parse_measured(argv)
+    files = docs()
+    if not files:
+        sys.stderr.write("❌ 前置：一篇 .md 都没找到 ⇒ 扫描面空了，不算跑过\n")
+        return 2
+    all_decls, all_skipped = [], []
+    for rel, p in files:
+        try:
+            text = open(p, encoding="utf-8", errors="replace").read()
+        except OSError as exc:
+            sys.stderr.write("❌ 前置：%s 读不出（%s）\n" % (rel, exc))
+            return 2
+        d, sk = find_decls(text, rel)
+        all_decls.extend((rel, ln, k, ns) for ln, k, ns in d)
+        all_skipped.extend(sk)
+
+    print("实测：%s · 扫描 %d 篇 .md（历史类整篇不扫）· 总数声明 %d 处 / %d 个数 · 跳过 %d 处"
+          % (" · ".join("%s=%s" % (k, measured[k]) for k in MEASURED_KEYS if k in measured),
+             len(files), len(all_decls),
+             sum(len(ns) for _r, _l, _k, ns in all_decls), len(all_skipped)))
+
+    checks = []
+    ck = lambda name, cond, extra="": checks.append((name, bool(cond), extra))  # noqa: E731
+
+    for kern in KERNEL_KEYS:
+        hits = [(rel, ln, ns) for rel, ln, k, ns in all_decls if k == kern]
+        bad = ["%s:%d 文档写 %s，实测 %s" % (rel, ln, "/".join(str(x) for x in ns), measured[kern])
+               for rel, ln, ns in hits if any(x != measured[kern] for x in ns)]
+        # 「命中 0 处」也判负：文档里一处都不声明这一侧的断言数 ⇒ 这条判据就空转了，
+        # 那不是"没有漂移"，是"没人承诺过" —— 与 check_tools 的"清单为空"同一条罪。
+        ck("C%s %s 侧总数声明与本轮实测一致（命中 %d 处）" % (1 if kern == "surge" else 2,
+                                                             kern.upper(), len(hits)),
+           bool(hits) and not bad,
+           ("一处声明都没有 ⇒ 判据空转" if not hits else "") + "；".join(bad[:6]))
+    amb = [(rel, ln, ns) for rel, ln, k, ns in all_decls if k is None]
+    vals = set(measured.values())
+    amb_bad = ["%s:%d %s 不在本轮实测值里（%s）"
+               % (rel, ln, "/".join(str(x) for x in ns), sorted(vals))
+               for rel, ln, ns in amb if any(x not in vals for x in ns)]
+    ck("C3 无表头可依的并排声明逐数落在实测值里（命中 %d 处）" % len(amb),
+       not amb_bad, ("本仓当前没有这一类声明 ⇒ 由 C4 ④ 的样本自证它会红"
+                     if not amb else "") + "；".join(amb_bad[:6]))
+    ok4, why4 = selfproof(measured)
+    ck("C4 判别自证（同数换措辞不红 · 改一个数必红 · 三式写法都认 · 无表头表行也判得到）",
+       ok4, why4)
+
+    for s in all_skipped[:8]:
+        print("   ↷ " + s)
+    if len(all_skipped) > 8:
+        print("   ↷ …另有 %d 处" % (len(all_skipped) - 8))
+    bad_ = [c for c in checks if not c[1]]
+    for name, ok_, extra in checks:
+        print("   %s %s%s" % ("✅" if ok_ else "❌", name,
+                              (" · " + extra) if (extra and not ok_) else ""))
+    print("TOTAL: %d passed, %d failed" % (len(checks) - len(bad_), len(bad_)))
+    return 1 if bad_ else 0
+
+
+if __name__ == "__main__":
+    # Windows GBK 终端里 print 中文/emoji 会 UnicodeEncodeError ⇒ 退出码 1，
+    # 看着像判负、其实一条都没判。与 check_doc_readings.py / check_tools.py 同款兜底。
+    for s in (sys.stdout, sys.stderr):
+        try:
+            s.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:                                      # noqa: BLE001
+            pass
+    sys.exit(main(sys.argv[1:]))
