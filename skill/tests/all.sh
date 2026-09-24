@@ -14,13 +14,24 @@
 # 用法：
 #   bash skill/tests/all.sh                        # 全跑（含联网审计）
 #   bash skill/tests/all.sh --offline              # 跳过联网项（离线机器 / 无外网时）
+#   bash skill/tests/all.sh --landed               # 提交并推送**之后**复核这批是否落地
 #
 # 检查对象恒为 profiles/ 顶层的固定名四件（routing / lazy 各两形态）。存档版在
 # profiles/config_old/ 里，**不参与任何检查**（2026-09-24 定：丢掉历史包袱、加快速度）；
 # 要复核旧版本，带着路径直接调对应脚本。
 #
-# 退出码：0 全绿 · 1 有判负 · 2 前置环境不达标
-#   （2 = 缺 Python 或缺 PyYAML，或固定名 profile 不存在 —— 后者刻意不静默）
+# 退出码：0 判据全过 · 1 有判负 · 2 前置环境不达标
+#   （2 = 缺 Python 或缺 PyYAML，或固定名 profile 不存在，或 --landed 的前置不成立 —— 后者刻意不静默）
+#
+# ── 「判据过了」与「这批落地了」是两件事，本脚本用两档分开判 ──────────────
+# 为什么要分开：AGENTS.md §1 的顺序是 跑闸 → commit → push，而"未提交 / 落后 / 未推送
+# 全 0"只有 push 之后才可达 ⇒ 把三数塞进默认档会让它**永远红**，淹掉真正的判据失败。
+# 所以：默认档只**报**三数（退出码不因它变），`--landed` 才把三数**判负**（复用退出码 1）。
+# `--landed` 是**按批开关**，不是新默认：维护者说"先改本地、不提交不推送"的那批，
+# 按设计就该不跑它（跑了必红，那是设计而不是故障）。
+# ⚠️ 两档都**不判**"有没有把垃圾文件扫进提交" —— 那由提交前点名 stage 挡，不在本脚本覆盖面内。
+# 组合口径：`--offline --landed` 在参数解析处就 exit 2（离线时 Surge 侧少跑联网阶段，
+# 拿它宣布"已落地"就是假绿），刻意不等跑完 8 秒才报。
 
 set -u
 
@@ -33,9 +44,20 @@ cd "$ROOT" || exit 2
 export PYTHONIOENCODING=utf-8 PYTHONDONTWRITEBYTECODE=1
 
 OFFLINE=0
+LANDED=0
 for a in "$@"; do
-  [ "$a" = "--offline" ] && OFFLINE=1
+  case "$a" in
+    --offline) OFFLINE=1 ;;
+    --landed)  LANDED=1 ;;
+    # 未知参数不静默吞掉：打错一个字母就退化成默认档，正是本仓最忌讳的"看着跑过了"。
+    *) printf '❌ 未知参数：%s（本脚本只认 --offline / --landed）\n' "$a" >&2; exit 2 ;;
+  esac
 done
+if [ "$OFFLINE" = "1" ] && [ "$LANDED" = "1" ]; then
+  printf '❌ --landed 不认 --offline：离线时 Surge 侧少跑联网阶段 ⇒ 用它宣布"已落地"是假绿。\n' >&2
+  printf '   要复核落地就带联网跑：bash skill/tests/all.sh --landed\n' >&2
+  exit 2
+fi
 # 外部已经设了 SKIP_NET（有人直接 `SKIP_NET=1 bash all.sh`）也算离线，
 # 否则头部会印「联网：开」而下面的阶段其实跳过了 —— 读数与事实不符。
 [ "${SKIP_NET:-0}" = "1" ] && OFFLINE=1
@@ -89,16 +111,26 @@ item() {
     *)
       reds=$((reds + 1)); [ "$final" = "0" ] && final=1
       printf '   %-2s ❌ %-30s · %s · %ss\n' "$n" "$name" "${total:-判负}" "$dt"
-      tail -14 "$log" | sed 's/^/        /'
+      # 先点名失败行，再兜底末尾若干行：子日志是六阶段 / 两阶段的长输出，失败在阶段 1 时
+      # `tail` 只剩阶段 6 的汇总 ⇒ 判负原因看不见，只能再单跑一次那个 runner（实测确认：
+      # 把 Surge 阶段 1 的期望码改错，`all.sh` 摘要里那条失败出现 0 次、单跑 runner 才看得见）。
+      local marks
+      marks="$(grep -nE '❌|Traceback|FAIL|[1-9][0-9]* failed' "$log" | head -14)"
+      if [ -n "$marks" ]; then
+        printf '%s\n' "$marks" | sed 's/^/        /'
+      else
+        tail -14 "$log" | sed 's/^/        /'
+      fi
       ;;
   esac
 }
 
 printf '仓库根：%s\n' "$ROOT"
 # 「当前是哪一版」只剩一个来源：profile 头注 `#! version=routing_vX.Y`（形状由 check_min_pair.py 判）。
-printf '订阅地址固定名 · 当前版：%s   联网：%s\n\n' \
+printf '订阅地址固定名 · 当前版：%s   联网：%s   档位：%s\n\n' \
   "$(sed -n '1s/^#! version=//p' surge/profiles/routing.conf 2>/dev/null)" \
-  "$([ "$OFFLINE" = "1" ] && echo 跳过 || echo 开)"
+  "$([ "$OFFLINE" = "1" ] && echo 跳过 || echo 开)" \
+  "$([ "$LANDED" = "1" ] && echo '落地复核（三数计入判负）' || echo '默认（三数只报不判）')"
 
 item "Surge 回归（六阶段）"  bash skill/tests/surge/run.sh
 item "Egern 回归（两阶段）"  bash skill/tests/egern/run.sh
@@ -107,16 +139,21 @@ item "换设备可移植性"        "$PY" skill/tests/check_portability.py
 item "文档读数与实测对拍"    "$PY" skill/tests/check_doc_readings.py
 
 printf '\n'
+# 「落地状态」三个数：默认档只报（下面末行据它换措辞），--landed 档才判负。
+DIRTY=0; BEHIND=0; UNPUSHED=0; HAVE_GIT=0; HAVE_UP=0; UP=""
 if [ -d "$ROOT/.git" ]; then
-  printf '   ℹ️  未提交 %s 个文件 · HEAD=%s' \
-    "$(git -C "$ROOT" status --porcelain | wc -l | tr -d ' ')" \
-    "$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo '?')"
+  HAVE_GIT=1
+  DIRTY="$(git -C "$ROOT" status --porcelain | wc -l | tr -d ' ')"
   # 与线上的关系：clone 出来的仓天然有上游，这里顺手报"改完有没有推上去"。
   # 刻意不配 remote、不写凭据 —— 那是各台机器自己的事，见 docs/注意事项.md。
   UP="$(git -C "$ROOT" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)"
+  printf '   ℹ️  未提交 %s 个文件 · HEAD=%s' "$DIRTY" \
+    "$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo '?')"
   if [ -n "$UP" ]; then
+    HAVE_UP=1
     set -- $(git -C "$ROOT" rev-list --count --left-right "$UP...HEAD" 2>/dev/null || echo "0 0")
-    printf ' · 上游 %s：落后 %s · 未推送 %s\n' "$UP" "${1:-0}" "${2:-0}"
+    BEHIND="${1:-0}"; UNPUSHED="${2:-0}"
+    printf ' · 上游 %s：落后 %s · 未推送 %s\n' "$UP" "$BEHIND" "$UNPUSHED"
   else
     printf ' · 上游 未配置（clone 后自动有；本仓不代管凭据）\n'
   fi
@@ -184,10 +221,44 @@ else:
 PYEOF
 fi
 
+# --landed 的前置：没 git、没上游都判 2 —— 那种环境下"三数全 0"根本无从判定，
+# 让它退化成 0 就等于"没跑成却宣布落地"，与本仓「没跑成不等于跑绿」同一条罪。
+if [ "$LANDED" = "1" ] && [ "$final" = "0" ]; then
+  if [ "$HAVE_GIT" != "1" ]; then
+    printf '❌ --landed 需要 git 仓库（当前目录下没有 .git）⇒ 无法判定落地状态\n' >&2
+    exit 2
+  fi
+  if [ "$HAVE_UP" != "1" ]; then
+    printf '❌ --landed 需要上游 %s（现在未配置）⇒ "落后 / 未推送" 无从判起\n' "$UP" >&2
+    printf '   clone 出来的仓天然有上游；本仓不代管 remote 与凭据，见 AGENTS.md §4。\n' >&2
+    exit 2
+  fi
+fi
+
+LANDED_OK=0
+if [ "$HAVE_GIT" = "1" ] && [ "$DIRTY" = "0" ] && [ "$BEHIND" = "0" ] && [ "$UNPUSHED" = "0" ]; then
+  LANDED_OK=1
+fi
+
 DT=$((SECONDS - T0))
-if [ "$final" = "0" ]; then
-  printf 'ALL GREEN · %s 项检查通过 · %ss\n' "$n" "$DT"
-else
+if [ "$final" != "0" ]; then
   printf '❌ %s 项判负 / %s 项环境不达标 · %ss\n' "$reds" "$envs" "$DT"
+elif [ "$LANDED" = "1" ]; then
+  if [ "$LANDED_OK" = "1" ]; then
+    printf '✅ 已落地 · %s 项检查通过 · 未提交 0 · 落后 0 · 未推送 0 · %ss\n' "$n" "$DT"
+  else
+    printf '❌ 判据全过但未落地（未提交 %s · 落后 %s · 未推送 %s）· %ss\n' \
+      "$DIRTY" "$BEHIND" "$UNPUSHED" "$DT"
+    printf '   ⇒ 这批还没走完 §1：点名 stage 提交、push，再回来跑 `bash skill/tests/all.sh --landed`。\n' >&2
+    final=1
+  fi
+elif [ "$HAVE_GIT" = "1" ] && [ "$LANDED_OK" != "1" ]; then
+  # 默认档：状态没落地就不说 ALL GREEN —— 那三个字在 §1 里被借去描述"三数全 0"，
+  # 一个词背两个意思就是这次要治的误读面。退出码**不变**，中途跑闸不该变红灯。
+  printf '✅ 判据全过 · %s 项 · %ss —— 但状态未落地（未提交 %s · 落后 %s · 未推送 %s）\n' \
+    "$n" "$DT" "$DIRTY" "$BEHIND" "$UNPUSHED"
+  printf '   这还不算完成：提交、推送后跑 `bash skill/tests/all.sh --landed` 复核这批。\n'
+else
+  printf 'ALL GREEN · %s 项检查通过 · %ss\n' "$n" "$DT"
 fi
 exit "$final"

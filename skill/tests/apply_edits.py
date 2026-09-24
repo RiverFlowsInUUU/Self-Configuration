@@ -39,12 +39,73 @@ import tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))               # <仓根>/skill/tests
 ROOT = os.path.dirname(os.path.dirname(HERE))                    # → skill → 仓根
 
-# 与 AGENTS.md §2 第 5 条同源；--selftest 的 A9 拿 it 跟 all.sh 里的 GATE 逐字对拍，防两处漂移。
+# 与 AGENTS.md §2 第 5 条同源；--selftest 的 A9 拿 it 跟 all.sh 里的 GATE 逐字对拍（代码 ↔ 代码，
+# 有序比），A13 再拿它当真相去对文档侧的名单块与三处写死个数 —— 合计「真相 1 + 对拍 5」。
 GATE = (".gitattributes", "skill/tests/all.sh", "skill/tests/check_portability.py",
         "skill/tests/check_min_pair.py", "skill/tests/bump_version.py",
         "skill/tests/check_doc_readings.py",
         "skill/tests/surge/run.sh", "skill/tests/surge/architecture.sh",
         "skill/tests/surge/check_links.py", "skill/tests/egern/run.sh")
+
+# ── 文档侧的闸门「写死个数」：三处，全都要 == len(GATE) ─────────────────────
+# 口径是**真相 1 + 对拍 5**：名单 3 副本（all.sh · 本模块 · AGENTS.md §2 的块）
+# 与个数 3 处（下面这三条模式）。名单里 all.sh ↔ 本模块是代码对代码，由 A9 逐字有序对拍；
+# AGENTS.md 的块与三处个数由 A13 判 —— 文档侧**按集合比、不比顺序**，因为那个块是
+# 5 行 × 每行 2 列的排版产物（实测：块内行主序与 GATE 在第 6/7 位天然互换，
+# 拿有序 `==` 裸比会让 A13 上线第一天就红给自己、还误报成"AGENTS.md 漂移"）。
+GATE_DOC_PATTERNS = (
+    ("AGENTS.md §2 标题", r"(\d+)\s*个文件是[「『]?闸"),
+    ("docs/注意事项.md 浓缩句", r"(\d+)\s*[个份条]\s*[「『]?闸门"),
+    ("apply_edits.py 头注", r"现\s*(\d+)\s*个"),
+)
+
+
+def gate_block_names(agents_text):
+    """AGENTS.md §2 第 5 条那个围栏块 → 文件名列表。
+
+    块的实际排版是 **每行 2 列、空格对齐**（`.gitattributes` 与 `skill/tests/all.sh` 同一行）
+    ⇒ 按 2+ 个空格切列，逐行取 `split()[0]` 只会拿到 5 个。锚点取"含 `.gitattributes`
+    的围栏块"这个**结构**特征，不取周围的措辞 —— 改字不改名单时不该红。
+    """
+    import re
+    for blk in re.findall(r"```[^\n]*\n(.*?)```", agents_text, re.S):
+        if ".gitattributes" in blk:
+            return [tok for line in blk.splitlines()
+                    for tok in re.split(r"\s{2,}", line.strip()) if tok]
+    return []
+
+
+def gate_doc_check(agents_text, note_text, own_text, truth=GATE):
+    """文档侧对拍：返回失败原因列表（空 = 全过）。真相是 all.sh 那份 GATE（经 A9 钉住本模块副本）。"""
+    import re
+    errs = []
+    names = gate_block_names(agents_text)
+    if not names:
+        errs.append("AGENTS.md §2 的名单围栏块没找到（围栏没了？还是 .gitattributes 挪了位置？）")
+    else:
+        # 槽位数与唯一性两条都要立：只比集合会放过"在册项原样 + 多抄一行"（11 槽 / 10 唯一
+        # ⇒ 集合仍相等），而"少一个 + 多一个"那种真漂移才由集合差抓到。
+        if len(names) != len(truth):
+            errs.append("§2 块 %d 个槽位 ≠ 真相 %d 个" % (len(names), len(truth)))
+        dupes = sorted({x for x in names if names.count(x) > 1})
+        if dupes:
+            errs.append("§2 块有重复项：%s" % " ".join(dupes))
+        miss = sorted(set(truth) - set(names))
+        extra = sorted(set(names) - set(truth))
+        if miss:
+            errs.append("§2 块缺：%s" % " ".join(miss))
+        if extra:
+            errs.append("§2 块多出：%s" % " ".join(extra))
+    srcs = {"AGENTS.md §2 标题": agents_text,
+            "docs/注意事项.md 浓缩句": note_text,
+            "apply_edits.py 头注": own_text}
+    for tag, pat in GATE_DOC_PATTERNS:
+        m = re.search(pat, srcs[tag])
+        if not m:
+            errs.append("%s 的写死个数没匹配到（措辞被改？模式 `%s`）" % (tag, pat))
+        elif int(m.group(1)) != len(truth):
+            errs.append("%s 写的是 %s 个 · 真相 %d 个" % (tag, m.group(1), len(truth)))
+    return errs
 
 
 def die(msg):
@@ -249,6 +310,7 @@ def selftest():
            repr(readb("e.md")))
 
     # A9：闸门名单与 all.sh 里的 GATE 逐字一致（真仓文件，只读）
+    listed = GATE                     # 读不到 all.sh 时退回本模块副本（A13 也据此判）
     try:
         with open(os.path.join(ROOT, "skill/tests/all.sh"), encoding="utf-8") as f:
             src = f.read()
@@ -262,6 +324,43 @@ def selftest():
         m = _re.search(r"GATE = \((.*?)\)", src, _re.S)
         listed = tuple(ast.literal_eval("(" + m.group(1) + ")")) if m else ()
         ck("A9 闸门名单与 all.sh 逐字一致", listed == GATE, "%s vs %s" % (listed, GATE))
+
+    # A13：文档侧的名单块 + 三处写死个数。真相取 **all.sh 里现读出来的那份**（listed），
+    # 不是本模块副本 —— 这样"只往 all.sh 加一个闸门、文档四处一处没跟"会同时点亮 A9 与 A13，
+    # 而不是只由 A9 单独挡（少一层"靠 A9 没跑歪"的间接信任）。读不到 all.sh 时 listed 退回 GATE。
+    def _read(rel):
+        try:
+            with open(os.path.join(ROOT, rel), encoding="utf-8") as f:
+                return f.read()
+        except OSError:
+            return ""
+
+    agents_src, note_src = _read("AGENTS.md"), _read("docs/注意事项.md")
+    own_src = ""
+    try:
+        with open(__file__, encoding="utf-8") as f:
+            own_src = f.read()
+    except OSError:
+        pass
+    if not (agents_src and note_src and own_src):
+        ck("A13 文档侧对拍跳过（AGENTS.md / 注意事项 / 自身源码读不到）", True)
+    else:
+        errs = gate_doc_check(agents_src, note_src, own_src, listed)
+        # 判别自证 ①（正例）：在册 10 项原样 + 把其中一行抄第二遍 ⇒ 11 槽 / 10 唯一。
+        #   纯集合比在这一步是**放行**的，红它的只有"恰 10 槽"和"互不重复"两条。
+        ln = next((l for l in agents_src.splitlines() if "skill/tests/egern/run.sh" in l), "")
+        twin = agents_src.replace(ln, ln + "  skill/tests/egern/run.sh", 1)
+        pos = gate_doc_check(twin, note_src, own_src, listed)
+        # 判别自证 ②（反例）：个数不变的纯润色 ⇒ 不许红。不立这条，解析式就会过度贴合
+        #   当前措辞，下一个改文档的人拿到一次"A9 红给左手"，最省事的处置是放宽正则 ——
+        #   那正是 CHANGELOG 里点名过的那条作弊路径。
+        neg = gate_doc_check(agents_src,
+                             note_src.replace("10 个「闸门文件」", "10 份闸门文件", 1),
+                             own_src, listed)
+        ck("A13 文档侧名单块与三处写死个数对拍（含判别自证：多抄一行必红 · 纯润色不红）",
+           not errs and any("槽位" in x for x in pos) and any("重复" in x for x in pos)
+           and not neg,
+           "实测 %s · 正例 %s · 反例 %s" % (errs, pos, neg))
 
     # A11：越出仓根的路径要判越界（norm_rel 会 die，这里只验判定分支）
     rel = os.path.relpath(os.path.abspath("/etc/passwd"), os.getcwd()).replace("\\", "/")
