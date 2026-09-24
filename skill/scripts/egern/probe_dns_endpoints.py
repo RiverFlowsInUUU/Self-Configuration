@@ -28,7 +28,7 @@ import os
 
 # 输出编码垫片：见 _egern_common.force_utf8_stdout —— GBK 控制台下 emoji 会崩成退出码 1
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _egern_common import force_utf8_stdout  # noqa: E402
+from _egern_common import force_utf8_stdout, hostpart as _common_hostpart  # noqa: E402
 import urllib.request
 
 TIMEOUT = 12
@@ -76,21 +76,48 @@ def parse_answers(buf):
 
 # ---------------------------------------------------------------- 各协议
 def hostport(s):
-    """'tls://8.8.8.8:853' -> ('8.8.8.8', 853, 'tls')"""
-    proto, rest = (s.split("://", 1) + [""])[:2] if "://" in s else ("udp", s)
-    rest = rest.split("/")[0]
-    if ":" in rest:
-        h, p = rest.rsplit(":", 1)
-        return proto, h, int(p)
-    return proto, rest, {"udp": 53, "tls": 853, "https": 443}.get(proto, 53)
+    """'tls://8.8.8.8:853' -> ('tls', '8.8.8.8', 853)   （proto, host, port）
+
+    ⚠️ 主机部分**复用** `_egern_common.hostpart()`（方括号 IPv6 / 裸 IPv6 / `:port` / 任意
+    scheme 都对），端口另判 —— 早先本文件自己写了一份 `rsplit(":", 1)` 的拆分，**裸 IPv6
+    会被拆坏**：`2400:3200::1` → host=`2400:3200:`、port=`1`（2026-09-25 实测修掉）。
+    另：旧 docstring 把返回顺序写成了 `(host, port, proto)`，与实际相反，一并改正。
+    """
+    proto = s.split("://", 1)[0].lower() if "://" in s else "udp"
+    rest = (s.split("://", 1)[1] if "://" in s else s).split("/")[0]
+    port = {"udp": 53, "tls": 853, "https": 443}.get(proto, 53)
+    tail = rest.rsplit("]", 1)[-1] if rest.startswith("[") else rest
+    if tail.startswith(":") and tail[1:].isdigit():
+        port = int(tail[1:])
+    return proto, _common_hostpart(rest), port
+
+
+# ⚠️ 自检（import 即跑，fail-loud）：端口 / 主机的拆分必须对这几类形态成立。
+#    早先自己写的那份把裸 IPv6 `2400:3200::1` 拆成 host=`2400:3200:` / port=`1` —— 这个
+#    自检就是为它立的；放在模块级是为了**不可能静默失效**（`check_tools.py` 的 T1 只判可编译，
+#    判不到运行期行为；本文件又是闸外脚本）。
+for _case, _want in (("tls://8.8.8.8:853", ("tls", "8.8.8.8", 853)),
+                     ("2400:3200::1", ("udp", "2400:3200::1", 53)),
+                     ("[2400:3200::1]:853", ("udp", "2400:3200::1", 853)),
+                     ("https://223.5.5.5/dns-query", ("https", "223.5.5.5", 443)),
+                     ("8.8.8.8", ("udp", "8.8.8.8", 53))):
+    if hostport(_case) != _want:
+        raise SystemExit("❌ 自检：hostport(%r) = %r，期望 %r"
+                         % (_case, hostport(_case), _want))
 
 
 def try_udp(host, port):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # ⚠️ 早先固定 `AF_INET` ⇒ IPv6 端点必然失败（对着一份正确的配置报 FAIL）。
+    #    用 getaddrinfo 按端点自己选族，顺便把 socket 关掉（原先没关）。
+    af, socktype, proto_, _canon, sa = socket.getaddrinfo(host, port, 0, socket.SOCK_DGRAM)[0]
+    s = socket.socket(af, socktype, proto_)
     s.settimeout(TIMEOUT)
-    s.sendto(build_query(), (host, port))
-    # 跳过发往本机的 ICMP 导致的假连接（UDP 无连接，直接看是否有回包）
-    data, _ = s.recvfrom(4096)
+    try:
+        s.sendto(build_query(), sa)
+        # 跳过发往本机的 ICMP 导致的假连接（UDP 无连接，直接看是否有回包）
+        data, _ = s.recvfrom(4096)
+    finally:
+        s.close()
     return parse_answers(data)
 
 

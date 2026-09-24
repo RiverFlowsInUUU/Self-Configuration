@@ -20,16 +20,23 @@
 
     ⚠️ 适用范围：本实现按「中日韩汉字 + 拉丁字母数字 + `_`/`-`/空格 + FE0F」白名单。
        若标题引入新字符类别（希腊 / 西里尔字母、上标数字、`Ⓐ` 这类带圈字母…
-       github-slugger 对这些的处理与直觉不同），**必须重跑对拍**：
-           node _tools/dump_slugs.mjs <repo> out.json
-           python _tools/compare_slug.py out.json
-       自检：python check_links.py --selftest
+       github-slugger 对这些的处理与直觉不同），**必须逐条核对**。核对办法全程在仓内、
+       不依赖 node：
+         ① 把该标题加进本文件的 `SELFTEST` 列表，跑 `python check_links.py --selftest`，
+            看本实现的输出；
+         ② 把同一条标题贴进 GitHub 任意 Markdown 预览（或 issue 编辑框），从渲染后的标题
+            上取锚点；
+         ③ 两者不一致 ⇒ 改 `gh_slug()` 的白名单，并把该标题回填进 `SELFTEST`。
+       ⚠️ 早先这里写的是一条 `node _tools/dump_slugs.mjs` + `compare_slug.py` 的对拍流程 ——
+       那两个文件**从来不在本仓**（合并前的外挂脚本），照做会直接卡住。2026-09-25 换成上面
+       的仓内办法：**头注里不留跑不通的指引**。
 
 退出码：0 = 全部可解析；1 = 有失效链接；2 = 环境问题。
 """
 
 import os
 import re
+import subprocess
 import sys
 
 # Windows 中文环境（控制台 / 管道重定向）默认 GBK(cp936)：emoji 一 print 就
@@ -124,6 +131,23 @@ def selftest():
     print(f"  {'✅' if ok else '❌'} 同名标题去重 -> {sorted(got)}")
     if not ok:
         bad += 1
+    # ⚠️ 负例：坏链接必须被判出来。早先 selftest 只覆盖了**锚点算法**那半边，
+    #    "能不能判出坏链接"这半边一直没有反例（2026-09-25 补）。
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        def _w(name, text):
+            with open(os.path.join(td, name), "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(text)
+        _w("b.md", "# 你好\n")
+        _w("a.md", "[好](b.md#你好)\n[坏](b.md#nope)\n[丢](missing.md)\n")
+        p = subprocess.run([sys.executable, os.path.abspath(__file__), td],
+                           capture_output=True, text=True, encoding="utf-8", errors="replace")
+        out = (p.stdout or "") + (p.stderr or "")
+        ok2 = p.returncode == 1 and "nope" in out and "missing.md" in out
+        print(f"  {'✅' if ok2 else '❌'} 坏链接负例 -> rc={p.returncode}"
+              f"（期望 1 且点名 nope / missing.md）")
+        if not ok2:
+            bad += 1
     print("─" * 62)
     print("✅ 自检通过" if not bad else f"❌ 自检失败 {bad} 项")
     return 0 if not bad else 1

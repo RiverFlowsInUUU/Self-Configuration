@@ -54,6 +54,15 @@
 
 ### 共享层
 
+- 🩹 `check_links.py` 头注那条"重跑对拍"的指引**指向不存在的 `_tools/`**（合并前的外挂脚本，
+  从来不在本仓）⇒ 换成**全程在仓内、不依赖 node** 的三步核对办法；同时给 `--selftest` 补上
+  **链接判定那半边的负例**（此前只覆盖锚点算法）：临时目录里造一条坏锚点 + 一条缺失文件，
+  断言 rc=1 且两条都被点名。自检从"半边"变"两边"。
+- 🩹 `probe_dns_endpoints.py` 两处实跑级 bug（本文件是**闸外脚本**，T1 只判可编译）：
+  ① `hostport()` 的裸 IPv6 被 `rsplit(":", 1)` 拆成 host=`2400:3200:` / port=`1` ⇒ 主机部分
+  改为**复用** `_egern_common.hostpart()`（消灭第二份解析），并改正 docstring 里写反的返回顺序；
+  ② `try_udp` 固定 `AF_INET` ⇒ IPv6 端点必失败，改为 `getaddrinfo` 按端点选族，并补上关 socket。
+  另加**模块级 fail-loud 自检**（import 即跑，5 类形态）—— 这类闸外脚本不能只靠"没人跑的自测"。
 - 🧹 死代码与残留清理（非冻结）：`check_surge_dns.py` 去掉三处死代码 —— `hijack-dns` 那条
   算完没用的 `h`、恒空的 `after`、算完没用的 `alibaba`；`check_egern_dns.py` 的
   `routes_of(h, want)` 去掉**从未使用**的 `want` 形参（调用处另算了一遍，读者会误以为它按
