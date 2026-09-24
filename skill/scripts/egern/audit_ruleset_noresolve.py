@@ -51,7 +51,6 @@ except ImportError:
     print("需要 PyYAML：<venv>/Scripts/python -m pip install pyyaml", file=sys.stderr)
     sys.exit(2)
 
-IP_TYPES = ("IP-CIDR", "IP-CIDR6", "IP-ASN", "GEOIP", "IP-CIDR6,no-resolve".upper())
 # 缓存放到系统临时目录（20 个规则集约 5MB，别往 skills 目录里塞）
 CACHE = os.path.join(tempfile.gettempdir(), "egern-ruleset-cache")
 # 新鲜度窗口：从前只看文件在不在 ⇒ 半年前落下的缓存也能拿来判"没有未带 no-resolve 的条目"。

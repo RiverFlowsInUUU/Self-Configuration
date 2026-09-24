@@ -11,11 +11,32 @@
      probe_dns_endpoints / probe_doh / profile_ruleset / weigh_ruleset —— 在三个 runner 里
      0 引用）。实测 24 个被跟踪 .py 现在全部可编译，所以那是"还没坏"，不是"有防护"。
 
-四条判据（**固定条数**，不随 .py 文件数增长 —— 与其余判据同一口径）：
+六条判据（**固定条数**，不随 .py 文件数增长 —— 与其余判据同一口径）：
   · T1 全部被跟踪 .py 可编译      · T2 `make_min.py --selftest`
   · T3 `apply_edits.py --selftest` · T4 `surge/check_links.py --selftest`
+  · T5① 无未用顶层 import         · T5② 无本文件死常量
 
-两个刻意的实现选择：
+T5 补的是 T1 的那半边（2026-09-24 定）：可编译只保证"语法还读得动"，判不到"顶层绑了
+却再没人用的名字"。实测 26 个被跟踪 .py 里有 9 处，其中两处的坑叫**跨内核同名**：
+`IP_RULE_TYPES` 在 `egern/check_egern_dns.py:46` 定义并在 :377 在用，`surge/audit_routing_coverage.py:174`
+那份同名同形却无人用 —— 所以口径必须按"文件内"算，拿全仓 grep 词频判会把它读成活的。
+
+四条活路（每条都实测过它救回了什么，别删）：
+  · 本文件内有 `Load` 引用 ⇒ 活 —— 主判据，走 AST 不走文本，注释里提一句不算用。
+  · 行上有 `# t5-keep: 理由`（理由非空）⇒ 保留 —— 给"故意留着的别名"记名用，实测 1 处（`APPLE_PROBES`）。
+  · import 的名字在**源模块顶层被裸调用** ⇒ 活 —— "import 即生效"的编码垫片，
+    实测救回 7 处 `from _surge_common / _egern_common import force_utf8_stdout`：
+    importing 文件自己不点它，
+    但 `_egern_common.py:121` / `_surge_common.py:294` 在模块顶层调了一次。
+  · 常量在全文件字面出现 ≥2 次 ⇒ 放过 —— 只在散文/注释里被提的名字不当死绑定判。
+    这条让误差方向固定在**漏报**（宁可放过不误报），代价实测：`_egern_common.py:98 ep_ip`
+    字面出现 4 次（含头注里那句"给别人用的清单"）而全仓无人 import ⇒ 它不会被 T5 点亮。
+    记在这里，是为了让下一个读代码的人知道那是**口径选择**，不是漏了。
+
+两条判据共享：def/class 不进面（它们本来就该允许只被别人用）、只扫模块体第一层
+（`try:`/`if:` 里的绑得不判，方向同样是漏报）、`__` 开头与 `import *` 不判。
+
+另两个刻意的实现选择：
   · **不落 .pyc**：T1 用内置 `compile()` 在内存里判语法，不调 `compileall`（那会往仓里掉
     `__pycache__`；`all.sh` 虽然 `PYTHONDONTWRITEBYTECODE=1`，但这一项也会被手工单独跑）。
     语法不可编译正是 `compileall` 唯一能抓的东西，两者覆盖面等价。
@@ -33,7 +54,9 @@
 退出码：0 全过 · 1 有判负 · 2 前置不达标（读不到 git 清单且找不到 .py）
 """
 
+import ast
 import os
+import re
 import subprocess
 import sys
 
@@ -66,8 +89,89 @@ def tracked_py(root):
     return sorted(files), "目录遍历"
 
 
+# ── T5 顶层死绑定：两条判据共用一次扫描 ────────────────────────────────────
+# 标记的形状写死在这里：`# t5-keep: 理由`，理由必须非空（空理由等于没记名，判负）。
+KEEP_RX = re.compile(r"#\s*t5-keep:\s*(\S.*)")
+
+
+def top_bindings(tree):
+    """模块体**第一层**的 import 绑定与赋值目标 ⇒ (imports, consts)。
+
+    imports = [(名字, 行号, 原名, 源模块)] · consts = [(名字, 行号)]
+    def/class 不进面（它们允许只被别人用）；`try:`/`if:` 块里的绑得不进面。
+    """
+    imports, consts = [], []
+    for node in tree.body:
+        if isinstance(node, ast.Import):
+            imports += [(a.asname or a.name.split(".")[0], node.lineno, a.name, None)
+                        for a in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            imports += [(a.asname or a.name, node.lineno, a.name, node.module)
+                        for a in node.names if a.name != "*"]
+        elif isinstance(node, ast.Assign):
+            consts += [(t.id, node.lineno) for t in node.targets if isinstance(t, ast.Name)]
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            consts.append((node.target.id, node.lineno))
+    return imports, consts
+
+
+def top_called(tree):
+    """模块**顶层**被裸调用的名字 —— 这些名字的 import 是"import 即生效"的垫片。"""
+    return {n.value.func.id for n in tree.body
+            if isinstance(n, ast.Expr) and isinstance(n.value, ast.Call)
+            and isinstance(n.value.func, ast.Name)}
+
+
+def dead_bindings(corpus):
+    """corpus = {相对路径: 源码} ⇒ {'imp': […], 'con': […], 'keep': […], 'unparsed': N}。
+
+    写成"吃内存里的源码字典"而不是"自己读仓"，是为了能用假样本单独验它有没有判别力
+    （真仓里造红它的 fixture 就得改仓库文件，那是闸门最不该干的事）。
+    口径、四条活路、以及它刻意只漏报不误报的取向，全在头注里。
+    """
+    trees, loaded, called = {}, {}, {}
+    for rel, text in corpus.items():
+        try:
+            tree = ast.parse(text)
+        except (SyntaxError, ValueError):
+            continue                        # 读不懂是 T1 的活，这里不重复判、也不猜
+        trees[rel] = tree
+        loaded[rel] = {n.id for n in ast.walk(tree)
+                       if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)}
+        called[rel] = top_called(tree)
+
+    res = {"imp": [], "con": [], "keep": [], "unparsed": len(corpus) - len(trees)}
+    for rel in sorted(trees):
+        lines = corpus[rel].splitlines()
+        imports, consts = top_bindings(trees[rel])
+        for name, lineno, raw, mod in imports:
+            if name.startswith("__") or name in loaded[rel]:
+                continue
+            src = lines[lineno - 1] if 0 < lineno <= len(lines) else ""
+            mk = KEEP_RX.search(src)
+            if mk:
+                res["keep"].append((rel, lineno, "import", name, raw, mk.group(1).strip()))
+                continue
+            if mod and any(os.path.basename(r)[:-3] == mod.split(".")[0]
+                           and name in called[r] for r in trees):
+                continue                    # 源模块顶层调它 ⇒ import 即生效
+            res["imp"].append((rel, lineno, "未用 import", name, src.strip()[:56]))
+        for name, lineno in consts:
+            if name.startswith("__") or name in loaded[rel]:
+                continue
+            src = lines[lineno - 1] if 0 < lineno <= len(lines) else ""
+            mk = KEEP_RX.search(src)
+            if mk:
+                res["keep"].append((rel, lineno, "常量", name, "", mk.group(1).strip()))
+                continue
+            if len(re.findall(r"\b%s\b" % re.escape(name), corpus[rel])) != 1:
+                continue                    # 散文/注释里还提到 ⇒ 放过（只漏报不误报）
+            res["con"].append((rel, lineno, "死常量", name, src.strip()[:56]))
+    return res
+
+
 def check(root):
-    """[(判据名, 通过?, 说明)]，固定 4 条。"""
+    """[(判据名, 通过?, 说明)]，固定 6 条。"""
     out = []
 
     # ── T1 全部被跟踪 .py 可编译 ─────────────────────────────────────────
@@ -109,6 +213,31 @@ def check(root):
         line = tail[-1][:70] if tail else "（无输出）"
         out.append((name, p.returncode == 0,
                     "exit=%d · %s" % (p.returncode, line) if p.returncode else line))
+
+    # ── T5①② 顶层死绑定（两条共用一次扫描，口径见头注）──────────────────
+    corpus = {}
+    for rel in files:
+        try:
+            with open(os.path.join(root, rel.replace("/", os.sep)),
+                      encoding="utf-8", errors="replace") as f:
+                corpus[rel] = f.read()
+        except OSError:
+            pass                                       # 读不出：T1 已经点了名
+    res = dead_bindings(corpus)
+    # 保留数按各判据自己的面报：常量行的标记不该出现在 import 那条的读数里。
+    kept = {"imp": len([k for k in res["keep"] if k[2] == "import"]),
+            "con": len([k for k in res["keep"] if k[2] == "常量"])}
+    unparsed = " · %d 个文件读不懂（T1 已判负）" % res["unparsed"] if res["unparsed"] else ""
+    for key, label in (("imp", "T5① 无未用顶层 import"), ("con", "T5② 无本文件死常量")):
+        hits = res[key]
+        k = " · 另 %d 处 `t5-keep` 保留" % kept[key] if kept[key] else ""
+        if not files:
+            out.append((label, False, "清单为空 ⇒ 没跑成不等于跑绿"))
+            continue
+        detail = " · ".join("%s:%s %s" % (h[0], h[1], h[3]) for h in hits[:4])
+        out.append(("%s（%d 个 .py）" % (label, len(files)), not hits,
+                    ("%d 处判死：%s%s" % (len(hits), detail, " …" if len(hits) > 4 else ""))
+                    if hits else ("0/%d 通过%s%s" % (len(files), k, unparsed))))
     return out
 
 

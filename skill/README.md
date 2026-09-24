@@ -51,7 +51,7 @@ bash skill/tests/surge/architecture.sh         #        占位符 / 凭据 / .co
 bash skill/tests/egern/run.sh                  # Egern：两阶段 · 18 断言（阶段 1 · 5 fixture ×2；阶段 2 · 顶层固定名四件 ×2）
 python skill/tests/check_portability.py        # 换设备一致性：行尾 / BOM / 命名 / 残留，固定 18 条规则
 python skill/tests/check_doc_readings.py       # 文档读数对拍：组数 / 条数 / 份数 / 悬空指向 / 豁免行，固定 11 条
-python skill/tests/apply_edits.py --selftest   # 批量编辑执行器自带回归（13 条）；它**不参与 all.sh**
+python skill/tests/apply_edits.py --selftest   # 批量编辑执行器自带回归（13 条）；由 all.sh 第 6 项 `check_tools.py` 串跑
 SKIP_NET=1 bash skill/tests/surge/run.sh       # 跳过需要联网的阶段
 ```
 

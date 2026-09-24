@@ -327,6 +327,42 @@
   要动 `AGENTS.md` §2 的名单块与三处写死个数），这条留给维护者拍。
 - ✅ 验收（本批改完后重跑）：`bash skill/tests/all.sh` → **19 · 18 · 18 · 18 · 11 · 4 · 4**，七项全绿 · 12s；
   `bash skill/tests/all.sh --offline` → 前六项 **15 · 18 · 18 · 18 · 11 · 4** + 第 7 项出声跳过 · 末行 6 项 · 退出码 0。
+- 🔧 **工具自检判据 4 → 6：`check_tools.py` 加 T5①②（顶层死绑定扫描）** —— 补 T1 的那半边：
+  可编译只保证"语法还读得动"，判不到"顶层绑了却再没人用的名字"。首跑实测 **26 个被跟踪 `.py` 里 9 处判死**
+  （3 处未用 import + 6 处死常量），同批人工修掉：删 8 处、留 1 处记名（`APPLE_PROBES` 是「兼容旧提法」的别名，
+  **删否点名的动作归维护者**，本批只给它加 `# t5-keep: …`）。删除的 8 处逐条：
+  `skill/tests/make_min.py`（未用的 `import re` 与 `ALL_SH`）· `surge/check_surge_dns.py:28`（未用 import
+  `DOMESTIC_RESOLVER_IPS`，同块的 `FOREIGN_RESOLVER_IPS` 在用）· `surge/audit_routing_coverage.py`
+  （未用 import `parse_ruleset`、死常量 `IP_RULE_TYPES`）· `egern/audit_ruleset_noresolve.py:54`（`IP_TYPES`）·
+  `surge/_surge_common.py:158-159`（`_IP4_CIDR_RE` / `_IP6_CIDR_RE`，两个共享 helper 从没被任何一侧 import 过）。
+  定义家不塌：`DOMESTIC_RESOLVER_IPS` 在 `_surge_common.py` 自己文件内 :203/:226 仍在用 ⇒ 删 importer 不会
+  第二轮红给自己（这条是上一轮"级联红"担心的那个点，实测过才动手）。
+- 🧭 T5 的口径写死在 `check_tools.py` 头注里，四条活路各有实测救回数：本文件内有 `Load`（主判据，走 AST 不走文本）·
+  `# t5-keep: 理由`（理由为空**不算记名**，实测仍红）· import 的名字在源模块顶层被裸调用（编码垫片，实测救回
+  **7 处** `force_utf8_stdout`）· 常量全文件字面出现 ≥2 次放过（误差方向固定在漏报；代价照实记：
+  `_egern_common.py:98 ep_ip` 字面 4 次而全仓无人 import ⇒ 它点不亮，那是**口径选择**不是漏了）。
+  为什么必须按"文件内"算而不是全仓 grep 词频：`IP_RULE_TYPES` 在 `egern/check_egern_dns.py:46` 定义并在 :377 在用，
+  `surge/audit_routing_coverage.py:174` 那份同名同形却无人用 —— 按词频判会把它读成活的。
+  判别力用 12 个内存样本验（不碰仓库文件，真仓里造红它的 fixture 就得改在仓代码，那是闸门最不该干的事）：
+  **该红的 5 处一处不落、该放过的 7 个样本一个不误报**；def/class 与 `try:` 块里的绑得不进面。
+- ↷ `apply_edits.py --selftest` 的 A9 / A13 改成**第三档**：读不到真仓文件时从前是 `ck(…, True)`，
+  环境不对也能拿一张"闸门名单一致"的合格证。现在印 `↷ …（没跑成 ≠ 跑绿，也不算判负）`，
+  **不进 passed、不进 failed**，末行追加 `· 跳过 N 条`。跳过数写在 TOTAL **后面**而不是并进那两个数，
+  因为 `all.sh` 的 `item()` 与第 7 项按 `TOTAL: N passed, M failed` 逐字取数，并进去会读成"少跑了一条"。
+  实测反例：把 `apply_edits.py` 单独复制到没有 `all.sh` / `AGENTS.md` 的目录跑 ⇒ 现在
+  `TOTAL: 11 passed, 0 failed · 跳过 2 条`，**改前同一棵树印的是 `13 passed, 0 failed`**、退出码一样是 0。
+- 📄 连带活文档三处：`AGENTS.md` §1 七项里"工具自检"那句补上死绑定与「固定 6 条判据」·
+  `docs/注意事项.md` 同一句 · `skill/README.md:54` 那句「apply_edits 自带回归…**不参与 all.sh**」
+  是上一批（`check_tools.py` 进闸）之后就已经假掉的读数，按现状改成「由 all.sh 第 6 项串跑」。
+- 🚪 **本轮触碰闸门 0 个文件**（全非冻结，`GATE` 的 10 个成员一个没动）。留下一条已知偏窄的读数不改：
+  `all.sh` 第 6 项那行标签还写着「工具自检（自测+可编译）」，它现在多做一件"顶层死绑定"——
+  改那行要动冻结文件 ⇒ 留给下一次本来就要动 `all.sh` 的批次顺带，不为一句标签单独开一次请示。
+- 🐛 顺手实测到一处**没修**的运行时崩（记名等点名）：`skill/scripts/egern/probe_dns_endpoints.py:30` 行尾的
+  `# noqa: E402` 把下一行的 `import sys` 一起吃进了注释 ⇒ 第 29 行 `sys.path.insert` 当场
+  `NameError: name 'sys' is not defined`（实跑 `python … probe_dns_endpoints.py --help` 复现，一处没修成 4 处用到：:29/:124/:144/:184）。
+  T5 判不到它（那是"绑了没人用"，方向相反），T1 也判不到（语法完好），而闸永远不执行这个脚本 ⇒
+  要判这一类得再加一条"用了没绑"。粗扫 26 个 `.py`：剔掉 `__file__` 这类隐式名之后**只有这一个文件**中招。
+- ✅ 验收（本批改完后重跑）：`bash skill/tests/all.sh` → **19 · 18 · 18 · 18 · 11 · 6 · 4**，七项全绿 · 11s。
 
 ---
 

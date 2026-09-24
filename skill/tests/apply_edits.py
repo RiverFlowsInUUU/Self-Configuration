@@ -310,14 +310,18 @@ def selftest():
            repr(readb("e.md")))
 
     # A9：闸门名单与 all.sh 里的 GATE 逐字一致（真仓文件，只读）
-    listed = GATE                     # 读不到 all.sh 时退回本模块副本（A13 也据此判）
+    # 读不到真仓文件 ⇒ 第三档：`↷ 跳过`，既不计 passed 也不计 failed。
+    # 拿 True 冒充跑过，等于让"环境不对"发一张"名单一致"的合格证
+    #（先例见 check_tools.py 头注那句"清单为空 ⇒ 没跑成不等于跑绿"）。
+    listed = GATE                     # 本模块副本；all.sh 读到后以现读出来的那份为准
+    skips = []
     try:
         with open(os.path.join(ROOT, "skill/tests/all.sh"), encoding="utf-8") as f:
             src = f.read()
     except OSError:
         src = ""
     if not src:
-        ck("A9 闸门名单对拍跳过（找不到 all.sh）", True)
+        skips.append("A9 闸门名单对拍 · 找不到 %s" % os.path.join(ROOT, "skill/tests/all.sh"))
     else:
         import ast
         import re as _re
@@ -343,7 +347,9 @@ def selftest():
     except OSError:
         pass
     if not (agents_src and note_src and own_src):
-        ck("A13 文档侧对拍跳过（AGENTS.md / 注意事项 / 自身源码读不到）", True)
+        missing = [p for p, t in (("AGENTS.md", agents_src), ("docs/注意事项.md", note_src),
+                                  ("apply_edits.py 自身源码", own_src)) if not t]
+        skips.append("A13 文档侧对拍 · 读不到 %s" % " / ".join(missing))
     else:
         errs = gate_doc_check(agents_src, note_src, own_src, listed)
         # 判别自证 ①（正例）：在册 10 项原样 + 把其中一行抄第二遍 ⇒ 11 槽 / 10 唯一。
@@ -370,7 +376,12 @@ def selftest():
     for name, ok_, extra in checks:
         print("   %s %s%s" % ("✅" if ok_ else "❌", name,
                               (" · " + extra) if (extra and not ok_) else ""))
-    print("TOTAL: %d passed, %d failed" % (len(checks) - len(bad), len(bad)))
+    for s in skips:
+        print("   ↷ %s（没跑成 ≠ 跑绿，也不算判负）" % s)
+    tail = "TOTAL: %d passed, %d failed" % (len(checks) - len(bad), len(bad))
+    # 跳过数**写在 TOTAL 后面**而不是并进 passed/failed：`all.sh` 的 item() 与第 7 项
+    # 都按 `TOTAL: N passed, M failed` 逐字取数，把它并进那两个数会读成"少跑了一条"。
+    print(tail + (" · 跳过 %d 条" % len(skips) if skips else ""))
     return 1 if bad else 0
 
 

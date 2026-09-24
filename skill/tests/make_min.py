@@ -36,13 +36,11 @@
 import argparse
 import io
 import os
-import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 # 仓库根：本文件在 <根>/skill/tests/ ⇒ 上溯两级。判据从同目录的对拍器 import，不复制规则。
 REPO_ROOT = os.path.dirname(os.path.dirname(HERE))
-ALL_SH = os.path.join(HERE, "all.sh")
 sys.path.insert(0, HERE)
 
 from check_min_pair import TRAIL, WHOLE, normalize, head_version, OLD_DIR   # noqa: E402  判据唯一来源

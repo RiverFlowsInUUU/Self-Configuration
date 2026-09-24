@@ -155,8 +155,6 @@ FOREIGN_RESOLVER_IPS = {
 }
 
 _IP4_RE = re.compile(r"^\d{1,3}(\.\d{1,3}){3}$")
-_IP4_CIDR_RE = re.compile(r"^\d{1,3}(\.\d{1,3}){3}/\d{1,2}$")
-_IP6_CIDR_RE = re.compile(r"^[0-9A-Fa-f:]+/\d{1,3}$")
 
 # ⭐ 通用 scheme 前缀：`scheme://`，**大小写不敏感**，不枚举具体 scheme。
 # ⚠️ 不要改成白名单：那会让 scheme 的拼法参与审计结论

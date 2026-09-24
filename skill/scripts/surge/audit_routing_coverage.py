@@ -43,7 +43,7 @@ from _surge_common import (  # noqa: E402
     split_csv,
     strip_comment,
 )
-from audit_ruleset_content import fetch, parse_ruleset  # noqa: E402
+from audit_ruleset_content import fetch  # noqa: E402
 
 # 本文件位于 <仓库根>/skill/scripts/surge/ ⇒ 上溯三级即仓库根（不假设 cwd，也不出本仓取文件）
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -151,7 +151,7 @@ APPLE_PROBES_ROUTING = [
 APPLE_PROBES_LAZY = [
     "www.apple.com", "swcdn.apple.com", "gs-loc.apple.com", "courier.push.apple.com",
 ]
-APPLE_PROBES = APPLE_PROBES_ROUTING          # 兼容旧提法：全量那份就是分流版的期望
+APPLE_PROBES = APPLE_PROBES_ROUTING          # t5-keep: 「兼容旧提法」的别名，删否由维护者点名（本仓无人用这个旧提法）
 
 
 def apple_probes_for(path):
@@ -169,9 +169,6 @@ def apple_probes_for(path):
 BUILTIN_SET_SNAPSHOTS = {
     "SYSTEM": os.path.join(REPO_ROOT, "egern", "apple_system.list"),
 }
-
-
-IP_RULE_TYPES = {"IP-CIDR", "IP-CIDR6", "IP-ASN", "GEOIP", "IP-GEOIP", "SRC-IP", "DEST-IP"}
 
 
 class Matcher:

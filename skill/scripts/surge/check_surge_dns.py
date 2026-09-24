@@ -25,7 +25,6 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _surge_common import (  # noqa: E402
-    DOMESTIC_RESOLVER_IPS,
     FOREIGN_RESOLVER_IPS,
     endpoint_kind,
     hostpart,
