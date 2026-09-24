@@ -112,7 +112,13 @@ def version_checks(root):
                 out.append(("%s V%d 归档目录 %s/" % (side, k, OLD_DIR), False, "缺目录"))
             continue
         names = sorted(n for n in os.listdir(old_dir) if not n.startswith("."))
-        out.append(("%s V3 归档目录存在（%d 个文件）" % (side, len(names)), True, ""))
+        # V3 的"存在"两字由上面那个 `isdir` 分支兜着（缺目录时 V3–V6 一并判负），
+        # 走到这里存在性已成事实 ⇒ 这条唯一还能判的东西是"非空"。从前它写的是字面量 True，
+        # 实测：把 surge/profiles/config_old/ 清空成 0 个文件，输出照旧
+        # `✅ surge V3 归档目录存在（0 个文件）` · TOTAL: 18 passed ⇒ 一条永远绿的判据占着计数。
+        out.append(("%s V3 归档目录存在且非空（%d 个文件）" % (side, len(names)), bool(names),
+                    "空归档：每退一版留一份快照是这套沿革制度的前提 ⇒ 目录空 = 快照被手工挪走，"
+                    "或归档根本没建起来（缺目录不在此条，由上面的 缺目录 分支判）"))
         groups, illegal = {}, []
         for n in names:
             m = ARCHIVE_RE.match(n)

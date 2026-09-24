@@ -249,6 +249,51 @@
 - ✅ 验收（本轮改完后重跑）：`bash skill/tests/all.sh` → Surge **19** · Egern **18** · 形态对拍 **18** ·
   可移植性 **18** · 文档读数 **10**，末行走新措辞「判据全过 · 但状态未落地」；
   `apply_edits.py --selftest` **13** 条全绿。
+- 🧰 **`all.sh` 加第 6 项「工具自检」**：新增 [`skill/tests/check_tools.py`](skill/tests/check_tools.py)（非冻结，
+  与 `apply_edits.py` 同理 —— 它只报对错、不动手，但不在名单里也判不了别人）。4 条断言 = 三套自带回归
+  （`make_min.py` / `apply_edits.py` / `surge/check_links.py` 各自的 `--selftest`）+ "全部被 git 跟踪的 `.py`
+  都能编译"。治的是"检查器自己坏了没人知道"：改前编译面零判据、三套自测散在三个文件里要记三条命令。
+  反例是现成的 —— 本批实施过程中就往 `audit_ruleset_content.py` 里掉进过一个语法错误（替换用的 JSON 漏 escaping
+  的 `%%`），编译那条当场点名，人还没跑到闸就先红了；那条 SyntaxError 后来成为 T1 有牙的证据。
+- 🧊 **规则集缓存从此会过期**：取远端规则集的三处（`skill/scripts/surge/audit_ruleset_content.py` ·
+  `skill/scripts/egern/audit_routing_coverage.py` · `skill/scripts/egern/audit_ruleset_noresolve.py`，**都非冻结**）
+  从前只看"文件在不在"（改前全仓 grep `mtime` / `max_age` / `TTL` 零命中）⇒ 联网阶段可能拿半年前落下的一份判"通过"，
+  而输出里那个（缓存）看不出新陈。现统一 7 天窗口：窗口内直用 · 过窗先重下 · **重下失败才退回旧那份并逐条出声**，
+  末尾各打一行「缓存读数：N 个规则集 —— 新下载 a · 窗口内直用 b · 过期退回 c」。
+  过期退回**只报不判**（与闸门触碰同口径：那不是配置错了，是这台机器此刻下不动）。
+  实测：把缓存里一份的 mtime 推到 30 天前 —— `--offline` 下两份 Egern 脚本各出「缓存已过 7 天窗口」、
+  联网重跑变「新下载 1 · 过期退回 0」；Surge 侧用打桩 `urlopen` 逐分支验过 `fresh / cache / stale`，
+  其中 `stale` 那次网络调用数为 1、正文仍是旧那份。`--max-age-days` 只在 Surge 侧加（负数 = 不过期、0 = 全部重下），
+  Egern 两脚本要重下就直接删缓存或联网跑。
+- 🩹 `skill/tests/check_min_pair.py:115`（**冻结**，本轮授权）的 V3 是一条**恒真断言**：消息写着"存在"，
+  判据位上是一个字面量 `True`，而缺目录由上面的 `isdir` 分支单独兜 ⇒ 归档被挪空时它照样绿。现按 `bool(names)` 判。
+  改前改后各实测一次：把 `surge/profiles/config_old/` 清空 ⇒ 改前 `✅ surge V3 归档目录存在（0 个文件）` ·
+  18/0 · 退出码 0；改后同条件 `❌ …（0 个文件）· 空归档：…` · 17/1 · 退出码 1；恢复后回到 18/0。
+- 🖥 三个没有编码兜底的脚本（`apply_edits.py` · `check_portability.py` · `check_doc_readings.py`）补上
+  `bump_version.py` / `make_min.py` 同款 `reconfigure(encoding="utf-8", errors="replace")`。
+  为什么值得单独一条：中文 Windows 的管道默认 GBK，脚本 print emoji 就 `UnicodeEncodeError` ⇒ 退出码 1，
+  与"期望判负"的用例**撞码** ⇒ 假绿；而 `all.sh:44` 那个 `PYTHONIOENCODING` 只护得住从 `all.sh` 进来的调用，
+  文档里教的"单跑某一条命令"没有那层护。
+- 🧷 文档读数对拍 **10 → 11 条**：新增 `D10` 管当前版 profile（含 `.min`，`config_old/` 天然在场外）里的
+  `# audit-waive:` 行，口径**逐字抄自消费方** `skill/scripts/surge/check_surge_dns.py:load_waivers()` 的正则。
+  三种坏法逐个拿打桩文件实测（每条同时打印审计器真正读到了什么）：
+  ① 用 `//` 起头、或编号与理由之间没空格 ⇒ 审计器一条都读不到 ⇒ 判负；
+  ② `# audit-waive: 2` 光有编号 —— 消费方的 `\s+` 会吃掉换行，所以它**确实生效了**，只是报告里
+  「已豁免（profile 内声明）：」后面空无一物，"留痕"那半没了 ⇒ 判负；
+  ③ 同文件两条同编号 —— `_waivers[cid] = 理由` 后写覆盖先写，审计输出与只有一条时逐字相同，
+  **不跑这条判据永远不会有人发现** ⇒ 判负。当前真实读数：4 行 / 4 个文件 · 零判负。
+  刻意不判两条：编号是否连续（删一条豁免不该逼后面重编号）· 是否落在审计器现有检查号区间内（那要把判据钉在
+  审计器源码上，检查号一加一删就误伤）。文档连带 4 处：`AGENTS.md` §1 那行 · `skill/README.md` 的命令行注释 ·
+  两份 `docs/08-审计读数` 的「固定 10 条（D0–D9）」。
+- 🚪 **本轮触碰闸门 5 个文件**：`all.sh`（第 6 项命令 + 抬头「六条命令」）· `check_min_pair.py`（V3 那条）·
+  `check_doc_readings.py`（D10）· `check_portability.py`（编码兜底 6 行）· `bump_version.py`（升版桩里
+  「五项 TOTAL」→ 六项）。同样加了编码兜底的 `apply_edits.py` **不在名单内**，不构成越界。
+  每条"不改会漏掉什么"都带实测反例，列在上面四条里。**没动**：`GATE` 的 10 个成员、五项判据本身的口径、
+  任何 profile 与规则集、`config_old/` 归档字节。
+- 🚫 `check_tools.py` **没有**加进冻结名单：加进去是 10 → 11 的连锁（`all.sh` 的 `GATE`、`apply_edits.py` 的 A9/A13
+  与 5 处文档锚点都跟着动），而它自己不判配置内容 —— 这条留给维护者拍，本批不自作主张。
+- ✅ 验收（本批改完后重跑，不沿用上面的读数）：`bash skill/tests/all.sh` → Surge **19** · Egern **18** ·
+  形态对拍 **18** · 可移植性 **18** · 文档读数 **11** · 工具自检 **4**，六项全绿 · 11s。
 
 ---
 

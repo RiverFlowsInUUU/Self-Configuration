@@ -31,6 +31,7 @@ import os
 import re
 import sys
 import tempfile
+import time
 import urllib.error
 import urllib.request
 
@@ -53,19 +54,40 @@ BUILTIN_SETS = {"system", "lan", "direct", "proxy", "final", "reject",
                 "domestic", "foreign", "cellular", "wifi"}
 
 
-def fetch(url, cache_dir, timeout=45, force=False):
-    """下载规则集，带本地缓存。返回 (text, from_cache)。"""
+# 缓存新鲜度窗口（天）。`--max-age-days 0` = 全部视为过期（等价 --force 的重下，
+# 但下载失败时会退回手上那份并标 stale）。
+CACHE_MAX_AGE_DAYS = 7.0
+
+
+def fetch(url, cache_dir, timeout=45, force=False, max_age=CACHE_MAX_AGE_DAYS * 86400):
+    """下载规则集，带本地缓存与新鲜度窗口。返回 `(text, source)`，
+    source ∈ `fresh`（本次下载）· `cache`（窗口内直接命中）· `stale`（缓存已过窗口、
+    重下失败 ⇒ 退回过期那份）。
+
+    为什么必须有 `max_age`：从前这里只看 `isfile`，缓存**永不过期**
+    （全仓 grep `mtime` / `max_age` / `TTL` 在改动前零命中）。后果是联网阶段可能拿
+    一份半年前落下的规则集判"通过"，而输出里那个（缓存）看不出新陈 ——
+    与 `bump_version.py` 头注讲的「当前版」同一条罪：读数说得出名字、说不出事实。
+    """
     key = re.sub(r"[^A-Za-z0-9._-]", "_", url)[-120:]
     path = os.path.join(cache_dir, key)
+    stale = False
     if os.path.isfile(path) and not force:
-        return open(path, encoding="utf-8", errors="replace").read(), True
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        raw = r.read().decode("utf-8", errors="replace")
+        if max_age is None or time.time() - os.path.getmtime(path) <= max_age:
+            return open(path, encoding="utf-8", errors="replace").read(), "cache"
+        stale = True                        # 过了窗口：先试着重下，失败才退回这份
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": UA})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            raw = r.read().decode("utf-8", errors="replace")
+    except (urllib.error.URLError, urllib.error.HTTPError, OSError):
+        if stale:
+            return open(path, encoding="utf-8", errors="replace").read(), "stale"
+        raise
     os.makedirs(cache_dir, exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="") as f:
         f.write(raw)
-    return raw, False
+    return raw, "fresh"
 
 
 def parse_ruleset(text):
@@ -136,6 +158,8 @@ def main():
     ap.add_argument("profile", help="Surge .conf 文件路径")
     ap.add_argument("--cache-dir", default=None, help="规则集缓存目录")
     ap.add_argument("--force", action="store_true", help="忽略缓存重新下载")
+    ap.add_argument("--max-age-days", type=float, default=CACHE_MAX_AGE_DAYS, metavar="N",
+                    help="缓存新鲜度窗口（天），默认 %g；0 = 全部视为过期" % CACHE_MAX_AGE_DAYS)
     ap.add_argument("--show-domestic", action="store_true", help="打印直连集合明细")
     a = ap.parse_args()
 
@@ -154,6 +178,8 @@ def main():
     print(f"规则集缓存：{cache}")
     print(f"共 {len(refs)} 条 RULE-SET 规则\n")
 
+    max_age = None if a.max_age_days < 0 else a.max_age_days * 86400
+    n_fresh = n_cache = n_stale = 0
     high = 0
     medium = 0
     domestic_domain_rules = []   # [(标识, 域名条目数)] 判给 DIRECT 的集合
@@ -164,7 +190,7 @@ def main():
             print(f"── 第 {lineno} 行 · {ident}（Surge 内置集合，跳过）→ {policy}")
             continue
         try:
-            text, cached = fetch(ident, cache, force=a.force)
+            text, cached = fetch(ident, cache, force=a.force, max_age=max_age)
         except (urllib.error.URLError, urllib.error.HTTPError, OSError) as e:
             print(f"── 第 {lineno} 行 · {ident}")
             print(f"   ⚠️  下载失败：{e}（跳过，结论未知）\n")
@@ -174,7 +200,13 @@ def main():
         st = parse_ruleset(text)
         dcount = sum(st["domain_types"].values())
         icount = sum(st["ip_types"].values())
-        flag = "（缓存）" if cached else "（新下载）"
+        n_fresh += cached == "fresh"
+        n_cache += cached == "cache"
+        n_stale += cached == "stale"
+        flag = {"fresh": "（新下载）",
+                "cache": "（缓存）",
+                "stale": "（缓存已过 %g 天窗口 · 重下失败 ⇒ 按陈旧那份判）"
+                       % (max_age / 86400 if max_age else 0)}[cached]
 
         print(f"── 第 {lineno} 行 · {ident.split('/')[-1]} {flag} → {policy}")
         print(f"   共 {st['total']} 条：域名类 {dcount} / IP 类 {icount} / "
@@ -223,6 +255,12 @@ def main():
             print(f"✅ 直连集合共 {total_domain} 条域名条目 —— 足以接住国内域名")
         print()
 
+    print("缓存读数：%d 个规则集 —— 新下载 %d · 窗口内直用 %d · 过期退回 %d（窗口 %s）"
+          % (n_fresh + n_cache + n_stale, n_fresh, n_cache, n_stale,
+             "不过期" if max_age is None else "%g 天" % (max_age / 86400)))
+    if n_stale:
+        print("   ⚠️  过期退回**只报不判**（与闸门触碰同口径）：结论要按最新规则集下，"
+              "换到能联网的地方跑 `--force`。")
     print("─" * 62)
     print(f"result: {high} high, {medium} unknown")
     if high:

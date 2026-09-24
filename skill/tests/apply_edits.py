@@ -391,4 +391,12 @@ def main():
 
 
 if __name__ == "__main__":
+    # Windows GBK 终端里 print 中文/emoji 会 UnicodeEncodeError ⇒ 退出码 1，
+    # 看着像判负、其实一条都没判（实测：13 条全过的 --selftest 在裸终端里红在 ✅）。
+    # 与 bump_version.py / make_min.py 同款兜底；闸内另有 all.sh 的 PYTHONIOENCODING。
+    for s in (sys.stdout, sys.stderr):
+        try:
+            s.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:                                      # noqa: BLE001
+            pass
     sys.exit(main())

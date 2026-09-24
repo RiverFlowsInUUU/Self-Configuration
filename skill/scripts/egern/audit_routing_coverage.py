@@ -37,6 +37,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _egern_common import force_utf8_stdout  # noqa: E402
 import tempfile
+import time
 import urllib.request
 from fnmatch import fnmatch
 
@@ -47,6 +48,9 @@ except ImportError:
     sys.exit(2)
 
 CACHE = os.path.join(tempfile.gettempdir(), "egern-ruleset-cache")
+# 缓存新鲜度窗口（秒）。从前 fetch 只看文件在不在，缓存**永不过期** ⇒ 这份审计可能拿
+# 半年前的规则集判"国内域名有覆盖"。与 surge 侧 audit_ruleset_content.py 同一条口径。
+CACHE_MAX_AGE = 7 * 86400
 
 # 国内探针：全部是 .com/.net 等**不以 .cn 结尾**的常见站，专门用来暴露
 # 「.cn 兜底掩盖了国内域名无覆盖」这种假象。
@@ -62,22 +66,48 @@ FOREIGN_PROBES = [
 ]
 DOMAIN_TYPES = ("DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "DOMAIN-REGEX", "DOMAIN-WILDCARD")
 
+# 按 URL 去重记缓存来源：同一个规则集在【一】和【二】两趟里都会被取到，不去重会把"几个
+# 规则集来自缓存"这个数报成访问次数。
+CACHE_SOURCES = {}
+
+
+def _note(url, source):
+    CACHE_SOURCES.setdefault(url, source)
+
 
 def fetch(url, offline=False):
+    """取规则集正文，带缓存新鲜度窗口。缓存过窗口时**先试着重下**，重下失败才退回旧那份
+    并出声（`stale`）—— 静默拿陈旧规则集判"国内域名有覆盖"是本脚本最坏的一种假绿。
+    """
     os.makedirs(CACHE, exist_ok=True)
     name = re.sub(r"[^A-Za-z0-9._-]", "_", url.rstrip("/").split("/")[-1]) or "ruleset"
     path = os.path.join(CACHE, name)
+    stale = False
     if os.path.exists(path) and os.path.getsize(path) > 0:
-        return io.open(path, encoding="utf-8", errors="replace").read()
+        if time.time() - os.path.getmtime(path) <= CACHE_MAX_AGE:
+            _note(url, "cache")
+            return io.open(path, encoding="utf-8", errors="replace").read()
+        stale = True
     if offline:
+        if stale:
+            _note(url, "stale")
+            print(f"⚠️  {name}：缓存已过 {CACHE_MAX_AGE // 86400} 天窗口，--offline 不重下 ⇒ 按陈旧那份判")
+            return io.open(path, encoding="utf-8", errors="replace").read()
+        _note(url, "miss")
         return None
     req = urllib.request.Request(url, headers={"User-Agent": "egern-routing-audit/1.0"})
     try:
         with urllib.request.urlopen(req, timeout=90) as r:
             body = r.read().decode("utf-8", "replace")
     except Exception:  # noqa: BLE001
+        if stale:
+            _note(url, "stale")
+            print(f"⚠️  {name}：缓存已过 {CACHE_MAX_AGE // 86400} 天窗口且重下失败 ⇒ 退回过期那份")
+            return io.open(path, encoding="utf-8", errors="replace").read()
+        _note(url, "fail")
         return None
     io.open(path, "w", encoding="utf-8", newline="\n").write(body)
+    _note(url, "fresh")
     return body
 
 
@@ -216,6 +246,11 @@ def main():
 
     print()
     print("=" * 100)
+    src = list(CACHE_SOURCES.values())
+    print("缓存读数：%d 个规则集 —— 新下载 %d · 窗口内直用 %d · 过期退回 %d · 取不到 %d"
+          "（窗口 %d 天；过期退回**只报不判**，要按最新规则集下就联网重跑）"
+          % (len(src), src.count("fresh"), src.count("cache"), src.count("stale"),
+             src.count("miss") + src.count("fail"), CACHE_MAX_AGE // 86400))
     print(f"启用的 DIRECT 规则集域名条目合计: {direct_domains}")
     if wrong_direct:
         print(f"注意 —— {len(wrong_direct)} 个境外探针被判给了 DIRECT（规则集覆盖过宽，需人工确认）：")

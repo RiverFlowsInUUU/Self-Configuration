@@ -42,6 +42,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _egern_common import force_utf8_stdout  # noqa: E402
 import tempfile
+import time
 import urllib.request
 
 try:
@@ -53,24 +54,37 @@ except ImportError:
 IP_TYPES = ("IP-CIDR", "IP-CIDR6", "IP-ASN", "GEOIP", "IP-CIDR6,no-resolve".upper())
 # 缓存放到系统临时目录（20 个规则集约 5MB，别往 skills 目录里塞）
 CACHE = os.path.join(tempfile.gettempdir(), "egern-ruleset-cache")
+# 新鲜度窗口：从前只看文件在不在 ⇒ 半年前落下的缓存也能拿来判"没有未带 no-resolve 的条目"。
+# 与 surge 侧 audit_ruleset_content.py、同目录 audit_routing_coverage.py 同一条口径。
+CACHE_MAX_AGE = 7 * 86400
 
 
 def fetch(url, offline=False):
+    """取规则集正文。返回 `(text, path, source)`，source ∈ `fresh`（本次下载）·
+    `cache`（窗口内命中）· `stale`（过了窗口且重下失败 ⇒ 退回旧那份，调用方要出声）。
+    """
     os.makedirs(CACHE, exist_ok=True)
     name = re.sub(r"[^A-Za-z0-9._-]", "_", url.rstrip("/").split("/")[-1]) or "ruleset"
     path = os.path.join(CACHE, name)
+    stale = False
     if os.path.exists(path) and os.path.getsize(path) > 0:
-        return io.open(path, encoding="utf-8", errors="replace").read(), path, "cache"
+        if time.time() - os.path.getmtime(path) <= CACHE_MAX_AGE:
+            return io.open(path, encoding="utf-8", errors="replace").read(), path, "cache"
+        stale = True
     if offline:
+        if stale:
+            return io.open(path, encoding="utf-8", errors="replace").read(), path, "stale"
         return None, path, "miss"
     req = urllib.request.Request(url, headers={"User-Agent": "egern-dns-audit/1.0"})
     try:
         with urllib.request.urlopen(req, timeout=60) as r:
             body = r.read().decode("utf-8", "replace")
     except Exception as e:  # noqa: BLE001
+        if stale:
+            return io.open(path, encoding="utf-8", errors="replace").read(), path, "stale"
         return None, path, f"FAIL {e}"
     io.open(path, "w", encoding="utf-8", newline="\n").write(body)
-    return body, path, "http"
+    return body, path, "fresh"
 
 
 def parse(body):
@@ -135,12 +149,14 @@ def main():
     print(f"{'规则集':34s} {'条目':>7s} {'IP类':>6s} {'缺no-resolve':>13s}  {'状态':6s} 归属")
     print("-" * 96)
     highs, goods = [], []
+    hows = []
     for section, t, url, policy, disabled, nr in jobs:
         body, path, how = fetch(url, a.offline)
         name = url.rstrip("/").split("/")[-1]
         if body is None:
             print(f"{name:34s} {'-':>7s} {'-':>6s} {'-':>13s}  {'取失败':6s} {how}")
             continue
+        hows.append(how)
         entries, ip, missing, dist = parse(body)
         status = "禁用" if disabled else "启用"
         flag = ""
@@ -151,12 +167,18 @@ def main():
         else:
             goods.append(name)
         print(f"{name:34s} {len(entries):>7d} {len(ip):>6d} {len(missing):>13d}  {status:6s} {policy}{flag}")
+        if how == "stale":
+            print(f"{'':34s} ⚠️ 缓存已过 {CACHE_MAX_AGE // 86400} 天窗口且重下失败 ⇒ 以上按陈旧那份判")
         if missing and not disabled:
             print(f"{'':34s} 样例: " + " | ".join(missing[:3]))
         if section == "dns.forward":
             print(f"{'':34s} (以上来自 dns.forward，是 DNS 转发而非路由)")
 
     print("\n" + "=" * 96)
+    print("缓存读数：%d 个规则集 —— 新下载 %d · 窗口内直用 %d · 过期退回 %d（窗口 %d 天；"
+          "过期退回**只报不判**，要按最新规则集下就联网重跑）"
+          % (len(hows), hows.count("fresh"), hows.count("cache"), hows.count("stale"),
+             CACHE_MAX_AGE // 86400))
     if highs:
         print(f"HIGH —— 以下规则集被启用，且含 {sum(h[2] for h in highs)} 条未带 no-resolve 的 IP 条目：")
         for n, p, c in highs:

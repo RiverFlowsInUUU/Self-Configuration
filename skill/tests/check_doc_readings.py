@@ -8,7 +8,7 @@
   **没有任何检查会因为"改了 profile 忘了改文档"而报错** —— 只能一轮轮 grep 反查、逐个数字重测。
   这一项把它变成一条命令：不吻合就直接点名「哪个文件第几行写的 24，实测 23」。
 
-固定规则清单（每条 = 1 个断言，**共 10 条、不随文件数增长**）：
+固定规则清单（每条 = 1 个断言，**共 11 条、不随文件数增长**）：
     D0 两内核逐位对齐：组数 / 规则条数 / 规则集条数 三对 × 两形态必须相等（抓"只动了一侧"）
     D1 策略组数      —— 「N 组 / N 个策略组」类声明 == 实测组数
     D2 规则条数      —— 「N 条 … 规则」类声明 == 实测 `[Rule]` / `rules` 非注释条目数
@@ -22,6 +22,9 @@
                       订阅地址正是这次要根治的东西，写回去就等于把永久地址弄坏
     D9 头注即当前版  —— 四份 profile 头注 `#! version=` 必须齐全一致（两内核、routing/lazy 各一对），
                       且顶层固定名四件都在。从前"哪一版"是三处 `CURRENT=` 各写一遍，改一漏二。
+    D10 豁免行可被读到 —— 当前版 profile（含 `.min`）里每一行 `# audit-waive:` 必须**与消费方的
+                      正则同形**（`# audit-waive: <编号> <理由>`，理由非空），且**同一文件内编号不重复**。
+                      消费方是 `skill/scripts/surge/check_surge_dns.py` 的 `load_waivers()`。
 
 **刻意不判的东西**（判了会误伤，交给人）：
   · 判据/回归的断言数（27 / 50 / 14 / 18）—— 那要真跑测试才有值，递归且不划算。
@@ -30,6 +33,9 @@
   · 历史沿革类文件（`docs/07-*`、`日志旧版原文`、`CHANGELOG`、`体检报告`）整篇不扫 —— 旧数字在那儿是对的。
   · 一行里同一类数字出现多次又判不出形态（既没说 lazy 也没说分流）⇒ 跳过不判，
     并在末尾报「跳过 N 处」，让"没判到"这件事本身可见。
+  · 豁免编号**是否连续、是否落在审计器现有的检查号区间内** —— 前者本来就无意义（删一条豁免
+    不该逼着后面重编号），后者要把判据钉在 `check_surge_dns.py` 的源码上、检查号一加一删就误伤。
+    D10 只判"写了却读不到 / 读了却没痕迹 / 后一条把前一条顶掉"这**三种静默失效**。
 
 退出码：0 全绿 · 1 有不吻合 · 2 前置不达标（profile 解析不出来 / 找不到 CURRENT）
 """
@@ -59,6 +65,64 @@ HEAD_FILES = ("surge/profiles/routing.conf", "surge/profiles/lazy.conf",
               "egern/profiles/routing.yaml", "egern/profiles/lazy.yaml")
 CN_NUM = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7,
           "八": 8, "九": 9, "十": 10}
+
+# ── D10：豁免行 ───────────────────────────────────────────────────────────
+# 这条正则**逐字抄自消费方** `skill/scripts/surge/check_surge_dns.py:load_waivers()`。
+# 为什么要逐字：豁免的失效方式全是静默的 —— 形状差一点，`finditer` 一条都不匹配，
+# profile 里明明写着"这一处是刻意的"，审计器却按没豁免判（或反过来，多下一条重复编号时
+# `_waivers[cid] = 理由` 后写覆盖先写，先那份理由从此没人看得见）。
+WAIVE_CONSUMER = re.compile(r"#\s*audit-waive:\s*(\d+)\s+(.*)")
+
+
+def waive_files():
+    """当前版 profile（两内核、含 `.min` 形态）。`config_old/` 归档不参与 ——
+    归档里的豁免随着旧订阅地址一起作废，且 glob 只取顶层，天然排除子目录。"""
+    return sorted(glob.glob(os.path.join(ROOT, "surge", "profiles", "*.conf")) +
+                  glob.glob(os.path.join(ROOT, "egern", "profiles", "*.yaml")))
+
+
+def waive_readings(files=None):
+    r"""返回 (豁免行数, 涉及文件数, 坏行清单)。三种坏法：
+      ① **写了却读不到** —— 形状不合消费方的 `finditer`（用 `//` 起头、编号与理由之间没空格等）；
+      ② **理由是空的** —— 注意消费方的 `\s+` 会吃掉换行符，所以 `# audit-waive: 2` 单独一行
+         确实**被读到**了，finding 被降级成「已豁免（profile 内声明）：」后面空无一物：
+         豁免生效、痕迹没了，而这正是"写在 profile 里而不是写在审计器里"的全部意义；
+      ③ **同文件内编号重复** —— `_waivers[cid] = 理由` 后写覆盖先写，先那份理由从此没人看得见，
+         审计输出与"只有一条豁免"时逐字相同 ⇒ 不跑这条判据永远不会有人发现。
+    编号不要求连续、也不要求落在审计器现有的检查号区间内 —— 见头部「刻意不判」。
+    """
+    bad, n, touched = [], 0, set()
+    for p in (files if files is not None else waive_files()):
+        rel = os.path.relpath(p, ROOT).replace("\\", "/")
+        try:
+            text = open(p, encoding="utf-8", errors="replace").read()
+        except OSError as exc:
+            bad.append("%s: 读不出来（%s）" % (rel, exc))
+            continue
+        got = {}                                   # 行号 -> (编号, 理由)
+        for mm in WAIVE_CONSUMER.finditer(text):
+            got[text.count("\n", 0, mm.start()) + 1] = (int(mm.group(1)), mm.group(2).strip())
+        first = {}
+        for i in sorted(got):
+            cid, reason = got[i]
+            n += 1
+            touched.add(rel)
+            if not reason:
+                bad.append("%s:%d 编号 %d **没写理由** ⇒ 豁免照样生效，但报告里"
+                           "「已豁免（profile 内声明）：」后面空无一物" % (rel, i, cid))
+            elif cid in first:
+                bad.append("%s:%d 编号 %d 与本文件第 %d 行重复 ⇒ 审计器按后写覆盖先写，"
+                           "第 %d 行那份理由没人看得见" % (rel, i, cid, first[cid], first[cid]))
+            else:
+                first[cid] = i
+        for i, line in enumerate(text.splitlines(), 1):
+            if "audit-waive" in line and i not in got:
+                n += 1
+                touched.add(rel)
+                bad.append("%s:%d 形状不合 ⇒ 审计器**一条都读不到**（口径：`# audit-waive: "
+                           "<编号> <理由>`，编号与理由之间要空格） ｜ %s"
+                           % (rel, i, line.strip()[:60]))
+    return n, len(touched), bad
 
 
 def is_live(path):
@@ -329,6 +393,9 @@ def main():
     ck("D9 头注即当前版·同族跨内核一致且固定名四件齐：%s" % m["version"],
        m["current_ok"], "问题：%s ｜ 头注：%s"
        % (", ".join(m["current_missing"]), m["heads_note"]))
+    n_wv, n_wvf, wv_bad = waive_readings()
+    ck("D10 豁免行形状与消费方正则同形·编号文件内唯一（当前版 %d 行 / %d 个文件）"
+       % (n_wv, n_wvf), not wv_bad, "\n      " + "\n      ".join(wv_bad[:6]))
 
     print("\n对拍 %d 处声明 ｜ 判据 %d 条 ｜ 无法判定跳过 %d 处"
           % (sum(hits.values()), len(checks), len(skipped)))
@@ -345,4 +412,11 @@ def main():
 
 
 if __name__ == "__main__":
+    # Windows GBK 终端里 print 中文/emoji 会 UnicodeEncodeError ⇒ 退出码 1，
+    # 看着像判负、其实一条都没判。与 bump_version.py / make_min.py 同款兜底。
+    for s in (sys.stdout, sys.stderr):
+        try:
+            s.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:                                      # noqa: BLE001
+            pass
     sys.exit(main())
