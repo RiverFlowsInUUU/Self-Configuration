@@ -18,6 +18,11 @@
   （顶层字段全表 `egernapp.com/docs/configuration/example`），不再叫"默认出口组 / 默认策略组"，并写明它与兜底无关 ——
   兜底只有 `rules` 末尾那条 `default`。改的是 `DetailsReadme` §1.1（这条同时从「C. DNS 与默认出口」挪进「A. 全局开关 /
   辅助项」）与 `docs/04` §6。配置零改动，`Proxy` 这个取值保留（懒人版 `Proxy` 组为空，正靠它接住手动添加的节点）。
+- 📦 新增本仓第一份自托管规则集 [`egern/apple_system.list`](egern/apple_system.list)：Surge 官方内置 `SYSTEM` 的
+  2026-09-24 快照，18 条域名（快照原件里的 2 条 `PROCESS-NAME` 删掉，Egern 没有进程名匹配）。
+  存在的理由是 `docs/规则集与来源.md` §2 那条「`SYSTEM` 仅 Surge 有、Egern 无对应内置集」—— 懒人版用它补上 `SYSTEM` 位。
+  本文件先落仓，**profile 还没引用**（raw URL 得先存在，否则联网审计只是静默跳过）；引用与读数同步在懒人版那一批里做。
+  配置零改动。
 
 ### 共享层
 
