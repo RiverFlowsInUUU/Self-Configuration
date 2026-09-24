@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""回归断言数对拍（`all.sh` 第 7 项）：文档里写死的「19 断言 / 18 断言」↔ 本轮实测的 TOTAL。
+"""回归断言数对拍（`all.sh` 第 7 项）：文档里写死的「19 断言 / 22 断言」↔ 本轮实测的 TOTAL。
 
 为什么单独立一项，而不是并进 `check_doc_readings.py` 的 D 规则：
   D1–D3 对拍的是**解析 profile 就能算出来**的读数（组数 / 规则条数 / 规则集条数）。
@@ -10,7 +10,7 @@
   治的是这类漂移：runner 加了一条断言（23 → 27 那种），十来篇文档一处没跟，
   而仓里**没有任何检查会因为"断言数变了"而报错** —— 只能一轮轮 grep 反查。
 
-五条判据（**固定条数**，不随文档数 / 声明数增长 —— 与其余判据同一口径）：
+六条判据（**固定条数**，不随文档数 / 声明数增长 —— 与其余判据同一口径）：
   C1 Surge 侧总数声明 == 本轮 Surge 实测（且**至少有一处**在声明它，否则判据空转）
   C2 Egern 侧总数声明 == 本轮 Egern 实测（同上）
   C3 认不出内核的并排声明（表行里没有表头、格子里又没写内核名）里的数，都要是本轮某个实测值
@@ -18,6 +18,9 @@
      无表头可依那一类也真的判得到（四条缺一条 ⇒ C4 红）
   C5 文档写给 `check_tools.py` 的「固定 N 条判据」== 本轮 tools 实测（同样不许空转；
      判别自证随条内置 —— 改一个数必红 · 同数换措辞不红 · 别的脚本名行不许归进来）
+  C6 文档写给 `check_portability.py` / `check_doc_readings.py` 的「固定 N 条规则」== 本轮实测
+     （同样不许空转 —— 两个实测键各自至少命中 1 处；锚点同行认**脚本名或类别短语**，
+      因为 `AGENTS.md §1` 里那两个数与脚本名换了行）
 
 归属怎么认（决定红在哪一侧）：先按**表格列**问表头「这一列在说哪一侧」，再退到格子文本里的
 内核名、整行的内核名、文件路径（`surge/` / `egern/`）。全落空才交 C3。
@@ -27,8 +30,9 @@ C5 治的是复测出来的一个洞（2026-09-24 定）：`all.sh` 早把 `tool
 拿它比本轮实测，T6 一加（6→7）那个数就静默陈旧。锚点**按行取**：数字与 `check_tools.py`
 必须同在一行 —— 宁可在文档重排 wrapping 时"命中 0 处 ⇒ 判负"出声，也不拿 ±1 行的窗口
 去猜归属（`AGENTS.md` §1 那两句「固定 6 条」「固定 4 条」恰好上下相邻，放宽窗口就是串台）。
-本数的口径：它**不钉自己的 5**（判据判自己的条数是递归，`all.sh` 里"判据的判据会递归"那句
-同样管这里）；`portability` 的 18 与 `doc_readings` 的 11 是同类未钉，留维护者拍。
+本数的口径：它**不钉自己的 6**（判据判自己的条数是递归，`all.sh` 里"判据的判据会递归"那句
+同样管这里）。`portability` 的 18 与 `doc_readings` 的 11 原先也属"同类未钉"，**C6 起已钉**
+（2026-09-25 定：那两个数在 `AGENTS.md §1` 里写死，此前没有任何判据拿它比本轮实测）。
 
 只判**总数**，不判分项表（`surge/docs/08` 那张逐阶段表、`run.sh` 注释里的"3 个断言"）：
   分项数要么随 fixture 数漂、要么一行只覆盖一个阶段，把它们钉成死数会让每次加断言都要改表格；
@@ -75,6 +79,37 @@ HISTORY = ("CHANGELOG", "体检报告", "日志旧版原文", "/docs/07-", "/.gi
 # C5：写给 check_tools.py 的判据条数。行级锚点 —— 数字与脚本名不同行就不算（见头注）。
 TOOL_DECL = re.compile(r"固定\s*(\d+)\s*条判据")
 TOOL_ANCHOR = "check_tools.py"
+
+# C6：写给 portability / doc_readings 的**规则条数**。同 C5 的行级锚点口径。
+# 为什么单列一条：那两个数（`AGENTS.md §1` 的「固定 18 条规则」「固定 11 条规则」）此前
+# 没有任何判据拿它比本轮实测 —— 加一条规则、数字忘了改，静默陈旧（2026-09-25 定）。
+RULE_DECL = re.compile(r"固定\s*(\d+)\s*条规则")
+# ⚠️ 锚点要**同时**认脚本名与类别短语：`AGENTS.md §1` 里那两个数与脚本名**换了行**
+#    （数字在 :34 / :35，脚本名在 :36 / :37），只按脚本名锚定会一条都命中不了 ——
+#    实测：C6 第一次上线就报「check_doc_readings.py 一处声明都没有 ⇒ 判据空转」。
+#    按行取仍是硬口径：类别短语与数字必须**同一行**。
+RULE_ANCHORS = (("portability", ("check_portability.py", "换设备可移植性")),
+                ("doc_readings", ("check_doc_readings.py", "文档读数与实测对拍")))
+
+
+def find_rule_decls(text, rel):
+    """→ (decls, skipped)。decls = [(行号, 实测键, N)]；skipped = 有「固定 N 条规则」但认不出归属的行。
+
+    同一行命中多个锚点只算一次；认不出归属的**不静默**（进 skipped，末尾照常报「跳过 N 处」）——
+    例：`docs/跨内核差异对照.md` 里那句「它报的是固定 18 条规则通过与否」只有代词、没有锚点。
+    """
+    decls, skipped = [], []
+    for i, line in enumerate(text.splitlines(), 1):
+        if not RULE_DECL.search(line):
+            continue
+        keys = [k for k, anchors in RULE_ANCHORS if any(a in line for a in anchors)]
+        if not keys:
+            skipped.append("%s:%d 「固定 N 条规则」认不出归属（同行既无脚本名也无类别短语，只报不判）"
+                           % (rel, i))
+            continue
+        for key in keys:
+            decls.extend((i, key, int(m.group(1))) for m in RULE_DECL.finditer(line))
+    return decls, skipped
 
 KERNEL_KEYS = ("surge", "egern")
 MEASURED_KEYS = KERNEL_KEYS + ("min_pair", "portability", "doc_readings", "tools")
@@ -300,7 +335,7 @@ def main(argv):
     if not files:
         sys.stderr.write("❌ 前置：一篇 .md 都没找到 ⇒ 扫描面空了，不算跑过\n")
         return 2
-    all_decls, all_skipped, all_tool = [], [], []
+    all_decls, all_skipped, all_tool, all_rule = [], [], [], []
     for rel, p in files:
         try:
             text = open(p, encoding="utf-8", errors="replace").read()
@@ -311,6 +346,9 @@ def main(argv):
         all_decls.extend((rel, ln, k, ns) for ln, k, ns in d)
         all_skipped.extend(sk)
         all_tool.extend((rel, ln, n) for ln, n in find_tool_decls(text, rel))
+        rd, rsk = find_rule_decls(text, rel)
+        all_rule.extend((rel, ln, k, n) for ln, k, n in rd)
+        all_skipped.extend(rsk)
 
     print("实测：%s · 扫描 %d 篇 .md（历史类整篇不扫）· 总数声明 %d 处 / %d 个数 · 跳过 %d 处"
           % (" · ".join("%s=%s" % (k, measured[k]) for k in MEASURED_KEYS if k in measured),
@@ -348,6 +386,17 @@ def main(argv):
     ck("C5 check_tools 的文档写死判据条数与本轮实测一致（命中 %d 处 · 含判别自证）" % len(all_tool),
        bool(all_tool) and not tbad and ok5,
        "；".join(why5_parts) + (("；自证不通过：" + why5) if not ok5 else ""))
+
+    rbad, rn = [], 0
+    for key, _anchors in RULE_ANCHORS:
+        hits = [(rel, ln, n) for rel, ln, k, n in all_rule if k == key]
+        rn += len(hits)
+        if not hits:
+            rbad.append("%s 一处声明都没有 ⇒ 判据空转" % key)
+        rbad += ["%s:%d 文档写 %d，实测 %s=%s" % (rel, ln, n, key, measured[key])
+                 for rel, ln, n in hits if n != measured[key]]
+    ck("C6 portability / doc_readings 的「固定 N 条规则」与实测一致（命中 %d 处）" % rn,
+       not rbad, "；".join(rbad[:6]))
 
     for s in all_skipped[:8]:
         print("   ↷ " + s)
