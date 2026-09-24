@@ -59,9 +59,21 @@ BINARY_EXT = (".png", ".jpg", ".jpeg", ".gif", ".ico", ".icns", ".mmdb", ".pcap"
 # 这些前缀下的路径必须纯 ASCII：脚本、配置、图标、测试、fixture 都是被程序消费的
 MACHINE_PREFIXES = ("skill/", "icons/", "surge/profiles/", "egern/profiles/",
                     "surge/scripts/", "egern/scripts/", "surge/tests/", "egern/tests/")
-GARBAGE = ("__pycache__/", ".pyc", ".pyo", ".DS_Store", "Thumbs.db", "desktop.ini",
-           ".pytest_cache/", ".mypy_cache/", ".ruff_cache/", ".orig", ".bak", ".tmp",
-           ".log", ".swp", "~")
+# ⚠️ 分三类判，**不要退回 `any(g in p)` 子串匹配** —— 那会把正常名字判负：
+#    2026-09-25 实测 `docs/a~b.md` 命中 `"~"`（H1 直接判负），`a.log.md` 之类只差一个字符
+#    就命中 `".log"`。方向是**误报**，比漏报更烦人（会逼人给正常文件改名）。
+GARBAGE_DIRS = ("__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache")
+GARBAGE_NAMES = (".DS_Store", "Thumbs.db", "desktop.ini")
+GARBAGE_SUFFIX = (".pyc", ".pyo", ".orig", ".bak", ".tmp", ".log", ".swp", "~")
+
+
+def is_garbage(p):
+    """路径是不是单机残留：**目录段整段相等** / **文件名整名相等** / **文件名后缀相等**。"""
+    parts = p.split("/")
+    if any(seg in GARBAGE_DIRS for seg in parts[:-1]):
+        return True
+    name = parts[-1]
+    return name in GARBAGE_NAMES or name.endswith(GARBAGE_SUFFIX)
 
 
 def tracked_files():
@@ -181,7 +193,7 @@ def main():
     checks.append(("L1", "相对路径 ≤ 120 字符", too_long))
 
     # ── 残留与外链结构 ───────────────────────────────────────────────
-    garbage = [p for p in files if any(g in p for g in GARBAGE)]
+    garbage = [p for p in files if is_garbage(p)]
     checks.append(("H1", "无单机残留被跟踪", garbage))
     links = [p for p in files
              if os.path.islink(os.path.join(ROOT, p))]

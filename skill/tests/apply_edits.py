@@ -425,9 +425,26 @@ def selftest():
        "%s / %s" % (parse_gate_src('GATE = ("a.py", "b/c.sh")'),
                     [parse_gate_src(s) for s in ("GATE = ()", "no tuple here")]))
 
-    # A11：越出仓根的路径要判越界（norm_rel 会 die，这里只验判定分支）
-    rel = os.path.relpath(os.path.abspath("/etc/passwd"), os.getcwd()).replace("\\", "/")
-    ck("A11 仓外路径被认成越界", rel.startswith("..") or os.path.isabs(rel), rel)
+    # A11：越出仓根的路径必须判越界。**真调 `norm_rel`** —— 早先这里只验了
+    #      `os.path.relpath` 的前提成立（结果以 `..` 开头），对被测函数**零判别力**：
+    #      把 norm_rel 的越界分支整个删掉，A11 照样绿（2026-09-25 修）。
+    def _rel_problems():
+        import contextlib
+        import io as _io
+        out = []
+        if norm_rel("docs/x.md", ROOT) != "docs/x.md":
+            out.append("仓内相对路径没被原样收下")
+        for bad in ("../outside.md", "docs/../../outside.md"):
+            with contextlib.redirect_stdout(_io.StringIO()):      # die() 会 print，别脏了自测输出
+                try:
+                    norm_rel(bad, ROOT)
+                    out.append("仓外路径 %r 没被判越界" % bad)
+                except SystemExit as exc:
+                    if exc.code != 2:
+                        out.append("%r 的退出码是 %s，期望 2" % (bad, exc.code))
+        return out
+    _rp = _rel_problems()
+    ck("A11 仓外路径被认成越界（真调 norm_rel，退出码 2）", not _rp, "；".join(_rp))
 
     bad = [c for c in checks if not c[1]]
     for name, ok_, extra in checks:
