@@ -230,10 +230,19 @@ fi
 printf '%-30s %-14s %s\n' "$CURRENT.conf" "exit=$rc" "$res"
 
 if [ -f "$HERE/fixtures/bad_region_filter.conf" ]; then
-  "$PY" "$SCRIPTS_W/audit_region_filters.py" "$HERE_W/fixtures/bad_region_filter.conf" >/dev/null 2>&1
+  # ⚠️ (c)：坏 fixture 必须**只**因"漏关键词"判负 —— 光看 rc==1 分不清"审到了漏关键词"
+  #    与"因别的原因 rc=1"（本文件开头那段"解释器坏掉也是 1 ⇒ 假绿"同理）。
+  #    锚点取审计器 ① 那条具名 finding 的固定前缀（`Other Regions` 的负向断言漏了 …，
+  #    见 skill/scripts/surge/audit_region_filters.py 的 ① 分支）。
+  _bout="$("$PY" "$SCRIPTS_W/audit_region_filters.py" "$HERE_W/fixtures/bad_region_filter.conf" 2>&1)"
   rc=$?
-  if [ "$rc" = "1" ]; then
-    res="✅ OK（如期望判负）"; pass5=$((pass5+1))
+  if [ "$rc" = "1" ] && printf '%s' "$_bout" | grep -q '负向断言漏了'; then
+    res="✅ OK（判负，且原因是漏关键词）"; pass5=$((pass5+1))
+  elif [ "$rc" = "1" ]; then
+    res="❌ rc=1 但不是因漏关键词判负（判据可能已失效）"; fail5=$((fail5+1))
+    printf '\n---- bad_region_filter.conf 的输出（未命中「负向断言漏了」）----\n'
+    printf '%s\n' "$_bout" | sed 's/^/    /'
+    printf '%s\n' "------------------------"
   else
     res="❌ 期望 1"; fail5=$((fail5+1))
   fi

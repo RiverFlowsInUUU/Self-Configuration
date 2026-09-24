@@ -7,9 +7,14 @@
      `make_min.py` 是生成 `.min` 的那只手，而形态对拍器只比对**已经存在的两份产物**：
      生成器自己坏了，闸看不出来，只会等下一次有人手工跑它时才发现。
      三套串起来的实测成本 0.554s，换进来的是一条"这些工具自己还活着"的判据。
-  2. **有 6 个被跟踪的 .py 闸永远不执行**（`_egern_common` / `audit_ruleset_noresolve` /
-     probe_dns_endpoints / probe_doh / profile_ruleset / weigh_ruleset —— 在三个 runner 里
-     0 引用）。实测 24 个被跟踪 .py 现在全部可编译，所以那是"还没坏"，不是"有防护"。
+  2. **有一批被跟踪的 .py 闸永远不执行** —— 名单与个数**由本项现算并打印**，不在这里手写。
+     2026-09-25 实测：手写的那份已经漂了 —— 它把 `_egern_common` 说成"闸永远不执行"
+     （实际被 4 个闸内 Egern 脚本 import，且 `hostpart` 有 `ipv6_only` / `scheme_case`
+     两个 fixture 守着），却漏了真·一次都没跑的 `egern/audit_routing_coverage.py`。
+     口径见 `gate_reach()`：从三个 runner 出发做**名字闭包** —— .sh 按原文取名字，
+     .py 之间只认 import 与字面量里**带目录**的 `*.py` 路径（注释 / docstring 里的提及、
+     以及裸文件名（多半是打印文案里的散文）都**不算边**）。
+     实测 26 个被跟踪 .py 现在全部可编译，所以那是"还没坏"，不是"有防护"。
 
 七条判据（**固定条数**，不随 .py 文件数增长 —— 与其余判据同一口径）：
   · T1 全部被跟踪 .py 可编译      · T2 `make_min.py --selftest`
@@ -238,6 +243,113 @@ def unbound_uses(corpus):
     return {"hit": sorted(hit), "star": star, "unparsed": unparsed}
 
 
+# ── 派生读数：闸外脚本（不计入判据条数）──────────────────────────────────────
+# 口径：从三个 runner 出发做**名字闭包**，迭代到不动点 ——
+#   · .sh runner 按**原文**取名字，且**按侧归属**：`skill/tests/surge|egern/run.sh`
+#     里的裸名只算那一侧的 `skill/scripts/<侧>/` 与 `skill/tests/<侧>/`；
+#     `all.sh` 不带侧，算全仓（它引用的都是带目录的路径）。
+#   · .py 之间只沿 `py_edges()` 那两种边（import / 带目录的字面量路径），与侧无关。
+# ⚠️ 名单**必须现算**：手写必漂（见头注第 2 条那次实测）。
+# ⚠️ 也不能只按 basename 记：两侧有同名脚本（`audit_region_filters.py` /
+#    `audit_routing_coverage.py` / `audit_ruleset_refresh.py` 各一份），
+#    basename 级匹配分不开 —— 实测两次：先多算 3 个（8 而不是 6），按侧过滤后才对。
+RUNNERS = ("skill/tests/all.sh", "skill/tests/surge/run.sh", "skill/tests/egern/run.sh")
+
+
+def side_of(rel):
+    """这个仓内路径属于哪一侧（`skill/{scripts,tests}/<side>/…`）⇒ 'surge' / 'egern' / None。"""
+    parts = rel.split("/")
+    if len(parts) > 2 and parts[0] == "skill" and parts[1] in ("scripts", "tests"):
+        if parts[2] in ("surge", "egern"):
+            return parts[2]
+    return None
+
+
+# ⚠️ 只认**带目录**的 `*.py` 路径（`skill/tests/make_min.py` 这种）。裸文件名不算 ——
+#    2026-09-25 实测：`check_surge_dns.py:492` 的一句**打印文案**里写着
+#    "…需用 audit_routing_coverage.py 拿真实域名复核。"，按裸文件名匹配会把它当成调用边，
+#    于是两侧同名脚本一起被标成"可达"，闸外名单少一个（5 个而不是 6 个）。
+_PY_IN_LITERAL = re.compile(r"[\w.\-]+/[\w.\-/]*[\w.\-]+\.py")
+
+
+def py_edges(text):
+    """这份 .py 里"真能触发执行"的名字 ⇒ 集合。
+
+    只认两种：`import` / `from … import`（走 AST），以及**非 docstring 的字符串字面量**里
+    出现的 `*.py` 路径（`SUITES` 那种以字符串写着的 subprocess 调起）。
+    ⚠️ **注释与 docstring 里的提及不算边** —— 2026-09-25 实测：按"文本里出现过"做闭包，
+    `_egern_common.py` 注释里提过 `probe_dns_endpoints` 之类，名单会从 6 个缩成 2 个，
+    读数反而更假。
+    """
+    try:
+        tree = ast.parse(text)
+    except (SyntaxError, ValueError):
+        return set()
+    docs = set()
+    for n in ast.walk(tree):
+        if isinstance(n, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            body = getattr(n, "body", None) or []
+            if (body and isinstance(body[0], ast.Expr)
+                    and isinstance(body[0].value, ast.Constant)
+                    and isinstance(body[0].value.value, str)):
+                docs.add(id(body[0].value))
+    out = set()
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Import):
+            out.update(a.name.split(".")[0] for a in n.names)
+        elif isinstance(n, ast.ImportFrom) and n.module:
+            out.add(n.module.split(".")[0])
+        elif (isinstance(n, ast.Constant) and isinstance(n.value, str)
+              and id(n) not in docs):
+            out.update(os.path.basename(m)[:-3] for m in _PY_IN_LITERAL.findall(n.value))
+    return out
+
+
+def gate_reach(root, files):
+    """⇒ (可达集合, 闸外清单)。
+
+    口径：三个 runner 是 .sh，按**原文**取名字（那里的提及就是调用或前置清单）；
+    .py 之间只沿 `py_edges()` 那两种边，迭代到不动点。
+    """
+    texts = {}
+    for rel in list(RUNNERS) + list(files):
+        try:
+            with open(os.path.join(root, rel.replace("/", os.sep)),
+                      encoding="utf-8", errors="replace") as f:
+                texts[rel] = f.read()
+        except OSError:
+            texts[rel] = ""
+    # ⚠️ 键是 basename ⇒ **一对多**：两侧有同名脚本（`audit_region_filters.py` /
+    #    `audit_routing_coverage.py` / `audit_ruleset_refresh.py` 各有一份），
+    #    用 `{basename: rel}` 建字典会让后一个把前一个顶掉，那一侧就永远算成"闸外"
+    #    —— 2026-09-25 实测踩到过：名单多出 3 个（8 个而不是 6 个）。
+    bases = {}
+    for f in files:
+        bases.setdefault(os.path.basename(f), []).append(f)
+    reach = set(RUNNERS)
+    changed = True
+    while changed:
+        changed = False
+        py_words, sh_words = set(), {}          # sh_words: 侧(None=全仓) -> 名字集合
+        for r in sorted(reach):
+            t = texts.get(r, "")
+            if r.endswith(".py"):
+                py_words |= py_edges(t)
+            else:
+                sh_words.setdefault(side_of(r), set()).update(
+                    b[:-3] for b in bases if b in t)
+        for b, rels in bases.items():
+            name = b[:-3]
+            for rel in rels:
+                if rel in reach:
+                    continue
+                if (name in py_words or name in sh_words.get(None, set())
+                        or name in sh_words.get(side_of(rel), set())):
+                    reach.add(rel)
+                    changed = True
+    return reach, [f for f in files if f not in reach]
+
+
 def check(root):
     """[(判据名, 通过?, 说明)]，固定 7 条。"""
     out = []
@@ -331,6 +443,11 @@ def main():
     bad_ = [c for c in checks if not c[1]]
     for name, ok_, extra in checks:
         print("   %s %-38s %s" % ("✅" if ok_ else "❌", name, extra))
+    # 派生读数（不计入判据条数）：闸外脚本名单现算 —— 手写必漂，见头注第 2 条。
+    _files, _src = tracked_py(root)
+    _reach, _outside = gate_reach(root, _files)
+    print("   ℹ️  闸外脚本（从三个 runner 做名字闭包后的不可达 .py）：%d 个%s"
+          % (len(_outside), (" —— " + " · ".join(_outside)) if _outside else ""))
     print("TOTAL: %d passed, %d failed" % (len(checks) - len(bad_), len(bad_)))
     return 1 if bad_ else 0
 
