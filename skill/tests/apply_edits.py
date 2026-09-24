@@ -16,7 +16,7 @@
   · 整批先在内存里算完再写盘（唯一的落盘入口是 `commit()`，且只在校验零失败后才允许调用）；
     写盘用 `newline='\n'`，不碰行尾、不补尾换行。
   · 目标含 `\\r` 直接判负 —— 本工具只写 LF，CRLF 文件要先单独归一（AGENTS.md §2 第 3 条）。
-  · 冻结闸门文件（AGENTS.md §2 第 5 条那份名单，现 10 个）默认拒绝，必须显式 `--allow-gate`；
+  · 冻结闸门文件（AGENTS.md §2 第 5 条那份名单，现 12 个）默认拒绝，必须显式 `--allow-gate`；
     拒绝消息里就写着请示要附哪两条。
 
 用法：
@@ -45,13 +45,14 @@ GATE = (".gitattributes", "skill/tests/all.sh", "skill/tests/check_portability.p
         "skill/tests/check_min_pair.py", "skill/tests/bump_version.py",
         "skill/tests/check_doc_readings.py",
         "skill/tests/surge/run.sh", "skill/tests/surge/architecture.sh",
-        "skill/tests/surge/check_links.py", "skill/tests/egern/run.sh")
+        "skill/tests/surge/check_links.py", "skill/tests/egern/run.sh",
+        "skill/tests/check_tools.py", "skill/tests/check_assert_counts.py")
 
 # ── 文档侧的闸门「写死个数」：三处，全都要 == len(GATE) ─────────────────────
 # 口径是**真相 1 + 对拍 5**：名单 3 副本（all.sh · 本模块 · AGENTS.md §2 的块）
 # 与个数 3 处（下面这三条模式）。名单里 all.sh ↔ 本模块是代码对代码，由 A9 逐字有序对拍；
 # AGENTS.md 的块与三处个数由 A13 判 —— 文档侧**按集合比、不比顺序**，因为那个块是
-# 5 行 × 每行 2 列的排版产物（实测：块内行主序与 GATE 在第 6/7 位天然互换，
+# 6 行 × 每行 2 列的排版产物（实测：块内行主序与 GATE 在第 6/7 位天然互换，
 # 拿有序 `==` 裸比会让 A13 上线第一天就红给自己、还误报成"AGENTS.md 漂移"）。
 GATE_DOC_PATTERNS = (
     ("AGENTS.md §2 标题", r"(\d+)\s*个文件是[「『]?闸"),
@@ -64,7 +65,7 @@ def gate_block_names(agents_text):
     """AGENTS.md §2 第 5 条那个围栏块 → 文件名列表。
 
     块的实际排版是 **每行 2 列、空格对齐**（`.gitattributes` 与 `skill/tests/all.sh` 同一行）
-    ⇒ 按 2+ 个空格切列，逐行取 `split()[0]` 只会拿到 5 个。锚点取"含 `.gitattributes`
+    ⇒ 按 2+ 个空格切列，逐行取 `split()[0]` 只会拿到每行一半。锚点取"含 `.gitattributes`
     的围栏块"这个**结构**特征，不取周围的措辞 —— 改字不改名单时不该红。
     """
     import re
@@ -352,17 +353,22 @@ def selftest():
         skips.append("A13 文档侧对拍 · 读不到 %s" % " / ".join(missing))
     else:
         errs = gate_doc_check(agents_src, note_src, own_src, listed)
-        # 判别自证 ①（正例）：在册 10 项原样 + 把其中一行抄第二遍 ⇒ 11 槽 / 10 唯一。
-        #   纯集合比在这一步是**放行**的，红它的只有"恰 10 槽"和"互不重复"两条。
+        # 判别自证 ①（正例）：在册名单原样 + 把其中一行抄第二遍 ⇒ 槽位数多一 / 唯一数不变。
+        #   纯集合比在这一步是**放行**的，红它的只有"槽位恰 == len(真相)"和"互不重复"两条。
         ln = next((l for l in agents_src.splitlines() if "skill/tests/egern/run.sh" in l), "")
         twin = agents_src.replace(ln, ln + "  skill/tests/egern/run.sh", 1)
         pos = gate_doc_check(twin, note_src, own_src, listed)
         # 判别自证 ②（反例）：个数不变的纯润色 ⇒ 不许红。不立这条，解析式就会过度贴合
         #   当前措辞，下一个改文档的人拿到一次"A9 红给左手"，最省事的处置是放宽正则 ——
         #   那正是 CHANGELOG 里点名过的那条作弊路径。
-        neg = gate_doc_check(agents_src,
-                             note_src.replace("10 个「闸门文件」", "10 份闸门文件", 1),
-                             own_src, listed)
+        #   字面量按 len(真相) 派生（2026-09-24）：写死"10"的旧版在名单升数后 replace 会
+        #   找不到目标 ⇒ 拿原文跟自己比、`not neg` 恒成立 —— 与刚修掉的恒真断言同一种罪。
+        #   再加一道"替换必须真的改变文本"守卫：脱钩时**出声判负**，不许静默退化。
+        cnt = str(len(listed))
+        neg_src = note_src.replace("%s 个「闸门文件」" % cnt, "%s 份闸门文件" % cnt, 1)
+        neg = gate_doc_check(agents_src, neg_src, own_src, listed)
+        if neg_src == note_src:
+            neg = neg + ["反例替换没改变文本 ⇒ 判别自证退化成恒真（字面量与当前措辞脱钩）"]
         ck("A13 文档侧名单块与三处写死个数对拍（含判别自证：多抄一行必红 · 纯润色不红）",
            not errs and any("槽位" in x for x in pos) and any("重复" in x for x in pos)
            and not neg,

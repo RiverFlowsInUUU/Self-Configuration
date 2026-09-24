@@ -5,7 +5,7 @@
 #   本仓刻意不挂 CI（理由见 docs/注意事项.md），可检查项并不止一处 ——
 #   两套内核的回归（Surge 六阶段里已含架构不变量、全仓 markdown 链接与锚点、
 #   全部 profile 的刷新参数）+ 两版形态对拍 + 换设备可移植性 + 文档读数与实测对拍
-#   + 工具自检（三套自带回归与"全部被跟踪 .py 可编译"，见 check_tools.py 头注：
+#   + 工具自检（三套自带回归、全部被跟踪 .py 可编译、顶层死绑定与「用了没绑」，见 check_tools.py 头注：
 #     生成器与六个从不被闸执行的脚本都属于"还没坏"，不是"有防护"）
 #   + 回归断言数与本轮实测 TOTAL 对拍（见 check_assert_counts.py 头注：文档写死的
 #     「19 断言 / 18 断言」此前没有任何检查会因为 runner 加了断言而报错）。
@@ -151,7 +151,7 @@ item "Egern 回归（两阶段）"  bash skill/tests/egern/run.sh;      MEASURED
 item "两版形态去注释对拍"    "$PY" skill/tests/check_min_pair.py;  MEASURED+=("min_pair=$LAST_NUM")
 item "换设备可移植性"        "$PY" skill/tests/check_portability.py; MEASURED+=("portability=$LAST_NUM")
 item "文档读数与实测对拍"    "$PY" skill/tests/check_doc_readings.py; MEASURED+=("doc_readings=$LAST_NUM")
-item "工具自检（自测+可编译）"  "$PY" skill/tests/check_tools.py;  MEASURED+=("tools=$LAST_NUM")
+item "工具自检（自测+编译+绑定双向）"  "$PY" skill/tests/check_tools.py;  MEASURED+=("tools=$LAST_NUM")
 
 # 第 7 项：文档写死的断言数 ↔ 上面这六个实测 TOTAL。它自己不跑测试（判据的判据会递归）。
 # ⚠️ 离线档**不调它**：离线时 Surge 侧少跑 4 条联网断言（实测 15），与文档的联网口径是两个数
@@ -195,7 +195,8 @@ GATE = (".gitattributes", "skill/tests/all.sh", "skill/tests/check_portability.p
         "skill/tests/check_min_pair.py", "skill/tests/bump_version.py",
         "skill/tests/check_doc_readings.py",
         "skill/tests/surge/run.sh", "skill/tests/surge/architecture.sh",
-        "skill/tests/surge/check_links.py", "skill/tests/egern/run.sh")
+        "skill/tests/surge/check_links.py", "skill/tests/egern/run.sh",
+        "skill/tests/check_tools.py", "skill/tests/check_assert_counts.py")
 
 if not os.path.isdir(".git"):
     raise SystemExit                      # 非 git 环境（如打包后的归档）：这一栏跳过

@@ -55,7 +55,7 @@ bash skill/tests/all.sh --landed   # 提交并推送之后再跑一次：三数�
 4. **看到某个配置「好像不对」，先在文件里 grep `audit-waive`。** 明知故犯的地方都在 profile 头部
    留了豁免条目和理由，审计脚本的注释里也写了取舍。例：Surge 的 `encrypted-dns-server` 保留
    `dns.google` / `dns.alidns.com` 两条主机名端点是有意的（CDN 就近与 ECS 合规），不是泄露。
-5. **下面 10 个文件是「闸」，动它们之前必须先请示维护者。** 它们是判定对错的东西 ——
+5. **下面 12 个文件是「闸」，动它们之前必须先请示维护者。** 它们是判定对错的东西 ——
    改坏它们，全套检查会**看着全绿而其实失效**，比 profile 里写错一条规则严重得多。
 
    ```
@@ -64,6 +64,7 @@ bash skill/tests/all.sh --landed   # 提交并推送之后再跑一次：三数�
    skill/tests/bump_version.py                skill/tests/surge/run.sh
    skill/tests/check_doc_readings.py          skill/tests/surge/architecture.sh
    skill/tests/surge/check_links.py           skill/tests/egern/run.sh
+   skill/tests/check_tools.py                 skill/tests/check_assert_counts.py
    ```
 
    **请示时要带什么**：① 不改它会漏掉或误判**哪一个具体文件**（能给个反例最好）；
