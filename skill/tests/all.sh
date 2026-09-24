@@ -4,8 +4,8 @@
 # 为什么要有这个入口：
 #   本仓刻意不挂 CI（理由见 docs/注意事项.md），可检查项并不止一处 ——
 #   两套内核的回归（Surge 六阶段里已含架构不变量、全仓 markdown 链接与锚点、
-#   全部 profile 的刷新参数）+ 两版形态对拍 + 换设备可移植性。分开跑要记四条命令、
-#   读四段输出，串起来一条就能判定"这次改动有没有把什么弄坏"。
+#   全部 profile 的刷新参数）+ 两版形态对拍 + 换设备可移植性 + 文档读数与实测对拍。
+#   分开跑要记五条命令、读五段输出，串起来一条就能判定"这次改动有没有把什么弄坏"。
 #
 # 本仓完全独立：这一条命令跑的所有检查**只看本仓库的文件**，
 # 不需要任何其他仓库在旁边，也不依赖本机路径、盘符、用户名。仓库根由本脚本自身位置反推
@@ -98,6 +98,7 @@ item "Surge 回归（六阶段）"  bash skill/tests/surge/run.sh
 item "Egern 回归（两阶段）"  bash skill/tests/egern/run.sh
 item "两版形态去注释对拍"    "$PY" skill/tests/check_min_pair.py
 item "换设备可移植性"        "$PY" skill/tests/check_portability.py
+item "文档读数与实测对拍"    "$PY" skill/tests/check_doc_readings.py
 
 printf '\n'
 if [ -d "$ROOT/.git" ]; then

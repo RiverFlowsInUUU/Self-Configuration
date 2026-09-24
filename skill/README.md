@@ -15,7 +15,7 @@ reference/surge/*.md      深度主题 ×6（Surge 侧）
 reference/egern/*.md      深度主题 ×6（Egern 侧）
 scripts/surge/            5 个审计脚本 + _surge_common.py
 scripts/egern/            10 个审计/探测脚本 + _egern_common.py
-tests/                    all.sh（一条命令跑完全部本地检查）· check_min_pair.py · check_portability.py · bump_version.py
+tests/                    all.sh（一条命令跑完全部本地检查）· check_min_pair.py · check_portability.py · check_doc_readings.py · bump_version.py · apply_edits.py（批量编辑执行器，见下）
 tests/surge/              run.sh · architecture.sh · check_links.py · 3 fixture + fixtures/
 tests/egern/              run.sh · 5 fixture
 ```
@@ -45,11 +45,13 @@ tests/egern/              run.sh · 5 fixture
 脚本接收 profile 路径作为参数，不依赖当前目录，但测试入口按仓库结构定位，**在仓库根目录执行**：
 
 ```bash
-bash skill/tests/all.sh                          # ★★ 一条命令跑完下面全部 + 两版形态对拍 + 换设备可移植性
+bash skill/tests/all.sh                          # ★★ 一条命令跑完下面全部 + 两版形态对拍 + 换设备可移植性 + 文档读数对拍
 bash skill/tests/surge/run.sh                  # Surge：6 阶段 · 27 断言
 bash skill/tests/surge/architecture.sh         #        占位符 / 凭据 / .conf↔.min 一致性
 bash skill/tests/egern/run.sh                  # Egern：阶段 1 · 5 fixture ×2；阶段 2 · 20 份 profile ×2 = 50 断言
 python skill/tests/check_portability.py        # 换设备一致性：行尾 / BOM / 命名 / 残留，固定 18 条规则
+python skill/tests/check_doc_readings.py       # 文档读数对拍：组数 / 条数 / 份数 / 悬空指向，固定 10 条
+python skill/tests/apply_edits.py --selftest   # 批量编辑执行器自带回归（12 条）；它**不参与 all.sh**
 SKIP_NET=1 bash skill/tests/surge/run.sh       # 跳过需要联网的阶段
 ```
 

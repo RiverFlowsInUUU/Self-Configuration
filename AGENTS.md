@@ -13,7 +13,7 @@
 ## 1 · 改完的固定动作（这是本仓唯一的验收）
 
 ```bash
-bash skill/tests/all.sh            # 四项检查；离线用 --offline
+bash skill/tests/all.sh            # 五项检查；离线用 --offline
 ```
 
 末行的三个数就是「线上线下是否一致」，**必须全 0**：
@@ -25,8 +25,10 @@ bash skill/tests/all.sh            # 四项检查；离线用 --offline
 然后 `git add -A && git commit && git push`。跑不绿就别推。
 退出码口径：`0` 全绿 / `1` 判据失败 / `2` 环境或前置不达标（**没跑成不等于跑绿**）。
 
-四项分别守：Surge 六阶段回归 · Egern 两阶段回归 · `.min` 与完整版去注释对拍 ·
-换设备可移植性（行尾 / BOM / 命名 / 单机残留，**固定 18 条规则**）。
+五项分别守：Surge 六阶段回归 · Egern 两阶段回归 · `.min` 与完整版去注释对拍 ·
+换设备可移植性（行尾 / BOM / 命名 / 单机残留，**固定 18 条规则**）·
+文档读数与实测对拍（组数 / 规则条数 / 份数 / 图标数 / 检查项数 / 悬空指向，**固定 10 条规则**，
+见 `skill/tests/check_doc_readings.py`）。
 
 ## 2 · 五条硬约束（agent 最常在这里犯错）
 
@@ -72,7 +74,7 @@ bash skill/tests/all.sh            # 四项检查；离线用 --offline
 |:-----|:-------|:-------------------|
 | `surge/profiles/` · `egern/profiles/` | 订阅文件（`.conf` / `.yaml`，各有 `.min` 形态） | `.min` 与完整版由第 3 项对拍；升版走 §5 |
 | `skill/` | 配置领域技能包：`skill/SKILL.md` + `skill/reference/` + `skill/scripts/` | 触发词表与 `agent_created` 头**别乱动**，是靠它被检索的 |
-| `skill/scripts/` · `skill/tests/` | 审计脚本与回归判据 | 新增判据要把读数写进 `surge/docs/08-审计读数.md` 与 `egern/docs/08-审计读数.md` |
+| `skill/scripts/` · `skill/tests/` | 审计脚本与回归判据（批量改文档走 `skill/tests/apply_edits.py`：锚点不唯一就整批拒写） | 新增判据要把读数写进 `surge/docs/08-审计读数.md` 与 `egern/docs/08-审计读数.md` |
 | `docs/` | 人读的六篇详解（跨设备一致性、差异对照、体检报告…） | 相对链接由 Surge 侧阶段 6 全仓校验 |
 | `CHANGELOG.md` | **唯一一份**改动记录：装配层 + 两个内核的迭代都按日期写在这里 | 体例三条：**一天一段**（当天后续改动往那段增补，不开第二个同名日期段）· 段内分 `### Surge` / `### Egern` / `### 共享层`，没动的不写 · 一条只答「改了什么 · 哪里没动 · 验收」。别在 `surge/` `egern/` 里另起日志；合并前的内核迭代史在各自 `docs/07` 末节 |
 | `icons/` | 26 个策略组图标（两内核共用） | 路径**必须纯 ASCII**（`skill/tests/check_portability.py` 的 `N6`），别新加中文名 |
