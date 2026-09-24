@@ -232,11 +232,25 @@ def parse_measured(argv):
 # 为什么要在判据里带样本：解析式一旦过度贴合"今天这几个文件的措辞"，下一次改文档的人会拿到
 # 一次红给左手的失败，最省事的处置是放宽正则 —— 那是 CHANGELOG 里点名过的作弊路径。
 # 立住"同数换措辞不红 / 改一个数必红"，才说明红的是**数**、不是**措辞**。
+# ⚠️ 样本里的数必须**参数化**成本轮实测值（照 C5 的 `TOOL_FIX_SAME` 那套写法）。
+#    原先写死 18：回归断言数一变（例：给 runner 加一条断言），C4 就会红在
+#    「同数换措辞提取不一致 [[18], [18]]（应 [22]）」—— 真因只是样本里的死数字，
+#    解析器完全正常；维护者会被这条红引向错误方向，还得为一个常量去动冻结文件。
+#    2026-09-25 实测坐实（`--` 传 egern=22 复现）。
 FIX_SAME_NUMBER = (
-    ("a", "两阶段共 **18 个断言**，退出码非 0 即失败："),
-    ("b", "两阶段 · 18 断言（阶段 1 · 5 fixture ×2；阶段 2 · 四件 ×2）"),
+    ("a", "两阶段共 **%d 个断言**，退出码非 0 即失败："),
+    ("b", "两阶段 · %d 断言（阶段 1 · 5 fixture ×2；阶段 2 · 四件 ×2）"),
 )
-FIX_WRONG_NUMBER = "| 自检读数 | 5 个审计脚本 + 6 阶段 · 20 断言 | 10 个审计脚本 + 2 阶段 · 18 断言 |"
+
+
+def wrong_number_sample(measured):
+    """C4 ②「改一个数必红」的样本：那个数要**现算**成"本轮实测里不存在"的值（实测最大值 +1）。
+
+    写死一个数（原先是 20）迟早会撞上某个实测值 —— 那时 C4 会以假红的面目出现。
+    与 `FIX_SAME_NUMBER` 写死 18 是同一个病：样本与本轮实测耦合，却耦合在常量上。
+    """
+    return ("| 自检读数 | 5 个审计脚本 + 6 阶段 · %d 断言 | "
+            "10 个审计脚本 + 2 阶段 · 18 断言 |" % (max(measured.values()) + 1))
 FIX_THREE_SPELLINGS = (
     ("6 阶段 · 19 断言", [19]),
     ("6 阶段 · 19 个断言", [19]),
@@ -252,17 +266,19 @@ def selfproof(measured):
     """→ (通过?, 说明)。四条都要立：同数换措辞不红、改数必红、三式都认、无表头表行也判得到。"""
     errs = []
     # ① 同一串数字换措辞 ⇒ 提取结果必须一样，且都不红
+    n_egern = measured["egern"]
     got = []
     for _, line in FIX_SAME_NUMBER:
-        d, _sk = find_decls(line, "egern/docs/x.md")
+        d, _sk = find_decls(line % n_egern, "egern/docs/x.md")
         got.append(d[0][2] if d else None)
     if got[0] != got[1] or got[0] != [measured["egern"]]:
         errs.append("同数换措辞提取不一致 %s（应 %s）" % (got, [measured["egern"]]))
-    # ② 把 19 改成 20 ⇒ 必须红（这里 red = 该数不在实测里）
-    d2, _sk2 = find_decls(FIX_WRONG_NUMBER, "README.md")
+    # ② 改一个数 ⇒ 必须红（这里 red = 该数不在实测里）；样本的数现算，不写死
+    d2, _sk2 = find_decls(wrong_number_sample(measured), "README.md")
     nums2 = [x for _, _k, ns in d2 for x in ns]
     if not (nums2 and max(nums2) not in set(measured.values())):
-        errs.append("样本里的 20 没被判成漂移（%s）⇒ 解析式对数字不敏感" % nums2)
+        errs.append("样本里的 %d 没被判成漂移（%s）⇒ 解析式对数字不敏感"
+                    % (max(measured.values()) + 1, nums2))
     # ③ 三种写法都认得下来
     for text, want in FIX_THREE_SPELLINGS:
         d3, _sk3 = find_decls(text, "docs/x.md")
