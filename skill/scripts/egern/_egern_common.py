@@ -118,6 +118,13 @@ CACHE_MAX_AGE = 7 * 86400          # 秒；与 surge 侧 audit_ruleset_content.p
 CACHE_DIR = os.path.join(tempfile.gettempdir(), CACHE_DIR_NAME)
 
 
+def _slurp(path):
+    """读文件正文。**统一走 `with`** —— 缓存目录会被反复读，Windows 上未关的句柄
+    会短暂占着文件（2026-09-25 起本模块的读都收口到这里）。"""
+    with io.open(path, encoding="utf-8", errors="replace") as f:
+        return f.read()
+
+
 def cache_path_for(url, cache_dir=None):
     """URL → 缓存文件路径（文件名规则沿用三份手抄里那一式：末段路径消毒）。"""
     name = re.sub(r"[^A-Za-z0-9._-]", "_", url.rstrip("/").split("/")[-1]) or "ruleset"
@@ -142,11 +149,11 @@ def fetch_cached(url, offline=False, user_agent="egern-audit/1.0", timeout=60, c
     stale = False
     if os.path.exists(path) and os.path.getsize(path) > 0:
         if time.time() - os.path.getmtime(path) <= CACHE_MAX_AGE:
-            return io.open(path, encoding="utf-8", errors="replace").read(), path, "cache", ""
+            return _slurp(path), path, "cache", ""
         stale = True
     if offline:
         if stale:
-            return io.open(path, encoding="utf-8", errors="replace").read(), path, "stale", "离线不重下"
+            return _slurp(path), path, "stale", "离线不重下"
         return None, path, "miss", ""
     req = urllib.request.Request(url, headers={"User-Agent": user_agent})
     try:
@@ -154,10 +161,10 @@ def fetch_cached(url, offline=False, user_agent="egern-audit/1.0", timeout=60, c
             body = r.read().decode("utf-8", "replace")
     except Exception as exc:                                      # noqa: BLE001
         if stale:
-            return io.open(path, encoding="utf-8", errors="replace").read(), \
-                path, "stale", "重下失败：%s" % exc
+            return _slurp(path), path, "stale", "重下失败：%s" % exc
         return None, path, "error", str(exc)
-    io.open(path, "w", encoding="utf-8", newline="\n").write(body)
+    with io.open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(body)
     return body, path, "fresh", ""
 
 
@@ -172,7 +179,7 @@ def force_utf8_stdout():
     emoji 一 print 就抛 `UnicodeEncodeError`，进程以**退出码 1** 结束。
     ⚠️ 这比"打印不出来"严重得多：回归测试里 `bad_*` fixture 期望的**恰恰也是 1**
        ⇒ 解释器坏了会被计成「判负通过」，整轮看着绿、其实一条判据都没执行。
-    Git Bash 与 GitHub Actions 的终端都是 UTF-8，所以统一按 UTF-8 输出；
+    Git Bash 与现代终端都是 UTF-8，所以统一按 UTF-8 输出；
     真正的 cp936 控制台下最坏是图形字符显示成 `?`，不影响判据与退出码。
     """
     for stream in (sys.stdout, sys.stderr):

@@ -279,7 +279,7 @@ def force_utf8_stdout():
     emoji 一 print 就抛 `UnicodeEncodeError`，进程以**退出码 1** 结束。
     ⚠️ 这比"打印不出来"严重得多：回归测试里 `bad_*` fixture 期望的**恰恰也是 1**
        ⇒ 解释器坏了会被计成「判负通过」，整轮看着绿、其实一条判据都没执行。
-    Git Bash 与 GitHub Actions 的终端都是 UTF-8，所以统一按 UTF-8 输出；
+    Git Bash 与现代终端都是 UTF-8，所以统一按 UTF-8 输出；
     真正的 cp936 控制台下最坏是图形字符显示成 `?`，不影响判据与退出码。
     """
     for stream in (sys.stdout, sys.stderr):

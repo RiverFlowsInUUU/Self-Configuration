@@ -78,7 +78,8 @@ FORMS = {"routing": FULL["routing"] + ["surge/profiles/routing.min.conf",
 
 def read(p):
     """返回 (正文（LF）, 原换行形态)。工作树正常是 LF，但别人手工放进来的 CRLF 也按原样写回。"""
-    raw = io.open(p, encoding="utf-8", newline="").read()
+    with io.open(p, encoding="utf-8", newline="") as f:
+        raw = f.read()
     return raw.replace(CRLF, NL), (CRLF if CRLF in raw else NL)
 
 
@@ -89,7 +90,8 @@ def write(p, text, eol):
 def same_bytes(a, b):
     """归档目录里可能已有同名快照 ⇒ 用**字节**判同一份（文本判会放过换行差异）。"""
     try:
-        return io.open(a, "rb").read() == io.open(b, "rb").read()
+        with io.open(a, "rb") as fa, io.open(b, "rb") as fb:
+            return fa.read() == fb.read()
     except OSError:
         return False
 

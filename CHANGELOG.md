@@ -54,6 +54,14 @@
 
 ### 共享层
 
+- 🧹 死代码与残留清理（非冻结）：`check_surge_dns.py` 去掉三处死代码 —— `hijack-dns` 那条
+  算完没用的 `h`、恒空的 `after`、算完没用的 `alibaba`；`check_egern_dns.py` 的
+  `routes_of(h, want)` 去掉**从未使用**的 `want` 形参（调用处另算了一遍，读者会误以为它按
+  "期望策略"筛选）；两份 `_*_common.py` 注释里的「GitHub Actions」改为「现代终端」
+  （与"仓内不留 workflow 相关信息"的纪律对齐）。判定逻辑与输出零改动。
+- 🧹 文件句柄收口：`check_surge_dns.load_waivers` · `_egern_common`（新增 `_slurp()` 收口 4 处读）
+  · `check_min_pair` 的 V6 逐字节对拍 · `bump_version` 的 `read()` / `same_bytes()` —— 一律改 `with`。
+  行为零改动；缓存目录会被反复读，Windows 上未关的句柄会短暂占着文件。
 - 🔒 冻结文件 `surge/run.sh` · `check_tools.py` · `all.sh` 三处（本轮授权）：
   ① 阶段 5 补齐注释里承诺的 **(c) 断言**：坏 fixture 必须**只**因"漏关键词"判负 —— 原先只看
   `rc==1`，分不清"审到了漏关键词"与"因别的原因 rc=1"；现在追加对 stdout 的具名断言

@@ -146,7 +146,8 @@ def version_checks(root):
                 p_old = os.path.join(old_dir, n)
                 p_live = os.path.join(dirpath, "%s%s.%s" % (m.group(1), m.group(3) or "", ext))
                 try:
-                    same = (open(p_old, "rb").read() == open(p_live, "rb").read())
+                    with open(p_old, "rb") as fa, open(p_live, "rb") as fb:
+                        same = fa.read() == fb.read()
                 except OSError:
                     same = False
                 if not same:

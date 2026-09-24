@@ -385,8 +385,13 @@ def audit(path):
         ok.append("geoip 带 no_resolve")
 
     # ---- 5. DNS 端点必须有显式路由（no_resolve 之后的域名侧缺口）----------
-    def routes_of(h, want):
-        """返回能覆盖该端点的显式规则描述。"""
+    def routes_of(h):
+        """返回能覆盖该端点的显式规则描述。
+
+        ⚠️ 早先有个 `want` 形参，调用处传了「期望策略」、函数体里**从没用过**
+        （策略判断在调用处另算了一遍）—— 2026-09-25 去掉死参数，避免读者以为它会按
+        「期望策略」筛选。
+        """
         hits = []
         for r in enabled:
             t, b = rbody(r)
@@ -406,8 +411,8 @@ def audit(path):
         foreign = "foreign" in grp.lower()
         for s in servers or []:
             h = hostpart(s)
-            hits = routes_of(h, "Proxy" if foreign else "DIRECT")
             want = "Proxy" if foreign else "DIRECT"
+            hits = routes_of(h)
             if hits:
                 ok.append(f"端点 {h} 有显式路由 {hits[0]}（期望 {want}）")
             elif not foreign and is_ip(h) and h in DOMESTIC_RESOLVER_IPS:

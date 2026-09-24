@@ -72,7 +72,8 @@ def add(level, cid, msg, detail=""):
 # 在报告里照样逐条打印 —— 它只是不再让整轮判负，不是"看不见"。
 def load_waivers(path):
     import re as _re
-    text = open(path, encoding="utf-8", errors="replace").read()
+    with open(path, encoding="utf-8", errors="replace") as f:
+        text = f.read()
     for m in _re.finditer(r"#\s*audit-waive:\s*(\d+)\s+(.*)", text):
         cid = int(m.group(1))
         _waivers[cid] = m.group(2).strip()
@@ -150,7 +151,6 @@ def check_3_hijack(cfg):
     #    :53 的地址空间是无限的，列举永远不可能"列全" —— 第一版按条数判负是错的。
     covered = set()
     for it in items:
-        h = int(hostpart(it), 0) if hostpart(it).isdigit() else hostpart(it)
         covered.add(hostpart(it))
     uncovered = sorted(ip for ip in FOREIGN_RESOLVER_IPS if ":" not in ip and ip not in covered)
     if uncovered:
@@ -389,12 +389,6 @@ def check_9_rule_order(sections):
 
     if reject_lines:
         first_reject = reject_lines[0]
-        after = [n for n in ("REJECT",) if False]
-        alibaba = None
-        for i, (lineno, parts) in enumerate(rules):
-            if i > first_reject and len(parts) >= 2 and parts[1].strip().upper() == "DIRECT":
-                alibaba = (i, lineno, parts[0])
-                break
         # 真正的判据：拦截是否排在"会命中大量国内域名的 DIRECT 规则"之前。
         # 这里只能做顺序性提示，命中与否取决于规则集内容（交给 audit_routing_coverage.py）。
         add(OK if first_reject <= (idx_first_ip if idx_first_ip is not None else 1 << 30)
