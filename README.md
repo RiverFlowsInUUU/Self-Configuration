@@ -49,7 +49,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 
 ## 🧭 井然有序
 
-🗂️ *各司其职，各安其序，无隙可乘。*
+🗂️ 各司其职，各安其序，无隙可乘。
 
 | 组 | 🪶 懒人版 | 🧭 分流版 |
 |:---|:---:|:---:|
