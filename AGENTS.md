@@ -74,7 +74,7 @@ bash skill/tests/all.sh            # 四项检查；离线用 --offline
 | `skill/` | 配置领域技能包：`skill/SKILL.md` + `skill/reference/` + `skill/scripts/` | 触发词表与 `agent_created` 头**别乱动**，是靠它被检索的 |
 | `skill/scripts/` · `skill/tests/` | 审计脚本与回归判据 | 新增判据要把读数写进 `surge/docs/08-审计读数.md` 与 `egern/docs/08-审计读数.md` |
 | `docs/` | 人读的六篇详解（跨设备一致性、差异对照、体检报告…） | 相对链接由 Surge 侧阶段 6 全仓校验 |
-| `CHANGELOG.md` | **唯一一份**改动记录：装配层 + 两个内核的迭代都按日期写在这里 | 别在 `surge/` `egern/` 里另起日志（2026-09-24 起收成一份）；合并前的内核迭代史在各自 `docs/07` 末节 |
+| `CHANGELOG.md` | **唯一一份**改动记录：装配层 + 两个内核的迭代都按日期写在这里 | 体例三条：**一天一段**（当天后续改动往那段增补，不开第二个同名日期段）· 段内分 `### Surge` / `### Egern` / `### 共享层`，没动的不写 · 一条只答「改了什么 · 哪里没动 · 验收」。别在 `surge/` `egern/` 里另起日志；合并前的内核迭代史在各自 `docs/07` 末节 |
 | `icons/` | 26 个策略组图标（两内核共用） | 路径**必须纯 ASCII**（`skill/tests/check_portability.py` 的 `N6`），别新加中文名 |
 
 ## 4 · 换到一台新机器只做三件事
