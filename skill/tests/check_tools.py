@@ -11,10 +11,11 @@
      probe_dns_endpoints / probe_doh / profile_ruleset / weigh_ruleset —— 在三个 runner 里
      0 引用）。实测 24 个被跟踪 .py 现在全部可编译，所以那是"还没坏"，不是"有防护"。
 
-六条判据（**固定条数**，不随 .py 文件数增长 —— 与其余判据同一口径）：
+七条判据（**固定条数**，不随 .py 文件数增长 —— 与其余判据同一口径）：
   · T1 全部被跟踪 .py 可编译      · T2 `make_min.py --selftest`
   · T3 `apply_edits.py --selftest` · T4 `surge/check_links.py --selftest`
   · T5① 无未用顶层 import         · T5② 无本文件死常量
+  · T6 无"用了没绑"（整文件任何位置都没绑过的 Load 名）
 
 T5 补的是 T1 的那半边（2026-09-24 定）：可编译只保证"语法还读得动"，判不到"顶层绑了
 却再没人用的名字"。实测 26 个被跟踪 .py 里有 9 处，其中两处的坑叫**跨内核同名**：
@@ -33,8 +34,19 @@ T5 补的是 T1 的那半边（2026-09-24 定）：可编译只保证"语法还�
     字面出现 4 次（含头注里那句"给别人用的清单"）而全仓无人 import ⇒ 它不会被 T5 点亮。
     记在这里，是为了让下一个读代码的人知道那是**口径选择**，不是漏了。
 
+T6 补的是 T5 的反方向（2026-09-24 定）：T5 判"绑了没人用"，T6 判"**用了没绑**"。
+它上线的由头是一处实跑的崩：`probe_dns_endpoints.py:30` 的 `# noqa: E402` 把尾巴上的
+`import sys` 一起吃进了注释（那行现在读作 `… # noqa: E402import sys`），:29 的
+`sys.path.insert` 一跑就 `NameError` —— T1 判不到（语法完好），T5 判不到（方向相反），
+而闸永远不执行这个脚本。口径：**整文件任何位置**（含函数体，走 `ast.walk` 不走第一层）
+都没绑过的 `Load` 名判死 —— import / 赋值 / def / class / 形参 / except as / global /
+walrus 都算绑；内建名与 `__` 围裹的隐式名（`__file__` / `__name__`…）不进面；
+含 `import *` 的文件**整份跳过并出声**（星号能带进名字，硬判方向就是误报）；
+`exec` / `globals()` 注入的名字判不到 —— 误差方向同 T5，只漏报不误报。
+
 两条判据共享：def/class 不进面（它们本来就该允许只被别人用）、只扫模块体第一层
 （`try:`/`if:` 里的绑得不判，方向同样是漏报）、`__` 开头与 `import *` 不判。
+（T6 不适用"第一层"这条 —— 它绑的采集走全文件 `ast.walk`，见上段。）
 
 另两个刻意的实现选择：
   · **不落 .pyc**：T1 用内置 `compile()` 在内存里判语法，不调 `compileall`（那会往仓里掉
@@ -55,6 +67,7 @@ T5 补的是 T1 的那半边（2026-09-24 定）：可编译只保证"语法还�
 """
 
 import ast
+import builtins
 import os
 import re
 import subprocess
@@ -170,8 +183,63 @@ def dead_bindings(corpus):
     return res
 
 
+# ── T6 用了没绑：口径与反例见头注 ───────────────────────────────────────────
+_IMPLICIT = set(dir(builtins)) | {"__file__", "__name__", "__doc__", "__package__",
+                                  "__spec__", "__loader__", "__builtins__", "__debug__",
+                                  "__path__", "__module__", "__qualname__", "__class__",
+                                  "__dict__", "__slots__", "__all__"}
+
+
+def _bound_anywhere(tree):
+    """整文件任何位置出现过绑定的名字（方向：只漏报不误报，宁可多认绑）。"""
+    bound = set()
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Name) and not isinstance(n.ctx, ast.Load):
+            bound.add(n.id)
+        elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            bound.add(n.name)
+        elif isinstance(n, ast.arg):
+            bound.add(n.arg)
+        elif isinstance(n, (ast.Import, ast.ImportFrom)):
+            bound.update(a.asname or a.name.split(".")[0] for a in n.names)
+        elif isinstance(n, ast.ExceptHandler) and n.name:
+            bound.add(n.name)
+        elif isinstance(n, (ast.Global, ast.Nonlocal)):
+            bound.update(n.names)
+        elif isinstance(n, ast.MatchAs) and n.name:
+            bound.add(n.name)
+    return bound
+
+
+def unbound_uses(corpus):
+    """corpus ⇒ {'hit': [(rel, lineno, name)], 'star': [rel…], 'unparsed': N}。
+
+    与 dead_bindings 同口径吃内存字典，判别力用假样本单验，不往仓文件里塞红它的样例。
+    """
+    hit, star, unparsed = [], [], 0
+    for rel in sorted(corpus):
+        try:
+            tree = ast.parse(corpus[rel])
+        except (SyntaxError, ValueError):
+            unparsed += 1
+            continue
+        if any(isinstance(n, ast.ImportFrom) and any(a.name == "*" for a in n.names)
+               for n in ast.walk(tree)):
+            star.append(rel)
+            continue
+        bound = _bound_anywhere(tree)
+        seen = {}
+        for n in ast.walk(tree):
+            if (isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)
+                    and n.id not in bound and n.id not in _IMPLICIT
+                    and not (n.id.startswith("__") and n.id.endswith("__"))):
+                seen.setdefault(n.id, n.lineno)
+        hit += [(rel, ln, name) for name, ln in seen.items()]
+    return {"hit": sorted(hit), "star": star, "unparsed": unparsed}
+
+
 def check(root):
-    """[(判据名, 通过?, 说明)]，固定 6 条。"""
+    """[(判据名, 通过?, 说明)]，固定 7 条。"""
     out = []
 
     # ── T1 全部被跟踪 .py 可编译 ─────────────────────────────────────────
@@ -238,6 +306,19 @@ def check(root):
         out.append(("%s（%d 个 .py）" % (label, len(files)), not hits,
                     ("%d 处判死：%s%s" % (len(hits), detail, " …" if len(hits) > 4 else ""))
                     if hits else ("0/%d 通过%s%s" % (len(files), k, unparsed))))
+
+    # ── T6 用了没绑（口径见头注；绑的采集走全文件，与 T5 的"第一层"不同）──
+    ub = unbound_uses(corpus)
+    if not files:
+        out.append(("T6 无「用了没绑」", False, "清单为空 ⇒ 没跑成不等于跑绿"))
+    else:
+        detail = " · ".join("%s:%d %s" % h for h in ub["hit"][:4])
+        star = (" · %d 个文件含 import * 整份跳过：%s" % (len(ub["star"]),
+                                                        " ".join(ub["star"][:3]))) if ub["star"] else ""
+        out.append(("T6 无「用了没绑」（%d 个 .py）" % len(files), not ub["hit"],
+                    ("%d 处命中：%s%s" % (len(ub["hit"]), detail,
+                                          " …" if len(ub["hit"]) > 4 else "")) if ub["hit"]
+                    else "0/%d 通过%s%s" % (len(files), star, unparsed)))
     return out
 
 

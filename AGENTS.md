@@ -33,8 +33,8 @@ bash skill/tests/all.sh --landed   # 提交并推送之后再跑一次：三数�
 七项分别守：Surge 六阶段回归 · Egern 两阶段回归 · `.min` 与完整版去注释对拍 ·
 换设备可移植性（行尾 / BOM / 命名 / 单机残留，**固定 18 条规则**）·
 文档读数与实测对拍（组数 / 规则条数 / 份数 / 图标数 / 检查项数 / 悬空指向、豁免行可被读到，**固定 11 条规则**，
-见 `skill/tests/check_doc_readings.py`）· 工具自检（三套自带回归 + 全部被跟踪 `.py` 可编译 + 顶层死绑定，
-**固定 6 条判据**，见 `skill/tests/check_tools.py`）·
+见 `skill/tests/check_doc_readings.py`）· 工具自检（三套自带回归 + 全部被跟踪 `.py` 可编译 + 顶层死绑定 + 用了没绑，
+**固定 7 条判据**，见 `skill/tests/check_tools.py`）·
 回归断言数对拍（文档写死的「19 断言 / 18 断言」↔ 本轮六个 TOTAL，**固定 5 条判据**，
 见 `skill/tests/check_assert_counts.py`；`--offline` 档它**不出声判过**，因为离线时 Surge 侧少跑 4 条联网断言）。
 
