@@ -25,8 +25,8 @@
 
 用法
 ----
-    python audit_ruleset_refresh.py surge/profiles/routing_v3.2.conf
-    python audit_ruleset_refresh.py surge/profiles/routing_v3.2.conf --strict
+    python audit_ruleset_refresh.py surge/profiles/routing.conf
+    python audit_ruleset_refresh.py surge/profiles/routing.conf --strict
     python audit_ruleset_refresh.py Profile.conf --expect 86400    # 换约定值
 
 退出码：0 = 无 HIGH（且 --strict 下无约定偏离）；1 = 有；2 = 用法 / 文件读不到。

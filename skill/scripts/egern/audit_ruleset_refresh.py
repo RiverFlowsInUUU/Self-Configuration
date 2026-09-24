@@ -22,8 +22,8 @@
 
 用法
 ----
-    python audit_ruleset_refresh.py egern/profiles/routing_v3.2.yaml
-    python audit_ruleset_refresh.py egern/profiles/routing_v3.2.yaml egern/profiles/lazy.yaml --strict
+    python audit_ruleset_refresh.py egern/profiles/routing.yaml
+    python audit_ruleset_refresh.py egern/profiles/routing.yaml egern/profiles/lazy.yaml --strict
 
 退出码：0 = 无 HIGH（且 --strict 下无约定偏离）；1 = 有；2 = 用法 / 文件读不到 / 解析失败。
 """

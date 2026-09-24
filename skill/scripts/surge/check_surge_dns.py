@@ -533,6 +533,10 @@ def check_12_no_resolve(sections):
 
 def run(path, strict=False, quiet=False):
     _waivers.clear()
+    # findings 与 _waivers 同属模块级状态：不清空则同一进程内第二次 run() 会把上一轮的
+    # 发现累计进来（实测：对同一份 profile 连跑两次，len(findings) 16 → 32）。
+    # 一次性 CLI 看不出，但任何复用 / 单测都会中招，且结论会静默偏大。
+    findings.clear()
     load_waivers(path)
     sections, _ = parse_conf(path)
     cfg = kv_dict(sections.get("general", []))

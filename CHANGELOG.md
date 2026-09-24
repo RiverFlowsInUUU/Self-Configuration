@@ -10,6 +10,27 @@
 
 ---
 
+## 2026-09-25
+
+### Surge
+
+- 🩹 三处脚本头注的示例路径改固定名：`audit_region_filters.py` · `audit_ruleset_refresh.py` 里的
+  `routing_v3.2.conf` → `routing.conf`。订阅地址固定化（09-24）之后该文件已不存在，照抄示例一律
+  rc=2「找不到文件」。配置零改动。
+- 🩹 `check_surge_dns.py` 的 `run()` 补 `findings.clear()`：`findings` 与 `_waivers` 同属模块级状态，
+  不清空则同进程内第二次 `run()` 会把上一轮的发现累计进来（实测对同一份 profile 连跑两次 16 → 32）。
+  判定逻辑与退出码语义未动，一次性 CLI 行为逐字不变。
+
+### Egern
+
+- 🩹 同款头注修正：`audit_ruleset_refresh.py` 的 `routing_v3.2.yaml` → `routing.yaml`。配置零改动。
+- 🔢 `docs/04` 的分项读数「10/10 + 40/40」→「10/10 + 8/8」（40 是 20 份 profile 时代的口径）。
+
+### 共享层
+
+- 🔢 验收：`all.sh` 离线 6 项 / 联网 7 项全绿（19 / 18 / 18 / 18 / 11 / 7 / 5）。
+  这批**不触碰冻结名单**，闸门自检照旧「冻结 12 个文件未被动过」。
+
 ## 2026-09-24
 
 ### Surge
