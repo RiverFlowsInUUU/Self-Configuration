@@ -2,7 +2,7 @@
 
 # 🛡️ Surge · Egern 配置模板
 
-*让 DNS 无处可漏*
+殊途同归 · 久用如一
 
 [![Surge](https://img.shields.io/badge/Surge-iOS%20%7C%20macOS-1f6feb?style=flat-square)](#-两全其美--皆合心意)
 [![Egern](https://img.shields.io/badge/Egern-iOS%20%7C%20macOS-0969da?style=flat-square)](#-两全其美--皆合心意)
