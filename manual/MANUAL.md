@@ -13,7 +13,7 @@
 
 | 它不是 | 谁是这个 |
 |:-------|:---------|
-| 仓库门面 | [根 README](../README.md)：「📁 文件结构」及以上保持原样，以下与本手册同步 |
+| 仓库门面 | [根 README](../README.md)：「📖 按需查阅」及以上保持原样，以下与本手册同步 |
 | 逐键参考书 | 两份逐键附录 —— [Surge DetailsReadme](../surge/DetailsReadme/DetailsReadme.md) · [Egern DetailsReadme](../egern/DetailsReadme/DetailsReadme.md)。每个配置项的完整语义与出处仍以它们为准，本手册只讲操作 |
 | 读数报表 | 审计读数只落在 [surge/docs/08](../surge/docs/08-审计读数.md) · [egern/docs/08](../egern/docs/08-审计读数.md)。本手册不写死任何读数 —— 组数、规则数、断言数、规则集条数一律不抄。这是本仓的纪律：期望值从源头现算，文档不复述会漂的数字 |
 
