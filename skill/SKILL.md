@@ -64,6 +64,7 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
 - 🧷 **改配置的安全姿势**：Egern profile 含数千字符的超长单行，**不要用 YAML dump 重写整个文件**；
   按行读入 + 内容定位 + 断言"全文恰好命中 1 行"，改完逐字段比对未触碰部分。详见分支 B。
 - 🚨 **凡写「实测」处皆为经验值**，两款都是闭源商业软件，很多行为无文档可依，版本更新后需重新验证。
+- 📊 **任何条数一律现抓，不要照抄本仓文档里的数。** 所有远程规则集都没锁 commit、随上游每周漂；文档为可读性写的条数只是**写作时点的约数**。要精确值就跑 `skill/scripts/surge/audit_ruleset_content.py <profile>`（Surge）/ `skill/scripts/egern/profile_ruleset.py <规则集 URL>`（Egern），两侧脚本都逐个数条目类型。
 
 ## 4 · 按需读取
 

@@ -1,4 +1,4 @@
-#! version=lazy_v1.0
+#! version=lazy_v1.1
 # ============================================================================
 # lazy · 懒人版
 #
@@ -241,14 +241,16 @@ default_proxy_group: Proxy
 #   2. 移除 WeChat 组后，微信流量改由 geoip CN / direct.txt 兜住，仍然直连；
 #      但如果你有特殊需求（例如需要走代理的微信场景），要自己加回来。
 #   3. 移除 Apple_All_No_Resolve 后，Apple 流量变成「一部分直连、一部分走代理」。
-#      实测依据（direct.txt 共 110,607 条 DOMAIN-SUFFIX + 553 条 DOMAIN）：
+#      实测依据（direct.txt 约 11.1 万条纯域名、零 IP 条目；精确条数一律现抓 ——
+#      清单每周随上游变，别照抄本行）：
 #      · **走代理**：icloud.com 及全部 iCloud 子域（gateway / setup / p01-* 等）、
 #        apple.com 裸域、appstore.com。
 #        （push.apple.com 原本也在这里 —— 2026-09-24 起由 ④ 的 System 快照接回直连。）
 #        ⚠️ iCloud 系在 direct.txt 里**一条都没有** —— 这是影响最大的部分。
 #        ⚠️ push.apple.com 在 real_ip_domains 里那层只是「DNS 返回真实 IP、不做 fake-ip」，
 #           本来不改变去向（代理）；现在改直连是因为 ④ 那条规则，不是因为 real_ip_domains。
-#      · **仍直连**：direct.txt 里那 257 条 Apple 精确条目 —— www.apple.com /
+#      · **仍直连**：direct.txt 里那批 Apple 精确条目（2026-09-25 现抓 229 条 `DOMAIN`
+#        精确匹配；从前这里写 257 条，已随上游漂 ⇒ 条数一律现抓）—— www.apple.com /
 #        mesu.apple.com / swcdn.apple.com / gs-loc.apple.com /
 #        amp-api.apps.apple.com / *.mzstatic.com 等（**全是 DOMAIN 精确匹配**，
 #        没有 apple.com / icloud.com 的后缀条目）；

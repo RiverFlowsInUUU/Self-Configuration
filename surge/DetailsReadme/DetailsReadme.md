@@ -764,7 +764,7 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 | 5 | `RULE-SET,…,private.txt` | `DIRECT` | `update-interval=604800` | 内网域名。实测 130 条零 IP ⇒ 按原则**不写** `no-resolve` |
 | 6 | `RULE-SET,SYSTEM` | `DIRECT` | — | Apple 激活 / 推送 / 配对，内置权威集合，**保底**。懒人版只此一条 Apple 相关（全量集 2026-09-24 起移出，见 §14.1） |
 | 7 | `RULE-SET,…,AI.list` | `AI` | `update-interval=604800` | 实测 49 条零 IP ⇒ 不写 `no-resolve` |
-| 8 | `RULE-SET,…,direct.txt` | `DIRECT` | `update-interval=604800` | **主承重墙**，111,171 条零 IP（写作时点快照）。见 §12 |
+| 8 | `RULE-SET,…,direct.txt` | `DIRECT` | `update-interval=604800` | **主承重墙**，约 11.1 万条纯域名、零 IP（条数一律现抓）。见 §12 |
 | 9 | `GEOIP,CN,DIRECT` | `DIRECT` | `no-resolve` | IP 类规则，放最后 |
 | 10 | `FINAL,Proxy,dns-failed` | `Proxy` | `dns-failed` | 兜底 |
 

@@ -116,7 +116,7 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 **直连三件套**（决定国内流量不走代理）：
 1. `Lan.list` —— 局域网。
 2. `Apple_All_No_Resolve.list` —— Apple 域名 + 带 `no-resolve` 的 IP，既做直连判定又不重新触发解析。
-3. **国内域名规则集（Loyalsoldier `direct.txt`）** —— 约 **11.1 万条纯域名**（`DOMAIN-SUFFIX` 约 11.06 万 + `DOMAIN` 553，**零 IP 条目**；上游每次更新都会变动，故这里用约数），是「国内域名直连」的主力。纯域名规则只做字符串匹配、不触发解析，因此无需 `no_resolve`；「已经是 IP 的连接」由下方 `geoip: CN` 兜住。
+3. **国内域名规则集（Loyalsoldier `direct.txt`）** —— 约 **11.1 万条纯域名**（`DOMAIN-SUFFIX` 约 11.09 万 + `DOMAIN` 约 550，**零 IP 条目**；上游每次更新都会变动，故这里用约数、精确值一律现抓），是「国内域名直连」的主力。纯域名规则只做字符串匹配、不触发解析，因此无需 `no_resolve`；「已经是 IP 的连接」由下方 `geoip: CN` 兜住。
 > （历史上这里还有一条 `domain_suffix: cn` —— 把整个 `.cn` TLD 再钉一次，**不依赖规则集是否加载成功**；
 > 2026-09-24 起分流版与懒人版都不再需要：`direct.txt` 本身含 `DOMAIN-SUFFIX,cn`。）
 > 另有一条本仓自托管的 `apple_system.list` —— 位 ⑲ 的系统域名集，补 Egern 没有内置 `SYSTEM` 的缺口。

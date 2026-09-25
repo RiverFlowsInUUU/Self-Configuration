@@ -485,6 +485,46 @@
   验收：`bash skill/tests/all.sh --offline` → 15 / 22 / 18 / 18 / **18** / 8 六项全绿；
   第 5 项 D1/D2/D3 的「实际比较」由 0 → 6 / 2 / 2，全 LIVE 比较 56 处 · 判负 0 · 判不出 36 行。
 
+### 共享层
+
+- 📊 **A-25：`direct.txt` 的写死条数全部改成「约数 + 条数一律现抓」**（四轮对拍审留下的最后一处事实缺陷）。
+  改前四份当前版 profile 各写一个互不相同的精确数、且都已被上游推翻（2026-09-25 现抓 **111,407 条**
+  = 110,853 条 `DOMAIN-SUFFIX` + 554 条 `DOMAIN`，零 IP）：`surge/profiles/routing.conf` 写 111,171 ·
+  `surge/profiles/lazy.conf` 写 111,171 · `egern/profiles/routing.yaml` 写 111,160（分项 110,607）·
+  `egern/profiles/lazy.yaml` 写分项 110,607 与 Apple 精确条目 257（现抓 229）。
+  ⇒ 四处统一为「**约 11.1 万条纯域名**（约 11.09 万条 `DOMAIN-SUFFIX` + 约 550 条 `DOMAIN`，零 IP 条目）」，
+  并各带**本内核**的现抓入口（Surge `skill/scripts/surge/audit_ruleset_content.py` ·
+  Egern `skill/scripts/egern/profile_ruleset.py`）。镜像文档同步三处：`docs/规则集与来源.md` 组件表行 ·
+  `surge/DetailsReadme` 的 §12 表行 · `surge/docs/04` 的逐段讲解表行；Egern 侧三处**约数句里残留的精确分项**
+  （`egern/DetailsReadme` · `egern/docs/04` · `egern/docs/06`）一并改成约数。
+  `egern/docs/07` 2026-09-21 那条 🐛「改用约数」的**原句不动**（历史表述），只在其下追加一行 🆕：
+  当年只落了 Egern 侧文档，profile 与 Surge 侧三处一直是写死的 —— 本轮才真正落地。
+- 🔢 **懒人版随之升号 `lazy_v1.0 → lazy_v1.1`（两内核同步）**。
+  **Why**：`check_min_pair.py` 的 V6 判的是「归档里有**同号**快照 ⇒ 当前版必须与之逐字相同」，
+  而 `config_old/lazy_v1.0.*` 正是当前版的逐字快照 —— 连注释级的改动都会点亮它。
+  **反例（本轮实测）**：只留注释改动、把头注退回 `lazy_v1.0` 跑第 3 项 ⇒ `TOTAL: 16 passed, 2 failed`，
+  surge V6 点名 `lazy_v1.0.conf` + `lazy_v1.0.min.conf`、egern V6 点名 `lazy_v1.0.yaml`，
+  而「X 两侧 lazy 版本一致」仍绿（改号要两侧一起改，只改一侧它会红）；升号后回到全绿。
+  分流版无此约束（`config_old/` 只到 `routing_v3.1`，
+  `v3.2` 从未归档 ⇒ 当前字节就是 `v3.2` 的发布内容）⇒ **本轮只升懒人版，`routing_v3.2` 号不变**。
+  ⚠️ 顺带记下这处口径张力：V6 判的是**字节**、分不清「改配置本体」与「改注释」，而 `bump_version.py` /
+  `make_min.py` 的措辞都是「改了**配置本体**」才升版 ⇒ 同号快照存在时，注释级改动要么点亮 V6、要么被迫
+  占一个版本号（本轮取后者，因为改的是订阅者直接读到的那份文件）。要不要让 V6 按「去注释后逐字相同」判，
+  是判据强度问题、另批定，本轮不动冻结项。
+  **How to apply**：走 `bump_version.py --family lazy --apply`。四份快照本来就在位 ⇒ 归档**零新增文件**、
+  订阅地址不变，落盘的只有两行头注。
+  ⚠️ 该脚本默认会把 4 处 `lazy_v1.0` 当**活指向**改写（`docs/注意事项.md` · `docs/跨内核差异对照.md` ·
+  `skill/reference/egern/public-repo.md` · `skill/tests/make_min.py`）—— 逐条核过：那四处写的都是
+  「归档目录里现有什么」，升号后**仍为真**、改写反而变假 ⇒ 本轮全部以 `--keep` 排除。这是脚本判据的一处
+  缺陷（分不清「历史清单陈述」与「活指向」），**未动脚本**，另批跟。
+- 🧷 顺路把 `surge/profiles/lazy.min.conf` 规范化到生成器输出（83 → 85 行，**仅空白**、正文逐字未动）
+  ⇒ `make_min.py` 四份全报「已同步」，它回到纯函数状态；`.min` 的订阅字节确有变化，故在此点名。
+- 📐 **A-22 档②：skill 包不逐处改数，只加一条共享纪律** —— `skill/SKILL.md` §3 新增
+  「任何条数一律现抓，不要照抄本仓文档里的数」，并点名两侧现抓脚本。
+  **哪里没动**：`skill/reference/**` 里那些「11 万条」观感描述（本来就是约数）、`docs/体检报告.md`
+  与 `docs/日志旧版原文.md`（读数快照 / 历史存档）、`config_old/` 全部归档（含归档 profile 里的旧精确数 ——
+  那是当时的口径，改它等于篡改历史）。
+
 ## 2026-09-24
 
 ### Surge
