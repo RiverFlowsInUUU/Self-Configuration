@@ -64,6 +64,7 @@ import os
 import re
 import sys
 import glob
+import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))              # <仓根>/skill/tests
 ROOT = os.path.dirname(os.path.dirname(HERE))                   # → skill → 仓根
@@ -324,7 +325,18 @@ def measure():
 
 # ── 一行属于哪个「形态 / 内核」 ─────────────────────────────────────────────
 def form_of(line, path):
-    low = line.lower() + " " + path.lower()
+    """这一行讲的是哪个形态。⚠️ **只认行内词，不认文件路径**（A-20 的 ③）。
+
+    路径能推出**内核**（`surge/docs/**` 就是 Surge 侧，稳定），推不出**形态**：
+    分流版的设计文档里天生要摆两形态对照表（`| 规则 | 10 条 | 24 条 |`），
+    旧写法拿路径里的「分流版」给懒人版那一格配上 expected=24 ⇒ **正确的话被判红**。
+    实测（2026-09-25，同一份真 scan() 上对跑）：路径参与推导 4 处假红 → 收成行内只剩 1 处
+    （剩下那处是"1 条联网项"的量词歧义，另配行内 filter），代价 3 处比较退回判不出。
+    为什么接受这个代价：判不出会出声（进 skipped 并在末尾报数），判错了不出声 ——
+    而 ④ 之后"比较数"是打在行上的可见量，少 3 处比较看得见，假红看不见。
+    `path` 形参保留：调用方按 (行, 文件) 传，同族的 `kern_of` 仍然要用它。
+    """
+    low = line.lower()
     lazy = bool(re.search(r"lazy|懒人", low))
     rout = bool(re.search(r"routing|分流|v\d", low))
     if lazy and not rout:
@@ -378,9 +390,17 @@ def candidates(m, kern, form, kind):
     if kind == "dns_keys":
         return ["dns_keys=%s" % m["dns_keys"]]
     if kind in ("stages", "fixtures"):
-        ks = [("surge", "egern")] if not kern else [(kern, kern)]
-        return ["%s=%s" % (k, m["%s_%s" % (k, kind)]) for k, _ in ks]
-    keys = [("surge", "egern")] if not kern else [(kern, kern)]
+        ks = ["surge", "egern"] if not kern else [kern]
+        return ["%s=%s" % (k, m["%s_%s" % (k, kind)]) for k in ks]
+    # ⚠️ A-20（2026-09-25 四轮对拍审确认）：这里**必须存内核名，不能存元组**。
+    #    旧写法 `keys = [("surge", "egern")]` 配下面的 `for k in keys` ⇒ 拼出来的是
+    #    `('surge', 'egern')_routing_groups` 这种永不存在的名，`m.get()` 恒 None
+    #    ⇒ 这一类**一个候选都给不出**：D1/D2/D3 自引入那次提交起「命中 51 · 实际比较 0」
+    #    却整族 ✅（判据空转，且没有任何一条判据看得见）。
+    #    为什么不是「把循环改成 `for k, _ in keys`」那六字符修法：元组截断后
+    #    行内不带内核名的声明只剩 surge 单边候选 ⇒ **egern 侧改坏测不到**
+    #    （注入实测：内核名版报出真分叉，截断版报 0 条）。判据自证见 `k3_selfproof()`。
+    keys = ["surge", "egern"] if not kern else [kern]
     forms = [form] if form else ["routing", "lazy"]
     out = []
     for k in keys:
@@ -417,10 +437,90 @@ def expected(m, kern, form, kind):
     return next(iter(vals)) if len(vals) == 1 else None
 
 
+K3 = ("groups", "rules", "rulesets")
+# 判的是**集合归属**、没有"与实测比"那条分支的一类 ⇒ ④ 的空转判据对它们不适用
+# （实测 deadref 命中 75 · 比较 0：按数判会当场假红）。
+NO_CMP = ("deadref",)
+
+
+def _forked(cands):
+    """两内核实测是否**真的**分叉：只把「同一形态内 surge≠egern」算分叉。
+
+    ⚠️ 不能写成"候选值集合大小 > 1"（那是修 ① 之前的旧判据，当时候选恒空所以它从不触发）：
+    分流版与懒人版的组数/规则数**本来就该不同**（实测 分流 26 组 / 懒人 3 组）。
+    ① 修好后两形态都会进候选表，旧写法就把**跨形态的正常差**当成"两侧已分叉"——
+    最终代码上现测：换回旧判据 ⇒ 判负 42 处（正确实现是 0）、跳过 36 行塌到 4 行。
+    ⇒ 按形态分桶，桶内凑齐两内核且不等才算分叉；跨形态差只判不出、不判负。
+    """
+    by = {}
+    for c in cands:
+        tag, _, val = c.partition("=")
+        kern, _, form = tag.partition("_")
+        by.setdefault(form, {})[kern] = val
+    return any(len(set(v.values())) > 1 for v in by.values() if len(v) == 2)
+
+
+# 判别自证用的**两组**合成措辞：必须**在用的**三条 RULES 正则吃得到（不另抄一份判据）。
+#   ANCH = 内核与形态都写全 ⇒ 真的走到"与实测比"那一步，测 ①真话不红 / ②改数必红；
+#   BARE = 内核与形态**都不写** ⇒ 候选表里同时摆着分流/懒人的正常差，
+#          测 ③跨形态差不算分叉 / ④单边改坏必红 —— 这两条正是两种坏法的分界，
+#          用 ANCH 那句测不出来（它只有单边候选，新旧分叉判据在那句上同形）。
+K3_ANCH = {"groups": "Surge 分流版 %d 个策略组",
+           "rules": "Surge 分流版 %d 条规则",
+           "rulesets": "Surge 分流版 %d 条规则集"}
+K3_BARE = {"groups": "两侧各 %d 个策略组",
+           "rules": "两侧各 %d 条规则",
+           "rulesets": "两侧各 %d 条规则集"}
+
+
+def _scan_line(m, line, kind):
+    """把一行合成措辞喂给**在用的** scan()，返回该类的判负（判别自证的共用底座）。
+
+    只写进临时目录，仓内一个字节都不动 —— 与 `make_min.py` 的 selftest 同一口径。
+    """
+    with tempfile.TemporaryDirectory() as td:
+        p = os.path.join(td, "probe.md")
+        with open(p, "w", encoding="utf-8", newline="\n") as f:
+            f.write(line + "\n")
+        _, bad, _, _ = scan([("probe.md", p)], m)
+    return [b for b in bad if "[%s]" % kind in b]
+
+
+def k3_selfproof(m, kind):
+    """D1/D2/D3 的行内判别自证（D15 / D18 先例）：四种坏法各钉一条，缺一条就判负。
+
+      ① 真话不红 —— ANCH 那句（内核 + 形态写全、值取本轮实测）⇒ 不判负；
+      ② 改数必红 —— 同一句 +1 ⇒ 判负。**这条就是 A-20 本体**：candidates() 存元组时
+         候选恒空 ⇒ 假话也"判不出" ⇒ 此处必红，空转再也绿不了；
+      ③ 跨形态正常差不红 —— BARE 那句（不写内核也不写形态，候选表里分流/懒人两形态并列，
+         实测 26 与 3 本来就不同）⇒ 只能判不出、不许判负。这条钉住 `_forked` 的形状：
+         拿"候选值集合大小 > 1"当分叉判据的写法在此处必红（真仓现测：那样新增 42 处假红）；
+      ④ 单边改坏必红 —— BARE 那句 + 只把 egern 侧挪 1 ⇒ 必须判负。
+         这条钉住 ① 的修法：元组截断版（`for k, _ in keys`）只剩 surge 单边候选，在此处
+         判不出 ⇒ 必红。（①②用 ANCH、③④用 BARE：同一句措辞测不出这两种坏法的差别。）
+    """
+    out = []
+    key = "surge_routing_%s" % kind
+    val = int(m[key])
+    if _scan_line(m, K3_ANCH[kind] % val, kind):
+        out.append("① 真话被判红")
+    if not _scan_line(m, K3_ANCH[kind] % (val + 1), kind):
+        out.append("② 改数没判红（判据空转，A-20 的坏法）")
+    if _scan_line(m, K3_BARE[kind] % val, kind):
+        out.append("③ 跨形态正常差被判成分叉")
+    m2 = dict(m)
+    m2["egern_routing_%s" % kind] = val + 1
+    if not _scan_line(m2, K3_BARE[kind] % val, kind):
+        out.append("④ 只改坏 egern 侧、行内不写内核名 ⇒ 没判出来（单边候选的坏法）")
+    return out
+
+
 def scan(docs, m):
-    """返回 (checks, bad, skipped)：checks 是「每条规则命中几处声明」。"""
+    """返回 (checks, bad, skipped, compared)：checks 是「每条规则命中几处声明」，
+    compared 是其中**真的走到与实测比**那一步的命中数（与 hits 同单位：逐命中）。"""
     hits = {k: 0 for k in ("groups", "rules", "rulesets", "files", "icons", "items", "deadref",
                           "dns_keys", "stages", "fixtures", "totals", "checker", "shared")}
+    compared = {k: 0 for k in hits}   # 逐命中：与 hits 同单位（同一行两个同类数 = 2 处）
     bad, skipped = [], []
     skipped_seen = set()   # 行级去重：同一 (文件, 行, kind) 只记一处（finditer 一行匹配多个数会重复）
 
@@ -439,7 +539,13 @@ def scan(docs, m):
         #    「两份逐字节相同的拷贝」这类会误命中）。
         ("files", re.compile(r"([0-9]+|[一二三四五六七八九十两])\s*件(?:\s*形态)?"),
          lambda line: ("顶层" in line or "固定名" in line or "形态" in line)),
-        ("rulesets", re.compile(r"(\d+)\s*条[^。\n]{0,16}(?:规则集|rule_set)|(?:规则集|rule_set)[^。\n]{0,12}?(\d+)\s*条")),
+        # ⚠️ 行内过滤：**「联网项」与「N 条」同行 ⇒ 那个「条」数的是断言条数，不是规则集条数**。
+        #    实测反例 `egern/docs/08-审计读数.md` 阶段 2 分项那句「另**完整版两份** × 1 条联网项
+        #    （规则集内容 / 分流覆盖）= **2**」—— 正则跨过括号里的「规则集」把"1 条断言"吃成
+        #    "1 条规则集"，实测 22 ⇒ 假红。这类"量词相同、所指不同"的行判不出比判错好
+        #    （与 C6 的双锚点同口径）。
+        ("rulesets", re.compile(r"(\d+)\s*条[^。\n]{0,16}(?:规则集|rule_set)|(?:规则集|rule_set)[^。\n]{0,12}?(\d+)\s*条"),
+         lambda line: "联网项" not in line),
         # D18「共用规则集份数」两个模式（正则与 filter 提到模块级，行内判别自证共用同一份）——
         # ⚠️ 不能并进 D3 的正则：D3 对的是**每形态 RULE-SET 引用数**（现 22/8），这里的口径是
         #    **两内核同形态 URL 交集**（现 分流 21 / 懒人 6），扩了正则就是拿错口径判正确的文档
@@ -483,10 +589,11 @@ def scan(docs, m):
                     # 「N 件」这种写法不带扩展名 ⇒ 内核只能靠行/路径判（`kern`），不再从格子里取。
                     k2 = kern
                     want = expected(m, k2, form, kind)
+                    if want is not None:
+                        compared[kind] = compared.get(kind, 0) + 1
                     if want is None:
                         cands = candidates(m, k2, form, kind)
-                        if kind in ("groups", "rules", "rulesets") and len(
-                                {x.split("=")[1] for x in cands}) > 1:
+                        if kind in ("groups", "rules", "rulesets") and _forked(cands):
                             # 两内核 / 两形态实测本身就分了叉 —— 这正是本仓最不能容忍的状态，
                             # 不能当成"判不出"放过
                             bad.append("%s:%d [%s] 两侧实测已分叉 %s，文档写 %s ｜ %s"
@@ -519,7 +626,7 @@ def scan(docs, m):
                 if name not in FIXED_NAMES:
                     bad.append("%s:%d [deadref] 订阅 URL 用了非固定名 %s（永久地址只认这四个）｜ %s"
                                % (rel, i, name, line.strip()[:70]))
-    return hits, bad, skipped
+    return hits, bad, skipped, compared
 
 
 def main():
@@ -542,7 +649,7 @@ def main():
 
     checks = []
     ck = lambda name, cond, extra="": checks.append((name, bool(cond), extra))  # noqa: E731
-    hits, bad, skipped = scan(docs, m)
+    hits, bad, skipped, compared = scan(docs, m)
 
     # D0：结构不变量本身 —— 两内核的组数 / 规则条数 / 规则集条数必须成对相等。
     #      文档声明类判据抓的是"文档没跟上"，这一条抓的是"两侧不一致"：
@@ -566,7 +673,21 @@ def main():
         # ⚠️ **命中 0 处也判负**：0 命中说明这一类声明在文档里根本不存在（措辞变了 / 判据写死了），
         #    判据在**空转**却不是"没有漂移" —— 与 C1/C2/C5/C6 同一条纪律（2026-09-25 补，
         #    起因：D4 实测 0 命中却一直 ✅）。
-        ck("%s（命中 %d 处声明）" % (NAMES[kind], n), not sub and n > 0, "\n      " + "\n      ".join(sub[:6]))
+        # ⚠️ A-20 的 ④：上面那条纪律治"命中 0"，这一条治**命中 >0 却一次都没比** ——
+        #    旧写法只看 `n > 0` ⇒ D1/D2/D3 长期「命中 51 ｜ 比较 0」而整族 ✅。
+        #    比较数打在行上，这一轮涨到哪儿一眼可见，不必再靠人翻代码确认有没有真比。
+        #    `NO_CMP` 那类判的是集合归属、天然没有比较分支，豁免并在注释里写明理由。
+        #    K3 三类另带**行内判别自证**（`k3_selfproof`）：折进同一条 ck ⇒
+        #    判据条数不变（全仓「18 条」的表述有 19 处、其中 4 处被 C6 锚住，单立第 19 条
+        #    等于把这 4 处同时改红，属维护者裁决面）。
+        cmp_n = compared.get(kind, 0)
+        proof = k3_selfproof(m, kind) if kind in K3 else []
+        ck("%s（命中 %d 处声明 ｜ 实际比较 %d 处%s）"
+           % (NAMES[kind], n, cmp_n,
+              " · 含判别自证：真话不红 · 改数必红 · 跨形态差不算分叉 · 单边改坏必红"
+              if kind in K3 else ""),
+           not sub and n > 0 and (kind in NO_CMP or cmp_n > 0) and not proof,
+           "\n      " + "\n      ".join(sub[:6] + proof))
 
     # D18 单独收尾：通用断言 + **行内判别自证**（D15 先例）。自证吃的是**在用的**那两个
     # 正则与 filter（模块级共用），断言「真话不红 · 改数必红 · 无锚措辞不误伤」，
@@ -624,8 +745,8 @@ def main():
     ck("D10 豁免行形状与消费方正则同形·编号文件内唯一（当前版 %d 行 / %d 个文件）"
        % (n_wv, n_wvf), not wv_bad, "\n      " + "\n      ".join(wv_bad[:6]))
 
-    print("\n对拍 %d 处声明 ｜ 判据 %d 条 ｜ 无法判定跳过 %d 处"
-          % (sum(hits.values()), len(checks), len(skipped)))
+    print("\n对拍 %d 处声明 ｜ 实际比较 %d 处 ｜ 判据 %d 条 ｜ 无法判定跳过 %d 行"
+          % (sum(hits.values()), sum(compared.values()), len(checks), len(skipped)))
     for s in skipped[:8]:
         print("   ↷ " + s)
     if len(skipped) > 8:
@@ -633,7 +754,7 @@ def main():
     bad_ = [c for c in checks if not c[1]]
     for name, ok_, extra in checks:
         print("   %s %s%s" % ("✅" if ok_ else "❌", name,
-                              ("" if ok_ else "" ) + (extra if not ok_ and extra.strip() else "")))
+                              extra if not ok_ and extra.strip() else ""))
     print("TOTAL: %d passed, %d failed" % (len(checks) - len(bad_), len(bad_)))
     return 1 if bad_ else 0
 

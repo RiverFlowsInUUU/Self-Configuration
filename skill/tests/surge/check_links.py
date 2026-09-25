@@ -52,7 +52,10 @@ for _stream in (sys.stdout, sys.stderr):
 # （`_` 与 `\ufe0f` 是 2026-09-22 的对拍结论：github-slugger 保留它们）
 _KEEP = re.compile(r"[a-z0-9_\u3400-\u4dbf\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af"
                    r"\ufe0e\ufe0f\u20e3]")
-_SKIP_DIRS = {".git", "icons", "node_modules", "__pycache__", ".workbuddy-ai"}
+# 只列**本仓有实质理由**跳的目录；其余点开头的目录（各家编辑器 / AI 工具的本地工作区，
+# 名字随工具版本变）由下面 `collect()` 的「点开头的目录一律不 walk」统一兜 ——
+# 早先这里写死过一个第三方工具的工作目录名，那属于"每来一个工具改一次判据"。
+_SKIP_DIRS = {".git", "icons", "node_modules", "__pycache__"}
 _HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
 _LINK = re.compile(r"\]\(([^)\s]+)\)")
 _FENCE = re.compile(r"^\s*(```+|~~~+)")
@@ -93,7 +96,7 @@ def anchors_of(path):
 def collect(dirpath):
     files = []
     for root, dirs, names in os.walk(dirpath):
-        dirs[:] = [d for d in dirs if d not in _SKIP_DIRS]
+        dirs[:] = [d for d in dirs if d not in _SKIP_DIRS and not d.startswith(".")]
         for n in names:
             if n.endswith((".md", ".markdown")):
                 files.append(os.path.join(root, n))

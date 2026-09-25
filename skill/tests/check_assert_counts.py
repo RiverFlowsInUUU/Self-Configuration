@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""回归断言数对拍（`all.sh` 第 7 项）：文档里写死的「19 断言 / 22 断言」↔ 本轮实测的 TOTAL。
+"""回归断言数对拍（`all.sh` 第 7 项）：文档里写死的「N 断言」↔ 本轮实测的 TOTAL。
 
 为什么单独立一项，而不是并进 `check_doc_readings.py` 的 D 规则：
   D1–D3 对拍的是**解析 profile 就能算出来**的读数（组数 / 规则条数 / 规则集条数）。
