@@ -61,14 +61,17 @@
   原样保留；另有 2 处省略宾语的「`config_old/` 归档不参与」（`check_doc_readings.py:133` · `egern/run.sh:154`）讲的是各自
   函数与阶段的取数范围，局部成立且不同措辞，不并入这条。本日志历史段落里的 5 处 ALL GREEN 是各自当时的真读数，一处不改。
   仓内代码 · 判据 · 冻结 12 件 · profile 零改动。
-  **验收**（前五条都可原样敲；三条计数以 diff 与本段范围取数，不拿本条自身的文字当判据）：
-  `git show <commit> -- CHANGELOG.md | grep -c "^-.*ALL GREEN · 退出码"` = 1（q1 条那句被删）·
-  `git show <commit> -- CHANGELOG.md | grep -c "^+.*未提交 8 · 落后 0 · 未推送 0"` = 1（实取串回填到位）·
+  **验收**（前五条都可原样敲，取数件为 q5 的 t1 `e0c6b00`；三条计数以 diff 与本段范围取数，不拿本条自身的文字当"必为 0"的判据）：
+  `git show e0c6b00 -- CHANGELOG.md | grep -c "^-.*ALL GREEN · 退出码"` = 1（q1 条那句被删）·
+  `git show e0c6b00 -- CHANGELOG.md | grep -c "^+.*未提交 8 · 落后 0 · 未推送 0"` = 2 —— 一处是 q1 条回填的实取串，
+  另一处是本条把这条命令写进了验收句自身 · `eadf6c3`（q5 前最后一件）的今天段该串命中 1 行，即本条删掉的那处 ·
   `grep -rn "不参与检查" --include="*.md" AGENTS.md docs manual skill | grep -v "architecture.sh"` 输出 0 行、去掉末段管道
   输出 7 行 · `grep -rn "不参与任何检查\|不参与检查" skill/tests/ .gitattributes | wc -l` = 3（q1 条那句读数成立、原样保留）·
   `grep -c "^## 2026-09-26" CHANGELOG.md` = 1（一天一段守住）· `bash skill/tests/all.sh --offline` 退出码 0 ·
-  `git show --name-only <commit>` 仅 `CHANGELOG.md` 一件 · 今天段（`## 2026-09-26` 到 `## 2026-09-25` 之间）该串命中 3 行
-  = 本条自引数，全文件 8 行 = 3 + 历史 5 处（历史一处未动 ⇒ 用来自证没顺手改旧账；旧版今天段该串命中 1 行，就是本条删掉的那处）。
+  `git show --name-only e0c6b00` 仅 `CHANGELOG.md` 一件 · 今天段（`## 2026-09-26` 到 `## 2026-09-25` 之间）该串命中 3 行
+  = 本条自引数，全文件 8 行 = 3 + 历史 5 处（历史一处未动 ⇒ 用来自证没顺手改旧账）。
+  **落地两件**：t1 改上面那三处读数与 q2 条形制；t2 只更正本条验收句自己的两处记法 —— 把取数件写死成 t1 的 `e0c6b00`，
+  并把「实取串回填 = 1」改成实测的 2（本条写这条命令时把它自己数进去了）。这正是本条要修的那类病，就地补一刀。
 
 ---
 
