@@ -26,6 +26,13 @@
   **验收**：`grep -rn "不参与检查" --include="*.md" .` 的活层 7 行经 `grep -v "architecture.sh"` 后输出 0 行；
   判别自证 —— 临时去掉 `docs/注意事项.md` 的限定语后该行立即被点名，还原后归 0；`bash skill/tests/all.sh --offline`
   ALL GREEN · 退出码 0 · 末行「闸门未被动过（冻结 12 个文件）」。
+- 🔐 `SECURITY.md` 首段「由仓内判据在每次提交前把关」改为「由仓内判据把关：提交前在本地跑
+  `bash skill/tests/all.sh`（本仓刻意不挂 CI，见 `AGENTS.md` §2 第 1 条）」——本仓没有 CI，
+  把关是人在本地跑的一条命令闸，原句把人工动作写成了提交前自动执行。
+  **没动**：`SECURITY.md` 其余三节与标题 · `skill/tests/` 与 profile 零改动 · 判据零改动。
+  **验收**：`grep -n "每次提交前\|自动" SECURITY.md` 输出 0 行、`grep -n "skill/tests/all.sh" SECURITY.md`
+  命中 1 行；判别自证——临时还原原句后前者立刻命中 1 行，还原归 0；`bash skill/tests/all.sh --offline`
+  退出码 0 · 末行「✅ 判据全过 · 6 项」+「闸门未被动过（冻结 12 个文件）」。
 
 ---
 
