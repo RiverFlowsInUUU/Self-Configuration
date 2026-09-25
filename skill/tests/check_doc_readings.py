@@ -8,7 +8,7 @@
   **没有任何检查会因为"改了 profile 忘了改文档"而报错** —— 只能一轮轮 grep 反查、逐个数字重测。
   这一项把它变成一条命令：不吻合就直接点名「哪个文件第几行写的 24，实测 23」。
 
-固定规则清单（每条 = 1 个断言，**共 16 条、不随文件数增长**）：
+固定规则清单（每条 = 1 个断言，**共 17 条、不随文件数增长**）：
     D0 两内核逐位对齐：组数 / 规则条数 / 规则集条数 三对 × 两形态必须相等（抓"只动了一侧"）
     D1 策略组数      —— 「N 组 / N 个策略组」类声明 == 实测组数
     D2 规则条数      —— 「N 条 … 规则」类声明 == 实测 `[Rule]` / `rules` 非注释条目数
@@ -34,6 +34,8 @@
                       `skill/scripts/<侧>/*.py` 的 10 个），判据接不住 ⇒ 不判（宁可少判）。
     D15 加固清单项数  —— 文件名 `N项` 与 H1 `（N 项）` == 表格里 `| N |` 的行数（**现算**）
     D16 TOTAL 槽位数  —— 「N 个 TOTAL」== `all.sh` 里 `MEASURED+=(` 的个数（**现算**）
+    D17 surge 审计器判据数 —— 「N 项审计清单 / 判据 / 检查」== `check_surge_dns.py` 里 `def check_N_` 的
+                      个数（**现算**）。含 egern 的行不判（那句「Egern 18 项」指的是加固清单，D15 管）
                        ⚠️ D1–D16 全部**命中 0 处即判负**（0 命中 = 判据空转，不是"没有漂移"）。
 
 **刻意不判的东西**（判了会误伤，交给人）：
@@ -222,6 +224,10 @@ def measure():
         m["%s_fixtures" % _kern] = len([
             l for l in (_cases.group(1).splitlines() if _cases else []) if l.strip()])
     # TOTAL 槽位：`all.sh` 里 `MEASURED+=(...)` 的个数（现算）。文档里那句「本轮六个 TOTAL」归它管。
+    m["checker_criteria"] = len(re.findall(
+        r"^def check_(\d+)_",
+        open(os.path.join(ROOT, "skill", "scripts", "surge", "check_surge_dns.py"),
+             encoding="utf-8").read(), re.M))
     m["totals"] = len(re.findall(r"MEASURED\+=\(",
                                 open(os.path.join(ROOT, "skill", "tests", "all.sh"),
                                      encoding="utf-8").read()))
@@ -331,7 +337,8 @@ def expected(m, kern, form, kind):
     """按内核 / 形态取实测值；两内核同值时允许不指定内核。"""
     if kind == "version":
         return m["version"]
-    if kind in ("icons", "items", "dns_keys", "totals"):
+    if kind in ("icons", "items", "dns_keys", "totals", "checker"):
+        return m["checker_criteria"] if kind == "checker" else m[kind]
         return m[kind]
     if kind in ("stages", "fixtures"):
         if kern:
@@ -350,7 +357,7 @@ def expected(m, kern, form, kind):
 def scan(docs, m):
     """返回 (checks, bad, skipped)：checks 是「每条规则命中几处声明」。"""
     hits = {k: 0 for k in ("groups", "rules", "rulesets", "files", "icons", "items", "deadref",
-                          "dns_keys", "stages", "fixtures", "totals")}
+                          "dns_keys", "stages", "fixtures", "totals", "checker")}
     bad, skipped = [], []
 
     RULES = [
@@ -376,6 +383,11 @@ def scan(docs, m):
         ("stages", re.compile(r"([0-9]+|[一二三四五六七八九十两])\s*个?\s*阶段")),
         ("fixtures", re.compile(r"(\d+)\s*(?:个|份)?\s*fixture")),
         ("totals", re.compile(r"([0-9]+|[一二三四五六七八九十两])\s*个\s*TOTAL")),
+        # surge 审计器的判据数（`def check_N_` 的个数，现算）。
+        # ⚠️ 行内过滤：**排除含 egern 的行** —— `docs/跨内核差异对照` 那句「Surge 12 项 / Egern 18 项」
+        #    里 18 指的是加固清单（D15 管），与这里的 checker 判据数不是一回事。
+        ("checker", re.compile(r"(\d+)\s*项(?:审计清单|判据|检查)"),
+         lambda line: "egern" not in line.lower()),
         # ⚠️ 「N 个审计脚本」**刻意不判**（2026-09-25 实测后撤掉）：仓里这个词有两种口径，
         #    且都成立 —— ① `egern/docs/08` 记的是**产出读数的 6 个**；② `skill/scripts/egern/*.py`
         #    去掉共享模块是 **10 个**（多出 probe_* / profile_ruleset / weigh_ruleset 四个探针工具）。
@@ -472,9 +484,10 @@ def main():
              "files": "D4 订阅文件份数", "icons": "D5 图标数", "items": "D6 检查项数",
              "deadref": "D8 profile 引用不悬空·订阅 URL 用固定名",
              "dns_keys": "D11 DNS 键数", "stages": "D12 阶段数",
-             "fixtures": "D13 fixture 数", "totals": "D16 TOTAL 槽位数"}
+             "fixtures": "D13 fixture 数", "totals": "D16 TOTAL 槽位数",
+             "checker": "D17 surge 审计器判据数"}
     for kind in ("groups", "rules", "rulesets", "files", "icons", "items", "deadref",
-                 "dns_keys", "stages", "fixtures", "totals"):
+                 "dns_keys", "stages", "fixtures", "totals", "checker"):
         sub = [b for b in bad if "[%s]" % kind in b]
         n = hits.get(kind, 0)
         # ⚠️ **命中 0 处也判负**：0 命中说明这一类声明在文档里根本不存在（措辞变了 / 判据写死了），
