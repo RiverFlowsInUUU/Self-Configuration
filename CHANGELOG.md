@@ -101,13 +101,14 @@
 - 📍 **可照抄命令的路径基准定于一处（q7）**：`skill/reference/egern/checker.md` 与
   `skill/reference/egern/pitfalls.md` 里四条"给人敲"的回归命令写的是 `bash scripts/../tests/run.sh` 与
   `bash tests/run.sh` —— 仓根敲、`cd skill` 敲、`scripts/../tests/` 拼法**三种 cwd 全部 `No such file or directory`**
-  （`skill/tests/` 下只有 `all.sh` 与 `egern/`·`surge/`，不存在顶层 `run.sh`），现四处统一改指实跑通过的
+  （`skill/tests/` 顶层为 `all.sh` + 8 个 `*.py` + `egern/`·`surge/` 两子目录，不存在顶层 `run.sh`），现四处统一改指实跑通过的
   `bash skill/tests/egern/run.sh`；顺带修 `docs/跨内核差异对照.md` 一处陈旧编号名 `docs/09-注意事项.md`
   （全仓无此名，现名 `docs/注意事项.md`，"09" 是 manual 章节号串门）。基准规则落进 `skill/SKILL.md` 且**只落这一处**：
   凡可照抄执行的命令以**仓根**为基准书写，要 `cd` 的显式写 `cd`，行文简写不作可执行路径。
   **没动**：判据 · 冻结 12 件 · profile · 根 README 零改动 · 断言数与文档读数无关（联网档 24 / 离线档 22 不变，
-  缺陷只在路径不在数）· 两份 reference 文档里余下 34 处"行文简写"（`scripts/probe_doh.py` 一类，
-  合并进 skill 包后中间多了 `egern/` 一层）本条不动，另立 q 处理 · `egern/docs/07-文件版本沿革.md:444`
+  缺陷只在路径不在数）· 两份 reference 文档里余下 33 处"行文简写"（`scripts/probe_doh.py` 一类，
+  合并进 skill 包后中间多了 `egern/` 一层；取数件 `.ai-loop/work/scan_q7c.py`，在 `0cc82ac` 现跑
+  **33 = `checker.md` 17 · `pitfalls.md` 14 · `ruleset-weight.md` 2**）本条不动，另立 q 处理 · `egern/docs/07-文件版本沿革.md:444`
   的「`docs/09-注意事项.md`」是沿革史原文且链接已指现名 ⇒ 不改不算缺陷。
   **验收**（取数件写死为本条落地 commit 的父件 `7f86516` 与工作区，现势可跑）：
   `PYTHONIOENCODING=utf-8 python .ai-loop/work/scan_q7.py` ⇒ 「按字面从仓根敲不出来的命令行」共 **0** 处（改前 4）；
