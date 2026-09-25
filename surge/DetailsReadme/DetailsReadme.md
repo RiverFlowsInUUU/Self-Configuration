@@ -528,6 +528,8 @@ NAT 类型检测（STUN）、时间同步（NTP）、游戏机配对，都需要
 | `direct.txt` | 111169 | 纯域名 | Loyalsoldier |
 | `SYSTEM` / `LAN` | — | 内置 | Surge |
 
+> 表内条数是**写作时点快照** —— 本仓所有远程 URL 都没锁 commit、会随上游漂；现抓由 `audit_ruleset_content.py` 重测。
+
 ### 11.2 `update-interval=604800`（一周）
 
 远程 `RULE-SET` 全部显式带一周刷新。
@@ -762,7 +764,7 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 | 5 | `RULE-SET,…,private.txt` | `DIRECT` | `update-interval=604800` | 内网域名。实测 130 条零 IP ⇒ 按原则**不写** `no-resolve` |
 | 6 | `RULE-SET,SYSTEM` | `DIRECT` | — | Apple 激活 / 推送 / 配对，内置权威集合，**保底**。懒人版只此一条 Apple 相关（全量集 2026-09-24 起移出，见 §14.1） |
 | 7 | `RULE-SET,…,AI.list` | `AI` | `update-interval=604800` | 实测 49 条零 IP ⇒ 不写 `no-resolve` |
-| 8 | `RULE-SET,…,direct.txt` | `DIRECT` | `update-interval=604800` | **主承重墙**，实测 111,171 条零 IP。见 §12 |
+| 8 | `RULE-SET,…,direct.txt` | `DIRECT` | `update-interval=604800` | **主承重墙**，111,171 条零 IP（写作时点快照）。见 §12 |
 | 9 | `GEOIP,CN,DIRECT` | `DIRECT` | `no-resolve` | IP 类规则，放最后 |
 | 10 | `FINAL,Proxy,dns-failed` | `Proxy` | `dns-failed` | 兜底 |
 
@@ -1047,7 +1049,7 @@ SKIP_NET=1 bash skill/tests/surge/run.sh   # 跳过联网阶段
 ```
 
 ⚠️ **本仓库刻意不挂 CI / 任何自动化**。理由与替代做法见
-[`skill/README.md`](../../README.md)。
+[`skill/README.md`](../../skill/README.md)。
 
 ### 18.4 退出码约定
 
