@@ -47,7 +47,7 @@ tests/egern/              run.sh · 5 fixture
 ```bash
 bash skill/tests/all.sh                          # ★★ 一条命令跑完下面全部 + 两版形态对拍 + 换设备可移植性 + 文档读数对拍 + 断言数对拍
 bash skill/tests/surge/run.sh                  # Surge：6 阶段 · 19 断言
-bash skill/tests/surge/architecture.sh         #        占位符 / 凭据 / .conf↔.min 一致性
+bash skill/tests/surge/architecture.sh         #        ① 占位符 / 凭据（全仓 .conf+.yaml 三档）· ②③④ .conf↔.min 一致性与规则/组顺序
 bash skill/tests/egern/run.sh                  # Egern：两阶段 · 24 断言（阶段 1 · 5 fixture ×2；阶段 2 · 顶层固定名四件 ×3 + 完整版 2 份 ×1 联网项；SKIP_NET=1 时 22）
 python skill/tests/check_portability.py        # 换设备一致性：行尾 / BOM / 命名 / 残留，固定 18 条规则
 python skill/tests/check_doc_readings.py       # 文档读数对拍：组数 / 条数 / 份数 / 悬空指向 / 豁免行，固定 18 条规则

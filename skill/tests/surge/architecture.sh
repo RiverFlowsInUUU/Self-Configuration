@@ -10,6 +10,8 @@
 #   所以这里守三条**只有本项目才成立**的不变量：
 #     ① 占位符纪律：节点地址必须是 RFC 5737 文档地址段 / example.com，
 #        凭据必须是 REPLACE_WITH_*，**绝不能**出现真实 IP / 真实域名 / 真实凭据。
+#        ⚠️ 扫描面是**全仓** walk 到的 `*.conf` / `*.yaml` / `*.yml`（两内核当前版 +
+#        `config_old/` 归档 + `skill/tests/` 夹具），不是只有 Surge 顶层那几份 —— 理由在 ① 段里。
 #     ② 带注释版与 min 版的 DNS 段必须**逐字相同** ——
 #        min 版的定位是"去掉注释"，不是"裁剪配置"，DNS 段被改动即是缺陷。
 #     ③ 规则顺序铁律：每个 profile 里，白名单 → REJECT → 域名类直连 → IP 类 → FINAL。
@@ -62,10 +64,11 @@ fi
 printf '%s\n' "架构不变量检查"
 printf '%s\n' "────────────────────────────────────────────────────────────"
 
-"$PY" - "$PROFILES_W" <<'PYEOF'
+"$PY" - "$PROFILES_W" "$ROOT_W" <<'PYEOF'
 import os, re, sys
 
 profiles_dir = sys.argv[1]
+repo_dir = sys.argv[2]          # ① 的 walk 起点（仓库根）；②③④ 仍只认 profiles_dir
 # 当前版词干由 shell 侧 export 下来；固定名 ⇒ 不随版本变，「哪一版」写在 profile 头注里
 # （#! version=routing_vX.Y），由 skill/tests/check_min_pair.py 判形状与两侧一致。
 CURRENT = os.environ.get("CURRENT") or "routing"
@@ -78,6 +81,18 @@ fails = []
 oks = []
 
 # ── ① 占位符纪律 ────────────────────────────────────────────────────────────
+# ⚠️ 扫描面（2026-09-25 起，A-1）= 全仓 walk 到的 `*.conf` / `*.yaml` / `*.yml`，
+#    **含两侧 `config_old/` 归档、含 `skill/tests/**` 夹具**。从前只有 Surge 顶层那几份 `.conf`。
+#    为什么必须扩：`bump_version.py` 是**逐字节**把当前版复制进归档、再提示 `git add` 的
+#    ⇒ 本地工作副本里只要带着真实节点地址 / 真实凭据 / 真实订阅 token，一次升版提交就把它
+#    永久写进 git 历史，而扩面之前的这道纪律**一个字都没判**（反例实测：往
+#    `egern/profiles/config_old/probe.yaml` 写 `server: 121.36.44.55` + `password: r3altokenvalue`
+#    + `?token=Ab3xKp9qLm2nQz7w`、另放一份 `probe2.yaml` 写真实主机名与真实 sni
+#    ⇒ 两份归档共 7 处，扩前脚本判负 **0 处**；同一棵假树里 `surge/profiles/probe_live.conf`
+#    的 4 处它判得到（那本来就在旧扫描面内）⇒ 扩前 `17 passed, 4 failed`、扩后 `17 passed, 11 failed`）。
+#    归档进了历史撤不回 ⇒ **归档不享豁免**；夹具是合成文件，同样只许放假值。
+#    三档只影响**报错怎么点名**（LIVE = 提交前该拦下 · ARCHIVE = 已进历史、撤它必须先改写历史 ·
+#    FIXTURE = 夹具被写脏），判据本身三档同一套。
 # RFC 5737 文档地址段：192.0.2.0/24、198.51.100.0/24、203.0.113.0/24
 DOC_NETS = ("192.0.2.", "198.51.100.", "203.0.113.")
 # 允许出现在模板里的域名（占位域名 + 公开规则集/测试端点域名）
@@ -110,80 +125,187 @@ FORBIDDEN_SUBSTRINGS = [
 #    判据：URL 里若出现 `token=` / `key=` / `sub=` 参数，其值必须含 REPLACE_WITH。
 TOKEN_RE = re.compile(r"(?:token|key|sub)\s*=\s*([A-Za-z0-9_\-]{6,})", re.I)
 _IPV4 = re.compile(r"\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b")
+# 允许直接出现在模板里的**真实** IP：公开解析器 + 保留地址 —— 它们不是节点地址，不构成泄露。
+# 前九个是 Surge 侧原有的；后五个是扩面后从 Egern 侧 / 归档 / 夹具里实际出现的数逐个认下来的
+# （2026-09-25 全仓 walk 实测：非文档 IPv4 只多出这五个，其余判据三档全 clean）。
+KNOWN_IPS = {
+    "223.5.5.5", "119.29.29.29", "1.1.1.1", "8.8.8.8", "8.8.4.4",
+    "1.0.0.1", "9.9.9.9", "208.67.222.222", "114.114.114.114",
+    "223.6.6.6",       # AliDNS 第二台（本仓 dns 段在用）
+    "1.12.12.12",      # 腾讯 DNSPod 公共解析器（本仓 dns 段在用）
+    "120.53.53.53",    # 腾讯 DNSPod 公共解析器（本仓 dns 段在用）
+    "0.0.0.0",         # 「监听全部接口」的绑定占位，不是节点地址
+    "127.0.0.1",       # 回环：本地 DNS / DoH 入口
+}
+# Egern 侧节点块的凭据键：Surge 写 `k = v`、Egern 写 `k: v`，形态不同、判据同一条（①-c）
+YAML_CRED_KEYS = ("password", "username", "uuid", "secret", "obfs-password", "credential")
+YAML_CRED_RE = re.compile(r"^\s*(?:-\s+)?(%s)\s*:\s*(.+)$" % "|".join(YAML_CRED_KEYS), re.M)
+YAML_SNI_RE = re.compile(r"^\s*(?:-\s+)?(sni|servername)\s*:\s*(.+)$", re.M)
+PLACEHOLDER_VALS = ("REPLACE_WITH_",)
 
-def strip_c(s):
-    """去掉整行注释与行尾注释（` #` / ` ;` 起）。"""
-    if s.startswith("#") or s.startswith(";"):
+
+def strip_c(s, yaml_=False):
+    """去掉整行注释与行尾注释（` #` / ` ;` 起）。
+
+    ⚠️ YAML 只认 `#`：`;` 在 YAML 里是普通字符，按 `;` 断注释会把值截断 ——
+    而"截掉后半段"恰好可能把敏感值藏起来，所以按形态分岔、不给 YAML 走 `;` 这条。
+    ⚠️ 另一条（反例实测）：**只右裁、不左裁** —— 从前这里 `return s.strip()` 连行首缩进一起删，
+    YAML 的缩进就是它的层级 ⇒ `proxies:` 块里的 `  server: 真域名` 会被看成顶格键、块被提前关掉，
+    ①-d 对 Egern 侧整段静默失效。行首空白必须留着。
+    """
+    if s.lstrip().startswith("#") or (not yaml_ and s.lstrip().startswith(";")):
         return ""
+    marks = "#" if yaml_ else "#;"
     for i in range(1, len(s)):
-        if s[i] in "#;" and s[i - 1] in " \t":
-            return s[:i].strip()
-    return s.strip()
+        if s[i] in marks and s[i - 1] in " \t":
+            return s[:i].rstrip()
+    return s.rstrip()
 
-for f in files:
-    raw_text = open(os.path.join(profiles_dir, f), encoding="utf-8").read()
-    # ⚠️ 只检查**有效配置行**，不检查注释。
-    #    第一版没做这一步，`# …跟 10.0.0.0/8 比一下` 这句注释被当成真实 IP 报负 ——
-    #    "注释里出现私有网段"是说明性文字，不是泄露。
-    text = "\n".join(strip_c(l) for l in raw_text.splitlines())
+
+def scan_targets(root):
+    """全仓 conf/yaml ⇒ [(档, 仓内相对路径, 绝对路径)]。
+
+    跳过点开头的目录（`.git` 等）与 `node_modules` / `__pycache__` —— 与 `check_links.py`
+    同一口径。⚠️ 这里**故意不用 `git ls-files`**：未提交的本地工作副本正是这道纪律要拦的
+    东西（"本地填真实节点、push 前忘删"），只扫已跟踪文件就等于不扫。
+    """
+    out = []
+    for dp, dns, fns in os.walk(root):
+        dns[:] = [d for d in dns if not d.startswith(".")
+                  and d not in ("node_modules", "__pycache__")]
+        for fn in sorted(fns):
+            if not fn.endswith((".conf", ".yaml", ".yml")):
+                continue
+            p = os.path.join(dp, fn)
+            rel = os.path.relpath(p, root).replace(os.sep, "/")
+            tier = ("ARCHIVE" if "/config_old/" in "/" + rel
+                    else "FIXTURE" if rel.startswith("skill/tests/") else "LIVE")
+            out.append((tier, rel, p))
+    return sorted(out)
+
+
+SCAN = scan_targets(repo_dir)
+if not [x for x in SCAN if x[0] == "LIVE"]:
+    print("❌ 全仓 walk 不到任何当前版 profile —— 目录被挪走了，这**不是**\"没有敏感串\"")
+    sys.exit(2)
+_kn = {"LIVE": 0, "ARCHIVE": 0, "FIXTURE": 0}
+for _t, _f, _p in SCAN:
+    _kn[_t] += 1
+
+for tier, f, path in SCAN:
+    yaml_ = f.endswith((".yaml", ".yml"))
+    tag = "%s %s" % (tier, f)          # 报错先报档、再报仓内路径
+    try:
+        raw_text = open(path, encoding="utf-8").read()
+    except UnicodeDecodeError:
+        fails.append(f"{tag}: 非 UTF-8 ⇒ 占位符纪律读不了（按未审处理，不当它过）")
+        continue
+    # ⚠️ 只检查**有效配置行**，不检查注释（①-a / ①-c2 除外 —— 那两条判的是真凭据残留，
+    #    藏在注释里同样算泄露）。第一版没做这一步，`# …跟 10.0.0.0/8 比一下` 这句注释
+    #    被当成真实 IP 报负 —— "注释里出现私有网段"是说明性文字，不是泄露。
+    text = "\n".join(strip_c(l, yaml_) for l in raw_text.splitlines())
 
     # ①-a 禁止的敏感子串（注释里也不许出现 —— 那是真实凭据的残留）
     for bad in FORBIDDEN_SUBSTRINGS:
         if bad in raw_text:
-            fails.append(f"{f}: 出现禁止的敏感串 `{bad}`")
+            fails.append(f"{tag}: 出现禁止的敏感串 `{bad}`")
 
-    # ①-b 每个出现的 IPv4 必须是文档地址段或已知公共 DNS（只看有效行）
-    KNOWN_DNS = {
-        "223.5.5.5", "119.29.29.29", "1.1.1.1", "8.8.8.8", "8.8.4.4",
-        "1.0.0.1", "9.9.9.9", "208.67.222.222", "114.114.114.114",
-    }
+    # ①-b 每个出现的 IPv4 必须是文档地址段或已知公共解析器（只看有效行）
     for ip in set(_IPV4.findall(text)):
-        if ip.startswith(DOC_NETS) or ip in KNOWN_DNS:
+        if ip.startswith(DOC_NETS) or ip in KNOWN_IPS:
             continue
-        fails.append(f"{f}: 出现非占位 IPv4 `{ip}`（必须用 192.0.2.x / 198.51.100.x / 203.0.113.x）")
+        fails.append(f"{tag}: 出现非占位 IPv4 `{ip}`（必须用 192.0.2.x / 198.51.100.x / 203.0.113.x）")
 
-    # ①-c 凭据字段必须显式写成 REPLACE_WITH_*
-    for m in re.finditer(r"(password|username|auth)\s*=\s*\"?([^,\"\n]+)", text):
-        val = m.group(2).strip()
-        if val.startswith("REPLACE_WITH_"):
-            continue
-        fails.append(f"{f}: 凭据字段 `{m.group(1)}` 的值不是占位符（`{val[:24]}…`）")
-    for m in re.finditer(r"sni\s*=\s*([^,\n]+)", text):
-        val = m.group(1).strip()
-        if val.startswith("REPLACE_WITH_") or val.startswith("192.0.2.") \
-                or val.startswith("198.51.100.") or val.startswith("203.0.113.") \
-                or val.endswith("example.com"):
-            continue
-        fails.append(f"{f}: sni 的值不是占位符（`{val}`）")
+    # ①-c 凭据字段必须显式写成 REPLACE_WITH_*（两内核各一套形态）
+    if yaml_:
+        for m in YAML_CRED_RE.finditer(text):
+            val = m.group(2).strip().strip("\"'")
+            if not val or val.startswith(PLACEHOLDER_VALS):
+                continue
+            fails.append(f"{tag}: 凭据字段 `{m.group(1)}` 的值不是占位符（`{val[:24]}…`）")
+        for m in YAML_SNI_RE.finditer(text):
+            val = m.group(2).strip().strip("\"'")
+            if not val or val.startswith(PLACEHOLDER_VALS) or val.endswith("example.com"):
+                continue
+            fails.append(f"{tag}: sni 的值不是占位符（`{val}`）")
+    else:
+        for m in re.finditer(r"(password|username|auth)\s*=\s*\"?([^,\"\n]+)", text):
+            val = m.group(2).strip()
+            if val.startswith("REPLACE_WITH_"):
+                continue
+            fails.append(f"{tag}: 凭据字段 `{m.group(1)}` 的值不是占位符（`{val[:24]}…`）")
+        for m in re.finditer(r"sni\s*=\s*([^,\n]+)", text):
+            val = m.group(1).strip()
+            if val.startswith("REPLACE_WITH_") or val.startswith("192.0.2.") \
+                    or val.startswith("198.51.100.") or val.startswith("203.0.113.") \
+                    or val.endswith("example.com"):
+                continue
+            fails.append(f"{tag}: sni 的值不是占位符（`{val}`）")
 
     # ①-c2 订阅 token / key 必须占位符化（最严重的一类泄露：泄露即被盗刷流量）
     for m in TOKEN_RE.finditer(raw_text):
         val = m.group(1)
         if "REPLACE_WITH" in val.upper():
             continue
-        fails.append(f"{f}: 订阅 URL 里出现疑似真实 token（`{val[:8]}…`）—— "
+        fails.append(f"{tag}: 订阅 URL 里出现疑似真实 token（`{val[:8]}…`）—— "
                      f"必须写成 REPLACE_WITH_YOUR_TOKEN")
 
     # ①-d 节点行里的主机名必须落在允许清单（只看有效行）
-    in_proxy = False
-    for i, line in enumerate(text.splitlines(), 1):
-        s = line
-        if s.startswith("[Proxy]"):
-            in_proxy = True
-            continue
-        if s.startswith("[") and in_proxy:
-            in_proxy = False
-        if not in_proxy or not s or "=" not in s:
-            continue
-        rhs = s.split("=", 1)[1]
-        p = [x.strip() for x in rhs.split(",")]
-        if len(p) < 2:
-            continue
-        server = p[1]
-        if _IPV4.match(server) or server.startswith("["):
-            continue
-        if not any(a in server for a in ALLOWED_DOMAINS):
-            fails.append(f"{f}:{i}: [Proxy] 里的节点主机名 `{server}` 不在允许清单内")
+    if yaml_:
+        in_proxies = False
+        for i, line in enumerate(text.splitlines(), 1):
+            if line.startswith("proxies:"):
+                in_proxies = True
+                rest = line.split(":", 1)[1].strip()
+                if rest not in ("", "[]"):        # 内联非空 ⇒ 模板里直接写了节点
+                    fails.append(f"{tag}:{i}: `proxies:` 内联了非空值 —— 模板不得携带节点")
+                continue
+            # 顶格键 ⇒ proxies 块结束（Egern 的列表项可以顶格写 `- `，那种不算结束）
+            if in_proxies and line and not line[0].isspace() and not line.startswith("-") \
+                    and ":" in line:
+                in_proxies = False
+            if not in_proxies:
+                continue
+            m = re.search(r"\b(?:server|host)\s*[:=]\s*[\"']?([^\"'\s,]+)", line)
+            if not m:
+                continue
+            srv = m.group(1)
+            if _IPV4.match(srv):
+                if not (srv.startswith(DOC_NETS) or srv in KNOWN_IPS):
+                    fails.append(f"{tag}:{i}: 节点 `server` 是非占位 IPv4 `{srv}`")
+                continue
+            if srv.startswith("["):               # IPv6 字面量：形态不归本条管
+                continue
+            if not any(a in srv for a in ALLOWED_DOMAINS):
+                fails.append(f"{tag}:{i}: 节点主机名 `{srv}` 不在允许清单内")
+    else:
+        in_proxy = False
+        for i, line in enumerate(text.splitlines(), 1):
+            # ①-d 走 Surge 的段结构：段名必须顶格才算数 ⇒ 这里自己补一次左裁
+            #   （`strip_c` 从 2026-09-25 起保留行首空白，那是给 YAML 的层级用的）。
+            s = line.strip()
+            if s.startswith("[Proxy]"):
+                in_proxy = True
+                continue
+            if s.startswith("[") and in_proxy:
+                in_proxy = False
+            if not in_proxy or not s or "=" not in s:
+                continue
+            rhs = s.split("=", 1)[1]
+            p = [x.strip() for x in rhs.split(",")]
+            if len(p) < 2:
+                continue
+            server = p[1]
+            if _IPV4.match(server) or server.startswith("["):
+                continue
+            if not any(a in server for a in ALLOWED_DOMAINS):
+                fails.append(f"{tag}:{i}: [Proxy] 里的节点主机名 `{server}` 不在允许清单内")
+
+# ① 的出声：扫了多少个文件、分几档，一次说清（扩面之前这里什么都不打 ⇒ 少扫一半看不出来）。
+# ⚠️ 此刻 `fails` 里只有 ① 的条目（②③④ 还没开始跑），所以用"有没有失败项"当"① 全过"的依据。
+if not fails:
+    oks.append("① 占位符纪律：%d 个 conf/yaml 全过五条子判据（当前版 %d · 归档 %d · 夹具 %d）"
+               % (len(SCAN), _kn["LIVE"], _kn["ARCHIVE"], _kn["FIXTURE"]))
 
 # ── ② DNS 段一致性：带注释版与 min 版的 DNS 相关键逐字相同 ─────────────────
 DNS_KEYS = [

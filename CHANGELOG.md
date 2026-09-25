@@ -525,6 +525,50 @@
   与 `docs/日志旧版原文.md`（读数快照 / 历史存档）、`config_old/` 全部归档（含归档 profile 里的旧精确数 ——
   那是当时的口径，改它等于篡改历史）。
 
+### 共享层
+
+- 🔒 **A-1：`architecture.sh` 的 ① 占位符纪律从「Surge 顶层那几份 `.conf`」扩到全仓 `.conf` +
+  `.yaml` / `.yml`**（**冻结 1 处·本轮授权**）。扫描面 = 全仓 walk 到的 **41 个文件**，分三档
+  （2026-09-25 实测：**当前版 8 · 归档 24 · 夹具 9**）：`LIVE`（两内核 `profiles/`）/
+  `ARCHIVE`（两侧 `config_old/`）/ `FIXTURE`（`skill/tests/**`）。**三档跑同一套五条子判据**，
+  档位只决定报错怎么点名（当前版 = 提交前该拦下 · 归档 = 已进历史、撤它必须改写历史 ·
+  夹具 = 合成文件被写脏）⇒ **归档不享豁免**。
+  **不改会漏掉什么**：`bump_version.py` 是**逐字节**把当前版复制进 `config_old/` 再提示 `git add` 的
+  ⇒ 本地工作副本里带着真实节点地址 / 真实凭据 / 真实订阅 token 时，一次升版提交就把它永久写进
+  git 历史，而扩面之前的这道判据对 Egern 侧与归档**一个字都不判**。
+  **反例（本轮在仓外假树实测）**：`git ls-files | xargs cp --parents` 复制整仓到 `relay-sc/A1-fake/`，
+  往 `egern/profiles/config_old/probe.yaml` 写 `server: 121.36.44.55` + `password: r3altokenvalue` +
+  `?token=Ab3xKp9qLm2nQz7w`，再放 `probe2.yaml` 写真实主机名 `vps-real-node.click` 与真实 sni
+  —— 这两份归档共 **7 处**，**改前脚本判负 0 处**（`17 passed, 4 failed`，那 4 处全在同树
+  `surge/profiles/probe_live.conf` 里，本来就在旧扫描面内）；**改后** `17 passed, 11 failed`
+  —— ① 判到 10 处（含上述 7 处），另一处是 ③ 顺带点名合成文件缺 `[Rule]` 段。
+  合规方向同时验过：真仓 41 个文件全过，① 出一条汇总行、不刷屏。
+- 🧩 两内核形态差异在实现里各落一条：凭据与 sni 判据同时吃 Surge 的 `k = v` 与 Egern 的 `k: v`
+  （①-c / ①-d）；Egern 的节点在 `proxies:` 块里 ⇒ 用「`proxies:` 开块、顶格键关块」跟踪块边界，
+  块内 `server` / `host` 值必须落在文档段 / 白名单 / 允许域名里。
+  ⚠️ 实现过程中踩到一处**静默失效**：`strip_c()` 原先连行首缩进一起裁 ⇒ `  server: 真实主机名`
+  被当成顶格键、`proxies` 块提前关闭 ⇒ Egern 侧 ①-d 整段不判。改为**只右裁不左裁**（YAML 的缩进
+  就是层级本身），并在判据行里补一次左裁；这条已写进 `checker.md` §7 与脚本注释。
+- 📐 白名单 `KNOWN_DNS` → `KNOWN_IPS`：扩面后从三档里**实际出现**的非文档 IPv4 逐个认下来，
+  只多 5 个（`223.6.6.6` / `1.12.12.12` / `120.53.53.53` 是公共解析器、`0.0.0.0` 是「监听全部
+  接口」的绑定占位、`127.0.0.1` 是本地 DNS / DoH 入口），其余判据三档全 clean。
+- 🚫 扫描面**刻意不用 `git ls-files`**：未提交的本地工作副本正是这道纪律要拦的东西 ——
+  靠索引清单就等于「只审已经交出去的文件」，而泄露发生在那之前。
+  另设前置：walk 不到任何 `LIVE` 文件时退回**退出码 2** 并明说「目录被挪走了，这**不是**没有敏感串」，
+  避免扩面后一次目录搬迁把「一条都没扫」伪装成「扫了且全绿」。
+- 📚 文档同步 5 篇 6 处（扩面后旧表述已不成立）：`docs/跨内核差异对照.md` 工具表里那句
+  「Surge 独有：拦占位 IP / 未替换凭据」改成「① 已扩到两内核 + 归档 + 夹具，②③④ 仍是 Surge 侧」；
+  `skill/reference/surge/checker.md` §7 ① 表新增「扫描面」行 + `strip_c` 只右裁的 ⚠️；
+  `skill/reference/surge/public-repo.md` §4.2 的「`architecture.sh` 只扫 `profiles/*.conf`」改为
+  「① 扫全仓 `.conf`/`.yaml`，但只认这两种扩展名，markdown 与 Python 仍需另扫」；
+  `skill/README.md` 命令注释、`docs/注意事项.md` 共享纪律行同口径各补一句。
+  **哪里没动**：② 的 DNS 段比对、③ 的规则顺序、④ 的组顺序三段扫描面**未扩**（仍只管 Surge 侧，
+  Egern 侧的对应不变量由 `skill/tests/egern/run.sh` 与第 3 项去注释对拍守着）；
+  `manual/` 13 篇与 `skill/reference/**` 这些 markdown **没有**进 ① 的扫描面（A-4 另批）；
+  四份当前版 profile、`config_old/` 全部归档、`make_min.py` / `bump_version.py` 零改动。
+  验收：`bash skill/tests/all.sh --offline` → 15 / 22 / 18 / 18 / 18 / 8 六项全绿，
+  真仓 ① 汇总行为「41 个 conf/yaml 全过五条子判据」；闸门自检如实提示「⚠️ 闸门被改动 1 处」。
+
 ## 2026-09-24
 
 ### Surge

@@ -292,7 +292,7 @@ bash skill/tests/surge/architecture.sh     # 占位符纪律 + DNS 段一致性 
 
 ### 4.2 全仓扫描（补一道）
 
-`architecture.sh` 只扫 `profiles/*.conf`。改 `docs/` / `skill/` 之后要另扫一遍：
+`architecture.sh` ① 现在扫的是**全仓** `.conf` / `.yaml`（含 Egern 侧与 `config_old/` 归档），但它只认这两种扩展名 —— `docs/`、`manual/`、`skill/` 里的 markdown 与 Python 仍需另扫一遍：
 
 ```bash
 grep -rn -iE '<你的私有域名|你的密码片段|你的用户名>' . \
