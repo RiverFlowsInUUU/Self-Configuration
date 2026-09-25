@@ -21,7 +21,7 @@ skill/                                      # 本 skill：SKILL.md（§0 判内�
   reference/{surge,egern}/ · scripts/{surge,egern}/ · tests/{surge,egern}/
 egern/profiles/lazy.yaml / lazy.min.yaml          # 懒人版 · 可选（3 组 / 10 条规则，AD 只留 REJECT、无 Final 兜底组（policy 直写 Proxy））
 egern/profiles/routing.yaml / .min.yaml           # 分流版 · 推荐（脱敏模板：无节点、无订阅、无证书；机场槽位 1 个）
-egern/profiles/config_old/                        # 历代版本按号留档、各含 `.min`，不参与检查：
+egern/profiles/config_old/                        # 历代版本按号留档、各含 `.min`，不参与检查（例外：`architecture.sh` ① 连归档一起扫）：
                                                   #   v2.4（v3 前一版）· v2.3（与 v2.4 只差 rule_set 的 update_interval）
                                                   #   v2.2（4 处修正）· v2.1（机场槽位 4 vs 2）· v2（多 52 行「值等于默认值」的冗余行）
                                                   #   v1（分流线起点，dns 段较冗长、功能等价）· lazy_v1.0（懒人版快照）

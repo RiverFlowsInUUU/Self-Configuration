@@ -70,7 +70,7 @@ Surge iOS 不支持本地文件配置 —— 把 profile 托管到可访问地�
 | `hijack-dns` / `hijack_dns` | 把发往 `:53` 的查询收进本地（拦不住走 443 / 853 的 DoH、DoT） |
 | Fake IP / `always-real-ip` / `real_ip_domains` | 接管 DNS 后返回假 IP 省一次握手；例外清单里的主机名拿真实 IP（游戏机 / NTP / APNs） |
 | 直连可达 | 兜底上游组的判据：端点全 IP 字面量，且不经代理就能问到答案（`group_reach`） |
-| 固定名 / 归档版 | 顶层四个永久订阅文件名 / `config_old/` 里退役的旧版（不参与任何检查） |
+| 固定名 / 归档版 | 顶层四个永久订阅文件名 / `config_old/` 里退役的旧版（不参与检查；例外：`architecture.sh` ① 连归档一起扫） |
 | 完整版 / `.min` | 带注释的读改版 / 生成的纯配置导入版 |
 | 闸门（gate） | `skill/tests/all.sh` 一条命令串起全部本地检查；默认档判"判据过了"，`--landed` 判"这批落地" |
 | `audit-waive` | profile 里有语义的豁免注释：`# audit-waive: <编号> <理由>` |
