@@ -84,6 +84,11 @@ TOOL_ANCHOR = "check_tools.py"
 # 为什么单列一条：那两个数（`AGENTS.md §1` 的「固定 18 条规则」「固定 11 条规则」）此前
 # 没有任何判据拿它比本轮实测 —— 加一条规则、数字忘了改，静默陈旧（2026-09-25 定）。
 RULE_DECL = re.compile(r"固定\s*(\d+)\s*条规则")
+# 治 gate1 静默丢（2026-09-25 对拍审问题 2）：有人在锚点行把「固定 18 条规则」改写成
+# 「固定 11 条」（漏了单位词「规则」），`RULE_DECL` 不匹配 ⇒ 整行在 gate1 前 `continue` 掉，
+# 连 skipped 都不进 ⇒ C6 命中数 6→5 仍绿（E4b）。这条**只配合锚点行**用的宽松式专门接这种
+# "带锚点却漏单位词"的声明，折进 decls 按本轮实测判红——不靠"命中数下限"那种一改文档就抖的脆判据。
+RULE_LOOSE = re.compile(r"固定\s*(\d+)\s*条")
 # ⚠️ 锚点要**同时**认脚本名与类别短语：`AGENTS.md §1` 里那两个数与脚本名**换了行**
 #    （数字在 :34 / :35，脚本名在 :36 / :37），只按脚本名锚定会一条都命中不了 ——
 #    实测：C6 第一次上线就报「check_doc_readings.py 一处声明都没有 ⇒ 判据空转」。
@@ -97,18 +102,22 @@ def find_rule_decls(text, rel):
 
     同一行命中多个锚点只算一次；认不出归属的**不静默**（进 skipped，末尾照常报「跳过 N 处」）——
     例：`docs/跨内核差异对照.md` 里那句「它报的是固定 18 条规则通过与否」只有代词、没有锚点。
+    ⚠️ 锚点行写了「固定 N 条」却漏单位词「规则」的，折进 decls 按实测判（治 E4b 的 gate1 静默丢）。
     """
     decls, skipped = [], []
     for i, line in enumerate(text.splitlines(), 1):
-        if not RULE_DECL.search(line):
-            continue
         keys = [k for k, anchors in RULE_ANCHORS if any(a in line for a in anchors)]
-        if not keys:
-            skipped.append("%s:%d 「固定 N 条规则」认不出归属（同行既无脚本名也无类别短语，只报不判）"
-                           % (rel, i))
-            continue
-        for key in keys:
-            decls.extend((i, key, int(m.group(1))) for m in RULE_DECL.finditer(line))
+        if RULE_DECL.search(line):
+            if not keys:
+                skipped.append("%s:%d 「固定 N 条规则」认不出归属（同行既无脚本名也无类别短语，只报不判）"
+                               % (rel, i))
+                continue
+            for key in keys:
+                decls.extend((i, key, int(m.group(1))) for m in RULE_DECL.finditer(line))
+        elif keys and RULE_LOOSE.search(line):
+            # 带锚点、有「固定 N 条」、却漏「规则」二字 ⇒ 静默漏判的漂移声明，折进来判红。
+            for key in keys:
+                decls.append((i, key, int(RULE_LOOSE.search(line).group(1))))
     return decls, skipped
 
 KERNEL_KEYS = ("surge", "egern")

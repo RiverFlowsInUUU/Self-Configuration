@@ -346,11 +346,11 @@ def kern_of(line, path):
 
 
 # ── D18 的两个声明模式（scan 与行内判别自证共用同一份，防止"自证测的不是在用的正则"）────
-# 判别**只靠同行语义锚，不靠距离参数**（2026-09-25 三轮对拍审的边界实测：「个」↔「逐字相同」
-# 之间正好隔 ` URL ` = 5 字符 ⇒ `{0,4}` 只是碰巧安全，谁顺手放宽一位，分流版的 21 就会
-# 被喂进懒人版的期望值 6 ⇒ 对着正确的文档报假红。与 D18 头注里"扩正则拿错口径"同型陷阱，
-# 只是换到了参数位 —— 所以这里的分工是：SHARED_A 吃「份…共用规则集」与「N 个 URL」，
-# SHARED_B 只吃**紧邻**的「N 个逐字相同」，且两个 filter 各自要求同行语义锚。）
+# 判别**只靠同行语义锚，不靠距离参数**。上一轮注释说「个↔逐字相同正好隔 ` URL ` = 5 字符 ⇒
+# {0,4} 只是碰巧安全」—— 那是**过期理由**：`expected` 现已按 `form_of` 分形态取数（分流→21/懒人→6），
+# 所以即便 SHARED_B 吃到分流版的「21 个 URL 逐字相同」，期望值也是 21 不是 6，不会假红。
+# 真正的分工是：SHARED_A 吃「份…共用规则集」与「N 个 URL」，SHARED_B 吃「N 个逐字相同」，
+# 两个 filter 各自要求同行语义锚；分流/懒人靠 `form_of` 分流取数，不靠距离参数防串台。）
 SHARED_A_RX = re.compile(r"(\d+)\s*份[^。\n]{0,8}共用规则集|(\d+)\s*个\s*URL")
 
 
@@ -365,7 +365,12 @@ SHARED_B_RX = re.compile(r"(\d+)\s*个\s*逐字相同")
 
 
 def _shared_b_filter(line):
-    return "懒人版" in line or "lazy" in line.lower()
+    # 形态词同行才吃（分流版→shared_routing / 懒人版→shared_lazy）。
+    # 光有「N 个逐字相同」不带形态词 ⇒ 判不出比哪一形态，跳过（无锚措辞不误伤）。
+    # ⚠️ 上一轮这里只认懒人版，分流版一旦不写 URL（`docs/规则集与来源:4` 的「21 个 URL 逐字相同」
+    #    被简写成「20 个逐字相同」）就整行漏判 —— 命中数 3→2 仍绿（E3 静默漏判）。补分流版形态词。
+    return ("懒人版" in line or "分流版" in line
+            or "lazy" in line.lower() or "routing" in line.lower())
 
 
 def candidates(m, kern, form, kind):
@@ -417,6 +422,7 @@ def scan(docs, m):
     hits = {k: 0 for k in ("groups", "rules", "rulesets", "files", "icons", "items", "deadref",
                           "dns_keys", "stages", "fixtures", "totals", "checker", "shared")}
     bad, skipped = [], []
+    skipped_seen = set()   # 行级去重：同一 (文件, 行, kind) 只记一处（finditer 一行匹配多个数会重复）
 
     RULES = [
         # ⚠️ 措辞要放宽：`26 个策略组图标` / `26 个分流组图标` / `26 个图标` 三种写法都在仓里
@@ -486,8 +492,11 @@ def scan(docs, m):
                             bad.append("%s:%d [%s] 两侧实测已分叉 %s，文档写 %s ｜ %s"
                                        % (rel, i, kind, " ".join(cands), g, line.strip()[:70]))
                         else:
-                            skipped.append("%s:%d [%s] `%s`（形态/内核判不出）"
-                                           % (rel, i, kind, line.strip()[:60]))
+                            _sk = (rel, i, kind)   # 行级：同一行同类只记一处（治 skipped 双报）
+                            if _sk not in skipped_seen:
+                                skipped_seen.add(_sk)
+                                skipped.append("%s:%d [%s] `%s`（形态/内核判不出）"
+                                               % (rel, i, kind, line.strip()[:60]))
                         continue
                     if str(want).isdigit() and int(g) != int(want):
                         bad.append("%s:%d [%s] 文档写 %s，实测 %s ｜ %s"
@@ -581,6 +590,12 @@ def main():
         _sp_bad.append("分流版真话被判红")
     if not _shared_check("分流版两侧 %d 个 URL 逐字相同" % (m["shared_routing"] + 1)):
         _sp_bad.append("分流版改数没判红")
+    # E3（本轮补）：分流版**不写 URL** 的简写措辞也要判得到 —— 上一版 SHARED_B 只认懒人版，
+    # 「分流版 20 个逐字相同」整行漏判、命中数 3→2 仍绿。扩形态词后必红。
+    if _shared_check("分流版两侧 %d 个逐字相同" % m["shared_routing"]):
+        _sp_bad.append("分流版漏 URL 的真话被判红")
+    if not _shared_check("分流版两侧 %d 个逐字相同" % (m["shared_routing"] + 1)):
+        _sp_bad.append("分流版漏 URL 改数没判红（E3 静默漏判）")
     if _shared_check("懒人版两侧 %d 个逐字相同" % m["shared_lazy"]):
         _sp_bad.append("懒人版真话被判红")
     if not _shared_check("懒人版两侧 %d 个逐字相同" % (m["shared_lazy"] + 1)):
@@ -589,7 +604,7 @@ def main():
         _sp_bad.append("无锚措辞被误吃")
     sub = [b for b in bad if "[shared]" in b]
     n = hits.get("shared", 0)
-    ck("%s（命中 %d 处声明 · 含判别自证：分流/懒人真话不红 · 改数必红 · 无锚措辞不误伤）"
+    ck("%s（命中 %d 处声明 · 含判别自证：分流/懒人真话不红 · 改数必红 · 分流版漏 URL 也判得到 · 无锚措辞不误伤）"
        % (NAMES["shared"], n), not sub and n > 0 and not _sp_bad,
        "；".join(["\n      " + x for x in (sub[:6] + _sp_bad)]))
     ck("D7 本仓自托管 URL 的落点存在（%d 个）" % len(m["self_urls"]), not m["self_missing"],
