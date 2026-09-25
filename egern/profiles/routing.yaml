@@ -350,7 +350,7 @@ policy_groups:
 # ⚠️ 这 6 个地区组（+ 末尾的 Other Regions）的关键词是**两份拷贝**：
 #    每个地区组写自己的 filter，而 Other Regions 的负向断言把它们的全部关键词又抄了一遍。
 #    **改任何一个地区组的关键词，都要同步改 Other Regions。**
-#    校验：`python skill/scripts/egern/audit_region_filters.py egern/profiles/routing_v3.2.yaml`
+#    校验：`python skill/scripts/egern/audit_region_filters.py egern/profiles/routing.yaml`
 # ================================================================
 - smart:
     name: Hong Kong
@@ -407,7 +407,7 @@ policy_groups:
     # 漏改的后果：该关键词不再被负向断言排除 ⇒ 属于那个地区的节点会**同时**出现在
     # 它自己的地区组和 Other Regions 里，两个组的内容不再互斥。
     #
-    # 自动校验：`python skill/scripts/egern/audit_region_filters.py egern/profiles/routing_v3.2.yaml`
+    # 自动校验：`python skill/scripts/egern/audit_region_filters.py egern/profiles/routing.yaml`
     #   它会把 6 个地区组的关键词集合与下面这段负向断言逐个比对，报出缺失项。
     #   ⚠️ 这段无法靠 YAML 变量消除（Egern 不支持 filter 引用），只能靠脚本守。
     # ================================================================

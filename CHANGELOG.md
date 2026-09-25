@@ -653,6 +653,13 @@
   **哪里没动**：正文一字未改；`surge/docs/04-模板逐段讲解.md:393` 的「想让配置更轻？」**保留** ——
   它是「想让 X？就做 Y」的条件式指令，不属讲课式提问。验收：全仓 live md 跳级 1 → 0、含「？」标题
   2 → 1（即上属保留项）· `all.sh --offline` 六项全绿（D 族与链接/锚点面覆盖 `skill/reference/**`）。
+- 🩹 三处 profile 头注里的校验命令改指现役固定名：`surge/profiles/routing.conf:294` 的
+  `routing_v3.2.conf` → `routing.conf` · `egern/profiles/routing.yaml:353` 与 `:410` 的
+  `routing_v3.2.yaml` → `routing.yaml`。这三条此前照抄必失败 —— 订阅地址固定化后带版本号的
+  profile 路径已不存在（实测 `❌ 找不到文件`），改后两侧实测退出码 0。
+  **哪里没动**：配置本体、`#! version=routing_v3.2` 头行与文内版本号提法（那不是路径引用）；
+  同族第 4 处 `skill/tests/bump_version.py:24` 是冻结件，另走人工裁决。
+  验收：`all.sh --offline` 六项全绿。
 
 ## 2026-09-24
 
