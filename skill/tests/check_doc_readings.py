@@ -9,6 +9,9 @@
   这一项把它变成一条命令：不吻合就直接点名「哪个文件第几行写的 24，实测 23」。
 
 固定规则清单（每条 = 1 个断言，**共 18 条、不随文件数增长**）：
+  🆕 2026-09-25 A-4：扫描面从「`LIVE` 逐篇点名的 13 篇」扩到 `LIVE` + `manual/**/*.md` +
+     `skill/reference/**/*.md`（通配，见 `LIVE_GLOBS`）⇒ 新增一篇手册/参考文档**自动在闸里**。
+     判据条数不变（新落的两处扩展 —— 徽章两类数、审计器编号引用 —— 都折进已有那条 ck）。
     D0 两内核逐位对齐：组数 / 规则条数 / 规则集条数 三对 × 两形态必须相等（抓"只动了一侧"）
     D1 策略组数      —— 「N 组 / N 个策略组」类声明 == 实测组数
                       🆕 含 README 门面上 `Groups` 徽章里的两个数（A-11：URL 参数里的数，
@@ -39,6 +42,9 @@
     D16 TOTAL 槽位数  —— 「N 个 TOTAL」== `all.sh` 里 `MEASURED+=(` 的个数（**现算**）
     D17 surge 审计器判据数 —— 「N 项审计清单 / 判据 / 检查」== `check_surge_dns.py` 里 `def check_N_` 的
                       个数（**现算**）。含 egern 的行不判（那句「Egern 18 项」指的是加固清单，D15 管）
+                      🆕 A-4 折进同一条 ck：文档写「`check_surge_dns.py` 第 N 项」时 N 必须在
+                      `def check_N_` 的**编号集合**里（只比个数会漏「删掉一号、文档仍指它」）。
+                      只认同行带工具名的，三查自证见 `checker_ref_selfproof()`。
     D18 共用规则集份数 —— 「N 份…共用规则集」/「N 个 URL」/「懒人版 N 个逐字相同」== 两侧同形态规则集
                       URL 的**交集**（**现算**：分流版 21 / 懒人版 6，**含被注释的 `Proxy.list`** ——
                       文档承诺的是 URL 集合层面"逐字相同"，不是活跃规则数；与 D3 的"每形态引用数"
@@ -80,8 +86,17 @@ LIVE = ["README.md", "AGENTS.md", "docs/注意事项.md", "docs/规则集与来�
         "egern/docs/08-审计读数.md", "surge/DetailsReadme/DetailsReadme.md",
         "egern/DetailsReadme/DetailsReadme.md",
         "skill/reference/surge/public-repo.md", "skill/reference/egern/public-repo.md"]
+# 🆕 A-4（2026-09-25）：权威操作层与参考层用**通配**接进来，不再逐篇点名。
+#    为什么必须用通配：这一族判据的前提就是「文档写了一个数、闸门得知道」，
+#    逐篇点名的话，每加一篇文档就把那条路重新敞开一次（事实即如此：`manual/` 落进仓那天起，
+#    13 篇一篇都不在 LIVE 里，而没有任何一条判据会因为「整层没进名单」出声）。
+#    实测（同一份代码，只把 LIVE_GLOBS 置空 = 扩面前）：扫描 13 → 35 篇 ·
+#    命中 185 → 254 处 · 比较 60 → 70 处 · 判负 0 ⇒ 这些文档今天说的是真话，
+#    但此前**没有任何一条判据知道**。
+LIVE_GLOBS = ("manual/**/*.md", "skill/reference/**/*.md")
 # 排除关键词：文件路径里含这些片段的整篇不扫（历史记录，旧数字是对的）
-HISTORY = ("日志旧版原文", "CHANGELOG", "体检报告", "/docs/07-")
+#    🆕 `manual/99-版本历史.md` 同此一类：那一章通篇在讲"当时是什么状态"，旧数在那儿是对的。
+HISTORY = ("日志旧版原文", "CHANGELOG", "体检报告", "/docs/07-", "manual/99-")
 # 固定名四件 = 永久订阅地址；头注所在 = 这四件（.min 形态由对拍器保证与完整版同内容，不再单独钉版本）
 FIXED_NAMES = {"routing.conf", "routing.min.conf", "lazy.conf", "lazy.min.conf",
                "routing.yaml", "routing.min.yaml", "lazy.yaml", "lazy.min.yaml"}
@@ -171,10 +186,25 @@ def is_live(path):
 
 def live_docs():
     out = []
-    for rel in LIVE:
+    rels = list(LIVE)
+    for g in LIVE_GLOBS:
+        for p in glob.glob(os.path.join(ROOT, g.replace("/", os.sep)), recursive=True):
+            rels.append(os.path.relpath(p, ROOT).replace("\\", "/"))
+    for rel in sorted(set(rels)):
         p = os.path.join(ROOT, rel)
         if os.path.isfile(p) and is_live(rel):
             out.append((rel, p))
+    # ⚠️ 通配面**空转**要出声：`manual/` 整层被挪走时 `glob` 安静地返回空 ⇒ 扫描面缩水到
+    #    看起来和昨天一样绿。与 `architecture.sh` ① 的「walk 不到 LIVE 就退出码 2」同一条纪律。
+    for g in LIVE_GLOBS:
+        # ⚠️ 判的是**这条通配自己**扫到没有，不能判「扫描面里有没有这个目录前缀」——
+        #    `skill/reference/**` 的前缀 `skill/` 下面还躺着 `skill/README.md`，那样判等于永不发声。
+        got = [os.path.relpath(x, ROOT).replace("\\", "/")
+               for x in glob.glob(os.path.join(ROOT, g.replace("/", os.sep)), recursive=True)]
+        if not [r for r in got if is_live(r)]:
+            print("❌ 前置：通配", g, "一篇活的都没扫到 —— 整层被挪走了，"
+                  "这不是「没有漂移」。", file=sys.stderr)
+            sys.exit(2)
     return out
 
 
@@ -236,10 +266,12 @@ def measure():
         m["%s_fixtures" % _kern] = len([
             l for l in (_cases.group(1).splitlines() if _cases else []) if l.strip()])
     # TOTAL 槽位：`all.sh` 里 `MEASURED+=(...)` 的个数（现算）。文档里那句「本轮六个 TOTAL」归它管。
-    m["checker_criteria"] = len(re.findall(
-        r"^def check_(\d+)_",
-        open(os.path.join(ROOT, "skill", "scripts", "surge", "check_surge_dns.py"),
-             encoding="utf-8").read(), re.M))
+    _csd = open(os.path.join(ROOT, "skill", "scripts", "surge", "check_surge_dns.py"),
+                encoding="utf-8").read()
+    # 编号**集合**（不只是个数）：A-4 的另一半判据判的是「文档写 `第 N 项`，而审计器里没有
+    # 这个号」。只比个数的话，检查号 12 被删掉、文档仍写「第 12 项」就悄悄悬空了。
+    m["checker_ids"] = sorted({int(x) for x in re.findall(r"^def check_(\d+)_", _csd, re.M)})
+    m["checker_criteria"] = len(m["checker_ids"])
     m["totals"] = len(re.findall(r"MEASURED\+=\(",
                                 open(os.path.join(ROOT, "skill", "tests", "all.sh"),
                                      encoding="utf-8").read()))
@@ -405,6 +437,42 @@ def _badge_line(label, a, b):
             "?style=flat-square)](x)" % (label, label, a, b))
 
 
+# ── A-4 的另一半：文档引用 `check_surge_dns.py` 第 N 项 ⇒ N 必须是真有的编号 ──────────
+# ⚠️ **只认同行带工具名的**。手册里还有「第 3 项 / 第 12 项」这种不带工具名的写法
+#    （`manual/07-故障排查.md` 那张表的第三列），同一列里混着 `all.sh` 的项数、加固清单编号
+#    与审计器编号 —— 靠行内词分不开 ⇒ 判了必误伤，本轮**刻意不判**（宁可少判），
+#    并把这条缺口写进 CHANGELOG。
+CHECKER_TOOL_ANCHOR = "check_surge_dns.py"
+CHECKER_ITEM_RX = re.compile(r"第\s*(\d+)\s*项")
+
+
+def checker_ref_nums(line):
+    """这一行里指向审计器检查项的编号；行内不带工具名 ⇒ 返回空。"""
+    return ([int(x.group(1)) for x in CHECKER_ITEM_RX.finditer(line)]
+            if CHECKER_TOOL_ANCHOR in line else [])
+
+
+def checker_ref_problems(m, line):
+    """行内判别自证与 `scan()` **共用**这一份（自证测的必须是在用的判据）。"""
+    return [n for n in checker_ref_nums(line) if n not in m["checker_ids"]]
+
+
+def checker_ref_selfproof(m):
+    """三查（D15 / D18 / 徽章先例）：① 真话不红 · ② 编错号必红 · ③ 不带工具名不误伤。"""
+    hi = max(m["checker_ids"])
+    ok = "`check_surge_dns.py` 第 %d 项专查这条" % hi
+    bad_ = "`check_surge_dns.py` 第 %d 项专查这条" % (hi + 1)
+    bare = "第 %d 项专查这条" % (hi + 1)
+    out = []
+    if _scan_line(m, ok, "checker"):
+        out.append("① 真实编号的引用被判红")
+    if not _scan_line(m, bad_, "checker"):
+        out.append("② 引用不存在的编号没判红（这条模式空转）")
+    if _scan_line(m, bare, "checker"):
+        out.append("③ 不带工具名的「第 N 项」被误吃")
+    return out
+
+
 def candidates(m, kern, form, kind):
     """这一类声明在当前行的定位下，实测值可能是哪些。"""
     if kind == "dns_keys":
@@ -555,7 +623,8 @@ def scan(docs, m):
     """返回 (checks, bad, skipped, compared)：checks 是「每条规则命中几处声明」，
     compared 是其中**真的走到与实测比**那一步的命中数（与 hits 同单位：逐命中）。"""
     hits = {k: 0 for k in ("groups", "rules", "rulesets", "files", "icons", "items", "deadref",
-                          "dns_keys", "stages", "fixtures", "totals", "checker", "shared")}
+                          "dns_keys", "stages", "fixtures", "totals", "checker", "shared",
+                          "checker_ref")}
     compared = {k: 0 for k in hits}   # 逐命中：与 hits 同单位（同一行两个同类数 = 2 处）
     bad, skipped = [], []
     skipped_seen = set()   # 行级去重：同一 (文件, 行, kind) 只记一处（finditer 一行匹配多个数会重复）
@@ -644,6 +713,16 @@ def scan(docs, m):
                     if str(want).isdigit() and int(g) != int(want):
                         bad.append("%s:%d [%s] 文档写 %s，实测 %s ｜ %s"
                                    % (rel, i, kind, g, want, line.strip()[:70]))
+            # `check_surge_dns.py 第 N 项`（A-4）：编号必须真实存在。计数走 `checker_ref` 这个
+            # 独立键（不混进 `checker` 的「N 项审计清单」声明数，那是两种口径），但判负行
+            # 统一打 `[checker]` 标签 ⇒ 归 D17 那条 ck 收尾，判据条数不变。
+            _crn = checker_ref_nums(line)
+            hits["checker_ref"] += len(_crn)
+            compared["checker_ref"] += len(_crn)
+            for _n in checker_ref_problems(m, line):
+                bad.append("%s:%d [checker] 文档引用 check_surge_dns.py 第 %d 项，"
+                           "实测编号 %s ｜ %s"
+                           % (rel, i, _n, m["checker_ids"], line.strip()[:70]))
             # README 徽章（A-11）：一行两个数，左 Surge｜右 Egern、形态分流版（见 BADGE_RX 注释）。
             # 计数记在 groups / rules 这两类上 ⇒ D1/D2 的**判据条数不变**（全仓「18 条」的表述不改）。
             for mm in BADGE_RX.finditer(line):
@@ -729,12 +808,18 @@ def main():
         #    判据条数不变（全仓「18 条」的表述有 19 处、其中 4 处被 C6 锚住，单立第 19 条
         #    等于把这 4 处同时改红，属维护者裁决面）。
         cmp_n = compared.get(kind, 0)
-        proof = k3_selfproof(m, kind) if kind in K3 else []
+        proof = (k3_selfproof(m, kind) if kind in K3
+                 else checker_ref_selfproof(m) if kind == "checker" else [])
+        _tail = ""
+        if kind in K3:
+            _tail = (" · 含判别自证：真话不红 · 改数必红 · 跨形态差不算分叉 · 单边改坏必红"
+                     + (" · 徽章两类数左右各判一次" if kind in BADGE_KIND.values() else ""))
+        elif kind == "checker":
+            _tail = (" · 另判 `check_surge_dns.py 第 N 项` 引用 %d 处"
+                     "（编号须真实存在 · 自证：真话不红 · 编错号必红 · 不带工具名不误吃）"
+                     % hits.get("checker_ref", 0))
         ck("%s（命中 %d 处声明 ｜ 实际比较 %d 处%s）"
-           % (NAMES[kind], n, cmp_n,
-              (" · 含判别自证：真话不红 · 改数必红 · 跨形态差不算分叉 · 单边改坏必红"
-               + (" · 徽章两类数左右各判一次" if kind in BADGE_KIND.values() else ""))
-              if kind in K3 else ""),
+           % (NAMES[kind], n, cmp_n, _tail),
            not sub and n > 0 and (kind in NO_CMP or cmp_n > 0) and not proof,
            "\n      " + "\n      ".join(sub[:6] + proof))
 
