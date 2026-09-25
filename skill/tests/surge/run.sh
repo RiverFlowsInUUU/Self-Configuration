@@ -84,7 +84,7 @@ fi
 if [ ! -f "$PROFILES/$CURRENT.conf" ]; then
   printf '\n❌ 前置检查失败：%s 在 %s 里不存在（订阅地址是永久承诺，这个名字不能被挪走或改名）\n' "$CURRENT.conf" "$PROFILES" >&2
   printf '   顶层现存：%s\n' "$(ls "$PROFILES" | tr '\n' ' ')" >&2
-  printf '   ⇒ 存档版在 %s/config_old/ 里，不参与检查；要恢复当前版就从那里放回固定名。\n' "$PROFILES" >&2
+  printf '   ⇒ 存档版在 %s/config_old/ 里，不参与检查（指回归与读数类；`architecture.sh` ① 全仓扫描面除外）；要恢复当前版就从那里放回固定名。\n' "$PROFILES" >&2
   exit 2
 fi
 

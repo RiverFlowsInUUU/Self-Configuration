@@ -82,6 +82,22 @@
   （本条落地 commit 的父件）对照 `grep -c "同族" manual/11-许可与图标.md docs/图标与许可.md` 两文件各 ≥1 ·
   `ls icons/ | wc -l` = 26 · `git show --name-status $(git log --grep "图标命名风格" --format=%H -1)` 恰三件且无 R 行 ⇒ 零改名；
   `bash skill/tests/all.sh --offline` 退出码 0 · 判据行「✅ 判据全过 · 6 项」+「✅ 闸门未被动过（冻结 12 个文件）」在场。
+- 🔒 **闸门冻结件内三处「归档不参与」绝对断言补例外（q6）**：`skill/tests/all.sh` 头注、`skill/tests/surge/run.sh`
+  缺文件报错的 printf 文案、`skill/tests/bump_version.py` 头注三处写「（任何）不参与检查」，与 `architecture.sh` ①
+  实扫 41 个 conf/yaml（当前版 8 · 归档 24 · 夹具 9）直接相悖。统一对齐 q1 已落地的 `AGENTS.md:126` 句式：
+  「不参与检查」后补限定「指回归与读数类；唯一例外是 `architecture.sh` ①」，各处按自身语境微调、不发明新口径。
+  **没动**：另两处省略宾语的「`config_old/` 归档不参与」（`check_doc_readings.py:133` · `egern/run.sh:154`，
+  各自局部成立、用户未批）· 逻辑行 / 判据数 / 阈值 / glob / 退出码 / printf 参数表一概未动（`run.sh` 该串 `%s`
+  仍 1 个、`exit 2` 逐字未动）· 根 README · `architecture.sh` 本体。**授权口径**：本轮特定授权（用户 2026-09-26 裁
+  「1 批准」，范围 = 只此三行文字），冻结 12 件名单不作废，下一轮再动闸门文件仍须重新请示。
+  **验收**（取数件写死为本条落地 commit 的父件 `22804f1` 与工作区，现势可跑）：
+  `grep -rn "不参与任何检查" skill/tests/ | wc -l` = 0（改前基线 2）·
+  `grep -rn "不参与任何检查\|不参与检查" skill/tests/ .gitattributes | wc -l` = 3（「不参与检查」短语三处保留）·
+  非破坏式判别 `git show 22804f1:skill/tests/all.sh | grep -c "不参与任何检查"` = 1 对照工作区同命令 = 0 ·
+  `bash skill/tests/surge/architecture.sh | grep "①"` 仍报 41（8 · 24 · 9）⇒ 口径改动不碰判据本身 ·
+  `bash skill/tests/all.sh --offline` 退出码 0，**提交后·推送前**读数为「⚠️  闸门被改动 3 处 —— AGENTS.md §2 第 5 条：
+  改前先请示维护者，并附「不改会漏掉什么」的反例」逐条点名那三件 —— 此 ⚠️ 是预期读数而非判负（该自检只列不判负），
+  推送后同一行回到「✅ 闸门未被动过（冻结 12 个文件）」，那只表示"无待推的闸门改动"、不表示"这批没改过闸门文件"。
 
 ---
 

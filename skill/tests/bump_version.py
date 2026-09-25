@@ -19,7 +19,7 @@
               （从前是三处 runner 各一行 `CURRENT=`，改一漏二）
       · 自增规则：小数点后加一个数（3.2 → 3.3）；到 x.9 进位成 (x+1).0；只保留一位小数
       · 订阅端：**不需要再改地址**
-    归档不参与任何检查（检查路径上的 glob 都是非递归的），所以升版不会让回归越跑越慢。
+    归档不参与检查（回归与读数类的 glob 都是非递归的；`architecture.sh` ① 例外，它全仓 walk），所以升版不会让回归越跑越慢。
     要复核某一版的行为，带着路径直接调对应脚本，例如
     `python skill/scripts/surge/check_surge_dns.py surge/profiles/config_old/routing_v3.2.conf`。
 
