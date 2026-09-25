@@ -23,16 +23,19 @@
   `skill/reference/surge/public-repo.md` · `skill/reference/egern/public-repo.md`。
   **没动**：判据与冻结文件零改动（同措辞另有 3 处在 `skill/tests/all.sh` / `surge/run.sh` /
   `bump_version.py` 内，属闸门 ⇒ 未碰，另行请示维护者）· profile 零改动 · 活层命中数仍是 7（只加限定语）。
-  **验收**：`grep -rn "不参与检查" --include="*.md" .` 的活层 7 行经 `grep -v "architecture.sh"` 后输出 0 行；
-  判别自证 —— 临时去掉 `docs/注意事项.md` 的限定语后该行立即被点名，还原后归 0；`bash skill/tests/all.sh --offline`
-  ALL GREEN · 退出码 0 · 末行「闸门未被动过（冻结 12 个文件）」。
-- 🔐 `SECURITY.md` 首段「由仓内判据在每次提交前把关」改为「由仓内判据把关：提交前在本地跑
+  **验收**：`grep -rn "不参与检查" --include="*.md" AGENTS.md docs manual skill | grep -v "architecture.sh"`
+  输出 0 行（活层那 7 行逐件带 `architecture.sh` ① 的限定语：`AGENTS.md` · `docs/注意事项.md` ·
+  `docs/跨内核差异对照.md` · `manual/04-Egern操作.md` · `manual/10-FAQ与术语表.md` · 两份 `public-repo.md`；
+  去掉末段管道则是 7）；判别自证 —— 临时去掉 `docs/注意事项.md` 的限定语后该行立即被点名，还原后归 0；
+  `bash skill/tests/all.sh --offline` 退出码 0 · 判据行「✅ 判据全过 · 6 项 · 12s —— 但状态未落地（未提交 8 · 落后 0 · 未推送 0）」，
+  「✅ 闸门未被动过（冻结 12 个文件）」在场（它不是末行，末行是「这还不算完成：提交、推送后跑 …--landed 复核这批」）。
+- 🔐 **把关卡子改回人工本地闸（q2）**：`SECURITY.md` 首段「由仓内判据在每次提交前把关」改为「由仓内判据把关：提交前在本地跑
   `bash skill/tests/all.sh`（本仓刻意不挂 CI，见 `AGENTS.md` §2 第 1 条）」——本仓没有 CI，
   把关是人在本地跑的一条命令闸，原句把人工动作写成了提交前自动执行。
   **没动**：`SECURITY.md` 其余三节与标题 · `skill/tests/` 与 profile 零改动 · 判据零改动。
   **验收**：`grep -n "每次提交前\|自动" SECURITY.md` 输出 0 行、`grep -n "skill/tests/all.sh" SECURITY.md`
   命中 1 行；判别自证——临时还原原句后前者立刻命中 1 行，还原归 0；`bash skill/tests/all.sh --offline`
-  退出码 0 · 末行「✅ 判据全过 · 6 项」+「闸门未被动过（冻结 12 个文件）」。
+  退出码 0 · 判据行「✅ 判据全过 · 6 项」+「闸门未被动过（冻结 12 个文件）」。
 - 🧭 **Egern 侧「闸外脚本」清单改指现算源（q3）**：`skill/reference/egern/public-repo.md` 原写
   「一条命令 + 6 个审计脚本」并逐个点名五个，而其中四个自 2026-09-25 起已在 `skill/tests/egern/run.sh`
   阶段 2 内、闸内的 `audit_ruleset_refresh.py` 反而没列 ⇒ 照文档手敲是重复跑且漏一项。现改两层指向：
@@ -43,9 +46,29 @@
   「刻意不挂 CI」的 2026-09-21 决定与原语气 · 判据零改动（双口径那条是刻意撤判，不补判）· 冻结文件零改动。
   **验收**：`grep -n "check_egern_dns.py" skill/reference/egern/public-repo.md` 输出 0 行、
   `grep -n "check_tools.py" skill/reference/egern/public-repo.md` ≥1 行；`bash skill/tests/all.sh --offline`
-  退出码 0 · 末行「✅ 判据全过 · 6 项」+「✅ 闸门未被动过（冻结 12 个文件）」在场（第 5 项扫 `skill/reference/**/*.md` 不因此变红）；
+  退出码 0 · 判据行「✅ 判据全过 · 6 项」+「✅ 闸门未被动过（冻结 12 个文件）」在场（第 5 项扫 `skill/reference/**/*.md` 不因此变红）；
   `python skill/tests/check_tools.py` ⇒ `TOTAL: 8 passed, 0 failed`；判别自证走非破坏式
   `git show <commit>^:<path> | grep` —— 旧清单必命中、新文案必 0。
+- 🧾 **今天段三条读数的更正与一条形制对齐（q5）**：q1 条的验收命令原写「`grep -rn "不参与检查" --include="*.md" .`
+  的活层 7 行经 `grep -v "architecture.sh"` 后输出 0 行」——原样敲不得 0 行：全仓式取数在同一天两次实测分别得
+  21 与 24 行，多出的全落在循环盘存档与本日志自身 ⇒ 每多一份循环盘存档就多几行，这条命令永远不可现势复跑，
+  现改成按活层目录取数的那条（7 / 0 两个数是稳的）。同条「`--offline` ALL GREEN」也不实：ALL GREEN 只在
+  `skill/tests/all.sh:289` 的"三数全 0"分支打印，q1 那次未提交 8 件、走的是 `:282-287` 分支，实取串已回填。
+  「末行」在 q1 / q2 / q3 三条里都安错了位置（闸门行与判据行之后还跟着「这还不算完成…」一行），统一改称
+  "判据行 / 在场"。q2 条目补句首加粗主题与 `（q2）`，与同段其余三条同形。
+  **没动**：q1 条「同措辞另有 3 处在 `skill/tests/all.sh` / `surge/run.sh` / `bump_version.py` 内」——实测带
+  「检查」二字者恰 3 处（`grep -rn "不参与任何检查\|不参与检查" skill/tests/ .gitattributes | wc -l` = 3），该读数成立、
+  原样保留；另有 2 处省略宾语的「`config_old/` 归档不参与」（`check_doc_readings.py:133` · `egern/run.sh:154`）讲的是各自
+  函数与阶段的取数范围，局部成立且不同措辞，不并入这条。本日志历史段落里的 5 处 ALL GREEN 是各自当时的真读数，一处不改。
+  仓内代码 · 判据 · 冻结 12 件 · profile 零改动。
+  **验收**（前五条都可原样敲；三条计数以 diff 与本段范围取数，不拿本条自身的文字当判据）：
+  `git show <commit> -- CHANGELOG.md | grep -c "^-.*ALL GREEN · 退出码"` = 1（q1 条那句被删）·
+  `git show <commit> -- CHANGELOG.md | grep -c "^+.*未提交 8 · 落后 0 · 未推送 0"` = 1（实取串回填到位）·
+  `grep -rn "不参与检查" --include="*.md" AGENTS.md docs manual skill | grep -v "architecture.sh"` 输出 0 行、去掉末段管道
+  输出 7 行 · `grep -rn "不参与任何检查\|不参与检查" skill/tests/ .gitattributes | wc -l` = 3（q1 条那句读数成立、原样保留）·
+  `grep -c "^## 2026-09-26" CHANGELOG.md` = 1（一天一段守住）· `bash skill/tests/all.sh --offline` 退出码 0 ·
+  `git show --name-only <commit>` 仅 `CHANGELOG.md` 一件 · 今天段（`## 2026-09-26` 到 `## 2026-09-25` 之间）该串命中 3 行
+  = 本条自引数，全文件 8 行 = 3 + 历史 5 处（历史一处未动 ⇒ 用来自证没顺手改旧账；旧版今天段该串命中 1 行，就是本条删掉的那处）。
 
 ---
 
