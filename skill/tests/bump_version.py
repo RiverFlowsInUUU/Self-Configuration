@@ -84,7 +84,10 @@ def read(p):
 
 
 def write(p, text, eol):
-    io.open(p, "w", encoding="utf-8", newline="").write(text.replace(NL, eol))
+    # `with` 收口（A-8）：不收口就依赖 CPython 引用计数来关句柄 ——
+    # write 抛异常时 fd 泄漏，Windows 上文件还会被悬着的句柄占住。
+    with io.open(p, "w", encoding="utf-8", newline="") as f:
+        f.write(text.replace(NL, eol))
 
 
 def same_bytes(a, b):

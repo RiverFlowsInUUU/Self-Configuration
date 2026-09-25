@@ -272,7 +272,9 @@ def main():
         if mt == gen:
             print("未动 " + rel(mp) + "（已是规则的输出）")
             continue
-        io.open(mp, "w", encoding="utf-8", newline="").write(gen)
+        # `with` 收口（A-8）：写完必须确定性关闭，不依赖引用计数（同 `bump_version.write`）。
+        with io.open(mp, "w", encoding="utf-8", newline="") as f:
+            f.write(gen)
         print("已写 " + rel(mp))
     print(NL + "验收：bash skill/tests/all.sh（第 3 项就是拿完整版逐字对拍这几份）")
     return 0
