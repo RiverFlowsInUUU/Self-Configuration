@@ -27,7 +27,7 @@
 "<venv>/Scripts/python.exe" scripts/profile_ruleset.py some.list    # 规则集类型分布
 "<venv>/Scripts/python.exe" scripts/weigh_ruleset.py some.list [--sub small.list] [--probe d]  # ★ 规则集"重量"：构成/冗余/深度/加载与匹配耗时/覆盖对比
 
-bash scripts/../tests/run.sh                                       # ★★ 回归测试两阶段（10 + 12 = 22 断言），退出码非 0 即失败
+bash scripts/../tests/run.sh                                       # ★★ 回归测试两阶段（10 + 12 + 2 = 24 断言；联网那 2 条 SKIP_NET=1 时跳过），退出码非 0 即失败
 ```
 
 ⭐ **计数口径是「按脚本对账」**：阶段 1 的 5 行 fixture 每行校两个脚本（两条独立判据）⇒ 计 10 条；

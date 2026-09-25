@@ -5,7 +5,7 @@
 #     把 skill/tests/ 的 5 个 fixture 同时喂给 check_egern_dns.py 与 audit_dns_forward.py
 #     （5 × 2 = 10 个断言）。
 #
-#   阶段 2 · 真实 profile 回归（DNS 面 + 地区组 filter 同步 + 规则集刷新参数）
+#   阶段 2 · 真实 profile 回归（DNS 面 + 地区组 filter 同步 + 规则集刷新参数 + 联网分流覆盖）
 #     对仓库里**全部** profiles/*.yaml 跑三件事，期望全部 rc=0：
 #       · check_egern_dns.py（DNS 面）—— 2026-09-25 补：此前真实 profile 的 DNS 面在闸内
 #         **零覆盖**，check_egern_dns 只在阶段 1 的合成 fixture 上跑过；而 Surge 侧对应物
@@ -13,6 +13,10 @@
 #         `check_egern_dns … 0 high / 2 low / 24 ok` 此前一直是**闸外手工读数**。
 #       · audit_region_filters.py（地区组 filter 与 Other Regions 负向断言的同步）
 #       · audit_ruleset_refresh.py（刷新参数，离线判定）
+#     另对**完整版两份**多跑一件事（`.min` 是同一份配置去注释，跑两遍纯属浪费，与 Surge 侧
+#     阶段 4 同一条理由；**只在联网档跑** —— 冷缓存 + 离线时该脚本会把"取不到规则集"读成
+#     "CN 域名兜不住"，故离线一律跳过并出声）：
+#       · audit_routing_coverage.py（规则集内容 / 分流覆盖，需联网）
 #     ⚠️ 为什么不并进阶段 1：阶段 1 的 fixture 是 DNS 面的合成配置，**没有地区组**，
 #        喂给 audit_region_filters.py 只会走"无需校验"分支 —— 看着绿，其实什么都没测。
 #        这两个脚本的断言对象都必须是**真实 profile**。
@@ -25,6 +29,7 @@
 # 用法：
 #   bash skill/tests/egern/run.sh                       # 用 PATH 里的 python
 #   PY=/path/to/python bash skill/tests/egern/run.sh    # 指定解释器
+#   SKIP_NET=1 bash skill/tests/egern/run.sh            # 跳过阶段 2 里那条联网项（冷缓存时别硬跑）
 #   在仓库根目录执行（脚本会自己定位 skill/tests/ 的上级）。
 
 set -u
@@ -73,7 +78,8 @@ if ! "$PY" -c "import yaml" >/dev/null 2>&1; then
   printf '   （若跳过此检查，脚本会以退出码 1 结束，bad_* 会被误判为通过。）\n' >&2
   exit 2
 fi
-for _s in check_egern_dns.py audit_dns_forward.py audit_region_filters.py; do
+for _s in check_egern_dns.py audit_dns_forward.py audit_region_filters.py \
+          audit_routing_coverage.py; do
   if [ ! -f "$SCRIPTS/$_s" ]; then
     printf '\n❌ 前置检查失败：缺少脚本 %s/%s\n' "$SCRIPTS" "$_s" >&2
     exit 2
@@ -204,13 +210,34 @@ for _p in "$PROFILES"/*.yaml; do
     printf '%s\n' "------------------------"
   fi
   printf '%-26s %-20s %s\n' "$_name (refresh)" "exit=$_rrc" "$_rres"
+  # 联网面（2026-09-25 补）：规则集内容 / 分流覆盖 —— 只跑完整版两份，且只在联网档跑。
+  case "$_name" in
+    *.min.yaml) continue ;;
+  esac
+  if [ "${SKIP_NET:-0}" = "1" ]; then
+    printf '%-26s %-20s %s\n' "$_name (coverage)" "—" "⏭️ 跳过（SKIP_NET=1）"
+    continue
+  fi
+  "$PY" "$SCRIPTS_W/audit_routing_coverage.py" "$PROFILES_W/$_name" >/dev/null 2>&1
+  _crc=$?
+  if [ "$_crc" = "0" ]; then
+    _cres="✅ OK"; pass2=$((pass2+1))
+  else
+    _cres="❌ 退出码 $_crc"; fail2=$((fail2+1))
+    printf '\n---- %s 的分流覆盖输出 ----\n' "$_name"
+    "$PY" "$SCRIPTS_W/audit_routing_coverage.py" "$PROFILES_W/$_name" 2>&1 | sed 's/^/    /'
+    printf '%s\n' "------------------------"
+  fi
+  printf '%-26s %-20s %s\n' "$_name (coverage)" "exit=$_crc" "$_cres"
 done
 
 printf '%s\n' "--------------------------------------------------------------------------------"
 printf 'result: %d passed, %d failed\n' "$pass2" "$fail2"
 
 # 两阶段合计的总数（与 Surge 侧 run.sh 的 TOTAL 同格式）：
-#   阶段 1 = fixture 数 × 2 个脚本，阶段 2 = profile 数 × 3 个脚本（DNS 面 / 地区组 / 刷新参数）。
+#   阶段 1 = fixture 数 × 2 个脚本；
+#   阶段 2 = profile 数 × 3 个脚本（DNS 面 / 地区组 / 刷新参数）+ 完整版 2 份 × 1 个联网脚本。
+#   ⇒ **联网档 24 条、离线档 22 条**（`SKIP_NET=1` 时那条联网项跳过并出声）。文档写的是联网口径。
 #   闸门工具直接抓这一行，省得再去两处 result 手工相加。
 printf 'TOTAL: %d passed, %d failed\n' "$((pass + pass2))" "$((fail + fail2))"
 

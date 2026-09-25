@@ -204,6 +204,25 @@ def main():
             if pol.upper() == "DIRECT":
                 direct_domains += len(doms)
 
+    # ⚠️ 前置：有规则集取不到 ⇒ 本轮的"覆盖结论"**不可信**，直接退退出码 2、不判配置对错。
+    #    2026-09-25 实测：`--offline` + 冷缓存时 22 份规则集全 miss ⇒ 探针全落 `default(兜底)`
+    #    ⇒ 本脚本报「CN 域名兜不住」并 rc=1 —— 那是**环境问题**，不是配置问题。
+    #    与「没跑成 ≠ 跑绿」是同一条纪律的反面：**没跑成也 ≠ 判负**。
+    #    放在【二】之前：判负表一旦印出来，读的人就会当成配置缺口去改配置。
+    _missing = sorted(u for u, s in CACHE_SOURCES.items() if s in ("miss", "fail"))
+    if _missing:
+        print()
+        print("=" * 100)
+        print("❌ 前置不达标：%d 份被启用的规则集**取不到** ⇒ 本轮不判配置对错（退出码 2）"
+              % len(_missing))
+        for u in _missing[:6]:
+            print("     · %s" % (u.rstrip("/").split("/")[-1] or u))
+        if len(_missing) > 6:
+            print("     · …另有 %d 份" % (len(_missing) - 6))
+        print("   ⇒ 联网重跑一次把缓存填上，或确认这些规则集地址还有效。"
+              "离线档应当**跳过本项**，而不是拿冷缓存判负。")
+        return 2
+
     # ---- 再逐个探针域名走规则 ----
     probes = [("CN", h) for h in CN_PROBES] \
         + [("  ", d) for d in a.domain if d not in CN_PROBES] \
