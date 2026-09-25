@@ -648,6 +648,13 @@
 - 🧹 `## 2026-09-25` 段内重复的三级标题合并为 Surge · Egern · 共享层三块：删 8 个重复标题及其紧随空行，
   同名块整块上移合拢。正文行零改写、零丢失（去标题与空行后逐行多重集对拍一致），段外零改动。
   配置、脚本与其余文档零改动。验收：`all.sh` 六项全绿 + 该段 `### ` 计数 11 → 3。
+- 🩹 三处 profile 头注里的校验命令改指现役固定名：`surge/profiles/routing.conf:294` 的
+  `routing_v3.2.conf` → `routing.conf` · `egern/profiles/routing.yaml:353` 与 `:410` 的
+  `routing_v3.2.yaml` → `routing.yaml`。这三条此前照抄必失败 —— 订阅地址固定化后带版本号的
+  profile 路径已不存在（实测 `❌ 找不到文件`），改后两侧实测退出码 0。
+  **哪里没动**：配置本体、`#! version=routing_v3.2` 头行与文内版本号提法（那不是路径引用）；
+  同族第 4 处 `skill/tests/bump_version.py:24` 是冻结件，另走人工裁决。
+  验收：`all.sh --offline` 六项全绿。
 
 ## 2026-09-24
 
