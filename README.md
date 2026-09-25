@@ -82,49 +82,44 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 
 ## 📁 文件结构
 
-| | 路径 | 内容 |
-|:--:|:-----|:-----|
-| 📖 | [`manual/`](manual/MANUAL.md) | **《操作手册》· 唯一权威操作层**：入口 [`MANUAL.md`](manual/MANUAL.md) 带总目录，01 快速开始 ～ 11 许可与图标，99 版本历史记录旧专题文档的内容去向 |
-| 📁 | [`surge/profiles/`](surge/profiles/) | 固定名四件 `.conf`：`routing` 分流版 · `lazy` 懒人版，各含带注释 / 纯配置 |
-| 📂 | [`surge/profiles/config_old/`](surge/profiles/config_old/) | 被替代的旧版按版本号留档，不参与检查 |
-| 📁 | [`egern/profiles/`](egern/profiles/) | 固定名四件 `.yaml`：与 Surge 侧同名同序 |
-| 📂 | [`egern/profiles/config_old/`](egern/profiles/config_old/) | 同上，`routing_v1` 起到 `v3.1` 的完整沿革 |
-| 📄 | [`egern/apple_system.list`](egern/apple_system.list) | 本仓**自托管**的第一份规则集：Surge 内置 `SYSTEM` 的时点快照，只给 Egern 引用 |
-| 🖼️ | [`icons/`](icons/) | 26 个策略组图标（两内核共用一份） |
-| 📚 | [`docs/`](docs/) | 跨内核共享文档 6 篇：跨内核差异对照 / 规则集与来源 / 注意事项 / 图标与许可 / 技能包合并与自包含 / 体检报告 |
-| 🗄️ | [`docs/_archive/`](docs/_archive/) | 归档决策记录：旧专题为何**就地冻结、未物理搬迁**（`legacy-2026-09-25/`） |
-| 📂 | [`surge/docs/`](surge/docs/) · [`egern/docs/`](egern/docs/) | 各内核专题文档：03 加固清单 · 07 版本沿革 · 08 审计读数（另 `surge/docs/11` 分流版设计）仍是活文档；01 / 02 / 04 / 05 / 06 与 `egern/docs/12` **已就地冻结**，顶部有横幅，请以手册为准 |
-| 📘 | [`surge/DetailsReadme/`](surge/DetailsReadme/) · [`egern/DetailsReadme/`](egern/DetailsReadme/) | 逐键技术附录：完整配置项讲解 · FAQ |
-| 🧪 | [`skill/`](skill/) | 单一入口 `SKILL.md`（按内核分支）+ 审计脚本 + 回归测试：`bash skill/tests/all.sh` 一条命令跑完七项检查 |
-| 🤖 | [`AGENTS.md`](AGENTS.md) | 给 AI agent 的开工说明：改完的固定动作 · 五条硬约束 · 换设备三件事 · 升版不改订阅地址 |
-| 🔁 | [`.gitattributes`](.gitattributes) | 行尾钉成 LF —— 同一个 commit 在任何设备上落盘字节相同，clone 下来直接改、改完直接推 |
-| 🗓️ | [`CHANGELOG.md`](CHANGELOG.md) | **唯一一份**改动记录：装配层与两个内核的迭代都按日期写在这里；合并前的内核迭代史见 [`surge/docs/07`](surge/docs/07-文件版本沿革.md) · [`egern/docs/07`](egern/docs/07-文件版本沿革.md) 末节 |
+两个内核同构，目录合写一处：`profiles/` 是用什么，`docs/` 与 `DetailsReadme/` 是查什么。
+
+```text
+manual/                 《操作手册》—— 唯一权威操作层（01 快速开始 ～ 11 许可与图标 · 99 版本历史）
+surge/
+├── profiles/           固定名四件：routing 分流版 · lazy 懒人版，各含注释完整版 + `.min` 纯配置
+│   └── config_old/     被替代的旧版按版本号留档，不参与检查
+├── docs/               活：03 加固清单 · 07 版本沿革 · 08 审计读数（另 `11` 分流版设计）
+│                       已就地冻结：01 · 02 · 04 · 05 · 06
+└── DetailsReadme/      逐键技术附录 · FAQ
+egern/                  与 surge/ 同构：profiles 为 `.yaml`、冻结多一篇 `12` 分流顺序；
+                        另有自托管规则集 `apple_system.list`（Surge 内置 SYSTEM 的时点快照）
+icons/                  26 个策略组图标（两内核共用一份）
+docs/                   跨内核权威清单与当时快照；`_archive/` 记「为何就地冻结、未物理搬迁」
+skill/                  审计脚本 + 回归闸门 —— `bash skill/tests/all.sh` 一条命令跑完七项检查
+AGENTS.md · .gitattributes · CHANGELOG.md     开工说明 · 行尾钉成 LF · 唯一一份改动记录
+```
 
 ---
 
-## 📖 更多文档
+## 📖 按需查阅
 
-👉 **操作与排查，从 [`manual/MANUAL.md`](manual/MANUAL.md) 读起** —— 快速开始 · DNS 原理与泄露面 · 两侧操作 · 规则集与素材 · 日常维护 · 故障排查 · 验证与自检 · 跨内核移植 · FAQ 与术语 · 许可与图标。
+| 想查什么 | 去哪 |
+|:---------|:-----|
+| 装、改、验、修 —— 一切操作与排查 | 👉 [`manual/MANUAL.md`](manual/MANUAL.md) 读起 |
+| 哪篇旧文档的内容去了手册哪一章 | [`manual/99-版本历史`](manual/99-版本历史.md) 映射表 |
+| 跨内核语法映射 · 对齐程度 · 哪些结论不能照搬 | [`docs/跨内核差异对照`](docs/跨内核差异对照.md) |
+| 21 份共用规则集的指向 / 作用 / 来源 | [`docs/规则集与来源`](docs/规则集与来源.md) |
+| 使用前必看的坑 | [`docs/注意事项`](docs/注意事项.md) |
+| 图标来源 · MIT 许可 · 第三方版权 | [`docs/图标与许可`](docs/图标与许可.md) |
+| 每个配置项的完整语义 · FAQ | [`surge/DetailsReadme`](surge/DetailsReadme/DetailsReadme.md) · [`egern/DetailsReadme`](egern/DetailsReadme/DetailsReadme.md) |
+| 当前审计读数（唯一落点，文档不抄数） | [`surge/docs/08`](surge/docs/08-审计读数.md) · [`egern/docs/08`](egern/docs/08-审计读数.md) |
+| 全部改动记录（合并前内核史见两侧 `docs/07` 末节） | [`CHANGELOG.md`](CHANGELOG.md) |
+| 本仓为何不依赖其他仓库 · 当时的快照（不反映现状） | [`技能包合并与自包含`](docs/技能包合并与自包含.md) · [`体检报告`](docs/体检报告.md) · [`日志旧版原文`](docs/日志旧版原文.md) |
 
-其余按需查，各有分工：
-
-- 🔀 [`docs/跨内核差异对照`](docs/跨内核差异对照.md) —— 语法映射 · 分组与规则的对齐程度 · 哪些结论不能照搬
-- 📚 [`docs/规则集与来源`](docs/规则集与来源.md) —— 21 份共用规则集的指向 / 作用 / 去向 / 来源
-- ⚠️ [`docs/注意事项`](docs/注意事项.md) —— 使用前必看
-- 🎨 [`docs/图标与许可`](docs/图标与许可.md) —— 图标来源 · MIT 许可 · 第三方版权
-- 🧩 [`docs/技能包合并与自包含`](docs/技能包合并与自包含.md) —— 两份单内核技能包怎么合成一份双分支入口 · 本仓为何完全不依赖其他仓库
-- 🧪 [`skill/SKILL.md`](skill/SKILL.md) —— 方法论主干（先判内核，再进 Surge / Egern 分支）
-- 📘 [`surge/DetailsReadme/`](surge/DetailsReadme/) · [`egern/DetailsReadme/`](egern/DetailsReadme/) —— 逐键配置项详解 · FAQ
-- 🗓️ [`CHANGELOG.md`](CHANGELOG.md) —— 本仓唯一的改动记录，两个内核都写在这一份里
-
-**两点说明**：
-
-- **已就地冻结**：两侧 `docs/` 的 01 / 02 / 04 / 05 / 06（另 `egern/docs/12`）共 11 篇，2026-09-25 起不再更新，
-  原文保留可读；每篇内容去了手册哪一章，见 [`manual/99-版本历史`](manual/99-版本历史.md) 的映射表。
-  同类的**当时快照**还有 [`docs/体检报告`](docs/体检报告.md)（当时的读数）与 `日志旧版原文`（只读存档），
-  它们记录的是彼时的观测与决策，不反映当前状态。
-- **编号沿旧**：两侧 `docs/` 的编号不对应 —— `surge/docs/11-分流版设计` 与 `egern/docs/12-分流顺序`
-  讲的是**同一主题**，编号沿用合并前的历史；09 / 10 / 11 是历史缺口，不是漏了文件。
+> **说明**　两侧 `docs/` 的 01 / 02 / 04 / 05 / 06（另 `egern/docs/12`）共 11 篇**已就地冻结** ——
+> 顶部有横幅，原文保留可读、不再更新，操作以手册为准。编号沿旧：`surge/docs/11` 与 `egern/docs/12`
+> 讲的是**同一主题**，09 / 10 / 11 是历史缺口，不是漏了文件。
 
 ---
 
