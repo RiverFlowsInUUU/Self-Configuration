@@ -4,7 +4,7 @@
 
 ---
 
-## 1 · 为什么会有这个问题
+## 1 · 问题成因
 
 Surge 把被引用的规则集**在内存里展开成匹配表**。一份 11 万条的规则集
 和一份 4 千条的规则集，对启动时间与常驻内存的影响不是一个量级。
@@ -59,7 +59,7 @@ Surge 把被引用的规则集**在内存里展开成匹配表**。一份 11 万
 
 ---
 
-## 3 · 怎么得到这些数字
+## 3 · 数字的取得方式
 
 ```bash
 python skill/scripts/surge/audit_ruleset_content.py surge/profiles/lazy.conf
@@ -97,7 +97,7 @@ python skill/scripts/surge/audit_ruleset_content.py surge/profiles/lazy.conf
 
 ---
 
-## 4 · 类型分布怎么读
+## 4 · 类型分布的读法
 
 `parse_ruleset()` 把条目分成三类：
 
@@ -123,7 +123,7 @@ _OTHER_TYPES = {"URL-REGEX", "USER-AGENT", "PROCESS-NAME", "PROTOCOL",
 
 ---
 
-## 5 · "太重"怎么办
+## 5 · 超重时的处置
 
 ### 5.1 先量，再判断
 

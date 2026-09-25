@@ -43,7 +43,7 @@ upstreams:
 ```
 
 > ⚠️ 换成 IP 之前**必须逐个实测端点真的可用**（`probe_dns_endpoints.py`）。
-> 实测踩过的坑：`https://9.9.9.9/dns-query` 直接失败（返回 `HTTP Version Not Supported`，Quad9 在该 IP 上只提供 HTTP/3）——
+> 实测反例：`https://9.9.9.9/dns-query` 直接失败（返回 `HTTP Version Not Supported`，Quad9 在该 IP 上只提供 HTTP/3）——
 > 必须写成 `tls://9.9.9.9`。另外要确认证书覆盖 IP：`tls://223.5.5.5` 的证书是 `CN=*.alidns.com`，覆盖 IP；`tls://1.12.12.12` 是 `CN=120.53.53.53`。
 
 ---
@@ -221,7 +221,7 @@ dns:
 
 ---
 
-## 为什么"换个更好的 bootstrap IP"没有意义
+## 更换 bootstrap IP 不改变结论的原因
 
 实测记录：把 `bootstrap` 从 `223.5.5.5` / `119.29.29.29` 换成 `180.76.76.76`，**泄露的 ISP 仍然是 China Telecom**，出现的仍是 `219.128.13x.x` / `59.37.178.x` 这类电信地址段。
 
@@ -240,7 +240,7 @@ dns:
 
 ---
 
-## 怎么从日志确认你踩的是哪一条
+## 从日志定位具体成因
 
 | 日志里看到 | 指向的案例 |
 |---|---|

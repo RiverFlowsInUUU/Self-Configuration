@@ -256,7 +256,7 @@ Surge 的代理类型限制。后果：落到这类节点上的 UDP 会被拒绝
 `reuse = true`（默认）让连接复用 —— 每个请求省掉一次 TCP + TLS 握手。
 设成 `false` 是自找延迟。
 
-### 2.6 不是 Surge 原生类型就别写
+### 2.6 非 Surge 原生类型不写
 
 `vless` / `XTLS Reality` 不是 Surge 的代理类型。写了会被跳过并告警，
 只增加解析噪音。
@@ -409,7 +409,7 @@ RULE-SET,<url>,<策略>,"update-interval=604800",no-resolve
 本仓两侧统一钉成 604800：同周期、写法一致、文件里看得见。审计时**只报两件事**：
 出现负值（= 关掉自动更新），或 Egern 的远程 `rule_set` 缺这个字段。
 
-### 4.7 为什么某些规则集要钉 commit
+### 4.7 部分规则集钉 commit 的理由
 
 ```
 RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/75f01010…/Clash/Ruleset/AI.list,AI,…

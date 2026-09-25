@@ -75,7 +75,7 @@ egern/DetailsReadme/DetailsReadme.md              # 完整技术文档
 
 ---
 
-## README 只讲产品，不讲我们怎么改的
+## README 的边界：只讲产品，不讲改动过程
 
 README 是**产品介绍** —— 读者要知道「这东西是什么、怎么用」。以下三类**不属于**它：
 
