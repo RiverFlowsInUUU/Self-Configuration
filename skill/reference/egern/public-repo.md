@@ -64,11 +64,16 @@ egern/DetailsReadme/DetailsReadme.md              # 完整技术文档
 
 📌 **全部验证都在本地完成 —— 本仓库刻意不挂 CI / 任何自动化（2026-09-21 决定）。**
 这是个人模板仓库，不会有外部贡献者，"自动验 PR"没有服务对象；而本地跑一次
-`bash skill/tests/egern/run.sh` + 6 个审计脚本只要几十秒。少一个对外暴露的面就少一份事。
+`bash skill/tests/egern/run.sh` 只要几十秒。少一个对外暴露的面就少一份事。
 
-⇒ 全部验证用本地命令复现：`bash skill/tests/egern/run.sh` + `check_egern_dns.py` /
-`audit_dns_forward.py` / `audit_ruleset_noresolve.py` / `audit_routing_coverage.py` /
-`audit_region_filters.py`。
+⇒ 全部验证用这**一条**本地命令复现：`bash skill/tests/egern/run.sh` —— 阶段 1 跑 fixture，
+阶段 2 逐份 profile 跑 DNS 面 / 地区组面 / 刷新面，联网档再跑分流覆盖面。具体脚本名
+**不抄在这里**，以该 runner 的头部注释为准：名单会随"某个面接进闸"而漂移，抄一份进文档
+就是下一个过期读数。
+
+闸外那几个不在验证链上：是手工探针 / 量测工具，另有一个需联网、尚未接闸的规则集条目级
+审计（`audit_ruleset_noresolve.py`）—— 名单与"刻意不进闸"的理由以
+`python skill/tests/check_tools.py` 的 T7 **现算**为准（同源就是它自己的 `MATRIX_WAIVED` 豁免表）。
 功能上没有任何损失。
 
 **脱敏清单（这五类必须洗）**：节点 server/凭据/sni/reality 公钥 → 占位；

@@ -33,6 +33,19 @@
   **验收**：`grep -n "每次提交前\|自动" SECURITY.md` 输出 0 行、`grep -n "skill/tests/all.sh" SECURITY.md`
   命中 1 行；判别自证——临时还原原句后前者立刻命中 1 行，还原归 0；`bash skill/tests/all.sh --offline`
   退出码 0 · 末行「✅ 判据全过 · 6 项」+「闸门未被动过（冻结 12 个文件）」。
+- 🧭 **Egern 侧「闸外脚本」清单改指现算源（q3）**：`skill/reference/egern/public-repo.md` 原写
+  「一条命令 + 6 个审计脚本」并逐个点名五个，而其中四个自 2026-09-25 起已在 `skill/tests/egern/run.sh`
+  阶段 2 内、闸内的 `audit_ruleset_refresh.py` 反而没列 ⇒ 照文档手敲是重复跑且漏一项。现改两层指向：
+  闸内面交给该 runner 的头部注释（名单不在文档里复制），闸外面交给 `check_tools.py` 的 T7 现算与它自己的
+  `MATRIX_WAIVED` 豁免表，措辞照豁免表口径（手工探针 / 量测工具，另加一个需联网、尚未接闸的规则集条目级
+  审计）；文档里不再留脚本个数，免得又长出一个新的快照读数。
+  **没动**：`:35`「docs/08 …… 6 个审计脚本的读数」（`check_doc_readings.py:39-40` · `:672-675` 明文保留的双口径之一）·
+  「刻意不挂 CI」的 2026-09-21 决定与原语气 · 判据零改动（双口径那条是刻意撤判，不补判）· 冻结文件零改动。
+  **验收**：`grep -n "check_egern_dns.py" skill/reference/egern/public-repo.md` 输出 0 行、
+  `grep -n "check_tools.py" skill/reference/egern/public-repo.md` ≥1 行；`bash skill/tests/all.sh --offline`
+  退出码 0 · 末行「✅ 判据全过 · 6 项」+「✅ 闸门未被动过（冻结 12 个文件）」在场（第 5 项扫 `skill/reference/**/*.md` 不因此变红）；
+  `python skill/tests/check_tools.py` ⇒ `TOTAL: 8 passed, 0 failed`；判别自证走非破坏式
+  `git show <commit>^:<path> | grep` —— 旧清单必命中、新文案必 0。
 
 ---
 
