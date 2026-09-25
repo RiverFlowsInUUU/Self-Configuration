@@ -9,10 +9,11 @@
 **https://github.com/RiverFlowsInUUU/Self-Configuration**（Egern 分支在 `egern/`，与 Surge 版同仓）
 
 ```
-README.md                                   # 门面：内核选择 + 四份订阅地址 + 五类泄露面
+README.md                                   # 门面：内核选择 + 四份订阅地址 + 五类泄露面 + 隐私对照 + 按需查阅
 CHANGELOG.md                                # **唯一一份**改动记录：装配史 + 两内核的迭代都写在这里
-LICENSE · .gitignore
+LICENSE · .gitignore · AGENTS.md            # AGENTS.md = 维护者任务书：冻结名单 · 连带范围 · 推送规矩
 icons/                                      # 26 个 PNG —— 两内核共用（原各存一份且逐字节相同）
+manual/                                     # ★ 手册层：唯一权威操作层（MANUAL.md 入口 + 11 章 + 99 版本历史）
 docs/                                       # ★ 共享文档层（不再各内核一份）
   跨内核差异对照.md · 规则集与来源.md · 注意事项.md · 图标与许可.md
 skill/                                      # 本 skill：SKILL.md（§0 判内核 → 分支 A/B）
@@ -118,7 +119,7 @@ README 是**产品介绍** —— 读者要知道「这东西是什么、怎么�
 用户连判两次 —— 先要求来源段下沉，随即补充：「不仅是规则集的来源，而且是有哪些规则集……
 我认为都没必要放在首页的 README 里面。」处理后新开
 [`docs/规则集与来源.md`](../../../docs/规则集与来源.md) 承接全部规则集信息，
-首页只在文件结构 / 更多文档里留一个链接。
+首页只在「📖 按需查阅」表里留一个链接（原「文件结构 / 更多文档」两节已于 2026-09-25 合并为一）。
 
 闸门：`verify_readme_tone.py`（维护者本地的装配闸门，按仓库惯例不进公开仓）的「首页无规则集文件与来源仓库」一项
 （匹配 `*.list` / `*.txt` / `*.mmdb` / `*.mrs`、`GEOIP` / `GEOSITE`、来源仓库 owner）。
