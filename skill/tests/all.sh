@@ -22,8 +22,7 @@
 #   bash skill/tests/all.sh --landed               # 提交并推送**之后**复核这批是否落地
 #
 # 检查对象恒为 profiles/ 顶层的固定名四件（routing / lazy 各两形态）。存档版在
-# profiles/config_old/ 里，**不参与检查** —— 指回归与读数类；唯一例外是 `architecture.sh` ①
-# （2026-09-24 定：丢掉历史包袱、加快速度）；
+# profiles/config_old/ 里，**不参与检查**（2026-09-24 定：丢掉历史包袱、加快速度）—— 指回归与读数类；唯一例外是 `architecture.sh` ①；
 # 要复核旧版本，带着路径直接调对应脚本。
 #
 # 退出码：0 判据全过 · 1 有判负 · 2 前置环境不达标
