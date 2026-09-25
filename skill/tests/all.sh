@@ -152,7 +152,7 @@ item "Egern 回归（两阶段）"  bash skill/tests/egern/run.sh;      MEASURED
 item "两版形态去注释对拍"    "$PY" skill/tests/check_min_pair.py;  MEASURED+=("min_pair=$LAST_NUM")
 item "换设备可移植性"        "$PY" skill/tests/check_portability.py; MEASURED+=("portability=$LAST_NUM")
 item "文档读数与实测对拍"    "$PY" skill/tests/check_doc_readings.py; MEASURED+=("doc_readings=$LAST_NUM")
-item "工具自检（自测+编译+绑定双向）"  "$PY" skill/tests/check_tools.py;  MEASURED+=("tools=$LAST_NUM")
+item "工具自检 + 覆盖矩阵"  "$PY" skill/tests/check_tools.py;  MEASURED+=("tools=$LAST_NUM")
 
 # 第 7 项：文档写死的断言数 ↔ 上面这六个实测 TOTAL。它自己不跑测试（判据的判据会递归）。
 # ⚠️ 离线档**不调它**：离线时 Surge 侧少跑 4 条联网断言（实测 15），与文档的联网口径是两个数

@@ -16,11 +16,13 @@
      以及裸文件名（多半是打印文案里的散文）都**不算边**）。
      实测 26 个被跟踪 .py 现在全部可编译，所以那是"还没坏"，不是"有防护"。
 
-七条判据（**固定条数**，不随 .py 文件数增长 —— 与其余判据同一口径）：
+八条判据（**固定条数**，不随 .py 文件数增长 —— 与其余判据同一口径）：
   · T1 全部被跟踪 .py 可编译      · T2 `make_min.py --selftest`
   · T3 `apply_edits.py --selftest` · T4 `surge/check_links.py --selftest`
   · T5① 无未用顶层 import         · T5② 无本文件死常量
   · T6 无"用了没绑"（整文件任何位置都没绑过的 Load 名）
+  · T7 覆盖矩阵（正向：声明格必须真被 runner 跑到；反向：`skill/scripts/**` 每个 .py
+    要么在矩阵里、要么在豁免里带非空理由。**寄居在本项**，不新增 `all.sh` 的项数）
 
 T5 补的是 T1 的那半边（2026-09-24 定）：可编译只保证"语法还读得动"，判不到"顶层绑了
 却再没人用的名字"。实测 26 个被跟踪 .py 里有 9 处，其中两处的坑叫**跨内核同名**：
@@ -272,8 +274,8 @@ def side_of(rel):
 _PY_IN_LITERAL = re.compile(r"[\w.\-]+/[\w.\-/]*[\w.\-]+\.py")
 
 
-def py_edges(text):
-    """这份 .py 里"真能触发执行"的名字 ⇒ 集合。
+def py_edges(text, ignore=frozenset()):
+    """这份 .py 里"真能触发执行"的名字 ⇒ 集合。`ignore` 里的路径不算边（见 `_DECLARED`）。
 
     只认两种：`import` / `from … import`（走 AST），以及**非 docstring 的字符串字面量**里
     出现的 `*.py` 路径（`SUITES` 那种以字符串写着的 subprocess 调起）。
@@ -301,12 +303,13 @@ def py_edges(text):
             out.add(n.module.split(".")[0])
         elif (isinstance(n, ast.Constant) and isinstance(n.value, str)
               and id(n) not in docs):
-            out.update(os.path.basename(m)[:-3] for m in _PY_IN_LITERAL.findall(n.value))
+            out.update(os.path.basename(m)[:-3] for m in _PY_IN_LITERAL.findall(n.value)
+                       if m not in ignore)
     return out
 
 
-def gate_reach(root, files):
-    """⇒ (可达集合, 闸外清单)。
+def gate_reach(root, files, ignore=frozenset()):
+    """⇒ (可达集合, 闸外清单)。`ignore` 传给 `py_edges`（声明表里的路径不算边）。
 
     口径：三个 runner 是 .sh，按**原文**取名字（那里的提及就是调用或前置清单）；
     .py 之间只沿 `py_edges()` 那两种边，迭代到不动点。
@@ -334,7 +337,7 @@ def gate_reach(root, files):
         for r in sorted(reach):
             t = texts.get(r, "")
             if r.endswith(".py"):
-                py_words |= py_edges(t)
+                py_words |= py_edges(t, ignore)
             else:
                 sh_words.setdefault(side_of(r), set()).update(
                     b[:-3] for b in bases if b in t)
@@ -350,8 +353,102 @@ def gate_reach(root, files):
     return reach, [f for f in files if f not in reach]
 
 
+# ── T7 覆盖矩阵（寄居在本项；**不新增 `all.sh` 的项数**）──────────────────────
+# 声明的是**承诺**："这一面对这个目标必须被闸跑到"。判据只验**机械可验的那半**：
+#   ① 正向：每一格的脚本文件存在，且它的名字确实出现在声明的 runner 原文里；
+#   ② 反向：`skill/scripts/**` 下每个被跟踪的 .py 都必须有归属 —— 要么在矩阵里，
+#      要么在 `MATRIX_WAIVED` 里带**非空理由**（"刻意不接闸"是承诺，"忘了"不是）。
+# 不验的那半（"跑没跑到那个目标"）需要 bash 语义模型 —— 宁可少判，不硬猜。
+# ⚠️ 手维护的只剩"承诺覆盖哪些面"这一个真正的承诺值；可达性由 `gate_reach()` 现算。
+MATRIX = (
+    ("DNS 面", "surge 顶层 profile", "skill/scripts/surge/check_surge_dns.py", "skill/tests/surge/run.sh"),
+    ("DNS 面", "egern 顶层 profile", "skill/scripts/egern/check_egern_dns.py", "skill/tests/egern/run.sh"),
+    ("DNS 面", "egern fixture", "skill/scripts/egern/audit_dns_forward.py", "skill/tests/egern/run.sh"),
+    ("地区组 filter", "surge routing.conf", "skill/scripts/surge/audit_region_filters.py", "skill/tests/surge/run.sh"),
+    ("地区组 filter", "egern 顶层 profile", "skill/scripts/egern/audit_region_filters.py", "skill/tests/egern/run.sh"),
+    ("刷新参数", "surge 顶层 profile", "skill/scripts/surge/audit_ruleset_refresh.py", "skill/tests/surge/run.sh"),
+    ("刷新参数", "egern 顶层 profile", "skill/scripts/egern/audit_ruleset_refresh.py", "skill/tests/egern/run.sh"),
+    ("架构不变量", "surge 顶层 profile", "skill/tests/surge/architecture.sh", "skill/tests/surge/run.sh"),
+    ("联网内容 + 分流覆盖", "surge 完整版", "skill/scripts/surge/audit_ruleset_content.py", "skill/tests/surge/run.sh"),
+    ("联网内容 + 分流覆盖", "surge 完整版", "skill/scripts/surge/audit_routing_coverage.py", "skill/tests/surge/run.sh"),
+    ("联网内容 + 分流覆盖", "egern 完整版", "skill/scripts/egern/audit_routing_coverage.py", "skill/tests/egern/run.sh"),
+    ("链接与锚点", "全仓 .md", "skill/tests/surge/check_links.py", "skill/tests/surge/run.sh"),
+)
+# 刻意不接闸的（**理由必须非空**）
+MATRIX_WAIVED = (
+    ("skill/scripts/surge/_surge_common.py", "共享模块，被 5 个闸内 Surge 脚本 import（不是独立的面）"),
+    ("skill/scripts/egern/_egern_common.py", "共享模块，被 4 个闸内 Egern 脚本 import（不是独立的面）"),
+    ("skill/scripts/egern/audit_ruleset_noresolve.py", "闸外：规则集条目级 no-resolve 审计，需联网，尚未接闸"),
+    ("skill/scripts/egern/probe_dns_endpoints.py", "手工探针（要真实网络），不接闸"),
+    ("skill/scripts/egern/probe_doh.py", "手工探针（要真实网络），不接闸"),
+    ("skill/scripts/egern/profile_ruleset.py", "手工工具（把 profile 里的规则集抽出来看），不接闸"),
+    ("skill/scripts/egern/weigh_ruleset.py", "手工工具（称规则集体量），不接闸"),
+)
+# ⚠️ 声明表里的路径**不是调用边** —— 现算"闸外"时必须把它们排掉：否则声明表会把自己
+#    的内容算成"可达"，闸外名单被填平（2026-09-25 实测：接上 T7 后闸外从 5 个变 0 个）。
+_DECLARED = (frozenset(s for _f, _t, s, _r in MATRIX)
+             | frozenset(s for s, _r in MATRIX_WAIVED))
+
+
+def matrix_problems(root, files, matrix=MATRIX, waived=MATRIX_WAIVED):
+    """⇒ 问题清单（空 = 全过）。口径见上；写成吃参数是为了能用假表单验判别力。"""
+    out, declared = [], set()
+    for face, target, script, runner in matrix:
+        declared.add(script)
+        # ⚠️ 存在性用**磁盘**判，不用 `files` —— `files` 只含 .py（`git ls-files *.py`），
+        #    而矩阵里有 .sh（`architecture.sh` 与三个 runner）。.py 另判一次"被跟踪"。
+        #    （实测踩过：用 `files` 判 runner ⇒ 12 格全报"runner 不存在"。）
+        if not os.path.isfile(os.path.join(root, script.replace("/", os.sep))):
+            out.append("%s × %s：脚本不存在（%s）" % (face, target, script))
+            continue
+        if script.endswith(".py") and script not in files:
+            out.append("%s × %s：.py 脚本没被跟踪（%s）" % (face, target, script))
+            continue
+        if not os.path.isfile(os.path.join(root, runner.replace("/", os.sep))):
+            out.append("%s × %s：声明的 runner 不存在（%s）" % (face, target, runner))
+            continue
+        try:
+            with open(os.path.join(root, runner.replace("/", os.sep)),
+                      encoding="utf-8", errors="replace") as f:
+                txt = f.read()
+        except OSError as exc:
+            out.append("%s × %s：runner 读不出（%s）" % (face, target, exc))
+            continue
+        if os.path.basename(script) not in txt:
+            out.append("%s × %s：%s 的名字不在 %s 里 ⇒ 这一格没被真跑到"
+                       % (face, target, os.path.basename(script), runner))
+    for script, reason in waived:
+        declared.add(script)
+        if not os.path.isfile(os.path.join(root, script.replace("/", os.sep))):
+            out.append("豁免项不存在：%s" % script)
+        if not reason.strip():
+            out.append("豁免项没写理由：%s ⇒ '刻意'是承诺，'忘了'不是" % script)
+    for f in files:
+        if f.startswith("skill/scripts/") and f not in declared:
+            out.append("skill/scripts 下的 %s 既不在矩阵里、也不在豁免里"
+                       " ⇒ 要么声明覆盖，要么写明为何不接" % f)
+    return out
+
+
+def selfproof_matrix(root, files):
+    """判别自证（四条）：原表不红 · 漏一行必红 · 脚本名不在 runner 里必红 · 豁免理由为空必红。"""
+    errs = []
+    real = matrix_problems(root, files)
+    if real:
+        errs.append("原表被判负：%s" % real[:2])
+    if not matrix_problems(root, files, MATRIX[:-2], MATRIX_WAIVED):
+        errs.append("删掉矩阵里最后一行 skill/scripts 声明没被判出来（反向归属那半失效）")
+    bad_runner = MATRIX[:1] + (("X", "Y", MATRIX[0][2], "skill/tests/egern/run.sh"),)
+    if not any("没被真跑到" in x for x in matrix_problems(root, files, bad_runner, MATRIX_WAIVED)):
+        errs.append("脚本名不在声明的 runner 里没被判出来")
+    if not any("没写理由" in x for x in
+               matrix_problems(root, files, MATRIX, (("skill/scripts/egern/probe_doh.py", "  "),))):
+        errs.append("豁免理由为空没被判出来")
+    return (not errs), "；".join(errs)
+
+
 def check(root):
-    """[(判据名, 通过?, 说明)]，固定 7 条。"""
+    """[(判据名, 通过?, 说明)]，固定 8 条。"""
     out = []
 
     # ── T1 全部被跟踪 .py 可编译 ─────────────────────────────────────────
@@ -431,6 +528,15 @@ def check(root):
                     ("%d 处命中：%s%s" % (len(ub["hit"]), detail,
                                           " …" if len(ub["hit"]) > 4 else "")) if ub["hit"]
                     else "0/%d 通过%s%s" % (len(files), star, unparsed)))
+    # ── T7 覆盖矩阵（寄居在本项，不新增 all.sh 的项数）────────────────────
+    if not files:
+        out.append(("T7 覆盖矩阵", False, "清单为空 ⇒ 没跑成不等于跑绿"))
+    else:
+        mp = matrix_problems(root, files)
+        ok7, why7 = selfproof_matrix(root, files)
+        out.append(("T7 覆盖矩阵（%d 格 · %d 项豁免 · 含判别自证）" % (len(MATRIX), len(MATRIX_WAIVED)),
+                    not mp and ok7,
+                    "；".join(mp[:4]) + ("" if ok7 else "；自证不通过：" + why7)))
     return out
 
 
@@ -445,7 +551,7 @@ def main():
         print("   %s %-38s %s" % ("✅" if ok_ else "❌", name, extra))
     # 派生读数（不计入判据条数）：闸外脚本名单现算 —— 手写必漂，见头注第 2 条。
     _files, _src = tracked_py(root)
-    _reach, _outside = gate_reach(root, _files)
+    _reach, _outside = gate_reach(root, _files, _DECLARED)
     print("   ℹ️  闸外脚本（从三个 runner 做名字闭包后的不可达 .py）：%d 个%s"
           % (len(_outside), (" —— " + " · ".join(_outside)) if _outside else ""))
     print("TOTAL: %d passed, %d failed" % (len(checks) - len(bad_), len(bad_)))
