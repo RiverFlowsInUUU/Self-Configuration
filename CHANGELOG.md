@@ -98,6 +98,26 @@
   `bash skill/tests/all.sh --offline` 退出码 0，**提交后·推送前**读数为「⚠️  闸门被改动 3 处 —— AGENTS.md §2 第 5 条：
   改前先请示维护者，并附「不改会漏掉什么」的反例」逐条点名那三件 —— 此 ⚠️ 是预期读数而非判负（该自检只列不判负），
   推送后同一行回到「✅ 闸门未被动过（冻结 12 个文件）」，那只表示"无待推的闸门改动"、不表示"这批没改过闸门文件"。
+- 📍 **可照抄命令的路径基准定于一处（q7）**：`skill/reference/egern/checker.md` 与
+  `skill/reference/egern/pitfalls.md` 里四条"给人敲"的回归命令写的是 `bash scripts/../tests/run.sh` 与
+  `bash tests/run.sh` —— 仓根敲、`cd skill` 敲、`scripts/../tests/` 拼法**三种 cwd 全部 `No such file or directory`**
+  （`skill/tests/` 下只有 `all.sh` 与 `egern/`·`surge/`，不存在顶层 `run.sh`），现四处统一改指实跑通过的
+  `bash skill/tests/egern/run.sh`；顺带修 `docs/跨内核差异对照.md` 一处陈旧编号名 `docs/09-注意事项.md`
+  （全仓无此名，现名 `docs/注意事项.md`，"09" 是 manual 章节号串门）。基准规则落进 `skill/SKILL.md` 且**只落这一处**：
+  凡可照抄执行的命令以**仓根**为基准书写，要 `cd` 的显式写 `cd`，行文简写不作可执行路径。
+  **没动**：判据 · 冻结 12 件 · profile · 根 README 零改动 · 断言数与文档读数无关（联网档 24 / 离线档 22 不变，
+  缺陷只在路径不在数）· 两份 reference 文档里余下 34 处"行文简写"（`scripts/probe_doh.py` 一类，
+  合并进 skill 包后中间多了 `egern/` 一层）本条不动，另立 q 处理 · `egern/docs/07-文件版本沿革.md:444`
+  的「`docs/09-注意事项.md`」是沿革史原文且链接已指现名 ⇒ 不改不算缺陷。
+  **验收**（取数件写死为本条落地 commit 的父件 `7f86516` 与工作区，现势可跑）：
+  `PYTHONIOENCODING=utf-8 python .ai-loop/work/scan_q7.py` ⇒ 「按字面从仓根敲不出来的命令行」共 **0** 处（改前 4）；
+  `grep -c 'bash tests/run.sh' skill/reference/egern/pitfalls.md` = 0，非破坏式判别
+  `git show 7f86516:skill/reference/egern/pitfalls.md | grep -c 'bash tests/run.sh'` = **3**（旧串必红）；
+  `bash skill/tests/egern/run.sh` 从仓根直跑退出码 0；`grep -rn "为基准" skill/SKILL.md` = 1 处 且
+  `grep -rn "为基准" skill/reference/ docs/ manual/ AGENTS.md` = 0 ⇒ 声明唯一；
+  `grep -c "09-注意事项" docs/跨内核差异对照.md` = 0（改前 1）；
+  `bash skill/tests/all.sh --offline` 退出码 0 · 判据行「✅ 判据全过 · 6 项 · 12s —— 但状态未落地（未提交 5 · 落后 0 · 未推送 0）」
+  +「✅ 闸门未被动过（冻结 12 个文件）」在场 · `grep -c "^## 2026-09-26" CHANGELOG.md` = 1 · 改动文件 CR = 0。
 
 ---
 

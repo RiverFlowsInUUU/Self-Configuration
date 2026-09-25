@@ -81,15 +81,15 @@ f3 的审计结果是 `0 high / 1 low`，但用户实测**持续泄露到中国�
 
 ❗ **绝不要采纳「端点全为 IP 即充分」这种更宽的写法** —— 一个全为境外 IP 的组（如纯 `8.8.8.8`）虽是 IP 字面量，却必须经代理才可达，那会**直接回退到坑 13 的 f5 事故形态**。放宽必须保留收紧面。
 回归守卫：`tests/` 目录下有五份合成 profile —— **改 `group_reach` 判据后必须五份都跑**
-（或直接 `bash tests/run.sh`，**阶段 1** 把五份同时喂给两个脚本、共 10 个断言）：
+（或直接 `bash skill/tests/egern/run.sh`，**阶段 1** 把五份同时喂给两个脚本、共 10 个断言）：
 
 | profile | 构造 | 期望 | 命令 |
 |---|---|---|---|
 | `tests/bad_foreign.yaml` | 兜底组端点全为**境外** IP（`8.8.8.8` / `1.1.1.1`） | **HIGH + 退出码 1** | `check_egern_dns.py tests/bad_foreign.yaml` |
 | `tests/bad_hostname.yaml` | 兜底组端点含**主机名**（`dns.alidns.com`） | **HIGH + 退出码 1** | `check_egern_dns.py tests/bad_hostname.yaml` |
 | `tests/ok_route.yaml` | 兜底组端点全为国内 IP **且有显式 `ip_cidr → DIRECT`**（走判据 A） | **通过 + 退出码 0** | `check_egern_dns.py tests/ok_route.yaml` |
-| `tests/ipv6_only.yaml` | 端点仅 IPv6 国内解析器（`[2400:3200::1]`） | **通过 + 退出码 0，且两脚本结论必须一致** | `bash tests/run.sh` |
-| `tests/scheme_case.yaml` | 端点 scheme 写成大写（`HTTPS://` / `TLS://`），其余与 `ok_route.yaml` **逐字相同** | **通过 + 退出码 0，结论必须与 `ok_route.yaml` 完全相同** | `bash tests/run.sh` |
+| `tests/ipv6_only.yaml` | 端点仅 IPv6 国内解析器（`[2400:3200::1]`） | **通过 + 退出码 0，且两脚本结论必须一致** | `bash skill/tests/egern/run.sh` |
+| `tests/scheme_case.yaml` | 端点 scheme 写成大写（`HTTPS://` / `TLS://`），其余与 `ok_route.yaml` **逐字相同** | **通过 + 退出码 0，结论必须与 `ok_route.yaml` 完全相同** | `bash skill/tests/egern/run.sh` |
 
 前两个是**收紧面**（证明判据没被放宽成"全 IP 即安全"）；后三个是**放行面**（分别证明判据 A 路径、
 IPv6 端点解析、scheme 任意拼法都仍有效）。后两份的期望值都必须在**修 bug 之前先验证它会失败** ——
