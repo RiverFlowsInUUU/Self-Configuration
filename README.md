@@ -95,16 +95,16 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 
 | 想查 | 去哪 |
 |:-----|:-----|
-| 操作 | 👉 从 [`manual/MANUAL.md`](manual/MANUAL.md) 读起 |
-| 跨内核 | [`语法映射与移植边界`](docs/跨内核差异对照.md) |
-| 规则集 | [`21 份共用规则集的指向与来源`](docs/规则集与来源.md) |
-| 避坑 | [`使用前必看`](docs/注意事项.md) |
-| 许可 | [`图标来源与 MIT 许可`](docs/图标与许可.md) |
-| 逐键 | [`Surge`](surge/DetailsReadme/DetailsReadme.md) · [`Egern`](egern/DetailsReadme/DetailsReadme.md) `DetailsReadme` |
-| 读数 | [`Surge`](surge/docs/08-审计读数.md) · [`Egern`](egern/docs/08-审计读数.md) `docs/08` |
-| 旧文档去向 | [`手册 99 章映射表`](manual/99-版本历史.md) |
-| 改动史 | [`CHANGELOG.md`](CHANGELOG.md) |
-| 自包含 | [`为何不依赖外部仓库`](docs/技能包合并与自包含.md) · [`体检报告`](docs/体检报告.md) · `日志旧版原文` |
+| 装⁠改⁠验⁠修 | 👉 从 [`manual/MANUAL.md`](manual/MANUAL.md) 读起 |
+| 语⁠法⁠映⁠射 | [`语法映射与移植边界`](docs/跨内核差异对照.md) |
+| 规⁠则⁠来⁠源 | [`21 份共用规则集的指向与来源`](docs/规则集与来源.md) |
+| 注⁠意⁠事⁠项 | [`使用前必看`](docs/注意事项.md) |
+| 图⁠标⁠许⁠可 | [`图标来源与 MIT 许可`](docs/图标与许可.md) |
+| 逐⁠键⁠语⁠义 | [`Surge`](surge/DetailsReadme/DetailsReadme.md) · [`Egern`](egern/DetailsReadme/DetailsReadme.md) `DetailsReadme` |
+| 审⁠计⁠读⁠数 | [`Surge`](surge/docs/08-审计读数.md) · [`Egern`](egern/docs/08-审计读数.md) `docs/08` |
+| 归⁠档⁠去⁠向 | [`手册 99 章映射表`](manual/99-版本历史.md) |
+| 改⁠动⁠记⁠录 | [`CHANGELOG.md`](CHANGELOG.md) |
+| 仓⁠库⁠自⁠足 | [`为何不依赖外部仓库`](docs/技能包合并与自包含.md) · [`体检报告`](docs/体检报告.md) · `日志旧版原文` |
 
 > **说明**　就地冻结 = 原文可读、不再更新，操作以手册为准。编号沿旧：`surge/docs/11` 与 `egern/docs/12` 同一主题；09 / 10 / 11 是历史缺口，不是漏了文件。
 
