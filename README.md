@@ -100,7 +100,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 | 👉 装⁠改⁠验⁠修 | 从 [`manual/MANUAL.md`](manual/MANUAL.md) 读起 |
 | 🔀 语⁠法⁠映⁠射 | [`语法映射与移植边界`](docs/跨内核差异对照.md) |
 | 📜 规⁠则⁠来⁠源 | [`21 份共用规则集的指向与来源`](docs/规则集与来源.md) |
-| ⚠️ 注⁠意⁠事⁠项 | [`使用前必看`](docs/注意事项.md) |
+| ❗ 注⁠意⁠事⁠项 | [`使用前必看`](docs/注意事项.md) |
 | 🎨 图⁠标⁠许⁠可 | [`图标来源与 MIT 许可`](docs/图标与许可.md) |
 | ⌨️ 逐⁠键⁠语⁠义 | [`Surge`](surge/DetailsReadme/DetailsReadme.md) · [`Egern`](egern/DetailsReadme/DetailsReadme.md) `DetailsReadme` |
 | 📊 审⁠计⁠读⁠数 | [`Surge`](surge/docs/08-审计读数.md) · [`Egern`](egern/docs/08-审计读数.md) `docs/08` |
