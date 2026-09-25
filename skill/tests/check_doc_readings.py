@@ -11,7 +11,10 @@
 固定规则清单（每条 = 1 个断言，**共 18 条、不随文件数增长**）：
     D0 两内核逐位对齐：组数 / 规则条数 / 规则集条数 三对 × 两形态必须相等（抓"只动了一侧"）
     D1 策略组数      —— 「N 组 / N 个策略组」类声明 == 实测组数
+                      🆕 含 README 门面上 `Groups` 徽章里的两个数（A-11：URL 参数里的数，
+                      位置即语义 —— 左 Surge｜右 Egern、形态钉死分流版）
     D2 规则条数      —— 「N 条 … 规则」类声明 == 实测 `[Rule]` / `rules` 非注释条目数
+                      🆕 含 README 门面上 `Rules` 徽章里的两个数（同上）
     D3 规则集条数    —— 「N 条 … 规则集 / rule_set」类声明 == 实测 RULE-SET / rule_set 引用数
     D4 订阅文件份数  —— 「N 份 `.conf` / `.yaml`」类声明 == 两内核 `profiles/` 下的文件数
     D5 图标数        —— 「N 个策略组图标」== `icons/` 文件数
@@ -385,6 +388,23 @@ def _shared_b_filter(line):
             or "lazy" in line.lower() or "routing" in line.lower())
 
 
+# ── README 门面徽章里的读数（A-11，折进 D1/D2 两条、不单立判据）────────────────────
+# 为什么单开一条模式：shields.io 把数写死在 **URL 参数**里（`badge/Groups-26%20%7C%2026`），
+# 上面那些按中文量词匹配的正则**一个字都吃不到** ⇒ 徽章是全仓最显眼的读数，也是唯一没人对拍的。
+# 位置即语义：`A%20%7C%20B` 左 = Surge、右 = Egern（与本仓「Surge/Egern」一贯的排列同序），
+# 形态**钉死分流版**（Groups 链到 `#-井然有序` 那张两形态对照表，Rules 链到跨内核差异对照）。
+# ⚠️ 左右顺序是一条**假设**，但它只可能造成假红、不可能造成假绿：两侧真分叉时 D0 先判负，
+#    而徽章这条对每个数都独立比一次实测 —— 没有「判不出就放过」那一步。
+BADGE_RX = re.compile(r"img\.shields\.io/badge/(Groups|Rules)-(\d+)%20%7C%20(\d+)")
+BADGE_KIND = {"Groups": "groups", "Rules": "rules"}
+
+
+def _badge_line(label, a, b):
+    """行内判别自证用的合成徽章行（与 README 那两行同形）。"""
+    return ("[![%s](https://img.shields.io/badge/%s-%d%%20%%7C%%20%d-8250df"
+            "?style=flat-square)](x)" % (label, label, a, b))
+
+
 def candidates(m, kern, form, kind):
     """这一类声明在当前行的定位下，实测值可能是哪些。"""
     if kind == "dns_keys":
@@ -498,6 +518,10 @@ def k3_selfproof(m, kind):
       ④ 单边改坏必红 —— BARE 那句 + 只把 egern 侧挪 1 ⇒ 必须判负。
          这条钉住 ① 的修法：元组截断版（`for k, _ in keys`）只剩 surge 单边候选，在此处
          判不出 ⇒ 必红。（①②用 ANCH、③④用 BARE：同一句措辞测不出这两种坏法的差别。）
+      ⑤–⑦ README 徽章（A-11）—— 徽章把数写在 shields.io 的 URL 参数里，量词模式吃不到
+         ⇒ 单开一条模式，三查：⑤ 真话不红 · ⑥ 右半边（Egern）改数必红 ·
+         ⑦ 左半边（Surge）改数必红。这条模式只服务徽章，空转时 D1/D2 仍会靠正文命中数绿着，
+         所以自证必须挂在同一条 ck 上（判据条数不变，全仓「固定 18 条规则」的表述不改）。
     """
     out = []
     key = "surge_routing_%s" % kind
@@ -512,6 +536,18 @@ def k3_selfproof(m, kind):
     m2["egern_routing_%s" % kind] = val + 1
     if not _scan_line(m2, K3_BARE[kind] % val, kind):
         out.append("④ 只改坏 egern 侧、行内不写内核名 ⇒ 没判出来（单边候选的坏法）")
+    # ⑤–⑦ README 徽章（A-11）：这条模式**只**服务徽章，它空转时 D1/D2 仍会靠正文命中数绿着
+    #    ⇒ 必须单独自证。徽章的数在 URL 参数里，中文量词那三条正则碰不到，所以真话/改数各验一次。
+    if kind in BADGE_KIND.values():
+        _lbl = [k for k, v in BADGE_KIND.items() if v == kind][0]
+        _s = int(m["surge_routing_%s" % kind])
+        _e = int(m["egern_routing_%s" % kind])
+        if _scan_line(m, _badge_line(_lbl, _s, _e), kind):
+            out.append("⑤ 徽章真话被判红")
+        if not _scan_line(m, _badge_line(_lbl, _s, _e + 1), kind):
+            out.append("⑥ 徽章右半边（Egern）改数没判红")
+        if not _scan_line(m, _badge_line(_lbl, _s + 1, _e), kind):
+            out.append("⑦ 徽章左半边（Surge）改数没判红")
     return out
 
 
@@ -608,6 +644,18 @@ def scan(docs, m):
                     if str(want).isdigit() and int(g) != int(want):
                         bad.append("%s:%d [%s] 文档写 %s，实测 %s ｜ %s"
                                    % (rel, i, kind, g, want, line.strip()[:70]))
+            # README 徽章（A-11）：一行两个数，左 Surge｜右 Egern、形态分流版（见 BADGE_RX 注释）。
+            # 计数记在 groups / rules 这两类上 ⇒ D1/D2 的**判据条数不变**（全仓「18 条」的表述不改）。
+            for mm in BADGE_RX.finditer(line):
+                _bk = BADGE_KIND[mm.group(1)]
+                for _pos, _kern in ((2, "surge"), (3, "egern")):
+                    hits[_bk] += 1
+                    compared[_bk] += 1
+                    _want = m["%s_routing_%s" % (_kern, _bk)]
+                    if int(mm.group(_pos)) != int(_want):
+                        bad.append("%s:%d [%s] 徽章（%s · %s 侧）写 %s，实测 %s ｜ %s"
+                                   % (rel, i, _bk, mm.group(1), _kern,
+                                      mm.group(_pos), _want, line.strip()[:70]))
             # 引用不悬空：写出的 profile 文件名要么在当前版固定名里，要么在 config_old/ 归档里；
             # 但**订阅 URL**（Self-Configuration/main/…/profiles/xxx）只准用固定名 —— 那是永久地址。
             for mm in re.finditer(r"\b(routing[A-Za-z0-9._]*|lazy)\.((?:min\.)?)(conf|yaml)\b", line):
@@ -684,7 +732,8 @@ def main():
         proof = k3_selfproof(m, kind) if kind in K3 else []
         ck("%s（命中 %d 处声明 ｜ 实际比较 %d 处%s）"
            % (NAMES[kind], n, cmp_n,
-              " · 含判别自证：真话不红 · 改数必红 · 跨形态差不算分叉 · 单边改坏必红"
+              (" · 含判别自证：真话不红 · 改数必红 · 跨形态差不算分叉 · 单边改坏必红"
+               + (" · 徽章两类数左右各判一次" if kind in BADGE_KIND.values() else ""))
               if kind in K3 else ""),
            not sub and n > 0 and (kind in NO_CMP or cmp_n > 0) and not proof,
            "\n      " + "\n      ".join(sub[:6] + proof))
