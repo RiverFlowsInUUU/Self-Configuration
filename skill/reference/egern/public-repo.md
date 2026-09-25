@@ -15,7 +15,8 @@ LICENSE · .gitignore · AGENTS.md            # AGENTS.md = 维护者任务书�
 icons/                                      # 26 个 PNG —— 两内核共用（原各存一份且逐字节相同）
 manual/                                     # ★ 手册层：唯一权威操作层（MANUAL.md 入口 + 11 章 + 99 版本历史）
 docs/                                       # ★ 共享文档层（不再各内核一份）
-  跨内核差异对照.md · 规则集与来源.md · 注意事项.md · 图标与许可.md
+  活专题四篇：跨内核差异对照.md · 规则集与来源.md · 注意事项.md · 图标与许可.md
+  归档快照三篇 + _archive/：体检报告.md · 技能包合并与自包含.md · 日志旧版原文.md（均标注「不随现状更新」）
 skill/                                      # 本 skill：SKILL.md（§0 判内核 → 分支 A/B）
   reference/{surge,egern}/ · scripts/{surge,egern}/ · tests/{surge,egern}/
 egern/profiles/lazy.yaml / lazy.min.yaml          # 懒人版 · 可选（3 组 / 10 条规则，AD 只留 REJECT、无 Final 兜底组（policy 直写 Proxy））

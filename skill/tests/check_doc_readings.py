@@ -8,7 +8,7 @@
   **没有任何检查会因为"改了 profile 忘了改文档"而报错** —— 只能一轮轮 grep 反查、逐个数字重测。
   这一项把它变成一条命令：不吻合就直接点名「哪个文件第几行写的 24，实测 23」。
 
-固定规则清单（每条 = 1 个断言，**共 17 条、不随文件数增长**）：
+固定规则清单（每条 = 1 个断言，**共 18 条、不随文件数增长**）：
     D0 两内核逐位对齐：组数 / 规则条数 / 规则集条数 三对 × 两形态必须相等（抓"只动了一侧"）
     D1 策略组数      —— 「N 组 / N 个策略组」类声明 == 实测组数
     D2 规则条数      —— 「N 条 … 规则」类声明 == 实测 `[Rule]` / `rules` 非注释条目数
@@ -36,7 +36,10 @@
     D16 TOTAL 槽位数  —— 「N 个 TOTAL」== `all.sh` 里 `MEASURED+=(` 的个数（**现算**）
     D17 surge 审计器判据数 —— 「N 项审计清单 / 判据 / 检查」== `check_surge_dns.py` 里 `def check_N_` 的
                       个数（**现算**）。含 egern 的行不判（那句「Egern 18 项」指的是加固清单，D15 管）
-                       ⚠️ D1–D16 全部**命中 0 处即判负**（0 命中 = 判据空转，不是"没有漂移"）。
+    D18 共用规则集份数 —— 「N 份…共用规则集」/「N 个 URL」== 两侧分流版规则集 URL 的**交集**（**现算**，
+                      **含被注释的 `Proxy.list`** —— 文档承诺的是 URL 集合层面"逐字相同"，不是活跃规则数；
+                      与 D3 的"每形态引用数"是两个口径，不可合并，合并即对着正确的 21 报假红）。
+                       ⚠️ D1–D18 全部**命中 0 处即判负**（0 命中 = 判据空转，不是"没有漂移"）。
 
 **刻意不判的东西**（判了会误伤，交给人）：
   · 判据/回归的断言数（27 / 50 / 14 / 18）—— 那要真跑测试才有值，递归且不划算。
@@ -289,6 +292,25 @@ def measure():
     m["self_urls"] = sorted(self_urls)
     m["self_missing"] = [u for u in sorted(self_urls)
                          if not os.path.isfile(os.path.join(ROOT, u.replace("/", os.sep)))]
+    # D18 共用规则集份数的实测值：分流版两侧 URL 集合的交集。
+    # ⚠️ 口径：**含被注释的条目** —— 两侧 `Proxy.list` 都注释掉了，但文档承诺的是
+    #    「URL 集合逐字相同」（`docs/规则集与来源.md` 的括注写明含它），不是"活跃规则数"。
+    #    拿活跃口径去对，一上线就会对着正确的 21 报假红（实测：活跃交集 20 / 含注释 21 / 单侧引用 22+）。
+    def _rs_urls(path, key):
+        out = set()
+        try:
+            for line in open(path, encoding="utf-8", errors="replace"):
+                if key in line:
+                    for mm in re.finditer(r"https?://[^\s,\"'）]+", line):
+                        u = mm.group(0)
+                        if u.endswith(".list") or u.endswith(".txt"):
+                            out.add(u)
+        except OSError:
+            return set()
+        return out
+    s_urls = _rs_urls(os.path.join(ROOT, "surge", "profiles", "routing.conf"), "RULE-SET")
+    e_urls = _rs_urls(os.path.join(ROOT, "egern", "profiles", "routing.yaml"), "match:")
+    m["shared_urls"] = len(s_urls & e_urls)
     return m
 
 
@@ -337,9 +359,10 @@ def expected(m, kern, form, kind):
     """按内核 / 形态取实测值；两内核同值时允许不指定内核。"""
     if kind == "version":
         return m["version"]
-    if kind in ("icons", "items", "dns_keys", "totals", "checker"):
-        return m["checker_criteria"] if kind == "checker" else m[kind]
-        return m[kind]
+    if kind in ("icons", "items", "dns_keys", "totals", "checker", "shared"):
+        if kind == "checker":
+            return m["checker_criteria"]
+        return m["shared_urls"] if kind == "shared" else m[kind]
     if kind in ("stages", "fixtures"):
         if kern:
             return m["%s_%s" % (kern, kind)]
@@ -357,7 +380,7 @@ def expected(m, kern, form, kind):
 def scan(docs, m):
     """返回 (checks, bad, skipped)：checks 是「每条规则命中几处声明」。"""
     hits = {k: 0 for k in ("groups", "rules", "rulesets", "files", "icons", "items", "deadref",
-                          "dns_keys", "stages", "fixtures", "totals", "checker")}
+                          "dns_keys", "stages", "fixtures", "totals", "checker", "shared")}
     bad, skipped = [], []
 
     RULES = [
@@ -376,6 +399,10 @@ def scan(docs, m):
         ("files", re.compile(r"([0-9]+|[一二三四五六七八九十两])\s*件(?:\s*形态)?"),
          lambda line: ("顶层" in line or "固定名" in line or "形态" in line)),
         ("rulesets", re.compile(r"(\d+)\s*条[^。\n]{0,16}(?:规则集|rule_set)|(?:规则集|rule_set)[^。\n]{0,12}?(\d+)\s*条")),
+        # D18「N 份共用规则集」/「N 个 URL」—— ⚠️ 不能并进 D3 的正则：D3 对的是**每形态 RULE-SET
+        #    引用数**（现 22/8），这里的口径是**两内核 URL 交集**（现 21），扩了正则就是拿错口径
+        #    判正确的文档（2026-09-25 双机对拍审确认的陷阱）。所以单立一类、单独实测。
+        ("shared", re.compile(r"(\d+)\s*份[^。\n]{0,8}共用规则集|(\d+)\s*个\s*URL")),
         ("rules", re.compile(r"(\d+)\s*条[^。\n]{0,10}规则(?!集)|(?:规则|`rules`)[^。\n]{0,8}?(\d+)\s*条")),
         # ── 2026-09-25 补的四类（此前无判据）──────────────────────────────────
         # 「N 个键」的「个」可省：落位清单里 `16 键` 与 `16 个 DNS 键` 两种写法各占一半。
@@ -485,9 +512,9 @@ def main():
              "deadref": "D8 profile 引用不悬空·订阅 URL 用固定名",
              "dns_keys": "D11 DNS 键数", "stages": "D12 阶段数",
              "fixtures": "D13 fixture 数", "totals": "D16 TOTAL 槽位数",
-             "checker": "D17 surge 审计器判据数"}
+             "checker": "D17 surge 审计器判据数", "shared": "D18 共用规则集份数（含注释项·交集口径）"}
     for kind in ("groups", "rules", "rulesets", "files", "icons", "items", "deadref",
-                 "dns_keys", "stages", "fixtures", "totals", "checker"):
+                 "dns_keys", "stages", "fixtures", "totals", "checker", "shared"):
         sub = [b for b in bad if "[%s]" % kind in b]
         n = hits.get(kind, 0)
         # ⚠️ **命中 0 处也判负**：0 命中说明这一类声明在文档里根本不存在（措辞变了 / 判据写死了），

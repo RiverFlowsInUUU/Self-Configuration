@@ -32,7 +32,7 @@ bash skill/tests/all.sh --landed   # 提交并推送之后再跑一次：三数�
 
 七项分别守：Surge 六阶段回归 · Egern 两阶段回归 · `.min` 与完整版去注释对拍 ·
 换设备可移植性（行尾 / BOM / 命名 / 单机残留，**固定 18 条规则**）·
-文档读数与实测对拍（组数 / 规则条数 / 份数 / 图标数 / 检查项数 / 悬空指向、豁免行可被读到，**固定 17 条规则**，
+文档读数与实测对拍（组数 / 规则条数 / 份数 / 图标数 / 检查项数 / 悬空指向、豁免行可被读到，**固定 18 条规则**，
 见 `skill/tests/check_doc_readings.py`）· 工具自检 + 覆盖矩阵（三套自带回归 + 全部被跟踪 `.py` 可编译 + 顶层死绑定 + 用了没绑 +
 覆盖矩阵，**固定 8 条判据**，见 `skill/tests/check_tools.py`）·
 回归断言数对拍（文档写死的「19 断言 / 24 断言」↔ 本轮六个 TOTAL，**固定 6 条判据**，
@@ -84,16 +84,18 @@ bash skill/tests/all.sh --landed   # 提交并推送之后再跑一次：三数�
 | `surge/profiles/` · `egern/profiles/` | 订阅文件：顶层固定名四件 + `config_old/` 归档 | 改了完整版跑 `make_min.py` 生成 `.min`（见 §5），对拍是第 3 项；升版走 §5 |
 | `skill/` | 配置领域技能包：`skill/SKILL.md` + `skill/reference/` + `skill/scripts/` | 触发词表与 `agent_created` 头**别乱动**，是靠它被检索的 |
 | `skill/scripts/` · `skill/tests/` | 审计脚本与回归判据（批量改文档走 `skill/tests/apply_edits.py`：锚点不唯一就整批拒写） | 新增判据要把读数写进 `surge/docs/08-审计读数.md` 与 `egern/docs/08-审计读数.md` |
-| `docs/` | 人读的六篇详解（跨设备一致性、差异对照、体检报告…） | 相对链接由 Surge 侧阶段 6 全仓校验 |
+| `docs/` | 人读的**活专题四篇**（注意事项、规则集与来源、跨内核差异对照、图标与许可）+ **归档快照三篇**（体检报告、技能包合并与自包含、日志旧版原文，均标注「不随现状更新」）+ `_archive/` 旧文档目录。没有叫「跨设备一致性」的篇目 —— 那个话题在注意事项里 | 相对链接由 Surge 侧阶段 6 全仓校验 |
+| `manual/` | 人读手册：`MANUAL.md` 索引 + 编号章节 01–11、99 | 手册允许指向审计项**序号**与**取舍结论**；会漂的统计读数一律落两侧 `docs/08-审计读数.md`，别抄进手册 |
 | `CHANGELOG.md` | **唯一一份**改动记录：装配层 + 两个内核的迭代都按日期写在这里 | 体例三条：**一天一段**（当天后续改动往那段增补，不开第二个同名日期段）· 段内分 `### Surge` / `### Egern` / `### 共享层`，没动的不写 · 一条只答「改了什么 · 哪里没动 · 验收」。别在 `surge/` `egern/` 里另起日志；合并前的内核迭代史在各自 `docs/07` 末节 |
 | `icons/` | 26 个策略组图标（两内核共用） | 路径**必须纯 ASCII**（`skill/tests/check_portability.py` 的 `N6`），别新加中文名 |
 
-## 4 · 换到一台新机器只做三件事
+## 4 · 换到一台新机器只做四件事
 
 ```bash
 git clone https://github.com/RiverFlowsInUUU/Self-Configuration.git
 git config --global user.name  "你的名字"
 git config --global user.email "你的邮箱"
+pip install pyyaml   # Egern 侧脚本读 .yaml 靠它；缺它 `all.sh` 前置就 rc=2（没跑成不等于跑绿）
 ```
 
 推送凭据用 `gh auth login` 或 Git 凭据管理器。**token 不进仓内任何文件，也不写进 remote URL。**

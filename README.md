@@ -13,7 +13,7 @@
 
 </div>
 
-> 🤖 **AI agent 请从这里开始** → [`AGENTS.md`](AGENTS.md)：改完必跑的那一条命令，和四条不要越的线。
+> 🤖 **AI agent 请从这里开始** → [`AGENTS.md`](AGENTS.md)：改完必跑的那一条命令，和五条不要越的线。
 
 ## 📥 两全其美 · 皆合心意
 
@@ -96,7 +96,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 | 🕘 改⁠动⁠记⁠录 | [`CHANGELOG.md`](CHANGELOG.md) —— 唯一改动记录 |
 | 📦 仓⁠库⁠自⁠足 | [`为何不依赖外部仓库`](docs/技能包合并与自包含.md) · [`体检报告`](docs/体检报告.md) · `日志旧版原文` |
 
-> **说明**　就地冻结 = 原文可读、不再更新，操作以手册为准。编号沿旧：`surge/docs/11` 与 `egern/docs/12` 同一主题；09 / 10 / 11 是历史缺口，不是漏了文件。
+> **说明**　就地冻结 = 原文可读、不再更新，操作以手册为准。编号沿旧：`surge/docs/11` 与 `egern/docs/12` 同一主题；09 / 10 两侧皆无，11 只有 Surge 侧有、Egern 侧空着 —— 都是历史缺口，不是漏了文件。
 
 ---
 
