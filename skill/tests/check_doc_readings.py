@@ -36,9 +36,14 @@
     D16 TOTAL 槽位数  —— 「N 个 TOTAL」== `all.sh` 里 `MEASURED+=(` 的个数（**现算**）
     D17 surge 审计器判据数 —— 「N 项审计清单 / 判据 / 检查」== `check_surge_dns.py` 里 `def check_N_` 的
                       个数（**现算**）。含 egern 的行不判（那句「Egern 18 项」指的是加固清单，D15 管）
-    D18 共用规则集份数 —— 「N 份…共用规则集」/「N 个 URL」== 两侧分流版规则集 URL 的**交集**（**现算**，
-                      **含被注释的 `Proxy.list`** —— 文档承诺的是 URL 集合层面"逐字相同"，不是活跃规则数；
-                      与 D3 的"每形态引用数"是两个口径，不可合并，合并即对着正确的 21 报假红）。
+    D18 共用规则集份数 —— 「N 份…共用规则集」/「N 个 URL」/「懒人版 N 个逐字相同」== 两侧同形态规则集
+                      URL 的**交集**（**现算**：分流版 21 / 懒人版 6，**含被注释的 `Proxy.list`** ——
+                      文档承诺的是 URL 集合层面"逐字相同"，不是活跃规则数；与 D3 的"每形态引用数"
+                      是两个口径，不可合并，合并即对着正确的 21 报假红）。不带形态的行默认按**分流版**
+                      判（仓内口径旗舰；懒人版的数一律同行带「懒人版」，实测）。⚠️「Egern 独有 2 项」
+                      是集合差、不是共用份数 ⇒ **刻意不判**（挂进本类即名实不符；单立判据的连带面
+                      =全链「固定 18 条」改 19，2026-09-25 三轮对拍审定案走最小面，升 D19 需维护者点名）。
+                      附**行内判别自证**（D15 先例）：真话不红 · 改数必红 · 无锚措辞不误伤。
                        ⚠️ D1–D18 全部**命中 0 处即判负**（0 命中 = 判据空转，不是"没有漂移"）。
 
 **刻意不判的东西**（判了会误伤，交给人）：
@@ -292,7 +297,7 @@ def measure():
     m["self_urls"] = sorted(self_urls)
     m["self_missing"] = [u for u in sorted(self_urls)
                          if not os.path.isfile(os.path.join(ROOT, u.replace("/", os.sep)))]
-    # D18 共用规则集份数的实测值：分流版两侧 URL 集合的交集。
+    # D18 共用规则集份数的实测值：**同形态**两侧 URL 集合的交集（分流版 21 / 懒人版 6）。
     # ⚠️ 口径：**含被注释的条目** —— 两侧 `Proxy.list` 都注释掉了，但文档承诺的是
     #    「URL 集合逐字相同」（`docs/规则集与来源.md` 的括注写明含它），不是"活跃规则数"。
     #    拿活跃口径去对，一上线就会对着正确的 21 报假红（实测：活跃交集 20 / 含注释 21 / 单侧引用 22+）。
@@ -308,9 +313,12 @@ def measure():
         except OSError:
             return set()
         return out
-    s_urls = _rs_urls(os.path.join(ROOT, "surge", "profiles", "routing.conf"), "RULE-SET")
-    e_urls = _rs_urls(os.path.join(ROOT, "egern", "profiles", "routing.yaml"), "match:")
-    m["shared_urls"] = len(s_urls & e_urls)
+    m["shared_routing"] = len(
+        _rs_urls(os.path.join(ROOT, "surge", "profiles", "routing.conf"), "RULE-SET")
+        & _rs_urls(os.path.join(ROOT, "egern", "profiles", "routing.yaml"), "match:"))
+    m["shared_lazy"] = len(
+        _rs_urls(os.path.join(ROOT, "surge", "profiles", "lazy.conf"), "RULE-SET")
+        & _rs_urls(os.path.join(ROOT, "egern", "profiles", "lazy.yaml"), "match:"))
     return m
 
 
@@ -335,6 +343,29 @@ def kern_of(line, path):
     if s and not e:
         return "surge"
     return None
+
+
+# ── D18 的两个声明模式（scan 与行内判别自证共用同一份，防止"自证测的不是在用的正则"）────
+# 判别**只靠同行语义锚，不靠距离参数**（2026-09-25 三轮对拍审的边界实测：「个」↔「逐字相同」
+# 之间正好隔 ` URL ` = 5 字符 ⇒ `{0,4}` 只是碰巧安全，谁顺手放宽一位，分流版的 21 就会
+# 被喂进懒人版的期望值 6 ⇒ 对着正确的文档报假红。与 D18 头注里"扩正则拿错口径"同型陷阱，
+# 只是换到了参数位 —— 所以这里的分工是：SHARED_A 吃「份…共用规则集」与「N 个 URL」，
+# SHARED_B 只吃**紧邻**的「N 个逐字相同」，且两个 filter 各自要求同行语义锚。）
+SHARED_A_RX = re.compile(r"(\d+)\s*份[^。\n]{0,8}共用规则集|(\d+)\s*个\s*URL")
+
+
+def _shared_a_filter(line):
+    # P12（D4 先例）：裸的「N 个 URL」不加限定就吃 —— LIVE 名单里有两份 DetailsReadme，
+    # 哪天出现一句「2 个 URL 指向同一文件」就会误判红。语义锚：共用规则集 或 逐字相同/共用。
+    return ("共用规则集" in line
+            or ("URL" in line and ("逐字相同" in line or "共用" in line)))
+
+
+SHARED_B_RX = re.compile(r"(\d+)\s*个\s*逐字相同")
+
+
+def _shared_b_filter(line):
+    return "懒人版" in line or "lazy" in line.lower()
 
 
 def candidates(m, kern, form, kind):
@@ -362,7 +393,11 @@ def expected(m, kern, form, kind):
     if kind in ("icons", "items", "dns_keys", "totals", "checker", "shared"):
         if kind == "checker":
             return m["checker_criteria"]
-        return m["shared_urls"] if kind == "shared" else m[kind]
+        if kind == "shared":
+            # 不带形态的行按**分流版**判：仓内"N 份共用规则集"的旗舰口径就是分流版
+            # （README 门面 · 规则集与来源），懒人版的数实测一律同行带「懒人版」（form_of 认得到）。
+            return m["shared_lazy"] if form == "lazy" else m["shared_routing"]
+        return m[kind]
     if kind in ("stages", "fixtures"):
         if kern:
             return m["%s_%s" % (kern, kind)]
@@ -399,10 +434,12 @@ def scan(docs, m):
         ("files", re.compile(r"([0-9]+|[一二三四五六七八九十两])\s*件(?:\s*形态)?"),
          lambda line: ("顶层" in line or "固定名" in line or "形态" in line)),
         ("rulesets", re.compile(r"(\d+)\s*条[^。\n]{0,16}(?:规则集|rule_set)|(?:规则集|rule_set)[^。\n]{0,12}?(\d+)\s*条")),
-        # D18「N 份共用规则集」/「N 个 URL」—— ⚠️ 不能并进 D3 的正则：D3 对的是**每形态 RULE-SET
-        #    引用数**（现 22/8），这里的口径是**两内核 URL 交集**（现 21），扩了正则就是拿错口径
-        #    判正确的文档（2026-09-25 双机对拍审确认的陷阱）。所以单立一类、单独实测。
-        ("shared", re.compile(r"(\d+)\s*份[^。\n]{0,8}共用规则集|(\d+)\s*个\s*URL")),
+        # D18「共用规则集份数」两个模式（正则与 filter 提到模块级，行内判别自证共用同一份）——
+        # ⚠️ 不能并进 D3 的正则：D3 对的是**每形态 RULE-SET 引用数**（现 22/8），这里的口径是
+        #    **两内核同形态 URL 交集**（现 分流 21 / 懒人 6），扩了正则就是拿错口径判正确的文档
+        #    （2026-09-25 双机对拍审确认的陷阱）。所以单立一类、单独实测。
+        ("shared", SHARED_A_RX, _shared_a_filter),
+        ("shared", SHARED_B_RX, _shared_b_filter),
         ("rules", re.compile(r"(\d+)\s*条[^。\n]{0,10}规则(?!集)|(?:规则|`rules`)[^。\n]{0,8}?(\d+)\s*条")),
         # ── 2026-09-25 补的四类（此前无判据）──────────────────────────────────
         # 「N 个键」的「个」可省：落位清单里 `16 键` 与 `16 个 DNS 键` 两种写法各占一半。
@@ -512,15 +549,49 @@ def main():
              "deadref": "D8 profile 引用不悬空·订阅 URL 用固定名",
              "dns_keys": "D11 DNS 键数", "stages": "D12 阶段数",
              "fixtures": "D13 fixture 数", "totals": "D16 TOTAL 槽位数",
-             "checker": "D17 surge 审计器判据数", "shared": "D18 共用规则集份数（含注释项·交集口径）"}
+             "checker": "D17 surge 审计器判据数", "shared": "D18 共用规则集份数（含注释项·同形态交集口径）"}
     for kind in ("groups", "rules", "rulesets", "files", "icons", "items", "deadref",
-                 "dns_keys", "stages", "fixtures", "totals", "checker", "shared"):
+                 "dns_keys", "stages", "fixtures", "totals", "checker"):
         sub = [b for b in bad if "[%s]" % kind in b]
         n = hits.get(kind, 0)
         # ⚠️ **命中 0 处也判负**：0 命中说明这一类声明在文档里根本不存在（措辞变了 / 判据写死了），
         #    判据在**空转**却不是"没有漂移" —— 与 C1/C2/C5/C6 同一条纪律（2026-09-25 补，
         #    起因：D4 实测 0 命中却一直 ✅）。
         ck("%s（命中 %d 处声明）" % (NAMES[kind], n), not sub and n > 0, "\n      " + "\n      ".join(sub[:6]))
+
+    # D18 单独收尾：通用断言 + **行内判别自证**（D15 先例）。自证吃的是**在用的**那两个
+    # 正则与 filter（模块级共用），断言「真话不红 · 改数必红 · 无锚措辞不误伤」，
+    # 并把上一轮只能手改手回的反例固化成任何机器 `python check_doc_readings.py` 都可复跑。
+    def _shared_nums(line):
+        out = []
+        for rx, flt in ((SHARED_A_RX, _shared_a_filter), (SHARED_B_RX, _shared_b_filter)):
+            if flt(line):
+                for g in rx.finditer(line):
+                    v = next((x for x in g.groups() if x), None)
+                    if v:
+                        out.append(int(v))
+        return out
+
+    def _shared_check(line):
+        want = expected(m, None, form_of(line, "fixture.md"), "shared")
+        return [(g, want) for g in _shared_nums(line) if want is not None and g != want]
+
+    _sp_bad = []
+    if _shared_check("分流版两侧 %d 个 URL 逐字相同" % m["shared_routing"]):
+        _sp_bad.append("分流版真话被判红")
+    if not _shared_check("分流版两侧 %d 个 URL 逐字相同" % (m["shared_routing"] + 1)):
+        _sp_bad.append("分流版改数没判红")
+    if _shared_check("懒人版两侧 %d 个逐字相同" % m["shared_lazy"]):
+        _sp_bad.append("懒人版真话被判红")
+    if not _shared_check("懒人版两侧 %d 个逐字相同" % (m["shared_lazy"] + 1)):
+        _sp_bad.append("懒人版改数没判红")
+    if _shared_nums("这 2 个 URL 指向同一文件"):
+        _sp_bad.append("无锚措辞被误吃")
+    sub = [b for b in bad if "[shared]" in b]
+    n = hits.get("shared", 0)
+    ck("%s（命中 %d 处声明 · 含判别自证：分流/懒人真话不红 · 改数必红 · 无锚措辞不误伤）"
+       % (NAMES["shared"], n), not sub and n > 0 and not _sp_bad,
+       "；".join(["\n      " + x for x in (sub[:6] + _sp_bad)]))
     ck("D7 本仓自托管 URL 的落点存在（%d 个）" % len(m["self_urls"]), not m["self_missing"],
        "\n      缺文件：%s" % ", ".join(m["self_missing"]))
     ck("D9 头注即当前版·同族跨内核一致且固定名四件齐：%s" % m["version"],
