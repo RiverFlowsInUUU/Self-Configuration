@@ -110,6 +110,14 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 - 🩺 [`docs/体检报告`](docs/体检报告.md) —— 全仓排查快照：每条硬判据是拿什么换的（含三处被实测推翻的原结论）
 - 🧪 [`skill/SKILL.md`](skill/SKILL.md) —— 方法论主干（先判内核，再进 Surge / Egern 分支）
 - 📘 [`surge/DetailsReadme/`](surge/DetailsReadme/) · [`egern/DetailsReadme/`](egern/DetailsReadme/) —— 逐段详解 · 原理推导 · 已知取舍 · FAQ
+
+**读上面这份清单前，有两点容易踩**：
+
+- **两侧 `docs/` 的编号不对应**：`surge/docs/11-分流版设计` 与 `egern/docs/12-分流顺序` 讲的是**同一主题**，
+  只是编号沿用了合并前的历史。编号 **09 / 10 / 11 是历史缺口**，不是漏了文件。
+- **清单里混着历史存档**：`体检报告`（当时的读数快照）· `技能包合并与自包含`（当时的合并决策）
+  · `日志旧版原文`（只读存档）—— 三者记录的都是**当时**的观测与决策，**不反映当前状态**；
+  要看现状请以各专项文档与 `CHANGELOG` 为准。
 - 🗓️ [`CHANGELOG.md`](CHANGELOG.md) —— 本仓唯一的改动记录，两个内核都写在这一份里
 
 ---

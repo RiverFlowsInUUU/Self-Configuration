@@ -481,6 +481,9 @@ rules:
 
 顶层另加：`ipv6: false`、`hijack_dns: ['*']`、`real_ip_domains: ['*.lan','*.local','*.push.apple.com']`。
 
+> 📌 上面这段（含下面那条 f10 修正）与 [`reference/egern/hardening-template.md`](reference/egern/hardening-template.md)
+> 里的**逐字相同**。**权威版本在那一份** —— 要改请改它，本处跟着同步（同一段写两处，只改一处是这仓最忌的事）。
+
 ⭐ **f10 起不要做这一步（它的反面才是对的）**：早期版本（f3）要求"把域名形式的节点逐个写成 `domain_suffix → Domestic-DNS`"，因为那时代理 DNS 会共用 `forward`。**f7 显式写出 `proxy_nameservers` 之后，代理 DNS 会跳过 `forward`** ⇒ 那些规则再也没被查询过（死代码，坑 18）。现在只需保证两件事：
 
 1. `proxy_nameservers` **显式设置**，端点全部是**国内可达的 IP 字面量** —— 它是节点域名解析的唯一出口；
