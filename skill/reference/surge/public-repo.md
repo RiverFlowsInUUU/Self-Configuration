@@ -29,7 +29,7 @@ Self-Configuration/
     │   ├── lazy.min.conf         # 懒人版（纯配置）—— 导入用
     │   ├── routing.conf          # 分流版（带注释）—— 改这份
     │   ├── routing.min.conf      # 分流版（纯配置）—— 导入用
-    │   └── config_old/           # 被替代的旧版按版本号留档，不参与检查
+    │   └── config_old/           # 被替代的旧版按版本号留档，不参与检查（例外：`architecture.sh` ① 连归档一起扫）
     ├── docs/                     # 01–08 编号系列 + 11-分流版设计（07 末节 = 本内核合并前的迭代史）
     └── DetailsReadme/
         └── DetailsReadme.md      # 完整技术文档（18 节）

@@ -1,6 +1,6 @@
 # 04 · Egern 操作
 
-对象：`../egern/profiles/` 下 `routing.yaml`（推荐，完整分流）与 `lazy.yaml`（懒人配置），各含带注释完整版与 `.min.yaml` 形态；历代旧版在 `config_old/` 归档，不参与任何检查。
+对象：`../egern/profiles/` 下 `routing.yaml`（推荐，完整分流）与 `lazy.yaml`（懒人配置），各含带注释完整版与 `.min.yaml` 形态；历代旧版在 `config_old/` 归档，不参与检查（指回归与读数类；唯一例外是 `architecture.sh` ① 的占位符 / 凭据扫描，归档不享豁免）。
 加固清单在 [`../egern/docs/03-加固清单-18项.md`](../egern/docs/03-加固清单-18项.md)；逐段细讲在 [`../egern/docs/04-模板逐段讲解.md`](../egern/docs/04-模板逐段讲解.md)（已冻结仍可读，逐行分析全仓最细；与手册冲突时以手册与本侧 `DetailsReadme` 为准）；逐键权威是 [`../egern/DetailsReadme/DetailsReadme.md`](../egern/DetailsReadme/DetailsReadme.md)。
 
 ---

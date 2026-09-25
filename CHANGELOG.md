@@ -10,6 +10,25 @@
 
 ---
 
+## 2026-09-26
+
+### 共享层
+
+- 📚 **归档的扫描面口径统一（q1）**：`architecture.sh` ① 实扫 41 个 conf/yaml（当前版 8 · 归档 24 ·
+  夹具 9），但活层有 7 处写「归档不参与任何检查」，其中 `docs/注意事项.md` · `docs/跨内核差异对照.md`
+  两处与同文件里已写对的表述直接对冲。现统一为带例外的口径：散文式「不参与检查 —— 指回归与读数类；
+  唯一例外是 `architecture.sh` ① 的占位符 / 凭据扫描，归档不享豁免」，表格与目录树注释用压缩式
+  「（例外：`architecture.sh` ① 连归档一起扫）」；落在 `AGENTS.md` · `docs/注意事项.md` ·
+  `docs/跨内核差异对照.md` · `manual/04-Egern操作.md` · `manual/10-FAQ与术语表.md` ·
+  `skill/reference/surge/public-repo.md` · `skill/reference/egern/public-repo.md`。
+  **没动**：判据与冻结文件零改动（同措辞另有 3 处在 `skill/tests/all.sh` / `surge/run.sh` /
+  `bump_version.py` 内，属闸门 ⇒ 未碰，另行请示维护者）· profile 零改动 · 活层命中数仍是 7（只加限定语）。
+  **验收**：`grep -rn "不参与检查" --include="*.md" .` 的活层 7 行经 `grep -v "architecture.sh"` 后输出 0 行；
+  判别自证 —— 临时去掉 `docs/注意事项.md` 的限定语后该行立即被点名，还原后归 0；`bash skill/tests/all.sh --offline`
+  ALL GREEN · 退出码 0 · 末行「闸门未被动过（冻结 12 个文件）」。
+
+---
+
 ## 2026-09-25
 
 ### Surge
