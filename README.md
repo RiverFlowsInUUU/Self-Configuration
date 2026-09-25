@@ -82,12 +82,14 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 
 ## 📁 文件结构
 
-- 📖 [`manual/`](manual/MANUAL.md) —— 《操作手册》，唯一权威操作层
-- 📥 [`surge/`](surge/) · [`egern/`](egern/) —— 配置模板，各固定名四件（完整版与 `.min` 版）
-- 🖼️ [`icons/`](icons/) —— 26 个策略组图标，两内核共用
-- 📚 [`docs/`](docs/) · 两侧 `docs/` · `DetailsReadme/` —— 清单 · 读数 · 逐键附录
-- 🧪 [`skill/`](skill/) —— 审计与闸门：`bash skill/tests/all.sh` 一条命令跑完七项检查
-- 🗂️ [`AGENTS.md`](AGENTS.md) · [`CHANGELOG.md`](CHANGELOG.md) —— 开工说明 · 唯一改动记录
+| 角色 | 位置 · 一句话 |
+|:-----|:-------------|
+| 📖 操⁠作⁠手⁠册 | [`manual/`](manual/MANUAL.md) —— 《操作手册》，唯一权威操作层 |
+| 📥 配⁠置⁠模⁠板 | [`surge/`](surge/) · [`egern/`](egern/) —— 各固定名四件（完整版与 `.min` 版） |
+| 🖼️ 图⁠标⁠素⁠材 | [`icons/`](icons/) —— 26 个策略组图标，两内核共用 |
+| 📚 附⁠录⁠清⁠单 | [`docs/`](docs/) · 两侧 `docs/` · `DetailsReadme/` —— 清单 · 读数 · 逐键附录 |
+| 🧪 审⁠计⁠闸⁠门 | [`skill/`](skill/) —— `bash skill/tests/all.sh` 一条命令跑完七项检查 |
+| 🗂️ 仓⁠务⁠记⁠录 | [`AGENTS.md`](AGENTS.md) · [`CHANGELOG.md`](CHANGELOG.md) —— 开工说明 · 唯一改动记录 |
 
 ---
 
@@ -95,16 +97,16 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 
 | 想查 | 去哪 |
 |:-----|:-----|
-| 装⁠改⁠验⁠修 | 👉 从 [`manual/MANUAL.md`](manual/MANUAL.md) 读起 |
-| 语⁠法⁠映⁠射 | [`语法映射与移植边界`](docs/跨内核差异对照.md) |
-| 规⁠则⁠来⁠源 | [`21 份共用规则集的指向与来源`](docs/规则集与来源.md) |
-| 注⁠意⁠事⁠项 | [`使用前必看`](docs/注意事项.md) |
-| 图⁠标⁠许⁠可 | [`图标来源与 MIT 许可`](docs/图标与许可.md) |
-| 逐⁠键⁠语⁠义 | [`Surge`](surge/DetailsReadme/DetailsReadme.md) · [`Egern`](egern/DetailsReadme/DetailsReadme.md) `DetailsReadme` |
-| 审⁠计⁠读⁠数 | [`Surge`](surge/docs/08-审计读数.md) · [`Egern`](egern/docs/08-审计读数.md) `docs/08` |
-| 归⁠档⁠去⁠向 | [`手册 99 章映射表`](manual/99-版本历史.md) |
-| 改⁠动⁠记⁠录 | [`CHANGELOG.md`](CHANGELOG.md) |
-| 仓⁠库⁠自⁠足 | [`为何不依赖外部仓库`](docs/技能包合并与自包含.md) · [`体检报告`](docs/体检报告.md) · `日志旧版原文` |
+| 👉 装⁠改⁠验⁠修 | 从 [`manual/MANUAL.md`](manual/MANUAL.md) 读起 |
+| 🔀 语⁠法⁠映⁠射 | [`语法映射与移植边界`](docs/跨内核差异对照.md) |
+| 📜 规⁠则⁠来⁠源 | [`21 份共用规则集的指向与来源`](docs/规则集与来源.md) |
+| ⚠️ 注⁠意⁠事⁠项 | [`使用前必看`](docs/注意事项.md) |
+| 🎨 图⁠标⁠许⁠可 | [`图标来源与 MIT 许可`](docs/图标与许可.md) |
+| ⌨️ 逐⁠键⁠语⁠义 | [`Surge`](surge/DetailsReadme/DetailsReadme.md) · [`Egern`](egern/DetailsReadme/DetailsReadme.md) `DetailsReadme` |
+| 📊 审⁠计⁠读⁠数 | [`Surge`](surge/docs/08-审计读数.md) · [`Egern`](egern/docs/08-审计读数.md) `docs/08` |
+| 🗃️ 归⁠档⁠去⁠向 | [`手册 99 章映射表`](manual/99-版本历史.md) |
+| 🕘 改⁠动⁠记⁠录 | [`CHANGELOG.md`](CHANGELOG.md) |
+| 📦 仓⁠库⁠自⁠足 | [`为何不依赖外部仓库`](docs/技能包合并与自包含.md) · [`体检报告`](docs/体检报告.md) · `日志旧版原文` |
 
 > **说明**　就地冻结 = 原文可读、不再更新，操作以手册为准。编号沿旧：`surge/docs/11` 与 `egern/docs/12` 同一主题；09 / 10 / 11 是历史缺口，不是漏了文件。
 
