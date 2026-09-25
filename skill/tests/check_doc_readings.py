@@ -8,7 +8,7 @@
   **没有任何检查会因为"改了 profile 忘了改文档"而报错** —— 只能一轮轮 grep 反查、逐个数字重测。
   这一项把它变成一条命令：不吻合就直接点名「哪个文件第几行写的 24，实测 23」。
 
-固定规则清单（每条 = 1 个断言，**共 11 条、不随文件数增长**）：
+固定规则清单（每条 = 1 个断言，**共 14 条、不随文件数增长**）：
     D0 两内核逐位对齐：组数 / 规则条数 / 规则集条数 三对 × 两形态必须相等（抓"只动了一侧"）
     D1 策略组数      —— 「N 组 / N 个策略组」类声明 == 实测组数
     D2 规则条数      —— 「N 条 … 规则」类声明 == 实测 `[Rule]` / `rules` 非注释条目数
@@ -25,6 +25,13 @@
     D10 豁免行可被读到 —— 当前版 profile（含 `.min`）里每一行 `# audit-waive:` 必须**与消费方的
                       正则同形**（`# audit-waive: <编号> <理由>`，理由非空），且**同一文件内编号不重复**。
                       消费方是 `skill/scripts/surge/check_surge_dns.py` 的 `load_waivers()`。
+    D11 DNS 键数      —— 「N 个(相关)键」类声明 == `architecture.sh` 的 `DNS_KEYS` 长度（**现算**）
+    D12 阶段数        —— 「N 阶段」类声明 == 该侧 runner 里「`#   阶段 N ·`」头的计数（**现算**）
+    D13 fixture 数    —— 「N fixture」类声明 == 该侧 runner 里 `CASES` 的行数（**现算**）
+                       ⚠️ D11–D13 是 2026-09-25 补的：这三类数此前散在文档里写死、**无任何判据管**。
+                      期望值一律从源头现算 —— 写死进判据就等于给判据自己造下一个会漂的硬编码。
+                      同批**刻意没做**「审计脚本数」：仓里这个词有两种口径（产出读数的 6 个 /
+                      `skill/scripts/<侧>/*.py` 的 10 个），判据接不住 ⇒ 不判（宁可少判）。
 
 **刻意不判的东西**（判了会误伤，交给人）：
   · 判据/回归的断言数（27 / 50 / 14 / 18）—— 那要真跑测试才有值，递归且不划算。
@@ -63,7 +70,7 @@ FIXED_NAMES = {"routing.conf", "routing.min.conf", "lazy.conf", "lazy.min.conf",
                "routing.yaml", "routing.min.yaml", "lazy.yaml", "lazy.min.yaml"}
 HEAD_FILES = ("surge/profiles/routing.conf", "surge/profiles/lazy.conf",
               "egern/profiles/routing.yaml", "egern/profiles/lazy.yaml")
-CN_NUM = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7,
+CN_NUM = {"一": 1, "两": 2, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7,
           "八": 8, "九": 9, "十": 10}
 
 # ── D10：豁免行 ───────────────────────────────────────────────────────────
@@ -178,6 +185,23 @@ def measure():
 
     m["icons"] = len([p for p in glob.glob(os.path.join(ROOT, "icons", "*"))
                       if os.path.isfile(p)])
+    # ── 2026-09-25 补的四类读数：此前这些数在文档里写死、**没有任何判据管**（逐条落位清单共 48 处）
+    # ⚠️ 期望值一律**从源头现算** —— 把 16 / 6 / 2 这些数写进判据，判据自己就成了下一个会漂的硬编码。
+    arch = open(os.path.join(ROOT, "skill", "tests", "surge", "architecture.sh"),
+                encoding="utf-8").read()
+    blk = re.search(r"DNS_KEYS = \[(.*?)\]", arch, re.S)
+    m["dns_keys"] = len(re.findall(r'"[^"]+"', blk.group(1))) if blk else -1
+    for _kern, _runner in (("surge", "skill/tests/surge/run.sh"),
+                           ("egern", "skill/tests/egern/run.sh")):
+        _txt = open(os.path.join(ROOT, _runner.replace("/", os.sep)), encoding="utf-8").read()
+        m["%s_stages" % _kern] = len(re.findall(r"^#   阶段 [0-9]+ · ", _txt, re.M))
+        # fixture 数 = **阶段 1 的 CASES 行数** —— 那才是「回归规模」表里的那个数（与断言数同表）。
+        # ⚠️ 不是「目录里的 .conf 个数」：`skill/tests/surge/` 另有 `fixtures/bad_region_filter.conf`，
+        #    按目录数得 4，而全仓「N fixture」在回归规模语境下都是 3。两种口径并存，判据只能认一种，
+        #    取 CASES（会变的那个）；目录注释那句另行改准（见 2026-09-25 CHANGELOG）。
+        _cases = re.search(r'CASES="(.*?)"', _txt, re.S)
+        m["%s_fixtures" % _kern] = len([
+            l for l in (_cases.group(1).splitlines() if _cases else []) if l.strip()])
     allsh = open(os.path.join(ROOT, "skill/tests/all.sh"), encoding="utf-8").read()
     m["items"] = len(re.findall(r"^item ", allsh, re.M))
     # 「当前是哪一版」自 2026-09-24 起只有一个来源：profile 头注 `#! version=routing_vX.Y`
@@ -252,6 +276,11 @@ def kern_of(line, path):
 
 def candidates(m, kern, form, kind):
     """这一类声明在当前行的定位下，实测值可能是哪些。"""
+    if kind == "dns_keys":
+        return ["dns_keys=%s" % m["dns_keys"]]
+    if kind in ("stages", "fixtures"):
+        ks = [("surge", "egern")] if not kern else [(kern, kern)]
+        return ["%s=%s" % (k, m["%s_%s" % (k, kind)]) for k, _ in ks]
     keys = [("surge", "egern")] if not kern else [(kern, kern)]
     forms = [form] if form else ["routing", "lazy"]
     out = []
@@ -267,8 +296,13 @@ def expected(m, kern, form, kind):
     """按内核 / 形态取实测值；两内核同值时允许不指定内核。"""
     if kind == "version":
         return m["version"]
-    if kind in ("icons", "items"):
+    if kind in ("icons", "items", "dns_keys"):
         return m[kind]
+    if kind in ("stages", "fixtures"):
+        if kern:
+            return m["%s_%s" % (kern, kind)]
+        vals = {m["surge_%s" % kind], m["egern_%s" % kind]}
+        return next(iter(vals)) if len(vals) == 1 else None
     if kind == "files":
         if kern:
             return m["%s_files" % kern]
@@ -280,11 +314,15 @@ def expected(m, kern, form, kind):
 
 def scan(docs, m):
     """返回 (checks, bad, skipped)：checks 是「每条规则命中几处声明」。"""
-    hits = {k: 0 for k in ("groups", "rules", "rulesets", "files", "icons", "items", "deadref")}
+    hits = {k: 0 for k in ("groups", "rules", "rulesets", "files", "icons", "items", "deadref",
+                          "dns_keys", "stages", "fixtures")}
     bad, skipped = [], []
 
     RULES = [
-        ("icons", re.compile(r"(\d+)\s*个\s*策略组图标")),
+        # ⚠️ 措辞要放宽：`26 个策略组图标` / `26 个分流组图标` / `26 个图标` 三种写法都在仓里
+        #    实测（2026-09-25）：只认「策略组图标」会**漏掉 3 处**（egern/DetailsReadme 的
+        #    `:74` 分流组图标、`:398`/`:529` 图标）。锚点写在措辞上就会漏 —— 与 C6 的教训同型。
+        ("icons", re.compile(r"(\d+)\s*个(?:策略组|分流组)?图标")),
         # 「N 项检查」只认与 `all.sh` 同行的（否则会把 check_surge_dns.py 的"12 项检查"也算进来）
         ("items", re.compile(r"([0-9]+|[一二三四五六七八九十])\s*项(?:检查|检查通过)"),
          lambda line: "all.sh" in line),
@@ -293,6 +331,15 @@ def scan(docs, m):
         ("files", re.compile(r"([0-9]+)\s*份\s*`\.(conf|yaml)`")),
         ("rulesets", re.compile(r"(\d+)\s*条[^。\n]{0,16}(?:规则集|rule_set)|(?:规则集|rule_set)[^。\n]{0,12}?(\d+)\s*条")),
         ("rules", re.compile(r"(\d+)\s*条[^。\n]{0,10}规则(?!集)|(?:规则|`rules`)[^。\n]{0,8}?(\d+)\s*条")),
+        # ── 2026-09-25 补的四类（此前无判据）──────────────────────────────────
+        # 「N 个键」的「个」可省：落位清单里 `16 键` 与 `16 个 DNS 键` 两种写法各占一半。
+        ("dns_keys", re.compile(r"(\d+)\s*个?\s*(?:DNS\s*)?(?:相关)?键")),
+        ("stages", re.compile(r"([0-9]+|[一二三四五六七八九十两])\s*个?\s*阶段")),
+        ("fixtures", re.compile(r"(\d+)\s*(?:个|份)?\s*fixture")),
+        # ⚠️ 「N 个审计脚本」**刻意不判**（2026-09-25 实测后撤掉）：仓里这个词有两种口径，
+        #    且都成立 —— ① `egern/docs/08` 记的是**产出读数的 6 个**；② `skill/scripts/egern/*.py`
+        #    去掉共享模块是 **10 个**（多出 probe_* / profile_ruleset / weigh_ruleset 四个探针工具）。
+        #    判据按 ② 判会把 ① 那句**正确的话**判负 ⇒ 接不住就不判（宁可少判）。
     ]
     for rel, p in docs:
         text = open(p, encoding="utf-8").read()
@@ -308,7 +355,7 @@ def scan(docs, m):
                     g = next((x for x in mm.groups() if x), None)
                     if g is None:
                         continue
-                    if kind == "items" and g in CN_NUM:
+                    if kind in ("items", "stages") and g in CN_NUM:
                         g = str(CN_NUM[g])
                     hits[kind] += 1
                     k2 = {"conf": "surge", "yaml": "egern"}.get(
@@ -383,8 +430,11 @@ def main():
     ck("D0 两内核逐位对齐（实测 %d 对）" % len(pairs), not off, "\n      " + "\n      ".join(off))
     NAMES = {"groups": "D1 策略组数", "rules": "D2 规则条数", "rulesets": "D3 规则集条数",
              "files": "D4 订阅文件份数", "icons": "D5 图标数", "items": "D6 检查项数",
-             "deadref": "D8 profile 引用不悬空·订阅 URL 用固定名"}
-    for kind in ("groups", "rules", "rulesets", "files", "icons", "items", "deadref"):
+             "deadref": "D8 profile 引用不悬空·订阅 URL 用固定名",
+             "dns_keys": "D11 DNS 键数", "stages": "D12 阶段数",
+             "fixtures": "D13 fixture 数"}
+    for kind in ("groups", "rules", "rulesets", "files", "icons", "items", "deadref",
+                 "dns_keys", "stages", "fixtures"):
         sub = [b for b in bad if "[%s]" % kind in b]
         n = hits.get(kind, 0)
         ck("%s（命中 %d 处声明）" % (NAMES[kind], n), not sub, "\n      " + "\n      ".join(sub[:6]))
