@@ -8,7 +8,7 @@
   **没有任何检查会因为"改了 profile 忘了改文档"而报错** —— 只能一轮轮 grep 反查、逐个数字重测。
   这一项把它变成一条命令：不吻合就直接点名「哪个文件第几行写的 24，实测 23」。
 
-固定规则清单（每条 = 1 个断言，**共 14 条、不随文件数增长**）：
+固定规则清单（每条 = 1 个断言，**共 16 条、不随文件数增长**）：
     D0 两内核逐位对齐：组数 / 规则条数 / 规则集条数 三对 × 两形态必须相等（抓"只动了一侧"）
     D1 策略组数      —— 「N 组 / N 个策略组」类声明 == 实测组数
     D2 规则条数      —— 「N 条 … 规则」类声明 == 实测 `[Rule]` / `rules` 非注释条目数
@@ -32,6 +32,9 @@
                       期望值一律从源头现算 —— 写死进判据就等于给判据自己造下一个会漂的硬编码。
                       同批**刻意没做**「审计脚本数」：仓里这个词有两种口径（产出读数的 6 个 /
                       `skill/scripts/<侧>/*.py` 的 10 个），判据接不住 ⇒ 不判（宁可少判）。
+    D15 加固清单项数  —— 文件名 `N项` 与 H1 `（N 项）` == 表格里 `| N |` 的行数（**现算**）
+    D16 TOTAL 槽位数  —— 「N 个 TOTAL」== `all.sh` 里 `MEASURED+=(` 的个数（**现算**）
+                       ⚠️ D1–D16 全部**命中 0 处即判负**（0 命中 = 判据空转，不是"没有漂移"）。
 
 **刻意不判的东西**（判了会误伤，交给人）：
   · 判据/回归的断言数（27 / 50 / 14 / 18）—— 那要真跑测试才有值，递归且不划算。
@@ -79,6 +82,22 @@ CN_NUM = {"一": 1, "两": 2, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, 
 # profile 里明明写着"这一处是刻意的"，审计器却按没豁免判（或反过来，多下一条重复编号时
 # `_waivers[cid] = 理由` 后写覆盖先写，先那份理由从此没人看得见）。
 WAIVE_CONSUMER = re.compile(r"#\s*audit-waive:\s*(\d+)\s+(.*)")
+
+
+def checklist_problems(checklists):
+    """加固清单项数对拍 ⇒ 问题清单（空 = 全过）。
+
+    吃参数是为了能用假数据验判别力（`selfproof` 写在 D15 那条判据里）。
+    口径：文件名里的 `N项` 与 H1 的 `（N 项）` 都必须等于**表格里 `| N |` 的行数** ——
+    文件名是最显眼的承诺，而它此前没有任何判据管（实测 Surge 那份停在 12、表里 14 行）。
+    """
+    out = []
+    for rel, (fn, h1, rows) in sorted(checklists.items()):
+        if fn != rows:
+            out.append("%s：文件名写 %d 项，表里 %d 行" % (rel, fn, rows))
+        if h1 != rows:
+            out.append("%s：H1 写 %d 项，表里 %d 行" % (rel, h1, rows))
+    return out
 
 
 def waive_files():
@@ -202,6 +221,22 @@ def measure():
         _cases = re.search(r'CASES="(.*?)"', _txt, re.S)
         m["%s_fixtures" % _kern] = len([
             l for l in (_cases.group(1).splitlines() if _cases else []) if l.strip()])
+    # TOTAL 槽位：`all.sh` 里 `MEASURED+=(...)` 的个数（现算）。文档里那句「本轮六个 TOTAL」归它管。
+    m["totals"] = len(re.findall(r"MEASURED\+=\(",
+                                open(os.path.join(ROOT, "skill", "tests", "all.sh"),
+                                     encoding="utf-8").read()))
+    # 加固清单项数：**文件名与 H1 里的「N 项」必须等于表格行数**（2026-09-25 补）。
+    # ⚠️ 文件名里的数字是"最显眼的承诺"，此前**没有任何判据管** —— 实测 Surge 那份名字停在 12
+    #    而表里 14 行（正文自己都引用了第 13/14 项），已随本批改名并留旧名。
+    m["checklists"] = {}
+    for _p in glob.glob(os.path.join(ROOT, "*", "docs", "03-加固清单-*项.md")):
+        _rel = os.path.relpath(_p, ROOT).replace("\\", "/")
+        _txt2 = open(_p, encoding="utf-8", errors="replace").read()
+        _nm = re.search(r"-([0-9]+)项\.md$", os.path.basename(_p))
+        _h1 = re.search(r"^# .*?（([0-9]+) 项）", _txt2, re.M)
+        m["checklists"][_rel] = (int(_nm.group(1)) if _nm else -1,
+                                 int(_h1.group(1)) if _h1 else -1,
+                                 len(re.findall(r"^\| *[0-9]+ *\|", _txt2, re.M)))
     allsh = open(os.path.join(ROOT, "skill/tests/all.sh"), encoding="utf-8").read()
     m["items"] = len(re.findall(r"^item ", allsh, re.M))
     # 「当前是哪一版」自 2026-09-24 起只有一个来源：profile 头注 `#! version=routing_vX.Y`
@@ -296,7 +331,7 @@ def expected(m, kern, form, kind):
     """按内核 / 形态取实测值；两内核同值时允许不指定内核。"""
     if kind == "version":
         return m["version"]
-    if kind in ("icons", "items", "dns_keys"):
+    if kind in ("icons", "items", "dns_keys", "totals"):
         return m[kind]
     if kind in ("stages", "fixtures"):
         if kern:
@@ -315,7 +350,7 @@ def expected(m, kern, form, kind):
 def scan(docs, m):
     """返回 (checks, bad, skipped)：checks 是「每条规则命中几处声明」。"""
     hits = {k: 0 for k in ("groups", "rules", "rulesets", "files", "icons", "items", "deadref",
-                          "dns_keys", "stages", "fixtures")}
+                          "dns_keys", "stages", "fixtures", "totals")}
     bad, skipped = [], []
 
     RULES = [
@@ -327,8 +362,12 @@ def scan(docs, m):
         ("items", re.compile(r"([0-9]+|[一二三四五六七八九十])\s*项(?:检查|检查通过)"),
          lambda line: "all.sh" in line),
         ("groups", re.compile(r"(\d+)\s*(?:个)?\s*(?:策略组|分组|组)(?!件|织|图标)")),
-        # 「N 份」只认紧跟 `.conf` / `.yaml` 的写法，内核由扩展名定（不看行内有没有 surge/egern 字样）
-        ("files", re.compile(r"([0-9]+)\s*份\s*`\.(conf|yaml)`")),
+        # 「N 份」：⚠️ 2026-09-25 实测原模式（`N 份 ` + 反引号扩展名）在**全部 live 文档里 0 命中** ⇒
+        #    判据一直空转。文档里真实的写法是「**顶层固定名四件**」（8 处）⇒ 改认「N 件」，
+        #    并加**行内过滤**：只认同一行出现「顶层 / 固定名 / 形态」的（否则「三件事」「一份代码」
+        #    「两份逐字节相同的拷贝」这类会误命中）。
+        ("files", re.compile(r"([0-9]+|[一二三四五六七八九十两])\s*件(?:\s*形态)?"),
+         lambda line: ("顶层" in line or "固定名" in line or "形态" in line)),
         ("rulesets", re.compile(r"(\d+)\s*条[^。\n]{0,16}(?:规则集|rule_set)|(?:规则集|rule_set)[^。\n]{0,12}?(\d+)\s*条")),
         ("rules", re.compile(r"(\d+)\s*条[^。\n]{0,10}规则(?!集)|(?:规则|`rules`)[^。\n]{0,8}?(\d+)\s*条")),
         # ── 2026-09-25 补的四类（此前无判据）──────────────────────────────────
@@ -336,6 +375,7 @@ def scan(docs, m):
         ("dns_keys", re.compile(r"(\d+)\s*个?\s*(?:DNS\s*)?(?:相关)?键")),
         ("stages", re.compile(r"([0-9]+|[一二三四五六七八九十两])\s*个?\s*阶段")),
         ("fixtures", re.compile(r"(\d+)\s*(?:个|份)?\s*fixture")),
+        ("totals", re.compile(r"([0-9]+|[一二三四五六七八九十两])\s*个\s*TOTAL")),
         # ⚠️ 「N 个审计脚本」**刻意不判**（2026-09-25 实测后撤掉）：仓里这个词有两种口径，
         #    且都成立 —— ① `egern/docs/08` 记的是**产出读数的 6 个**；② `skill/scripts/egern/*.py`
         #    去掉共享模块是 **10 个**（多出 probe_* / profile_ruleset / weigh_ruleset 四个探针工具）。
@@ -355,11 +395,11 @@ def scan(docs, m):
                     g = next((x for x in mm.groups() if x), None)
                     if g is None:
                         continue
-                    if kind in ("items", "stages") and g in CN_NUM:
+                    if kind in ("items", "stages", "totals", "files") and g in CN_NUM:
                         g = str(CN_NUM[g])
                     hits[kind] += 1
-                    k2 = {"conf": "surge", "yaml": "egern"}.get(
-                        mm.group(2) if kind == "files" else None, kern)
+                    # 「N 件」这种写法不带扩展名 ⇒ 内核只能靠行/路径判（`kern`），不再从格子里取。
+                    k2 = kern
                     want = expected(m, k2, form, kind)
                     if want is None:
                         cands = candidates(m, k2, form, kind)
@@ -432,17 +472,28 @@ def main():
              "files": "D4 订阅文件份数", "icons": "D5 图标数", "items": "D6 检查项数",
              "deadref": "D8 profile 引用不悬空·订阅 URL 用固定名",
              "dns_keys": "D11 DNS 键数", "stages": "D12 阶段数",
-             "fixtures": "D13 fixture 数"}
+             "fixtures": "D13 fixture 数", "totals": "D16 TOTAL 槽位数"}
     for kind in ("groups", "rules", "rulesets", "files", "icons", "items", "deadref",
-                 "dns_keys", "stages", "fixtures"):
+                 "dns_keys", "stages", "fixtures", "totals"):
         sub = [b for b in bad if "[%s]" % kind in b]
         n = hits.get(kind, 0)
-        ck("%s（命中 %d 处声明）" % (NAMES[kind], n), not sub, "\n      " + "\n      ".join(sub[:6]))
+        # ⚠️ **命中 0 处也判负**：0 命中说明这一类声明在文档里根本不存在（措辞变了 / 判据写死了），
+        #    判据在**空转**却不是"没有漂移" —— 与 C1/C2/C5/C6 同一条纪律（2026-09-25 补，
+        #    起因：D4 实测 0 命中却一直 ✅）。
+        ck("%s（命中 %d 处声明）" % (NAMES[kind], n), not sub and n > 0, "\n      " + "\n      ".join(sub[:6]))
     ck("D7 本仓自托管 URL 的落点存在（%d 个）" % len(m["self_urls"]), not m["self_missing"],
        "\n      缺文件：%s" % ", ".join(m["self_missing"]))
     ck("D9 头注即当前版·同族跨内核一致且固定名四件齐：%s" % m["version"],
        m["current_ok"], "问题：%s ｜ 头注：%s"
        % (", ".join(m["current_missing"]), m["heads_note"]))
+    _ck = checklist_problems(m["checklists"])
+    _ck_ok = (not _ck
+              and checklist_problems({"x": (3, 3, 3)}) == []
+              and checklist_problems({"x": (3, 3, 4)}) != []
+              and checklist_problems({"x": (3, 4, 3)}) != [])
+    ck("D15 加固清单项数：文件名与 H1 == 表格行数（%d 份 · 含判别自证：同名不红 · 文件名错必红 · H1 错必红）"
+       % len(m["checklists"]), bool(m["checklists"]) and _ck_ok, "；".join(_ck[:4]))
+
     n_wv, n_wvf, wv_bad = waive_readings()
     ck("D10 豁免行形状与消费方正则同形·编号文件内唯一（当前版 %d 行 / %d 个文件）"
        % (n_wv, n_wvf), not wv_bad, "\n      " + "\n      ".join(wv_bad[:6]))
