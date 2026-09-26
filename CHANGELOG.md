@@ -135,6 +135,21 @@
   （改前 `dddbc38` = **31** = `checker.md` 15 · `pitfalls.md` 14 · `ruleset-weight.md` 2）；
   fixture 三条从仓根实跑退出码 1 / 1 / 0；`bash skill/tests/all.sh --offline` 退出码 0 ·
   「✅ 闸门未被动过（冻结 12 个文件）」在场 · `grep -c "^## 2026-09-26" CHANGELOG.md` = 1 · 改动文件 CR = 0。
+- 🔧 **surge 引用层块内变量少一层路径（q9）**：`skill/reference/surge/checker.md:39` 的 `S=./skill/scripts` 改
+  `S=./skill/scripts/surge` 一行 —— `skill/scripts/` 顶层只有 `egern/`·`surge/` 两个目录、**无一个 `.py`**，
+  该代码块里 12 行命令（`:42`–`:48` · `:52`–`:56`）照抄即
+  `can't open file '…\skill\scripts\check_surge_dns.py': [Errno 2] No such file or directory`、退出码一律 **2**。
+  它不在 q7/q8 的取数面里：那两批按字面 token `scripts/…` 扫，`"$S/x.py"` 的字面串里没有 `scripts/`；
+  q7 落进 `skill/SKILL.md` 的"仓根基准"声明管的是 cwd，管不到**变量拼接**。取数件因此按块内变量赋值回实路径
+  （`.ai-loop/work/scan_var.py`：活层 41 件 md 里块内变量赋值全仓只 1 处，它名下 12 行全取不到）。
+  **没动**：同块 `:49`·`:59`·`:60` 三行本就可跑（退出码 0）· `:61` 是文档故意的负例（退出码 2「前置检查失败：解释器不可用」，不算缺陷也不改）·
+  `:58` 的「6 阶段，19 断言」读数 · 冻结 12 件（含 `skill/tests/surge/run.sh` 与 `architecture.sh`）· 文件名 · profile · 根 README。
+  **验收**（取数件写死父件 `d429233` 与工作区，现势可跑）：
+  `PYTHONIOENCODING=utf-8 python .ai-loop/work/scan_var.py` ⇒「`$VAR/文件` 取不到」= **0**（改前 12），非破坏式判别
+  `git show d429233:skill/reference/surge/checker.md | grep -c "^S=./skill/scripts$"` = **1**、工作区同式 = **0**；
+  整块两模式对拍（`.ai-loop/work/run_surge_block.py`）⇒ 改前拼法「rc 0 = 3 · rc≠0 = 13」（12 行取不到件 + `:61` 负例）、
+  现拼法「rc 0 = 15 · rc≠0 = 1」（唯一红即 `:61` 负例，属预期）；`bash skill/tests/surge/run.sh` 末行
+  「TOTAL: 19 passed, 0 failed」不变；`grep -c "^## 2026-09-26" CHANGELOG.md` = 1 · 改动文件 CR = 0。
 
 ---
 
