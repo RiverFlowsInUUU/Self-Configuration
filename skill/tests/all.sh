@@ -228,7 +228,7 @@ if up:
     src, changed = "未推送的提交", git("diff", "--name-only", "%s...HEAD" % up)
 else:
     # 没有上游时退一步：至少看最近一次提交（agent 常常先 commit 再跑检查）
-    src, changed = "最近一次提交", git("diff", "--name-only", "HEAD^", "HEAD")
+    src, changed = "最近一次提交（该仓无上游）", git("diff", "--name-only", "HEAD^", "HEAD")
 
 def once_released(p):
     """一次性放行（2026-09-26 · 用户授权 q11）：只放 `check_links.py` 扩面那一次改动。
@@ -268,7 +268,8 @@ if hits:
     for tag, p in hits:
         print("      · %-12s %s" % (tag, p))
 else:
-    print("\n   ✅  闸门未被动过（冻结 %d 个文件 · 名单见 AGENTS.md §2 第 5 条）" % len(GATE))
+    print("\n   ✅  本批待落地改动未触碰其他闸门文件（查：未提交 + %s · 冻结 %d 个文件 · "
+          "名单见 AGENTS.md §2 第 5 条）" % (src, len(GATE)))
 PYEOF
 fi
 
