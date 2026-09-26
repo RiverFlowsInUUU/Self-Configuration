@@ -2,7 +2,7 @@
 
 把两个内核共享的那套骨架一次讲透，再分内核讲各自的模型。读完应能自己推导出：为什么模板里那些"看起来多此一举"的键，一个都不能少。
 
-素材来自原两侧 `docs/01` / `docs/02` / `docs/05`（已冻结），逐键语义以两侧 `DetailsReadme` 为准。
+素材来自原两侧 `docs/01` / `docs/02` / `docs/05`（已就地冻结），逐键语义以两侧 `DetailsReadme` 为准。
 
 ---
 
@@ -126,7 +126,7 @@ Egern 的 `forward` 未命中时回退 bootstrap。曾有一版（f5）把兜底
 
 ## 2.7 端点实测的两条铁律
 
-模板里的每个 DNS 端点都逐个实测过（`skill/scripts/egern/probe_dns_endpoints.py`，吃 profile 文件）。两条结论值得永远记住：
+模板里的每个 DNS 端点都逐个实测过（`skill/scripts/egern/probe_dns_endpoints.py`，吃 profile 文件），得到两条结论：
 
 1. 判死活只能用 RFC 8484 线格式：`GET /dns-query?dns=<base64url>` 加 `application/dns-message`。Google 风格的 JSON API（`?name=x&type=A`）是可选扩展 —— `dns.google` / `8.8.8.8` / `dns.alidns.com` 用 JSON 全回 400，但它们没坏。拿 JSON 判死活会得出完全错误的"不可用清单"。
 2. 协议形式写错等于静默失效，配置校验不会报错。实测案例：Quad9 在 `9.9.9.9` 上只提供 HTTP/3，`https://9.9.9.9/dns-query` 直接 `HTTP Version Not Supported`；改 `tls://9.9.9.9` 正常（证书 `CN=dns.quad9.net`）。对候选端点应连测三轮再下"稳定"的结论。
@@ -153,11 +153,16 @@ Egern 的 `forward` 未命中时回退 bootstrap。曾有一版（f5）把兜底
 
 ---
 
-## 2.9 延伸阅读（按内核）
+## 相关页面
 
 | 主题 | 去处 |
 |:-----|:-----|
-| 原理全篇（已冻结，读时注意顶部横幅） | [`../surge/docs/01-DNS是怎么工作的.md`](../surge/docs/01-DNS是怎么工作的.md) · [`../egern/docs/01-DNS是怎么工作的.md`](../egern/docs/01-DNS是怎么工作的.md) |
-| 泄露案例全篇 | 两侧 `docs/02-DNS为什么会泄露.md` |
-| 事故复盘 | 两侧 `docs/05` · [07-故障排查](07-故障排查.md) |
-| 逐键语义 | 两侧 `DetailsReadme` |
+| 原理全篇（已就地冻结，读时注意顶部横幅） | [`../surge/docs/01-DNS是怎么工作的.md`](../surge/docs/01-DNS是怎么工作的.md) · [`../egern/docs/01-DNS是怎么工作的.md`](../egern/docs/01-DNS是怎么工作的.md) |
+| 泄露案例全篇 | 两侧 `docs/02-DNS为什么会泄露.md` —— [Surge](../surge/docs/02-DNS为什么会泄露.md) · [Egern](../egern/docs/02-DNS为什么会泄露.md) |
+| 事故复盘 | 两侧 `docs/05` —— [Surge](../surge/docs/05-分流与no_resolve必须成对交付.md) · [Egern](../egern/docs/05-分流与no_resolve必须成对交付.md) · [07-故障排查](07-故障排查.md) |
+| 逐键语义 | 两侧 `DetailsReadme` —— [Surge](../surge/DetailsReadme/DetailsReadme.md) · [Egern](../egern/DetailsReadme/DetailsReadme.md) |
+| 动手装配置（本篇讲原理） | [01-快速开始](01-快速开始.md) |
+| 本篇判据在各内核怎么落键 | [03-Surge操作](03-Surge操作.md) · [04-Egern操作](04-Egern操作.md) |
+| 装完怎么验、验什么 | [08-验证与自检](08-验证与自检.md) |
+| 把这套骨架搬到另一内核 | [09-跨内核移植](09-跨内核移植.md) |
+| 规则集名字会骗人这件事的操作面 | [05-规则集与素材](05-规则集与素材.md) |
