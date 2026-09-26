@@ -150,6 +150,11 @@
   整块两模式对拍（`.ai-loop/work/run_surge_block.py`）⇒ 改前拼法「rc 0 = 3 · rc≠0 = 13」（12 行取不到件 + `:61` 负例）、
   现拼法「rc 0 = 15 · rc≠0 = 1」（唯一红即 `:61` 负例，属预期）；`bash skill/tests/surge/run.sh` 末行
   「TOTAL: 19 passed, 0 failed」不变；`grep -c "^## 2026-09-26" CHANGELOG.md` = 1 · 改动文件 CR = 0。
+- 📍 **本日志里 `.ai-loop/work/*.py` 的取数件不随仓发布（q10）**：本段若干条「验收」里的
+  `PYTHONIOENCODING=utf-8 python .ai-loop/work/<名>.py` 属**循环协作盘上的临时取数件**，整目录经 `.git/info/exclude` 排除、
+  不在跟踪树里（`git ls-files .ai-loop` 计数 0）⇒ 新克隆照抄必 `can't open file`（q10 实测三条全退出码 2）。
+  **不改上面那 6 处指认本身**（沿革不抹，与 q5 快照读数同一口径）；仓外读者要复核相应判据，按各条目自述的判据与取数范围自行复刻即可 ——
+  它们都已写明「数什么、对哪个 commit 对拍、期望值多少」。
 
 ---
 
