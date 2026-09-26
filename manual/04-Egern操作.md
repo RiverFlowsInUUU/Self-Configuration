@@ -1,7 +1,7 @@
 # 04 · Egern 操作
 
 对象：`../egern/profiles/` 下 `routing.yaml`（推荐，完整分流）与 `lazy.yaml`（懒人配置），各含带注释完整版与 `.min.yaml` 形态；历代旧版在 `config_old/` 归档，不参与检查（指回归与读数类；唯一例外是 `architecture.sh` ① 的占位符 / 凭据扫描，归档不享豁免）。
-加固清单在 [`../egern/docs/03-加固清单-18项.md`](../egern/docs/03-加固清单-18项.md)；逐段细讲在 [`../egern/docs/04-模板逐段讲解.md`](../egern/docs/04-模板逐段讲解.md)（已冻结仍可读，逐行分析全仓最细；与手册冲突时以手册与本侧 `DetailsReadme` 为准）；逐键权威是 [`../egern/DetailsReadme/DetailsReadme.md`](../egern/DetailsReadme/DetailsReadme.md)。
+加固清单在 [`../egern/docs/03-加固清单-18项.md`](../egern/docs/03-加固清单-18项.md)；逐段细讲在 [`../egern/docs/04-模板逐段讲解.md`](../egern/docs/04-模板逐段讲解.md)（已就地冻结仍可读，逐行分析全仓最细；与手册冲突时以手册与本侧 `DetailsReadme` 为准）；逐键权威是 [`../egern/DetailsReadme/DetailsReadme.md`](../egern/DetailsReadme/DetailsReadme.md)。
 
 ---
 
@@ -17,7 +17,7 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 
 ## 4.2 `dns:` 段：五小节，一个原则
 
-原则一句话：`bootstrap` 唯一安全的形态是"永远不被触发"。逐节要点（逐行讲解见已冻结的 `egern/docs/04` §2）：
+原则一句话：`bootstrap` 唯一安全的形态是"永远不被触发"。逐节要点（逐行讲解见已就地冻结的 `egern/docs/04` §2）：
 
 | 小节 | 要点 |
 |:-----|:-----|
@@ -27,7 +27,7 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 | `proxy_nameservers` | 硬覆盖：一设就绕过 `forward`、强制直连、成为代理侧解析的唯一出口。"不设"本身也留了一条"未命中回退 Bootstrap"的明文分支 —— 模板最终选择显式设置 + 国内端点（它是强制直连的，境外解析器在国内线路不可达）。排障口诀：节点连不上，第一件事注释掉这个列表 |
 | `hosts` / `block_ips` | `hosts` 是"端点写主机名"时代的补救，端点全 IP 后无引用点、已删；`block_ips` 丢弃空路由式污染应答，刻意不含私网段，免误伤内网 |
 
-已知代价（完整版见 `DetailsReadme` 的取舍节）：设置了 `proxy_nameservers` + 兜底国内组，需要本地解析的境外域名会拿到国内答案，实际影响面仅限 `DIRECT` 域名。审计里的 2 条 LOW 就是它 —— 是取舍，不是缺陷。
+已知代价（完整版见 `DetailsReadme` 的取舍节）：设置了 `proxy_nameservers` + 兜底国内组，需要本地解析的境外域名会拿到国内答案，实际影响面仅限 `DIRECT` 域名。审计里那两条 `LOW`（一条是 `proxy_nameservers` 成为代理侧解析唯一出口，一条是 `forward` 兜底指向国内组）就是它 —— 是取舍，不是缺陷；读数见 [`../egern/docs/08-审计读数.md`](../egern/docs/08-审计读数.md)。
 
 ---
 
@@ -69,7 +69,7 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 
 ## 4.6 分流顺序与应用组默认出口
 
-逐位匹配顺序表在 [`../egern/docs/12-分流顺序.md`](../egern/docs/12-分流顺序.md)（已冻结，内容准确，仍可读）。
+逐位匹配顺序表在 [`../egern/docs/12-分流顺序.md`](../egern/docs/12-分流顺序.md)（已就地冻结，内容准确，仍可读）。
 两条与 Surge 侧共同的铁律同样成立：应用规则必须排在 `direct.txt` 之前；具体的在前、兜底在后。
 应用组的 `policies` 里只有 `Proxy` 一项（+ `flatten`）—— 这是设计，不是"忘了加地区"；想固定地区，改首位即可。
 
@@ -98,3 +98,16 @@ bash skill/tests/egern/run.sh
 
 期望读数与逐版口径见 [`../egern/docs/08-审计读数.md`](../egern/docs/08-审计读数.md)。
 最后在目标链路（尤其蜂窝）跑一次 leak test，并先写下"哪台设备、哪条链路、谁的 DNS" —— 混链路会让整轮结论作废。
+
+---
+
+## 相关页面
+
+| 下一步 | 去处 |
+|:-------|:-----|
+| 装好、跑通再看本篇 | [01-快速开始](01-快速开始.md) |
+| 对侧内核的操作章 | [03-Surge操作](03-Surge操作.md) |
+| 换、加、删任何规则集之前 | [05-规则集与素材](05-规则集与素材.md) |
+| 出问题了 | [07-故障排查](07-故障排查.md) |
+| 把本篇改动搬到 Surge 侧 | [09-跨内核移植](09-跨内核移植.md) |
+| 名词不认识、常见疑问没解决 | [10-FAQ与术语表](10-FAQ与术语表.md) |

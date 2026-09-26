@@ -21,7 +21,7 @@ Surge 的 `.conf` 按节组织，模板里与防泄露相关的节：
 
 ---
 
-## 3.2 `[General]` DNS 段：每行在白堵哪个出口
+## 3.2 `[General]` DNS 段：每行堵哪个出口
 
 对照 [02 章的泄露面全景](02-DNS原理与泄露面.md)，这些键各自堵一条通路：
 
@@ -31,7 +31,7 @@ Surge 的 `.conf` 按节组织，模板里与防泄露相关的节：
 | `encrypted-dns-server` | 日常解析走加密通道 | 端点尽量 IP 字面量；保留的 2 个主机名端点已用 `# audit-waive:` 记录豁免与理由 |
 | `hijack-dns` | 旁路设备（出口 ②） | 模板列出最常见的境外解析器地址把它们收进本地；想一网打尽可写 `hijack-dns = *`（有取舍，见 `DetailsReadme` §10.3） |
 | `encrypted-dns-follow-outbound-mode` | 防止"出站走代理、解析也跟着出境"的意外 | 模板显式设 `false`，理由在 `DetailsReadme` |
-| `use-local-host-item-for-proxy` | 防止本地 hosts 条目污染代理侧解析 | 同上 |
+| `use-local-host-item-for-proxy` | 防止本地 hosts 条目污染代理侧解析 | 理由在 `DetailsReadme` |
 | `always-real-ip` | Fake-IP 模式下游戏机 / NTP / STUN 拿到假 IP | 是功能清单，不是可选装饰。里面的主机名应能被 `[Rule]` 域名规则接住，`check_surge_dns.py` 第 11 项专查这条 |
 | `internet-test-url` / `proxy-test-url` | — | 性能探针，不是泄露通道：前者国内 204（测"能不能上网"），后者保持境外 `gstatic.com`（`smart` 打分要含国际段才是真实路径）。把后者"为防泄露"改成国内是典型的原则误套用，见 `DetailsReadme` §16 |
 
@@ -122,7 +122,7 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 
 ## 3.6 你必须替换 / 可以删除的
 
-必须替换（本手册为准；旧版逐行讲解见 [`../surge/docs/04-模板逐段讲解.md`](../surge/docs/04-模板逐段讲解.md)，已冻结）：
+必须替换（本手册为准；旧版逐行讲解见 [`../surge/docs/04-模板逐段讲解.md`](../surge/docs/04-模板逐段讲解.md)，已就地冻结）：
 
 - `lazy` 的 `[Proxy]` 占位节点；
 - `routing` 的 `Airport` 组 `policy-path` 占位订阅地址；
@@ -145,3 +145,16 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 - 策略组 / `include-other-group`：[manual.nssurge.com/policy-groups/policy-including.html](https://manual.nssurge.com/policy-groups/policy-including.html)
 - Smart 组限制（中文）：[kb.nssurge.com · smart-group](https://kb.nssurge.com/surge-knowledge-base/zh/guidelines/smart-group)
 - 其余逐节引用见 `DetailsReadme` 各节脚注。
+
+---
+
+## 相关页面
+
+| 下一步 | 去处 |
+|:-------|:-----|
+| 装好、跑通再看本篇 | [01-快速开始](01-快速开始.md) |
+| 对侧内核的操作章 | [04-Egern操作](04-Egern操作.md) |
+| 换、加、删任何规则集之前 | [05-规则集与素材](05-规则集与素材.md) |
+| 出问题了 | [07-故障排查](07-故障排查.md) |
+| 把本篇改动搬到 Egern 侧 | [09-跨内核移植](09-跨内核移植.md) |
+| 名词不认识、常见疑问没解决 | [10-FAQ与术语表](10-FAQ与术语表.md) |
