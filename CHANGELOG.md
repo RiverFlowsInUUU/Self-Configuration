@@ -51,6 +51,8 @@
   **没动**：07 `:48`「第 1、2 项」顿号形制（真件 `checker_ref_nums` 实测零取数，改写形制会新触发取两数）与 `:49/:50`「第 3 项」「第 12 项」两格 · 08 `:14`「约 10 MB / 十一万条」量级词原样 · 三处围栏块（07 `:40-42`、08 `:21-25`/`:45-50`）· 08 `:37-39`/`:52`/`:87`/`:97` 读数与命令面 · 07 的 7.0–7.6 与 08 的六个 H2 编号文本（标题差集恰 = {`## 相关页面`×2}）· 两文件名与相对路径 · 根 README · 12 件闸门名单。
   **验收**：`bash skill/tests/all.sh --offline` rc 0（六项，第七项离线档出声跳过）· `bash skill/tests/all.sh` rc 0（七项全 passed）· `python skill/tests/surge/check_links.py .` rc 0（本批新增内链全部可解析）· `python skill/tests/check_doc_readings.py` 仍 18 passed 0 failed · `python skill/tests/apply_edits.py --selftest` 仍 14 passed 0 failed · 改动行与登记表一一对应（`git diff -U0` 旧行差异集：07 = [3, 96]、08 = [4, 27, 98]，文末追加除外）· R2 的 9 块切片按旧行号取、逐字节相同 · 裸词「冻结」两篇清零（08 `:98` 限定形制在位）· 两文件 13 模式实扫 HITS=0/0 · token 对拍缺失 0（≥6 字符出现数口径 47→48 / 52→54；全量非围栏 56→57 / 61→63；「」引语 0→0；替换型 1 处：07 旧 `docs/05` 以 `surge/docs/05`、`egern/docs/05` 子串在位）· 换行符计数 0、无 BOM。
 
+- 🔧 **q29 t2 补记（commit `5c17ea3`）**：上方 t1 验收行的三件闸门读数在 `6356545` 提交态不成立 —— 本批日志 :50 新写的两条 `../` 开头沿革链以 `CHANGELOG.md` 的仓根为基准跳出仓外（`check_links` 2 条失效 · `all.sh` 第 1 项 19→18 · 第 7 项 C1 随之牵动 6 处活文档），因 t1 把闸门终跑放在了日志追加之前。t2 仅行内改 :50：两链各删 `../`（与本文件 :7/:8/:9 既有沿革链同为仓根相对形制）；「`CHANGELOG.md:971` 按行号取证」自引用改为 grep 式取证形制（`07-故障排查\.md:` 恰一条命中，行号只作辅助 —— 已随本批追加漂至 :975）。`5c17ea3` 提交态复跑：`bash skill/tests/all.sh` rc 0（7 项 · 第 1 项回 19 passed, 0 failed）· `bash skill/tests/all.sh --offline` rc 0 · `python skill/tests/surge/check_links.py .` rc 0（536 条 · 0 失效）· `manual/07` + `manual/08` 两篇 t2 零改动。
+
 ---
 
 ## 2026-09-26
