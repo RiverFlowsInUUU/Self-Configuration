@@ -1,5 +1,5 @@
-#! version=routing_v3.3
-# ================================================================ routing_v3.3（正式版 · 推荐）
+#! version=routing_v3.2
+# ================================================================ routing_v3.2（正式版 · 推荐）
 # 本版 = **routing_v2.4 + 规则段对齐 Surge**（内容与顺序均逐行对拍）：
 #   ① `dns.forward` 由单条 catch-all 扩为 4 层：
 #      白名单（white-guard → Domestic-DNS，抢在拦截前拿到解析）
@@ -12,7 +12,7 @@
 #      —— Lan 管 IP 段与路由管理域，private 管 .lan/.local 等特殊 TLD 与 miwifi.com）。
 #   ③ `rules` 删内联 `domain_suffix: cn` 兜底（direct.txt 本身已含 DOMAIN-SUFFIX,cn，
 #      正常路径 100% 重复；故障场景只是退化不是泄露）。
-#   ④ `rules` 顺序为本仓基准序，Surge `routing_v3.3.conf` 与本文件逐行对齐
+#   ④ `rules` 顺序为本仓基准序，Surge `routing_v3.2.conf` 与本文件逐行对齐
 #      （仅两处引擎差异例外：Surge 独有内置 SYSTEM / 内置 LAN，Egern 用 blackmatrix7 Lan.list）。
 # `policy_groups`、`dns` 其余键逐字未动。
 # ⭐ 推荐版由 `routing_v2.4` 移交给本版；`routing_v2.4` 降为保留版（文件未动，留作对照）。
@@ -195,34 +195,12 @@ dns:
   block_ips:
   - 0.0.0.0
   - 127.0.0.1
-# 两条占位节点：`Node-A` 归 `Proxy`（挂在成员末位，默认首项仍是 `MAX`），
-# `Node-B` 是 `AI` 的默认成员。协议 / 字段与 Surge 分流版那两条 hysteria2 一一对应
-# （`auth` ≙ Surge 的 `password`）。
-# ⚠️ 地址是 RFC 5737 文档段（203.0.113.0/24），请替换为你的真实信息；
-#    server 写成 IP 字面量 ⇒ 节点不产生"解析节点域名"这次查询。
-# 这两条**不进**任何地区组 / `Smart` / `MAX` —— 那些组只从 `Airport` 订阅取节点。
-# 要再加节点照这个格式写；名字里带上地区关键词（`HK` / `香港` …）时注意：
-# 显式写在本节的节点不会被地区组的正则筛到。
-proxies:
-- hysteria2:
-    name: Node-A
-    server: 203.0.113.10
-    port: 52341
-    auth: REPLACE_WITH_YOUR_PASSWORD
-    sni: REPLACE_WITH_YOUR_SNI
-- hysteria2:
-    name: Node-B
-    server: 203.0.113.11
-    port: 52341
-    auth: REPLACE_WITH_YOUR_PASSWORD
-    sni: REPLACE_WITH_YOUR_SNI
-# 再往下是你的节点池与分流组；新节点要么写进上面的 `proxies`，要么来自 `Airport` 订阅。
+proxies: []
+# 在此添加你的节点。本模板不附带任何示例 / 虚拟节点 —— 节点由你自行填写，
+# 再把下方分流组的 policies 填上对应的节点名（或订阅组名）。
 policy_groups:
 - select:
     name: Proxy
-    # 成员 = 各组名，末位再挂 `Node-A`（挂末位是刻意的：首项仍是 `MAX`，
-    # 默认出口没有被一条占位节点顶掉）。本组**不带** `flatten`，与 Surge 的
-    # `select, MAX, Smart, …, "Node-A"` 同形。
     policies:
     - MAX
     - Smart
@@ -233,7 +211,6 @@ policy_groups:
     - Japan
     - Korea
     - Other Regions
-    - Node-A
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Proxy.png
 - smart:
     name: Smart
@@ -261,8 +238,6 @@ policy_groups:
 #   首项 = 默认取向，逐组与 Surge 一致：ChatGPT / Gemini / AI / Spotify / YTMusic /
 #   YouTube / GitHub / Telegram / Twitter 默认 `Proxy`；Claude 默认 `Taiwan`；
 #   Google 默认 `Gemini`；Microsoft 默认 `DIRECT`。
-#   ⚠️ 本版有两处首项不是组名池：`AI` 首项是本文件的 `Node-B`（占位节点），
-#     `Spotify` / `YouTubeMusic` 首项是 `USA`。两侧（Surge / Egern）同写。
 # ================================================================
 - select:
     name: ChatGPT
@@ -288,27 +263,19 @@ policy_groups:
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/claude-color.png
 - select:
     name: AI
-    # 默认走本文件的 `Node-B`（占位节点），其后才是 `Proxy` 摊平的整池节点。
-    # ⇒ 只填两条节点、不导订阅时 `Proxy` / `AI` 仍有出口；只导订阅不填节点时，
-    #   来面板把本组切到订阅节点即可（`Proxy` 首项是 `MAX`，不受影响）。
     policies:
-    - Node-B
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/grok.png
 - select:
     name: Spotify
-    # 默认走 `USA`（与 `YouTubeMusic` 同）；Spotify 的解锁地区以美区为准。
     policies:
-    - USA
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Spotify.png
 - select:
     name: YouTubeMusic
-    # 默认走 `USA`。
     policies:
-    - USA
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTubeMusic.png

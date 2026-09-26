@@ -12,6 +12,35 @@
 
 ## 2026-09-26
 
+### Surge
+
+- 🧩 **懒人版补订阅入口、两份配置各带 2 条占位节点**（本批是新需求，不入循环，由维护者直接下达后在本会话执行并推送）：
+  `lazy.conf` 组数 `3 → 4` —— 新增隐藏订阅入口 `Airport`（`select` + `policy-path` + `hidden=true`），
+  `Proxy` / `AI` 各以 `include-other-group="Airport"` 取订阅节点；`[Proxy]` 由空变 2 条 `hysteria2` 占位节点
+  `Node-A`（归 `Proxy`）/ `Node-B`（归 `AI`），`server` 取 RFC 5737 文档段、凭据写 `REPLACE_WITH_*`。
+  `routing.conf` 同形态：`[Proxy]` 补同名两条（刻意**不进**任何地区组）、`Proxy` 组末位挂 `Node-A`、
+  `AI` 组首项 `Node-B`、`Spotify` / `YouTubeMusic` 首项 `Proxy` → `USA`。
+  **没动**：`AI` 组没有改成引用 `Proxy`（明确否决）· 分流版的订阅面仍只进 `Smart` / 地区组 / `MAX`，
+  其余应用组子成员不变 · `[Rule]` 24 条与 `[General]` / `[HostAddress]` / MITM 零改动 ·
+  `Proxy` 首项仍是 `MAX`（默认出口没被占位节点顶掉）· 根 `README` 除 `Airport` 一行外零改动。
+  **验收**：首行版本 `lazy_v1.1 → v1.2`、`routing_v3.2 → v3.3`，被替代的 4 件进 `surge/profiles/config_old/`；
+  `python skill/tests/make_min.py --family all --apply` rc 0（懒人 `.min` 正文 83 行 · 分流 148 行）；
+  `bash skill/tests/all.sh` 第 1 项 `TOTAL: 19 passed, 0 failed`。
+
+### Egern
+
+- 🧩 **同一形态的 Egern 侧**：`lazy.yaml` 组数 `3 → 4`（新增 `external` 槽位 `Airport`：`type: smart` + `hidden: true`；
+  `Proxy.policies` 排 `[Airport, Node-A]` —— `select` 首项即默认，故默认跟随订阅、占位节点挂末位；
+  `AI.policies` 排 `[Node-B, Airport]`，`flatten: true` 摊成具体节点）。`proxies` 由 `[]` 变 2 条 `hysteria2`
+  占位节点（字段名 `auth` ≙ Surge 的 `password`）。`routing.yaml`：`proxies` 同名两条（不进地区组）、
+  `Proxy.policies` 末位 `Node-A`、`AI.policies` 首项 `Node-B`、`Spotify` / `YouTubeMusic` 首项 `Proxy` → `USA`。
+  **没动**：`dns` 段 —— 懒人版与分流版去行尾注释后仍**逐字相同**（实测各 31 行相等）· 24 条规则 ·
+  26 组名单与段内顺序 · `AD` 只留 `REJECT` 这条 `lazy` 专属调整 · `Final` 组仍不设。
+  **验收**：`.min` 正文行数 懒人 132 · 分流 367；`make_min.py` 第一次运行如实报出一处完整版/精简版正文漂移
+  （`Proxy.policies` 排序）并拉回，第二次输出「已同步 · 正文未动」；`bash skill/tests/all.sh` 第 2 项
+  `TOTAL: 24 passed, 0 failed`；`python skill/scripts/egern/check_egern_dns.py` 对两份当前版读数均仍
+  `0 high, 2 low, 24 ok`。
+
 ### 共享层
 
 - 📚 **归档的扫描面口径统一（q1）**：`architecture.sh` ① 实扫 41 个 conf/yaml（当前版 8 · 归档 24 ·
@@ -235,6 +264,28 @@
 - 📚 **一条编号口径声明（q16 · 第三方督工复核触发）**：本段 q14、q15 两条标题里的「用户裁决⑧」「用户裁决⑨」，连同各条标题里的 q 问题号，
   都取自当天循环协作台账 —— 台账是维护者逐次拍板的入账序号，不随仓发布，读者无从对证也不必对证。
   每条正文已各自内联「改了什么 · 哪里没动 · 怎么验收」与当批批准的实质范围，按条目读即可自足。
+- 📚 **四份 profile 的新形态向文档层同步（七批 · 95 处）**：改到的读数逐件列 ——
+  `surge/DetailsReadme`（§4.1 改为「两份都是 2 条」并给 `Node-A` / `Node-B` × 两版对照表 · §6.3 组表补 `Airport` 行 ·
+  §13.1 懒人版改 4 组 · 默认取向表拆出 `AI` → `Node-B` 与 `Spotify` / `YouTubeMusic` → `USA`）、
+  `surge/docs/04` / `06` / `07` / `08` / `11`、`egern/DetailsReadme`（§1.2 由「空模板」改「2 条占位节点」· Q6 · 脱敏说明）、
+  `egern/docs/04` / `06` / `07` / `08`、`docs/注意事项.md` · `docs/跨内核差异对照.md`（懒人版分组数 `3 → 4`，
+  补「组的构成」「本机占位节点」两行，归档清单补 `routing_v3.2` / `lazy_v1.1`，Egern 侧文件总数 `20 份 / 10 版` →
+  `26 份 / 13 版`）、`manual/04` / `10`、两份 `skill/reference/*/public-repo.md`、`skill/reference/surge/hardening-template.md`。
+  两份 `docs/07-文件版本沿革.md` 各补 `routing_v3.3` 与 `lazy_v1.2` 的差异明细与谱系行。
+  同批清掉三处**先于本批就存在**的不实读数：`egern/docs/04` 与 `egern/DetailsReadme` 的「机场槽位 2 个」
+  （`routing_v2.4` 起已并为 1）、`surge/DetailsReadme` 的「分流版带 7 条本机节点」（实测其 `[Proxy]` 当时为空）、
+  `hardening-template.md` 的「14 条」（实测 10）。`surge/docs/11` 另有两条与现状不符的旧表述按现状改写
+  （「占位节点名做成 `Node-HK-01` / `Node-US-01`」、「`Node-Relay-*` 是 `https` 类型、只放 `Claude` 组」）。
+  **没动**：带日期的更新日志条目、以及首行标注「不随现状更新」的存档（`docs/体检报告.md` · `docs/日志旧版原文.md` ·
+  两份 `docs/07` 末节）里的旧读数一律不回改 · `config_old/` 归档零字节 · 判据逻辑除下一条外零改动。
+  **闸门件改动 1 处**：`skill/tests/check_doc_readings.py:537` 注释「实测 分流 26 组 / 懒人 3 组」→「懒人 4 组」，
+  按 `AGENTS.md` §2 第 5 条逐次请示、获批于本批修改（`numstat` = `1 1`，其余 11 件冻结文件零字节）。
+  **验收**：`bash skill/tests/all.sh` ⇒ 判据行「✅ 判据全过 · 7 项」，七项 `failed` 全为 0（19 / 24 / 18 / 18 / 18 / 8 / 6）；
+  闸门行如实出声 ——「⚠️ 闸门被改动 1 处 · 未提交 `skill/tests/check_doc_readings.py`」；
+  残留扫描 `grep -rn "3 组 / 10\|懒人版 3 组\|3 个组\|3 个分流组\|proxies: \[\]" --include="*.md" surge egern docs manual skill README.md | grep -v config_old`
+  实得 5 行 —— 新句式正确 2 行（`surge/DetailsReadme:653` · `surge/docs/04:231`，两处均写作「4 个组（3 个分流组 + 1 个隐藏订阅槽）」）、
+  带日期日志 1 行、存档 2 行；判别自证走非破坏式 —— `git show HEAD:egern/docs/04-模板逐段讲解.md | grep -c "只有 3 个组"` = 1，
+  同一 pattern 对现势工作树 = 0、`grep -c "只有 4 个组"` = 1（改前必命中、改后必归 0，且不动磁盘上的第二个字节）。
 
 ---
 

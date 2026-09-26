@@ -33,7 +33,7 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 
 ## 4.3 `proxies:` 与节点形态
 
-- 模板 `proxies: []` 为空，不附带示例节点（避免误导）。
+- 模板 `proxies` 带 2 条占位节点（`Node-A` / `Node-B`），`server` 都写成 IP 字面量。
 - 自己填节点时，`server` 能写 IP 就写 IP：写域名必然产生一次"本机 + 直连 + 明文"解析（代理还没通）。这是从根上消除节点域名解析面的唯一办法；中转 `prev_hop` 同理，且无需为节点域名改 `forward`。
 
 ---
@@ -77,8 +77,8 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 
 ## 4.7 必须替换与环境
 
-- 必填：`Airport`（旧版 `Airport-A` / `Airport-B`）订阅组的 `url(s)` 占位，换成你的订阅地址。当前版所有分流组已填好、`proxies` 可留空 —— 填完这一个占位就能直接导入。
-- 可选：自建节点写进 `proxies`（`server` 尽量 IP）。
+- 必填：`Airport`（旧版 `Airport-A` / `Airport-B`）订阅组的 `url(s)` 占位，换成你的订阅地址。当前版所有分流组已填好 —— 填完这一个占位就能直接导入（分流版 `AI` 首项是 `Node-B`，不填节点就在面板里把它切到订阅节点）。
+- 可选：`proxies` 里那 2 条占位节点换成你的自建节点（`server` 尽量 IP），或整条删掉并把组里的名字一并摘掉。
 - 运行审计脚本需要 Python 3 + PyYAML（本仓唯一第三方依赖）。
 - 官方文档入口：DNS `https://egernapp.com/docs/configuration/dns` · rules 字段 `https://egernapp.com/docs/configuration/rules` · 顶层字段全表 `https://egernapp.com/docs/configuration/example`（两处页键名不一致，以 example 页为准）。
 

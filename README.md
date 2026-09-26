@@ -59,7 +59,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 | 🎵 `Spotify` · 🎶 `YouTubeMusic` · ▶️ `YouTube` | - | ✅ |
 | 🐙 `GitHub` · 🔎 `Google` · 🪟 `Microsoft` | - | ✅ |
 | ✈️ `Telegram` · 🐦 `Twitter` · 💚 `WeChat` | - | ✅ |
-| 🛰️ `Airport`（订阅槽位）| - | ✅ |
+| 🛰️ `Airport`（订阅槽位）| ✅ | ✅ |
 | 🛑 `AD` | ✅ | ✅ |
 | 🇭🇰 `Hong Kong` · 🇺🇸 `USA` · 🇯🇵 `Japan` · 🇨🇳 `Taiwan`<br>🇸🇬 `Singapore` · 🇰🇷 `Korea` · 🇦🇶 `Other Regions` | - | ✅ |
 | 💧 `MAX` | - | ✅ |

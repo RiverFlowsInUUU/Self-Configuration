@@ -19,8 +19,8 @@ docs/                                       # ★ 共享文档层（不再各内
   归档快照三篇 + _archive/：体检报告.md · 技能包合并与自包含.md · 日志旧版原文.md（首行各自标快照/存档、不随现状更新）
 skill/                                      # 本 skill：SKILL.md（§0 判内核 → 分支 A/B）
   reference/{surge,egern}/ · scripts/{surge,egern}/ · tests/{surge,egern}/
-egern/profiles/lazy.yaml / lazy.min.yaml          # 懒人版 · 可选（3 组 / 10 条规则，AD 只留 REJECT、无 Final 兜底组（policy 直写 Proxy））
-egern/profiles/routing.yaml / .min.yaml           # 分流版 · 推荐（脱敏模板：无节点、无订阅、无证书；机场槽位 1 个）
+egern/profiles/lazy.yaml / lazy.min.yaml          # 懒人版 · 可选（4 组 / 10 条规则：Proxy · AI · AD + 隐藏订阅槽位 Airport；AD 只留 REJECT、无 Final 兜底组（policy 直写 Proxy））
+egern/profiles/routing.yaml / .min.yaml           # 分流版 · 推荐（脱敏模板：2 条占位节点 + 1 个机场槽位，凭据与订阅均为占位符、无真实证书）
 egern/profiles/config_old/                        # 历代版本按号留档、各含 `.min`，不参与检查（例外：`architecture.sh` ① 连归档一起扫）：
                                                   #   v2.4（v3 前一版）· v2.3（与 v2.4 只差 rule_set 的 update_interval）
                                                   #   v2.2（4 处修正）· v2.1（机场槽位 4 vs 2）· v2（多 52 行「值等于默认值」的冗余行）
@@ -46,10 +46,10 @@ egern/DetailsReadme/DetailsReadme.md              # 完整技术文档
 
 
 > **可选版本只有两个** —— `routing`（分流版 · 推荐）与 `lazy`（懒人版），文件名不带版本号；
-> 当前是第哪一版写在头注 `#! version=routing_v3.2` 里。历代旧版在 `profiles/config_old/` 备对照。
+> 当前是第哪一版写在头注 `#! version=routing_v3.3` 里。历代旧版在 `profiles/config_old/` 备对照。
 
 **要更新模板时**：**直接在仓库里改 `profiles/*.yaml` 即可。** 这份模板早已完成脱敏
-（无节点、无订阅、无证书），改它不需要"从自用配置重新生成"。改完跑
+（2 条占位节点 + 1 个占位订阅，全都连不出去，无真实证书），改它不需要"从自用配置重新生成"。改完跑
 `bash skill/tests/egern/run.sh`（两阶段 24 断言；SKIP_NET=1 时 22）+ 下面那批审计脚本，再提交推送。
 
 > 📦 **历史做法（已不再使用）**：早期由维护者本地的 `outputs/` 脚本链生成 ——

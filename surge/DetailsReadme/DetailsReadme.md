@@ -46,7 +46,7 @@ Surge/
     └── tests/                    # 6 阶段回归（阶段 1 用 3 个 fixture）+ 1 个地区坏样例 + 链接检查
 ```
 
-**两份配置是分工关系，不是版本关系**：`lazy` 是懒人版（3 组 / 10 条，全量一个出口），
+**两份配置是分工关系，不是版本关系**：`lazy` 是懒人版（4 组 / 10 条，全量一个出口），
 `routing` 是分流版（26 组 / 24 条，按应用 + 按地区）。选一份用，不要叠加。
 分流版的设计约束（`flatten` 的对应写法、Smart 组不能嵌套组、地区关键词双份）见
 [`docs/11-分流版设计.md`](../docs/11-分流版设计.md)。
@@ -266,38 +266,31 @@ always-real-ip = *.lan, *.local, *.localdomain, *.home.arpa,
 
 ## 4 · `[Proxy]` 与占位符
 
-### 4.1 占位节点
+### 4.1 占位节点：两份都是 2 条
 
-**`lazy.conf` —— 4 条**（`Node-A` ~ `Node-D`）：
+**`lazy.conf` 与 `routing.conf` 各带 2 条**，分工完全一致 —— `Node-A` 归 `Proxy`、
+`Node-B` 归 `AI`（Egern 侧那两份同形，见 [`egern/DetailsReadme`](../../egern/DetailsReadme/DetailsReadme.md)）：
 
 ```
 Node-A = hysteria2, 203.0.113.10, 52341, password=REPLACE_WITH_YOUR_PASSWORD, sni=REPLACE_WITH_YOUR_SNI
 Node-B = hysteria2, 203.0.113.11, 52341, password=REPLACE_WITH_YOUR_PASSWORD, sni=REPLACE_WITH_YOUR_SNI
-Node-C = https, cdn-relay.example.com, 443, username="REPLACE_WITH_USERNAME", password="REPLACE_WITH_PASSWORD", underlying-proxy="Node-B", sni=cdn-relay.example.com
-Node-D = https, 203.0.113.20, 443, underlying-proxy="Node-A", skip-cert-verify=true, sni=203.0.113.20
 ```
 
-| 节点 | 类型 | 角色 |
-|:-----|:-----|:-----|
-| `Node-A` | `hysteria2` | 落地节点（IP 字面量） |
-| `Node-B` | `hysteria2` | 落地节点 ②，同时是 `Node-C` 的 `underlying-proxy` |
-| `Node-C` | `https` | 中转链：经 `Node-B` 出去连 CDN 中转域名 |
-| `Node-D` | `https` | 经 `Node-A` 中转 |
+| 节点 | 类型 | 在懒人版 | 在分流版 |
+|:-----|:-----|:---------|:---------|
+| `Node-A` | `hysteria2` | `Proxy` 唯一的本机成员（`smart` 与订阅节点一起打分） | `Proxy` 成员**末位**（首项仍是 `MAX`，默认没被顶掉） |
+| `Node-B` | `hysteria2` | `AI` 唯一的本机成员 | `AI` 的**默认首项**，其后才是 `Proxy` 节点池 |
 
-**`routing.conf` —— 7 条**，多出的 3 条是地区样本，**名字里带地区关键词**：
+两类的**订阅节点引用面不同**（这是两版真正的设计差）：懒人版里订阅节点直接进
+`Proxy` / `AI`（`include-other-group="Airport"`）；分流版里订阅节点只进
+`Smart` / 7 个地区组 / `MAX`，其余应用组的成员表不变。
 
-```
-Node-HK-01 / Node-HK-02   # 中国香港
-Node-US-01                # 美国
-Node-JP-01                # 日本
-Node-SG-01                # 新加坡
-Node-Relay-01 / Node-Relay-02   # 两条中转链，同 lazy 的 C / D
-```
-
-> ⚠️ **命名不是装饰，是功能** —— 地区组用 `policy-regex-filter` 按**节点名**筛节点。
-> 叫 `HK-01` 会进 `Hong Kong` 组，叫 `香港一号` 也会，叫 `node1` 则哪个地区组都进不去。
-> 命名规则与关键词表见 [`docs/11` §4](../docs/11-分流版设计.md#4--地区名的筛选正则)。
-> 换成你自己的节点时，**保持名字里的地区关键词**即可。
+> ⚠️ **命名不是装饰，是功能**（只影响分流版的地区组）—— 地区组用 `policy-regex-filter`
+> 按**节点名**筛节点。叫 `HK-01` 会进 `Hong Kong` 组，叫 `香港一号` 也会，叫 `node1`
+> 则哪个地区组都进不去。命名规则与关键词表见
+> [`docs/11` §4](../docs/11-分流版设计.md#4--地区名的筛选正则)。
+> ⚠️ 另有一条官方限制：正则**对显式写在 `[Proxy]` 的成员不生效**，所以 `Node-A` / `Node-B`
+> 这类手写节点想进地区组，得给对应组补 `include-all-proxies=true`。本模板刻意没让它们进地区组。
 
 ### 4.2 `download-bandwidth` 不写的原因
 
@@ -309,21 +302,27 @@ Node-Relay-01 / Node-Relay-02   # 两条中转链，同 lazy 的 C / D
 
 这是 Surge 的代理类型限制，不是配置问题。后果：
 
-- 落到 `Node-C` / `Node-D` 上的 UDP 请求会被拒绝（由
+- 落到 `https` 类型节点上的 UDP 请求会被拒绝（由
   `udp-policy-not-supported-behaviour = reject` 决定）；
-- 所以它们**只放在 `AI` 组**，不做默认出口 —— AI 流量以稳定长连接为主，不靠 UDP；
+- 所以这类节点**不适合做默认出口** —— AI 流量以稳定长连接为主，历史上本模板把它放在 `AI` 组；
 - 反过来，需要 UDP 的场景（游戏、部分 QUIC 应用）必须走 `hysteria2`。
+- 📌 当前模板的两条占位节点都是 `hysteria2`，本节讲的是你**自己加** `https` / `http`
+  类节点时的行为（旧版 `lazy` 的 `Node-C` / `Node-D` 就是这一类，已随占位节点精简移除）。
 
 ### 4.4 节点用 IP 还是域名
 
-- `Node-A` / `Node-B` / `Node-D` 用 **IP 字面量** —— 不产生「解析节点域名」这一次查询。
+- `Node-A` / `Node-B` 都用 **IP 字面量**（RFC 5737 文档段）—— 不产生「解析节点域名」这一次查询。
   这是本配置里唯一**必定发生**的本地解析，能省则省。
-- `Node-C` 用域名（`cdn-relay.example.com`）—— 中转链按域名走 CDN 就近解析是它的意义所在。
+- 你换成域名节点（例如 CDN 中转）时，这次解析就会回来：它是"按域名就近解析"的代价，
+  旧版 `lazy` 的 `Node-C` 正是这种形态。
 
-### 4.5 `Node-E` 被注释掉的原因
+### 4.5 占位节点只留 hysteria2 的原因
 
-`vless` / `XTLS Reality` **不是 Surge 的原生代理类型**。写了会被跳过并告警，
-只增加解析噪音。保留一行注释是给从 Clash 迁过来的读者看的。
+两版的 `[Proxy]` 现在都只剩 2 条同类型占位，读者一眼就能改完。历史形态是 4 条
+（`hysteria2` ×2 + `https` 中转链 ×2）外加一条被注释的 `Node-E = vless` —— 那条注释
+留着是因为 `vless` / `XTLS Reality` **不是 Surge 的原生代理类型**，写了会被跳过并告警，
+只增加解析噪音；给从 Clash 迁过来的读者提个醒。⚠️ 这个知识点仍然成立，只是模板里
+那一行注释已随「节点缩减成 2 条」一起删掉了。
 
 ---
 
@@ -334,7 +333,6 @@ Node-Relay-01 / Node-Relay-02   # 两条中转链，同 lazy 的 C / D
 | 字段 | 占位形式 |
 |:-----|:---------|
 | 节点 IP | RFC 5737 文档地址段：`192.0.2.0/24`、`198.51.100.0/24`、`203.0.113.0/24` |
-| 中转域名 | `cdn-relay.example.com`（`example.com` 是 RFC 2606 保留域） |
 | 密码 / 用户名 | `REPLACE_WITH_YOUR_PASSWORD` / `REPLACE_WITH_USERNAME` |
 | SNI | `REPLACE_WITH_YOUR_SNI` 或与 server 相同的 IP / 域名 |
 
@@ -379,13 +377,18 @@ Node-Relay-01 / Node-Relay-02   # 两条中转链，同 lazy 的 C / D
 
 | 组 | 类型 | 理由 |
 |:---|:-----|:-----|
-| `Proxy` | `smart` | 日常流量，自动选最快 |
-| `AI` | `smart` | 但成员是 `Node-C` / `Node-D` —— 出口与日常流量**物理隔离**，组内自动选 |
+| `Proxy` | `smart` | 日常流量：`Node-A` + 订阅池，自动选最快 |
+| `AI` | `smart` | `Node-B` + 订阅池 —— **不引用 `Proxy`**，两组各自直接吃订阅 |
+| `Airport` | `select` | 订阅槽位，`hidden=true`（不在面板显示，只被上两组 include） |
 | `AD` | `select` | 手动开关（独立于规则链路） |
 
 ---
 
 ## 7 · `underlying-proxy` 中转链
+
+> 📌 **当前模板不带中转链** —— 旧版 `lazy` 的 `Node-C` / `Node-D` 是这一形态，
+> 已随「占位节点缩减成 2 条」移除。本节讲的是**你自己在 `[Proxy]` 加链式节点时**的机制，
+> 结论仍然成立。
 
 ### 7.1 机制
 
@@ -402,7 +405,7 @@ Node-C = https, cdn-relay.example.com, 443, …, underlying-proxy="Node-B", …
 
 1. **被指向的名字必须存在**（在 `[Proxy]` 或 `[Proxy Group]` 里）。
    否则 Surge 会以「无法解析 `underlying-proxy`」**拒绝加载整份配置**。
-   本文件里 `Node-C → Node-B`、`Node-D → Node-A`，都在同一个 `[Proxy]` 段里。
+   旧版 `lazy` 里是 `Node-C → Node-B`、`Node-D → Node-A`，都在同一个 `[Proxy]` 段里。
 2. **不能形成环**。`A → B` 且 `B → A` 会让 Surge 拒绝加载。
 
 ### 7.3 改动顺序
@@ -647,28 +650,34 @@ GEOIP,CN,DIRECT,no-resolve    # 对未解析的主机名直接跳过
 
 ### 13.1 两版的组结构
 
-**`lazy.conf` —— 3 个组**
+**`lazy.conf` —— 4 个组**（3 个分流组 + 1 个隐藏订阅槽）
 
 ```
-Proxy = smart, "Node-A", "Node-B", icon-url=…/Proxy.png
-AI    = smart, "Node-C", "Node-D", icon-url=…/openai.png
-AD    = select, REJECT, DIRECT, icon-url=…/AdBlock.png
+Airport = select, policy-path=…, update-interval=86400, hidden=true, icon-url=…/Airport.png
+Proxy   = smart, "Node-A", include-other-group="Airport", icon-url=…/Proxy.png
+AI      = smart, "Node-B", include-other-group="Airport", icon-url=…/openai.png
+AD      = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 ```
 
 | 组 | 类型 | 承载 | 被谁引用 |
 |:---|:-----|:-----|:---------|
-| `Proxy` | `smart` | `Node-A` / `Node-B` | `FINAL` + 3 条游戏机域名 |
-| `AI` | `smart` | `Node-C` / `Node-D` | `AI.list` |
+| `Airport` | `select` | `policy-path` 订阅槽位（`hidden=true`） | `Proxy` / `AI` 的 `include-other-group` |
+| `Proxy` | `smart` | `Node-A` + 订阅节点 | `FINAL` + 3 条游戏机域名 |
+| `AI` | `smart` | `Node-B` + 订阅节点 | `AI.list` |
 | `AD` | `select` | `REJECT` / `DIRECT` | 独立手动开关（不被规则引用，见 §13.3） |
+
+> 📌 懒人版的 `AI` **不引用 `Proxy`**（2026-09-26 定）：两组各挂自己那条占位节点、
+> 再各自 include 订阅槽。`smart` 组也不能把别的组当子策略，只有 `include-other-group`
+> 能把订阅里的**具体节点**复制进来。
 
 **`routing.conf` —— 26 个组**
 
-组序与 Egern v3.2 **逐位对齐**（由 `skill/tests/surge/architecture.sh` 的 ④ 断言守着）。
+组序与 Egern v3.3 **逐位对齐**（由 `skill/tests/surge/architecture.sh` 的 ④ 断言守着）。
 
 | 层 | 组 | 类型 | 作用 |
 |:---|:---|:----:|:-----|
 | ① 总入口 | `Proxy` / `Smart` | `select` / `smart` | `Proxy` 是**手动**总出口（首项 `MAX`）；`Smart` 是自动全节点池 |
-| ② 应用（13 组） | `ChatGPT` / `Gemini` / `Claude` / `AI` / `Spotify` / `YouTubeMusic` / `YouTube` / `GitHub` / `Google` / `Microsoft` / `Telegram` / `Twitter` / `WeChat` | `select` | 都是 `include-other-group="Proxy"` —— 复制 `Proxy` 的**已解析成员**（`WeChat` 首项 `DIRECT`，见下方 📌） |
+| ② 应用（13 组） | `ChatGPT` / `Gemini` / `Claude` / `AI` / `Spotify` / `YouTubeMusic` / `YouTube` / `GitHub` / `Google` / `Microsoft` / `Telegram` / `Twitter` / `WeChat` | `select` | 除 `WeChat`（只有 `DIRECT`）外都带 `include-other-group="Proxy"` —— 复制 `Proxy` 的**已解析成员**；首项各不相同：`Claude` `Taiwan` · `Google` `Gemini` · `Microsoft` / `WeChat` `DIRECT` · `AI` 占位节点 `Node-B` · `Spotify` / `YouTubeMusic` `USA`（见下方 📌） |
 | ③ 订阅 | `Airport` | `select` | `policy-path` 订阅槽位，`hidden=true` |
 | ③ 开关 | `AD` | `select` | 独立手动开关，**不被规则引用**（见 §13.3） |
 | ④ 地区 | `Hong Kong` / `USA` / `Japan` / `Taiwan` / `Singapore` / `Korea` / `Other Regions` | `smart` | `policy-regex-filter` 按节点名筛 |
@@ -693,14 +702,16 @@ AD    = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 >
 > 完整推导见 [`docs/11` §2.2](../docs/11-分流版设计.md)。
 
-**应用组各自的默认取向**（首项即默认，与 Egern v3.2 对齐）：
+**应用组各自的默认取向**（首项即默认，与 Egern v3.3 对齐）：
 
 | 应用组 | 默认 | 备注 |
 |:-------|:----:|:-----|
-| `ChatGPT` / `Gemini` / `AI` | `Proxy` | |
+| `ChatGPT` / `Gemini` | `Proxy` | |
+| `AI` | **`Node-B`** → `Proxy` | 首项是 `[Proxy]` 里那条本机占位节点，其后才是节点池 |
 | `Claude` | **`Taiwan`** | Egern 的取向，Claude 对台湾线路较友好 |
 | `Google` | `Gemini` → `Proxy` | 首项是 `Gemini` 组 ⇒ 「Google 走 Gemini → Proxy」 |
-| `Spotify` / `YouTubeMusic` / `YouTube` | `Proxy` | 媒体类 |
+| `Spotify` / `YouTubeMusic` | **`USA`** | 媒体类的解锁地区（2026-09-26 定） |
+| `YouTube` | `Proxy` | 媒体类 |
 | `Telegram` / `Twitter` | `Proxy` | 社交类 |
 | `GitHub` | `Proxy` | 开发者服务 |
 | `Microsoft` | **`DIRECT`** | 微软国内可直连，走代理反而慢 |
@@ -740,7 +751,7 @@ AD    = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 
 - AI 服务的风控对出口 IP 的稳定性敏感；
 - `Proxy` 是 `smart`，会按站点静默换节点 —— 出口 IP 飘忽反而有害；
-- 独立组可以把 AI 出口钉在专门的节点上（示例里是 `Node-C` / `Node-D`）。
+- 独立组可以把 AI 出口钉在专门的节点上（当前两份配置钉的是 `Node-B`，Egern 侧同名）。
 
 ### 13.5 组名与成员名的大小写
 
