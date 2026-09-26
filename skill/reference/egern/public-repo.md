@@ -46,7 +46,7 @@ egern/DetailsReadme/DetailsReadme.md              # 完整技术文档
 
 
 > **可选版本只有两个** —— `routing`（分流版 · 推荐）与 `lazy`（懒人版），文件名不带版本号；
-> 当前是第哪一版写在头注 `#! version=routing_v3.3` 里。历代旧版在 `profiles/config_old/` 备对照。
+> 当前是第哪一版写在头注 `#! version=routing_v3.4` 里。历代旧版在 `profiles/config_old/` 备对照。
 
 **要更新模板时**：**直接在仓库里改 `profiles/*.yaml` 即可。** 这份模板早已完成脱敏
 （2 条占位节点 + 1 个占位订阅，全都连不出去，无真实证书），改它不需要"从自用配置重新生成"。改完跑

@@ -1,5 +1,5 @@
-#! version=routing_v3.4
-# ================================================================ routing_v3.4（正式版 · 推荐）
+#! version=routing_v3.3
+# ================================================================ routing_v3.3（正式版 · 推荐）
 # 本版 = **routing_v2.4 + 规则段对齐 Surge**（内容与顺序均逐行对拍）：
 #   ① `dns.forward` 由单条 catch-all 扩为 4 层：
 #      白名单（white-guard → Domestic-DNS，抢在拦截前拿到解析）
@@ -12,7 +12,7 @@
 #      —— Lan 管 IP 段与路由管理域，private 管 .lan/.local 等特殊 TLD 与 miwifi.com）。
 #   ③ `rules` 删内联 `domain_suffix: cn` 兜底（direct.txt 本身已含 DOMAIN-SUFFIX,cn，
 #      正常路径 100% 重复；故障场景只是退化不是泄露）。
-#   ④ `rules` 顺序为本仓基准序，Surge `routing_v3.4.conf` 与本文件逐行对齐
+#   ④ `rules` 顺序为本仓基准序，Surge `routing_v3.3.conf` 与本文件逐行对齐
 #      （仅两处引擎差异例外：Surge 独有内置 SYSTEM / 内置 LAN，Egern 用 blackmatrix7 Lan.list）。
 # `policy_groups`、`dns` 其余键逐字未动。
 # ⭐ 推荐版由 `routing_v2.4` 移交给本版；`routing_v2.4` 降为保留版（文件未动，留作对照）。

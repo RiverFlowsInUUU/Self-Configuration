@@ -27,6 +27,11 @@
   `python skill/tests/make_min.py --family all --apply` rc 0（懒人 `.min` 正文 83 行 · 分流 148 行）；
   `bash skill/tests/all.sh` 第 1 项 `TOTAL: 19 passed, 0 failed`。
 
+- 📶 **四份 Surge 配置新增 `[SSID Setting]` 段 · 网络级暂停**（q20 · 用户直接下达，并裁 Egern 侧不动 —— 它无 suspend 对等件，硬凑会让两侧规则分叉）：
+  `lazy.conf` / `routing.conf` 在 `[General]` 与 `[Proxy]` 之间各插一段，正文一行 `SSID:MyHome suspend=true`（占位符与官方 Subnet Settings 页示例同名，段语义官方原文 「Suspend Surge temporarily under the matching networks.」：连上该名 Wi-Fi 自动暂停、离开自动恢复），段上一行中文注释说明用途；家庭软路由已挂代理的网络下设备端不再二次代理。两份 `.min` 由 `python skill/tests/make_min.py --family all --apply` 同步（正文 83 → 86 · 148 → 151 行，注释按既有规则剥离）；`docs/跨内核差异对照.md` §1 同批新增「网络级暂停」一行登记两侧差异。
+  **没动**：Egern 两份完整版规则/DNS/分组零接触 —— 仅随家族升版改头注号（`bump_version.py` 硬约束两内核同号）· Surge 其余段一字未动 · 12 件闸门名单零触达 · 占位节点与订阅槽不变。
+  **验收**：首行版本 `lazy_v1.2 → v1.3`、`routing_v3.3 → v3.4`，两内核四形态 8 件按发布字节进各自 `config_old/`（先归档后改内容，快照 = 上一发布版逐字节）；`python skill/tests/bump_version.py --family lazy --keep .ai-loop --apply` 与 `--family routing` 同形均 rc 0；`bash skill/tests/all.sh` rc 0 · 7 项 19/24/18/18/18/8/6 全 passed。
+
 ### Egern
 
 - 🧩 **同一形态的 Egern 侧**：`lazy.yaml` 组数 `3 → 4`（新增 `external` 槽位 `Airport`：`type: smart` + `hidden: true`；
