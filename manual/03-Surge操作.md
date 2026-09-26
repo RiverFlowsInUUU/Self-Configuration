@@ -125,7 +125,8 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 必须替换（本手册为准；旧版逐行讲解见 [`../surge/docs/04-模板逐段讲解.md`](../surge/docs/04-模板逐段讲解.md)，已冻结）：
 
 - `lazy` 的 `[Proxy]` 占位节点；
-- `routing` 的 `Airport` 组 `policy-path` 占位订阅地址。
+- `routing` 的 `Airport` 组 `policy-path` 占位订阅地址；
+- 两份 `[SSID Setting]` 段里的 `SSID:MyHome` —— `MyHome` 是照官方示例留的占位网络名，不替换就匹配不到任何 Wi-Fi，「回家自动暂停」静默不生效。该段只有 Surge 侧有，Egern 无对等件（见 [`../docs/跨内核差异对照.md`](../docs/跨内核差异对照.md) §1「网络级暂停」）。
 
 可以删（按收益排序，删完必须重跑分流覆盖审计）：
 
