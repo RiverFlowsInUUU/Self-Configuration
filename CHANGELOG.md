@@ -32,6 +32,10 @@
   **没动**：Egern 两份完整版规则/DNS/分组零接触 —— 仅随家族升版改头注号（`bump_version.py` 硬约束两内核同号）· Surge 其余段一字未动 · 12 件闸门名单零触达 · 占位节点与订阅槽不变。
   **验收**：首行版本 `lazy_v1.2 → v1.3`、`routing_v3.3 → v3.4`，两内核四形态 8 件按发布字节进各自 `config_old/`（先归档后改内容，快照 = 上一发布版逐字节）；`python skill/tests/bump_version.py --family lazy --keep .ai-loop --apply` 与 `--family routing` 同形均 rc 0；`bash skill/tests/all.sh` rc 0 · 7 项 19/24/18/18/18/8/6 全 passed。
 
+- 🔧 **`.min` 行数读数更正（q22）**：沿革件 `surge/docs/07:209` 与日志 `:27` / `:31` 三处 `.min` 行数按实测更正（懒人 82 → 85 · 分流 147 → 150，行数口径 = 文件换行数（`wc -l`））；沿革件就地改，日志 `:27` / `:31` 原文不碰（只追加不回改前批原文）。
+  **没动**：四件 `.min.conf` 零改动 · 其余文档与 profile 零改动 · 12 件闸门名单零触达。
+  **验收**：`surge/docs/07:209` 四数 = `82 → 85` / `147 → 150`；`wc -l surge/profiles/lazy.min.conf surge/profiles/routing.min.conf surge/profiles/config_old/lazy_v1.2.min.conf surge/profiles/config_old/routing_v3.3.min.conf` = 85 / 150 / 82 / 147；`bash skill/tests/all.sh` rc 0 · 7 项全 passed。
+
 ### Egern
 
 - 🧩 **同一形态的 Egern 侧**：`lazy.yaml` 组数 `3 → 4`（新增 `external` 槽位 `Airport`：`type: smart` + `hidden: true`；
