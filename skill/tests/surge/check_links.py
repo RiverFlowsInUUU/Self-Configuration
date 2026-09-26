@@ -79,8 +79,8 @@ _HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
 _LINK = re.compile(r"\]\(([^)\s]+)\)")
 _FENCE = re.compile(r"^\s*(```+|~~~+)")
 
-# ── 判据 ② 的构件（q11-user-approved · 2026-09-26 · 口径与收口扫描
-#    .ai-loop/work/closing_scan3.py 面一同源：132 token / 0 取不到 ⇒ 上线首日必须绿）──
+# ── 判据 ② 的构件（q11-user-approved · 2026-09-26 · 口径与 q10 收口扫描同源：现役层可照抄
+#    命令行的完整路径 token 对拍跟踪树 · 上线首日 132 token / 0 取不到 ⇒ 必须绿）──
 # 沿革层：整篇不进判据 ②（判据 ① 的口径保持原样，一个文件都不许多排除）。
 _CMD_HIST = re.compile(r"CHANGELOG\.md$|文件版本沿革|日志旧版原文|_archive|DetailsReadme")
 # 触发词：这一行得是「能照着敲」的命令上下文，纯提文件名的散文不算。
