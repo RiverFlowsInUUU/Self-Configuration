@@ -231,10 +231,10 @@ else:
     src, changed = "最近一次提交（该仓无上游）", git("diff", "--name-only", "HEAD^", "HEAD")
 
 def once_released(p):
-    """一次性放行（2026-09-26 · 用户授权 q11）：只放 `check_links.py` 扩面那一次改动。
+    """一次性放行（2026-09-26 · 用户授权 q11 · q14 起带 HEAD 自毁维）：只放 `check_links.py` 扩面那一次改动。
 
-    判据 = 该文件自带授权标记 `q11-user-approved`：标记在被改 ⇒ 放行出声之前先由改动
-    本身留痕；哪天标记被删（等于绕过授权动判据本体）⇒ 立刻恢复 ⚠️。
+    判据 = 该文件自带授权标记 `q11-user-approved` **且该标记尚未进入 HEAD**：标记一进 HEAD（授权那一批
+    已落地）、或标记被删（等于绕过授权动判据本体）⇒ 豁免立刻失效；看不见 HEAD ⇒ 一律不放行（fail-closed）。
     **不动 GATE 名单本身**：AGENTS.md §2 与 apply_edits.py 的 A9/A13 拿这份 12 名单
     逐字对拍且三处写死个数，删一项要连带改三个冻结文件；all.sh 也**不放行自己** ——
     闸门文件必须始终能看见「有人动了闸门」。
@@ -243,9 +243,13 @@ def once_released(p):
         return False
     try:
         with open(p, encoding="utf-8") as f:
-            return "q11-user-approved" in f.read()
+            cur = "q11-user-approved" in f.read()
     except OSError:
         return False
+    if not cur or not git("rev-parse", "--verify", "HEAD").strip():
+        return False                    # 看不见 HEAD（空仓、非 git 环境）⇒ 一律不放行（fail-closed）
+    return "q11-user-approved" not in git("show", "HEAD:%s" % p)
+                                        # 标记一进 HEAD（授权那批已落地）⇒ 豁免自动失效
 
 
 hits, seen, passed = [], set(), []
@@ -266,10 +270,11 @@ if hits:
     print("\n   ⚠️  闸门被改动 %d 处 —— AGENTS.md §2 第 5 条：改前先请示维护者，"
           "并附「不改会漏掉什么」的反例" % len(hits))
     for tag, p in hits:
-        print("      · %-12s %s" % (tag, p))
+        print("      · %-14s %s" % (tag, p))
 else:
-    print("\n   ✅  本批待落地改动未触碰其他闸门文件（查：未提交 + %s · 冻结 %d 个文件 · "
-          "名单见 AGENTS.md §2 第 5 条）" % (src, len(GATE)))
+    other = "其他" if passed else ""
+    print("\n   ✅  本批待落地改动未触碰%s闸门文件（查：未提交 + %s · 冻结 %d 个文件 · "
+          "名单见 AGENTS.md §2 第 5 条）" % (other, src, len(GATE)))
 PYEOF
 fi
 
