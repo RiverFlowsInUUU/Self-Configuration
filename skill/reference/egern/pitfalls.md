@@ -30,14 +30,14 @@
 ---
 
 **坑 1：用 JSON API 判 DoH 端点死活 → 误判。**
-`?name=x&type=A` + `accept: application/dns-json` 是 Google 风格的**可选** JSON API。RFC 8484 只强制**线格式**（`?dns=<base64url>` + `accept: application/dns-message`）。`dns.google`、`8.8.8.8`、`dns.alidns.com` 用 JSON 都会回 400 —— 它们没坏。**判断端点是否可用，只能用 `scripts/probe_doh.py` 的线格式请求。**
+`?name=x&type=A` + `accept: application/dns-json` 是 Google 风格的**可选** JSON API。RFC 8484 只强制**线格式**（`?dns=<base64url>` + `accept: application/dns-message`）。`dns.google`、`8.8.8.8`、`dns.alidns.com` 用 JSON 都会回 400 —— 它们没坏。**判断端点是否可用，只能用 `skill/scripts/egern/probe_doh.py` 的线格式请求。**
 
 **坑 2：给 `geoip` 加 `no_resolve` 会悄悄改掉 DNS 端点的路由。**
 `no_resolve: true` 之后 geoip **不再匹配域名**（官方："仅匹配已解析的 IP 地址"）。于是以主机名出现的加密 DNS 端点失去「CN → DIRECT」，只能靠某个 rule_set 里的 `DOMAIN-SUFFIX,cn` 兜住 —— 而那个规则集一旦加载失败（例如含 Egern 未文档化的类型），国内 DNS 查询就落到 `default → 代理`，被绕到境外出口再回国内，超时后**回退明文 bootstrap → 运营商 DNS**。**这就是"DNS 泄露到运营商"的完整机制链。修法：给每个 DNS 端点写显式路由（见模板），别依赖规则集内容。**
 
 **坑 3：自己的审计脚本只能验证自己编码进去的假设。** 脚本报 `0 high` 不等于真的没泄露。用户实测出泄露时，必须回到**机制层**重新推导（回退链 / 端点路由 / 分组兜底），而不是重跑同一个脚本。
 
-**坑 4：别假定 `.list` 是域名表。** 实测 `ChinaMax.list`：12614 条里 **12472 条是 IP-CIDR/IP-CIDR6**，域名只有 64 条，还含 65 条 `USER-AGENT` 和 **12 条 `PROCESS-NAME`（Egern 未文档化）**。用之前**下载 + 统计类型分布**（见 `scripts/profile_ruleset.py`）。这类巨型 IP 集合没有 `no_resolve`，是个持续触发本地解析的开销源。
+**坑 4：别假定 `.list` 是域名表。** 实测 `ChinaMax.list`：12614 条里 **12472 条是 IP-CIDR/IP-CIDR6**，域名只有 64 条，还含 65 条 `USER-AGENT` 和 **12 条 `PROCESS-NAME`（Egern 未文档化）**。用之前**下载 + 统计类型分布**（见 `skill/scripts/egern/profile_ruleset.py`）。这类巨型 IP 集合没有 `no_resolve`，是个持续触发本地解析的开销源。
 　→ ⚠️ **这条不只是"别误判"，它还有直接的后果**：把它当"国内域名走直连"的兜底规则用，等于没有兜底。真正能兜住的是 `ChinaMax_All_No_Resolve.list`（111k 域名 + 同份 IP，IP 条目全带 `no-resolve`）。详见**坑 17**。
 
 **坑 5：`policy` 嵌在类型字典里。** `- domain: {match: x, policy: Proxy}` —— 读 `r.get('policy')` 永远得到 `None`（审计器 f1 就是这么废掉的）。要读 `r[type]['policy']`。
@@ -47,7 +47,7 @@
 
 **坑 7：审计器的"兜底判定"不要只认一种写法。** f2 里把 `has_catchall` 写成「最后一条必须是 `domain_wildcard: '*'`」，于是配置里写 `domain_regex: '.'` 这条等效兜底时被误报 HIGH、而 `domain_wildcard` 前面的同义兜底又被算成"靠前规则指向境外组"报了假 LOW。**判定要按语义（是否覆盖一切域名）而不是按字面键名+位置**；同时必须显式排除兜底规则本身，避免它污染"靠前规则"检查。修好后同一份 f3 从 `1 high/3 low` 变成 `0 high/1 low`。
 
-**坑 8：`forward` 里的 `proxy_rule_set` 若含 IP 类条目且不带 `no-resolve`，会为了判定而强制一次预解析。** 实测 `ChinaDomain.list` 里那 9 条 `IP-CIDR(6)` 都带 `no-resolve`，所以安全；但用户自选的规则集不保证。审这类文件时**一定要数类型分布**（`scripts/profile_ruleset.py`）。
+**坑 8：`forward` 里的 `proxy_rule_set` 若含 IP 类条目且不带 `no-resolve`，会为了判定而强制一次预解析。** 实测 `ChinaDomain.list` 里那 9 条 `IP-CIDR(6)` 都带 `no-resolve`，所以安全；但用户自选的规则集不保证。审这类文件时**一定要数类型分布**（`skill/scripts/egern/profile_ruleset.py`）。
 
 **坑 9：审计器"看不见"的那一类名字，就是最终泄露的那一类。**
 f3 的审计结果是 `0 high / 1 low`，但用户实测**持续泄露到中国电信**。原因是脚本只检查了「用户会访问的域名」和「节点域名」，**从没把 profile 自己运行必需的域名（延迟测试 URL、策略组图标）拉进来做覆盖判定**。补上这项检查后：原始配置 `4 high`、**f3 `2 high`**（两个 latency test 域名）、f4 `0 high` —— **f3 的"0 high"是审计盲区造成的假安心**。
@@ -66,7 +66,7 @@ f3 的审计结果是 `0 high / 1 low`，但用户实测**持续泄露到中国�
 
 **坑 12：端点写成 IP 字面量之前，必须逐个实测它真的能用。**
 "IP 字面量 + 证书覆盖该 IP"不是想当然的。实测：`https://223.5.5.5/dns-query`、`https://1.12.12.12/dns-query`、`tls://1.12.12.12` 都正常；但 **`https://9.9.9.9/dns-query` 直接失败 —— `HTTP Version Not Supported`**（Quad9 在 `9.9.9.9` 上只提供 HTTP/3，不响应 RFC8484 的 HTTP/1.1 线格式；`149.112.112.112` 同样），而 **`tls://9.9.9.9` 正常**（证书 `CN=dns.quad9.net`）。**写错形式 = 白占一个端点，而且它是"静默失效"**，不会在配置校验时报错。
-测法见 `scripts/probe_dns_endpoints.py` —— **直接吃 profile 文件**，把 `upstreams` / `proxy_nameservers` / `bootstrap` 里每个端点逐个跑一遍（DoH 走 RFC8484 线格式、DoT 走 853 握手并校验证书、裸 IP 走 UDP:53），最后输出「失效端点 N / M」。**加固后报告里附上这张表，别只写"端点已改 IP"。**（f5 实测：15 个端点 0 失效。对候选端点应**连测 3 轮**再下"稳定/不稳"的结论 —— 本次就吃过一次单轮抖动误判。）
+测法见 `skill/scripts/egern/probe_dns_endpoints.py` —— **直接吃 profile 文件**，把 `upstreams` / `proxy_nameservers` / `bootstrap` 里每个端点逐个跑一遍（DoH 走 RFC8484 线格式、DoT 走 853 握手并校验证书、裸 IP 走 UDP:53），最后输出「失效端点 N / M」。**加固后报告里附上这张表，别只写"端点已改 IP"。**（f5 实测：15 个端点 0 失效。对候选端点应**连测 3 轮**再下"稳定/不稳"的结论 —— 本次就吃过一次单轮抖动误判。）
 
 **坑 13：兜底组挂在"必须经代理才可达"的组上 —— 审计器判 OK，用户实测却是 `upstream: bootstrap`。**
 本次事故：f5 把兜底指向 `Foreign-DNS`（端点全为 IP 字面量、且都在 `rules` 里判给 Proxy），审计判 `0 high`。用户复测报 **`upstream: bootstrap`**。复盘出两个漏洞：
@@ -85,11 +85,11 @@ f3 的审计结果是 `0 high / 1 low`，但用户实测**持续泄露到中国�
 
 | profile | 构造 | 期望 | 命令 |
 |---|---|---|---|
-| `tests/bad_foreign.yaml` | 兜底组端点全为**境外** IP（`8.8.8.8` / `1.1.1.1`） | **HIGH + 退出码 1** | `check_egern_dns.py tests/bad_foreign.yaml` |
-| `tests/bad_hostname.yaml` | 兜底组端点含**主机名**（`dns.alidns.com`） | **HIGH + 退出码 1** | `check_egern_dns.py tests/bad_hostname.yaml` |
-| `tests/ok_route.yaml` | 兜底组端点全为国内 IP **且有显式 `ip_cidr → DIRECT`**（走判据 A） | **通过 + 退出码 0** | `check_egern_dns.py tests/ok_route.yaml` |
-| `tests/ipv6_only.yaml` | 端点仅 IPv6 国内解析器（`[2400:3200::1]`） | **通过 + 退出码 0，且两脚本结论必须一致** | `bash skill/tests/egern/run.sh` |
-| `tests/scheme_case.yaml` | 端点 scheme 写成大写（`HTTPS://` / `TLS://`），其余与 `ok_route.yaml` **逐字相同** | **通过 + 退出码 0，结论必须与 `ok_route.yaml` 完全相同** | `bash skill/tests/egern/run.sh` |
+| `skill/tests/egern/bad_foreign.yaml` | 兜底组端点全为**境外** IP（`8.8.8.8` / `1.1.1.1`） | **HIGH + 退出码 1** | `python skill/scripts/egern/check_egern_dns.py skill/tests/egern/bad_foreign.yaml` |
+| `skill/tests/egern/bad_hostname.yaml` | 兜底组端点含**主机名**（`dns.alidns.com`） | **HIGH + 退出码 1** | `python skill/scripts/egern/check_egern_dns.py skill/tests/egern/bad_hostname.yaml` |
+| `skill/tests/egern/ok_route.yaml` | 兜底组端点全为国内 IP **且有显式 `ip_cidr → DIRECT`**（走判据 A） | **通过 + 退出码 0** | `python skill/scripts/egern/check_egern_dns.py skill/tests/egern/ok_route.yaml` |
+| `skill/tests/egern/ipv6_only.yaml` | 端点仅 IPv6 国内解析器（`[2400:3200::1]`） | **通过 + 退出码 0，且两脚本结论必须一致** | `bash skill/tests/egern/run.sh` |
+| `skill/tests/egern/scheme_case.yaml` | 端点 scheme 写成大写（`HTTPS://` / `TLS://`），其余与 `ok_route.yaml` **逐字相同** | **通过 + 退出码 0，结论必须与 `ok_route.yaml` 完全相同** | `bash skill/tests/egern/run.sh` |
 
 前两个是**收紧面**（证明判据没被放宽成"全 IP 即安全"）；后三个是**放行面**（分别证明判据 A 路径、
 IPv6 端点解析、scheme 任意拼法都仍有效）。后两份的期望值都必须在**修 bug 之前先验证它会失败** ——
@@ -176,7 +176,7 @@ f7 改动：geoip:CN 补上 no_resolve: true（官方：不再触发解析）
 
 ⇒ **凡是要"用 IP 规则判归属"的配置，都必须有一份域名类国内规则集兜底。这一步和补 `no_resolve` 是同一次改动，不能分两次做。**
 
-**配套新增脚本 `scripts/audit_routing_coverage.py`（清单 17）**：吃 profile，先统计每个启用的 `rule_set` 的域名/IP 构成，再拿一批探针域名按 rules 顺序走一遍，输出"命中规则 + 策略"。内置 15 个**不以 `.cn` 结尾**的国内探针（专门暴露"`.cn` 兜底掩盖了国内域名无覆盖"这种假象）+ 7 个境外探针（查是否被误判直连）。**动过 `no_resolve` 或换过规则集，必须复跑。** f7 实测 `7/15 落 Final`（完整复现用户现象），f8 `15/15 DIRECT`。
+**配套新增脚本 `skill/scripts/egern/audit_routing_coverage.py`（清单 17；合并前路径为 `scripts/…`，现 `skill/scripts/egern/…`）**：吃 profile，先统计每个启用的 `rule_set` 的域名/IP 构成，再拿一批探针域名按 rules 顺序走一遍，输出"命中规则 + 策略"。内置 15 个**不以 `.cn` 结尾**的国内探针（专门暴露"`.cn` 兜底掩盖了国内域名无覆盖"这种假象）+ 7 个境外探针（查是否被误判直连）。**动过 `no_resolve` 或换过规则集，必须复跑。** f7 实测 `7/15 落 Final`（完整复现用户现象），f8 `15/15 DIRECT`。
 
 **坑 18（f10 的教训）：不要把节点域名写进 DNS 分流规则 —— 它既没用，又让配置"看起来需要随订阅维护"。**
 
@@ -189,4 +189,4 @@ f7 改动：geoip:CN 补上 no_resolve: true（官方：不再触发解析）
 
 ⚠️ **更要提防它带来的错觉**：这些规则让配置**看起来**很严谨（"我专门照顾了节点域名"），实际既无功能，又把"换订阅"变成了一件需要复查配置的事。**判断一条规则该不该存在，只问两个问题：删掉它结果会变吗？它是否引入了维护耦合？**
 
-**配套新增脚本 `scripts/audit_dns_forward.py`（清单 18）**：打印 `forward` 的 value 集合与结构性冗余条数、统计"订阅耦合度"（从 `proxies[].server` 提取节点域名，查有几条 forward 规则把它们写死）、并支持 `--drill` 用**合成的"未来订阅"域名**做演练（默认 6 个故意不在任何规则集里的域名，验证"未命中的域名到底落到哪个上游"）。退出码 0/1，用于提交前本地检查。
+**配套新增脚本 `skill/scripts/egern/audit_dns_forward.py`（清单 18）**：打印 `forward` 的 value 集合与结构性冗余条数、统计"订阅耦合度"（从 `proxies[].server` 提取节点域名，查有几条 forward 规则把它们写死）、并支持 `--drill` 用**合成的"未来订阅"域名**做演练（默认 6 个故意不在任何规则集里的域名，验证"未命中的域名到底落到哪个上游"）。退出码 0/1，用于提交前本地检查。

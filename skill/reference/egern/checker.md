@@ -14,18 +14,18 @@
 ---
 
 ```bash
-"<venv>/Scripts/python.exe" scripts/check_egern_dns.py profile.yaml [more.yaml ...]
-"<venv>/Scripts/python.exe" scripts/probe_dns_endpoints.py profile.yaml   # ★ 端点逐个实测（含证书覆盖 IP）
-"<venv>/Scripts/python.exe" scripts/audit_ruleset_noresolve.py profile.yaml  # ★★ 规则集 IP 条目 no-resolve 审计（清单 16）
-"<venv>/Scripts/python.exe" scripts/audit_ruleset_noresolve.py --url <ruleset-url>
-"<venv>/Scripts/python.exe" scripts/audit_routing_coverage.py profile.yaml   # ★★ 分流覆盖审计（清单 17，域名→命中规则→策略）
-"<venv>/Scripts/python.exe" scripts/audit_dns_forward.py profile.yaml         # ★ forward 单值性（非 reject 去向）/订阅耦合审计（清单 18）
-"<venv>/Scripts/python.exe" scripts/audit_dns_forward.py profile.yaml --drill # ↑ --drill 可选：加合成"未来订阅"域名多演练一遍
-"<venv>/Scripts/python.exe" scripts/audit_region_filters.py profile.yaml      # ★ 地区组 filter 与 Other Regions 负向断言的「两份拷贝」同步校验
-"<venv>/Scripts/python.exe" scripts/audit_ruleset_refresh.py profile.yaml --strict  # ★ 刷新参数：非正值=HIGH，偏离约定值 604800=仅 --strict 判负
-"<venv>/Scripts/python.exe" scripts/probe_doh.py                    # 只测 DoH 线格式
-"<venv>/Scripts/python.exe" scripts/profile_ruleset.py some.list    # 规则集类型分布
-"<venv>/Scripts/python.exe" scripts/weigh_ruleset.py some.list [--sub small.list] [--probe d]  # ★ 规则集"重量"：构成/冗余/深度/加载与匹配耗时/覆盖对比
+"<venv>/Scripts/python.exe" skill/scripts/egern/check_egern_dns.py profile.yaml [more.yaml ...]
+"<venv>/Scripts/python.exe" skill/scripts/egern/probe_dns_endpoints.py profile.yaml   # ★ 端点逐个实测（含证书覆盖 IP）
+"<venv>/Scripts/python.exe" skill/scripts/egern/audit_ruleset_noresolve.py profile.yaml  # ★★ 规则集 IP 条目 no-resolve 审计（清单 16）
+"<venv>/Scripts/python.exe" skill/scripts/egern/audit_ruleset_noresolve.py --url <ruleset-url>
+"<venv>/Scripts/python.exe" skill/scripts/egern/audit_routing_coverage.py profile.yaml   # ★★ 分流覆盖审计（清单 17，域名→命中规则→策略）
+"<venv>/Scripts/python.exe" skill/scripts/egern/audit_dns_forward.py profile.yaml         # ★ forward 单值性（非 reject 去向）/订阅耦合审计（清单 18）
+"<venv>/Scripts/python.exe" skill/scripts/egern/audit_dns_forward.py profile.yaml --drill # ↑ --drill 可选：加合成"未来订阅"域名多演练一遍
+"<venv>/Scripts/python.exe" skill/scripts/egern/audit_region_filters.py profile.yaml      # ★ 地区组 filter 与 Other Regions 负向断言的「两份拷贝」同步校验
+"<venv>/Scripts/python.exe" skill/scripts/egern/audit_ruleset_refresh.py profile.yaml --strict  # ★ 刷新参数：非正值=HIGH，偏离约定值 604800=仅 --strict 判负
+"<venv>/Scripts/python.exe" skill/scripts/egern/probe_doh.py                    # 只测 DoH 线格式
+"<venv>/Scripts/python.exe" skill/scripts/egern/profile_ruleset.py some.list    # 规则集类型分布
+"<venv>/Scripts/python.exe" skill/scripts/egern/weigh_ruleset.py some.list [--sub small.list] [--probe d]  # ★ 规则集"重量"：构成/冗余/深度/加载与匹配耗时/覆盖对比
 
 bash skill/tests/egern/run.sh                                        # ★★ 回归测试两阶段（fixture 在 `skill/tests/egern/`、脚本在 `skill/scripts/egern/`；10 + 12 + 2 = 24 断言；联网那 2 条 SKIP_NET=1 时跳过），退出码非 0 即失败
 ```
@@ -52,7 +52,7 @@ bash skill/tests/egern/run.sh                                        # ★★ �
 ⚠️ **`hostpart()` 剥 scheme 必须用大小写不敏感的通用正则，不能用白名单。**
 白名单（`("https://", "tls://", ...)`）会让 scheme 的**拼法**参与审计结论：端点写成
 `HTTPS://223.5.5.5/dns-query` 时白名单失配，`HTTPS` 被当成主机名，端点从「IP 字面量」
-误判成「待解析域名」，同一份配置读数从 0 high 翻成 9 high。`tests/scheme_case.yaml` 是这条的守卫。
+误判成「待解析域名」，同一份配置读数从 0 high 翻成 9 high。`skill/tests/egern/scheme_case.yaml` 是这条的守卫。
 
 `check_egern_dns.py` 输出 `OK / LOW / HIGH` 三类，有 `HIGH` 时退出码 1，覆盖上面清单 1–15 项。
 清单 16 由 `audit_ruleset_noresolve.py` 单独覆盖（要下载**全部被引用的**规则集，几十秒，不塞进同一个脚本；有 `.ruleset-cache/` 本地缓存，加 `--offline` 可只读缓存）。实测判别力：**原始配置 → HIGH（`Apple_All.list` 13 条），f7 → OK（20 个全过）**。⚠️ 数量会随配置变化：f10 是 **19 个**（少的那 1 个 = `forward` 不再引用 `ChinaDomain.list`）；2026-09-21 新增 `white-guard` / `ads` 两条后为 **21 个** —— 报数变化时先确认是"少引用"而不是"漏扫"。
@@ -82,10 +82,10 @@ f10.2 起（2026-09-20，二次核查报告触发）：⑩ **「靠注释提醒�
   这个崩溃**旧版就有**，但因为它只被手工喂给 `check_egern_dns.py`，一直没被发现。
 
 ⇒ 固化五条：
-1. ⭐⭐ **共用逻辑必须收编成一个模块，不靠注释同步。** 现为 `scripts/_egern_common.py`，
+1. ⭐⭐ **共用逻辑必须收编成一个模块，不靠注释同步。** 现为 `skill/scripts/egern/_egern_common.py`，
    收 `DOMESTIC_RESOLVER_IPS` / `hostpart` / `ip_literal`；两个脚本都 import 它。
    **判据可以有两处调用点，但实现只能有一处。**
-2. ⭐⭐ **fixture 必须喂给"所有"脚本，而不是常跑的那一个。** 新增 `scripts/../tests/run.sh`
+2. ⭐⭐ **fixture 必须喂给"所有"脚本，而不是常跑的那一个。** 新增 `skill/tests/egern/run.sh`
    阶段 1（5 fixture × 2 脚本 = 10 断言）+ 阶段 2（全部 profile × 2 脚本），**改脚本 / 改 profile 后手动跑一次**。
    经验：**"只差一点就能抓到"的 bug，恰恰是因为守卫只覆盖了一半**。加守卫时要问："这条断言有没有在
    **每一个**消费方上跑过？"

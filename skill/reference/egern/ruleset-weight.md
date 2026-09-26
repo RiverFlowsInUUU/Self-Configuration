@@ -2,7 +2,7 @@
 
 > 本文是 [`SKILL.md`](../../SKILL.md) 的引用文件。 **何时读**：用户问「3.42 MB 的规则集是不是负担太重 / 别的软件扛得住吗」。
 
-配套脚本 `scripts/weigh_ruleset.py`。**先纠正两个前提再谈数字**（见正文）。
+配套脚本 `skill/scripts/egern/weigh_ruleset.py`。**先纠正两个前提再谈数字**（见正文）。
 
 ---
 
@@ -44,7 +44,7 @@
 ⇒ **覆盖是双峰的**：主流站点几百条就够，其余 99.5% 是长尾国内站。用小表 = 你随机撞到的国内小站（尤其视频/CDN 边缘）会被塞进境外代理。
 
 ```bash
-"<venv>/Scripts/python.exe" scripts/weigh_ruleset.py <大表> --sub <小表> --probe www.jd.com --probe api.deepseek.com
+"<venv>/Scripts/python.exe" skill/scripts/egern/weigh_ruleset.py <大表> --sub <小表> --probe www.jd.com --probe api.deepseek.com
 ```
 
 **结论模板**：内存代价 20 MB 级（iPhone 上 0.5%，无感；RAM < 256 MB 的路由器要留意，叠加广告表后是 +45 MB 量级）；换来的是国内域名直连。**不值得为省这 20 MB 牺牲分流**；真正的大头往往是广告表（本项目里那份 199,781 条 / +24.7 MB 比 ChinaMax 还大，且更可控）。
