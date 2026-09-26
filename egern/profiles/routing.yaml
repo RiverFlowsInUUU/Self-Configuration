@@ -79,7 +79,7 @@
 #   【改】Smart         —— 上游从「Airport-Free · Airport-C」改为「Airport-A · Airport-B」
 #   【改】Japan         —— 上游去掉 Airport-C，只剩「Airport-A · Airport-B」
 #   【改】MAX           —— 不再自带订阅 URL，改为「带节点筛选的 Smart」。
-# ⇒ 机场订阅入口 4 → 2（Airport-A / Airport-B），URL 占位符 9 → 4 条。
+# ⇒ 机场订阅入口 4 → 2（Airport-A / Airport-B），URL 占位符 8 → 4 条（口径 = 仅 `urls:` 下条目；含 `urls_disabled:` 为 11 → 5）。
 #    保留 A、B 的理由：A 被 8 个组引用、B 被 7 个，是地区组的共同上游；
 #    C 与 Free 只服务 Smart，删掉后 Smart 仍有 A/B 可用，能力不降。
 vif_only: true
