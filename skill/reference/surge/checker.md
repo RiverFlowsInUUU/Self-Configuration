@@ -36,7 +36,7 @@ fi
 ## 2 · 命令
 
 ```bash
-S=./skill/scripts
+S=./skill/scripts/surge
 
 # ── 不联网 ──────────────────────────────────────────────────────────
 python "$S/check_surge_dns.py"  surge/profiles/lazy.conf              # 期望 exit 0
