@@ -197,6 +197,21 @@
   `python skill/tests/apply_edits.py --selftest` ⇒「TOTAL: 14 passed, 0 failed」（A9/A13 双绿 = 名单与三处个数没被这次改动破坏）·
   `check_tools` 8 passed · `check_doc_readings.py` rc 0 · `check_links.py .` rc 0 且读数 59 件 / 462 条 / **132** 处逐字不变 ·
   四件改动文件 CR = 0。
+- 🛡️ **放行豁免补上 HEAD 自毁维 + 三处形制小修（q14 · 用户裁决⑧四项授权）**：
+  `once_released()` 原来只认工作区标记 ⇒ 授权批落地后豁免长亮、「一次性」名不副实；现补上 HEAD 失效维——
+  标记一进 HEAD（或被删）豁免立刻失效，看不见 HEAD 一律不放行（fail-closed）。三处小修：无上游点名的
+  13 字新 tag 撑破 `%-12s` 列宽 ⇒ 改 `%-14s`（两形的第二栏字符起始位对齐，判据 = 行内 `skill/tests` 的
+  index 相同）；干净仓的 ✅ 句「未触碰其他闸门文件」悬指 ⇒ 分两支出声，只有放行在场那支带「其他」；
+  `AGENTS.md` §2 的问句式描述改成与代码实出逐字一致的两种句式，「持续放行」句随自毁维同步改写。
+  **没动**：`GATE` 名单本身与三处写死个数 · `skill/tests/surge/check_links.py` 本批零字节（授权标记与
+  132 判据原样）· ℹ️ 放行行的文案（改的是它出现的条件）· 「后来者不许照学」三条 · 旧措辞在本日志里的沿革引用 ·
+  根 README · manual · profile · 其他一切跟踪树文件。
+  **验收**（写死父件 `2d9560e`，现势可跑）：把 `skill/tests/all.sh` 里 `<<PYEOF` 与 `PYEOF` 之间那段 Python
+  原样抽出，在五种临时仓形上各跑一遍 ⇒ ①有上游 · 已推送 · 干净 = ✅ 句**不带**「其他」；②无上游 · 最近一次提交
+  动 `all.sh` 与 ③有上游 · 未推送提交动 `all.sh` 的点名行第二栏字符起始位相同；④未推送提交动 `check_links.py`
+  而标记**已在 HEAD** = ℹ️ 消失、改出 ⚠️ 点名该件（用户写死的硬判据）；⑤标记尚未进 HEAD · 工作区带标记且被改 =
+  仍 ℹ️ + ✅ 带「其他」。全仓循环盘字面两式仍 0 行 · `apply_edits --selftest`「14 passed, 0 failed」·
+  `check_doc_readings --selftest`「18 passed, 0 failed」· `check_links.py .` rc 0 且 59 件 / 462 条 / **132** 处逐字不变。
 
 ---
 
