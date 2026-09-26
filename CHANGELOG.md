@@ -155,6 +155,26 @@
   不在跟踪树里（`git ls-files .ai-loop` 计数 0）⇒ 新克隆照抄必 `can't open file`（q10 实测三条全退出码 2）。
   **不改上面那 6 处指认本身**（沿革不抹，与 q5 快照读数同一口径）；仓外读者要复核相应判据，按各条目自述的判据与取数范围自行复刻即可 ——
   它们都已写明「数什么、对哪个 commit 对拍、期望值多少」。
+- 🛡️ **`check_links.py` 扩出第二条判据：现役层可照抄命令行里的完整路径（q11 · 用户授权）**：q7 那 4 条断命令的根因
+  是闸门只认「`]` 紧跟 `(`」这一种 markdown 链接语法、看不见反引号/代码围栏里的命令行路径。判据 ② 收口到最小面：只判「命令行触发词
+  （python / python3 / bash / sh / PYTHONIOENCODING=utf-8）所在行里、以 `.py`/`.sh` 结尾且含 `/` 的完整路径 token」，
+  按仓根与 `git ls-files` 跟踪树对拍（无 git 环境退回文件系统 walk）；**沿革层整篇排除**（`CHANGELOG.md`、
+  `*文件版本沿革*`、`日志旧版原文`、`_archive`、`DetailsReadme`）· 变量拼接形按「token 前一位必须是行首/空白/引号/
+  反引号/`=`」挡掉 · 占位符（`< > * $ { } /path/to/YYYY`）与裸文件名（无 `/`）不判 · 代码围栏内**照判**（与判据 ① 相反，
+  命令恰恰写在围栏里）。正/反例 fixture 随 `--selftest` 常驻：**措辞润色两版必绿**（0/0）、**目标脚本删除必红且只点名该路径**
+  （rc=1，不牵连沿革/变量/占位/裸名）。`skill/tests/all.sh` 的闸门自检加 `once_released()`：仅当 `check_links.py`
+  自带授权标记 `q11-user-approved` 时放行该件并出声（「ℹ️ 闸门一次性放行 1 处」），标记被删即恢复 ⚠️。
+  **没动**：GATE 12 名单本身（AGENTS.md §2 与 `apply_edits.py` A9/A13 拿它逐字对拍 + 三处写死个数，删一项要连动三个冻结件）、
+  判据 ①（链接与锚点）一字未改、`all.sh` 不放行自己、AGENTS.md · 根 README · manual · profile · fixture 零改动。
+  **验收**（写死本条落地 commit 的父件 `25542ef`，现势可跑）：
+  `PYTHONIOENCODING=utf-8 python skill/tests/surge/check_links.py .` ⇒ 退出码 **0** ·「扫描 59 个 markdown 文件，检查 462 条
+  相对链接 · 现役层命令行完整路径 **132** 处」—— 132 与收口扫描（`.ai-loop/work/closing_scan3.py` 面一 · q10 收口轮 0 取不到）同值；
+  `python skill/tests/surge/check_links.py --selftest` ⇒ 退出码 0 · 新增两行「措辞润色正例 ✅ 0/0」「路径漂移负例 ✅ 1」；
+  非破坏式判别 `git show 25542ef:skill/tests/surge/check_links.py | grep -c "q11-user-approved"` = **0** 对照工作区 = **1**；
+  `python skill/tests/apply_edits.py --selftest` ⇒「TOTAL: 14 passed, 0 failed」（A9/A13 现读 all.sh 名单未被扩码破坏）·
+  `python skill/tests/check_tools.py` ⇒「TOTAL: 8 passed, 0 failed」；`bash skill/tests/all.sh --offline` ⇒ 退出码 0，
+  **提交后·推送前**读数「ℹ️ 闸门一次性放行 1 处 …check_links.py」+「⚠️ 闸门被改动 1 处 —— skill/tests/all.sh」（本件同批被授权改动、
+  闸门不自放，此 ⚠️ 是预期读数非判负），推送后同一行回「✅ 闸门未被动过（冻结 12 个文件）」、`--landed` 三数全 0。
 
 ---
 
