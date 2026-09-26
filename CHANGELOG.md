@@ -212,6 +212,26 @@
   而标记**已在 HEAD** = ℹ️ 消失、改出 ⚠️ 点名该件（用户写死的硬判据）；⑤标记尚未进 HEAD · 工作区带标记且被改 =
   仍 ℹ️ + ✅ 带「其他」。全仓循环盘字面两式仍 0 行 · `apply_edits --selftest`「14 passed, 0 failed」·
   `check_doc_readings --selftest`「18 passed, 0 failed」· `check_links.py .` rc 0 且 59 件 / 462 条 / **132** 处逐字不变。
+- 🗑️ **闸门里的一次性放行整段删除（q15 · 用户裁决⑨「乙：收敛为无例外」）**：
+  `once_released()` 的判据含「该标记尚未进入 HEAD」，而授权标记自 `2d9560e` 起已在 HEAD、禁改历史是硬规则
+  ⇒ 这条豁免在真仓**再也走不到放行**，ℹ️ 出声支与 ✅ 带「其他」支只剩临时夹具可达 ⇒ 整段删：函数本体、循环里的
+  `if once_released(p)` / `passed.append(p)` / `continue` 三分支、`if passed:` 那两行 ℹ️ print、
+  `other = "其他" if passed else ""`；`hits, seen, passed = [], set(), []` 改回 `hits, seen = [], set()`；
+  ✅ 句回单式，逐字 = 「本批待落地改动未触碰闸门文件（查：未提交 + 未推送的提交 · 冻结 12 个文件 ·
+  名单见 AGENTS.md §2 第 5 条）」（即 q14 落地后真仓 11:55:36 实出的那一屏）。`AGENTS.md` §2 第 5 条同批改写：
+  两句式收成一句，「**唯一的放行例外**」段改为「**闸门一律没有放行例外**」，并写明
+  `skill/tests/surge/check_links.py` 里 4 行 `q11-user-approved` 自此不再被任何判据读取、只作**授权留痕**保留。
+  **没动**：`GATE` 那 12 件名单本身与三处写死个数 · `%-14s` 点名行 · ⚠️ 那两行 print（删掉豁免后它是唯一出声路径）·
+  `skill/tests/surge/check_links.py` 本批零字节（标记 4 行原样）· 「后来者不许照学这个模式…」的判据文字逐字未改，
+  只把它前面那半句「放行时另出一行 ℹ️ 点名该件」随删支一起去掉 · 旧措辞在本日志里的沿革引用不改写 ·
+  根 README · manual · profile · 其他一切跟踪树文件。
+  **验收**（写死父件 `c96698b`，现势可跑）：把 `skill/tests/all.sh` 里 `<<PYEOF` 与 `PYEOF` 之间那段 Python 原样抽出，
+  在四形临时仓各跑一遍 ⇒ ①有上游 · 已推送 · 干净 = 单式 ✅；②无上游 · 最近一次提交动 `all.sh` 与
+  ③有上游 · 未推送提交动 `all.sh` 的点名行第二栏 `skill/tests` 起始位相同（index 23）；④动 `check_links.py` =
+  ⚠️ 点名该件，**且不论标记在不在 HEAD**（原 q11 放行窗口那一形现也出 ⚠️ —— 这就是"收缩授权面"的实证）；
+  **全局负例**：任何一形（含真仓只读那一形）的输出里出现「ℹ️」「一次性放行」「未触碰其他闸门文件」任一 ⇒ 本轮判不通过。
+  `apply_edits --selftest`「14 passed, 0 failed」· `check_doc_readings --selftest`「18 passed, 0 failed」·
+  `check_links.py .` rc 0 且 59 件 / 462 条 / **132** 处逐字不变 · 三件改动文件 CR = 0。
 
 ---
 
