@@ -1,14 +1,14 @@
-#! version=lazy_v1.2
+#! version=lazy_v1.1
 # ============================================================================
 # lazy · 懒人版
 #
-# 只保留 3 个分流组（Proxy / AI / AD）+ 1 个隐藏的订阅槽位 `Airport`，与 6 类规则
+# 只保留 3 个策略组（Proxy / AI / AD）与 6 类规则
 # （白名单 / 广告拦截 / 内网直连 / 国内直连 / AI 分流 / 兜底）。
 # 全部流量走一个出口。
 #
-# ⚠️ 它与「分流版」routing_v3.3 的关系：**不是"精简"，是"裁剪"**
-#     砍的是地区组、各类 App 分组及其规则（订阅槽位两边都有）。
-#     保留部分的防泄露结构与分流版**同构**：dns 段去掉行尾注释后与 routing_v3.3 逐字相同
+# ⚠️ 它与「分流版」routing_v3.2 的关系：**不是"精简"，是"裁剪"**
+#     砍的是功能本身（地区组、订阅组、各类 App 分组及其规则全部移除）。
+#     保留部分的防泄露结构与分流版**同构**：dns 段去掉行尾注释后与 routing_v3.2 逐字相同
 #     （四层 Forward · bootstrap / upstreams / proxy_nameservers / block_ips 全部一致），
 #     规则段同样带 Lan + Private 两条内网。
 #
@@ -23,19 +23,17 @@
 #     依据 Egern 官方文档：规则 `policy` 字段可填**内置策略 / 代理服务器名 / 策略组名**，
 #     内置策略只有 `DIRECT` 与 `REJECT` 两个 —— **`Final` 不是关键字**，它一直只是组名，
 #     所以这一层组纯属可选，删掉它不改变任何流量的去向。
-#     分流版（routing_v1 ~ v3.3）**保留** `Final` 组且不隐藏：那里它有真实作用
+#     分流版（routing_v1 ~ v3.2）**保留** `Final` 组且不隐藏：那里它有真实作用
 #     （面板上可把兜底切到某个地区组 / 订阅组），与懒人版的前提不同。
 #
-# 📌 本文件是长期沿用的「懒人版」入口，文件名不带版本号（`lazy.yaml`），
-#     版本号写在首行 `#! version=lazy_v…`。routing_v1 ~ routing_v3.3 是另一条线 ——
-#     「分流版」（按应用 + 按地区），历代版本各自保留以备对照，
-#     演变过程见 docs/07-文件版本沿革.md。
+# 📌 本文件**没有版本号**，是长期沿用的「懒人版」入口。
+#     routing_v1 ~ routing_v2.4 是另一条线 —— 「分流版」（按应用 + 按地区），
+#     历代版本各自保留以备对照，演变过程见 docs/07-文件版本沿革.md。
 #
-# ⚠️ 导入前必读：本文件带 2 条**占位节点**（`Node-A` → `Proxy`、`Node-B` → `AI`）
-#     和 1 个**占位订阅**（`Airport` 的 `urls`）。两个组都是「自己那条节点 + 订阅节点」，
-#     所以两者至少填一项；都不填时兜底那一跳（`Proxy` 组本身）是断的，
-#     也就是**所有走代理的流量都不通**。
-#     ⚠️ 懒人版的 `AI` **不引用 `Proxy`**，它和 `Proxy` 各自直接吃订阅池（与分流版同取向）。
+# ⚠️ 导入前必读：`Proxy` 组的 policies 是空的 `[]`。
+#     routing_v2.4 里它列着 MAX / Smart / Hong Kong / USA … 这些组，本配置全部移除了，
+#     所以这里必须由你填上自己的节点名（或订阅组名）。
+#     在填好之前，兜底那一跳（`Proxy` 组本身）是断的 —— 也就是**所有走代理的流量都不通**。
 # ============================================================================
 vif_only: true
 hijack_dns:
@@ -49,7 +47,7 @@ real_ip_domains:
 - '*.local'
 - '*.push.apple.com'
 # ============================================================================
-# dns 段 —— 去掉行尾注释后与 routing_v3.3 逐字相同（防泄露结构完整保留）
+# dns 段 —— 去掉行尾注释后与 routing_v3.2 逐字相同（防泄露结构完整保留）
 #
 # 判据：删掉某一项，会不会多出一条明文 UDP:53 的通路？不会 → 冗余。
 # 明文通路只有 bootstrap 一条，官方规定它只有两个用途：① 解析 upstreams 中
@@ -107,61 +105,27 @@ dns:
   - 0.0.0.0
   - 127.0.0.1
 # ============================================================================
-# 节点：2 条占位，Node-A 归 Proxy、Node-B 归 AI
+# 节点：留空，由你填写
 # ============================================================================
-# ⚠️ 占位节点，请替换为你的真实信息。203.0.113.0/24 是 RFC 5737 保留的文档用地址段，
-#    不会指向任何真实主机。server 写成 IP 字面量：节点不产生"解析节点域名"这次查询。
-#    协议 / 字段名与 Surge 懒人版那两条 hysteria2 一一对应（`auth` ≙ Surge 的 `password`）。
-proxies:
-- hysteria2:
-    name: Node-A
-    server: 203.0.113.10
-    port: 52341
-    auth: REPLACE_WITH_YOUR_PASSWORD
-    sni: REPLACE_WITH_YOUR_SNI
-- hysteria2:
-    name: Node-B
-    server: 203.0.113.11
-    port: 52341
-    auth: REPLACE_WITH_YOUR_PASSWORD
-    sni: REPLACE_WITH_YOUR_SNI
+proxies: []
 # ============================================================================
-# 策略组：3 个分流组 + 1 个订阅槽位
+# 策略组：只留 3 个
 # ============================================================================
 policy_groups:
-# 订阅槽位（隐藏）。只做一个入口：把订阅链接里的节点拉进来。
-# `hidden: true` 让它不在面板里显示 —— 它本来就不该被手动选中，
-# 引用它的永远是下面两组里的 `- Airport`（配 `flatten: true` 摊成具体节点）。
-#
-# ⚠️ 把 URL 换成你自己的订阅。token 已用占位符，不含任何真实机场地址。
-- external:
-    name: Airport
-    type: smart
-    urls:
-    - https://sub.example.com/api/v1/client/subscribe?token=REPLACE_WITH_YOUR_TOKEN
-    hidden: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png
-# 手动选路入口：订阅池在前、自己那条占位节点在后。
-# 本组是 `select`（纯手动，首项即默认）⇒ `Airport` 写首位 = 默认跟随订阅节点，
-# `Node-A` 挂末位 = 没导订阅时的出口、或面板上想手动用它时点一下。
+# 手动选路入口。⚠️ policies 为空，必须填上你自己的节点名（或订阅组名），
+# 否则兜底 → Proxy 是断的。
 - select:
     name: Proxy
-    policies:
-    - Airport
-    - Node-A
-    flatten: true
+    policies: []
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Proxy.png
-# AI 流量出口：另一条占位节点 + 订阅里的节点。
-# routing_v2.4 里还并列着 ChatGPT / Gemini / Claude 三个独立组，
+# AI 流量出口。routing_v2.4 里还并列着 ChatGPT / Gemini / Claude 三个独立组，
 # 本配置只保留这一个总入口，它们全部并入此处。
-# ⚠️ 本组**不引用 Proxy**（刻意与分流版一样的分工：两条节点各归一组，订阅节点两组共用）。
-# flatten: true —— 把 Airport 的**成员**摊进本组逐个打分，而不是把整组当一个成员；
-# 少了它，smart 的候选只剩「Airport」这一个组单位，"自动选优"直接退化。
+# flatten: true —— 把 Proxy 的**成员**摊进本组逐个打分，而不是把 Proxy 整组当一个成员；
+# 分流版自 v3 起就这么写，懒人版 2026-09-23 跟上。
 - smart:
     name: AI
     policies:
-    - Node-B
-    - Airport
+    - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/openai.png
 # 广告拦截。只有一个子策略：REJECT（拦截）。

@@ -40,19 +40,7 @@ dns:
   block_ips:
   - 0.0.0.0
   - 127.0.0.1
-proxies:
-- hysteria2:
-    name: Node-A
-    server: 203.0.113.10
-    port: 52341
-    auth: REPLACE_WITH_YOUR_PASSWORD
-    sni: REPLACE_WITH_YOUR_SNI
-- hysteria2:
-    name: Node-B
-    server: 203.0.113.11
-    port: 52341
-    auth: REPLACE_WITH_YOUR_PASSWORD
-    sni: REPLACE_WITH_YOUR_SNI
+proxies: []
 policy_groups:
 - select:
     name: Proxy
@@ -66,7 +54,6 @@ policy_groups:
     - Japan
     - Korea
     - Other Regions
-    - Node-A
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Proxy.png
 - smart:
     name: Smart
@@ -96,21 +83,18 @@ policy_groups:
 - select:
     name: AI
     policies:
-    - Node-B
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/grok.png
 - select:
     name: Spotify
     policies:
-    - USA
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Spotify.png
 - select:
     name: YouTubeMusic
     policies:
-    - USA
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTubeMusic.png

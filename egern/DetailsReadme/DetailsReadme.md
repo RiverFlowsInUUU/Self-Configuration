@@ -49,11 +49,14 @@
 **C. DNS**
 - `dns` —— 双 DNS 模型核心（见 1.5）。
 
-### 1.2 `proxies` —— 空模板，由你填写
+### 1.2 `proxies` —— 2 条占位节点，导入即用
 
-模板此处为 `proxies: []`。Egern 的 `proxies` 只描述节点本身（`server` 可为 IP 或域名、`type` 决定协议、`password` / `sni` / `reality-...` 等凭据）。
+模板此处带 **2 条 `hysteria2` 占位节点**：`Node-A` 被 `Proxy` 组引用、`Node-B` 被 `AI` 组引用。
+Egern 的 `proxies` 只描述节点本身（`server` 可为 IP 或域名、协议名决定类型、`auth` / `sni` 等凭据）。
 
-> 模板**不附带任何示例 / 虚拟节点**。原因：占位节点既无真实出口，又会在 `policy_groups` 里留下悬空引用，属于「过度设计」。你填入真实节点后，再把对应分流组的 `policies` 填上节点名（或订阅组名）即可。
+> 占位节点**都被组真实引用**，不留悬空引用；地址取自 RFC 5737 的文档段、凭据写成 `REPLACE_WITH_*`，
+> 因此它连不上任何真实主机。用途是"不导订阅也能有一份可切出口"。
+> 你的自建节点直接替换这两条即可；不想要就整条删掉，并把对应组 `policies` 里的名字一并摘掉。
 
 ### 1.3 `policy_groups` —— 四种类型、组间引用、图标
 
@@ -73,7 +76,7 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
   见下方「组清单与要点」；逐段讲解见 `docs/04-模板逐段讲解.md` §4）。
 - **图标**：模板用到的 26 个分流组图标（整合自 RiverFlowsInUUU/Rule、jnlaoshu/MySelf、Koolson/Qure 三个公开仓库）已统一下载进本仓库 `icons/`，全部以 `https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/<file>` 形式引用，**不再跨项目引用任何图标地址**。
 
-#### 组清单与要点（`routing_v3.2`）
+#### 组清单与要点（`routing_v3.3`）
 
 **节点来源**（2 个订阅槽位）：`Airport-A` / `Airport-B`（后者另带一条 `urls_disabled` 示例）。
 `routing_v2.1` 及更早为 4 个槽位（多出 `Airport-C` / `Airport-Free`）—— `routing_v2.2` 精简掉，选路能力不变。
@@ -247,7 +250,7 @@ forward:
 
 > ⚠️ **读数说明（很重要）**：下表的所有数字都是**作者的「自用配置」**跑出来的 ——
 > 它带真实节点、且 f1–f8 时期 `rules` 里还有 DNS 端点路由规则。
-> **本仓库发布的是一份脱敏模板**（`proxies: []`、无节点、f10 已删段 A 路由），
+> **本仓库发布的是一份脱敏模板**（`proxies` 只有 2 条不可用的占位节点、订阅是占位 URL、f10 已删段 A 路由），
 > 它的审计读数**与下表不同**，且**从未声称全绿**。两者的差异见本节末尾「发布模板的审计读数」。
 
 | 版本 | `check_egern_dns.py` | `audit_ruleset_noresolve.py` | `audit_routing_coverage.py` |
@@ -394,9 +397,9 @@ forward:
 ## 6. 已知代价与取舍
 
 - **`Foreign-DNS` 已删除**：迭代 f10 起它就无任何引用（forward 兜底改国内组后不再需要境外组）；`routing_v1` 曾**整组注释**保留为 A/B 备用，**`routing_v2` 起整段删除**。要恢复境外解析答案，需自行在 `upstreams` 里加回该组。风险提醒：若用它作兜底且代理未就绪，会掉进明文 `:53`。
-- **两条线 × 双形态**：可选只有 `egern/profiles/lazy.yaml`（**懒人版**，3 组 / 10 条规则）与 `egern/profiles/routing.yaml`（**分流版 · 推荐**，26 组 / 24 条）；其余 `routing_v3` / `routing_v2.4` / `routing_v2.3` / `routing_v2.2` / `routing_v2.1` / `routing_v2` / `routing_v1` 都是分流线的历代旧版、保留以备对照（`routing_v1`~`routing_v2.1` 为 29 组 / 24 条，`routing_v2.2`~`routing_v2.4` 为 27 组 / 24 条）。**各版本逐项差异见 [`docs/07-文件版本沿革.md`](../docs/07-文件版本沿革.md)（权威版本）**。⚠️ 文件名 `routing_v1`…`routing_v3.2` 是**
+- **两条线 × 双形态**：可选只有 `egern/profiles/lazy.yaml`（**懒人版**，4 组 / 10 条规则）与 `egern/profiles/routing.yaml`（**分流版 · 推荐**，26 组 / 24 条）；其余 `routing_v3.2` / `routing_v3` / `routing_v2.4` / `routing_v2.3` / `routing_v2.2` / `routing_v2.1` / `routing_v2` / `routing_v1` 都是分流线的历代旧版、保留以备对照（`routing_v1`~`routing_v2.1` 为 29 组 / 24 条，`routing_v2.2`~`routing_v2.4` 为 27 组 / 24 条）。**各版本逐项差异见 [`docs/07-文件版本沿革.md`](../docs/07-文件版本沿革.md)（权威版本）**。⚠️ 文件名 `routing_v1`…`routing_v3.2` 是**
 - **图标整合进本仓库**：26 个图标源自已整合进 `icons/`，模板不再跨项目引用图标地址。来源归属与许可见 [`docs/图标与许可.md`](../../docs/图标与许可.md)（公开仓库署名）。
-- **删除虚拟节点（不保留引用）**：模板 `proxies` 为空，占位节点名引用已从 `policy_groups` 剥除（组间引用保留；`routing_v2.3` 起**已无空组**）。不保留虚假结构，由你自行填写。
+- **占位节点都被真实引用**：模板 `proxies` 带 2 条占位节点（`Node-A` → `Proxy` 末位、`Node-B` → `AI` 首项），不存在悬空引用（组间引用保留；`routing_v2.3` 起**已无空组**）。不用它们就整条删掉，并把对应组 `policies` 里的名字一并摘掉。
 - **与订阅解耦**：forward 不写任何节点 / 订阅域名，换订阅无需改动 DNS 段（清单 18 验证订阅耦合 4 → 0）。
 - **审计脚本报的 2 条 `LOW`（刻意为之，不是缺陷）**：`check_egern_dns.py` 对本模板的读数是 `0 high, 2 low`。两条都属「安全性 vs 可用性」的自觉取舍，不是配置错误：
   - **① 设置了 `proxy_nameservers`** —— 它成为代理侧解析的唯一出口（绕过 `forward`、强制直连）。这是必须的：节点域名要在代理起来之前解析，只能走直连侧。
@@ -522,8 +525,8 @@ S="skill/scripts"
 **Q5：`Foreign-DNS` 组去哪了？我还能用吗？**
 `routing_v2` 起已整段删除（迭代 f10 起它就无引用，`routing_v1` 曾注释保留为 A/B 备用）。想用境外解析答案，需自行在 `upstreams` 里加回该组（6 个境外 DoH/DoT 端点），并把 forward 兜底 `value` 改过去。但注意：若它作兜底且代理未就绪，会掉进明文 `:53` —— 迭代 f10 默认用国内组兜底正是为了避免这条路径。
 
-**Q6：模板为什么没有示例节点？**
-避免占位节点在分流组里留下悬空引用（过度设计）。你填真实节点后，再把对应组的 `policies` 填上节点名 / 订阅组名。
+**Q6：模板为什么只带 2 条占位节点？**
+四条配置（两内核 × 两形态）对齐成同一个形状：2 条占位节点 + 1 个订阅槽位，每条节点都被一个组真实引用（`Node-A` → `Proxy`、`Node-B` → `AI`），不留悬空引用。不用它们就整条删掉，并把对应组 `policies` 里的名字一并摘掉。
 
 **Q7：图标为什么都收进本仓库 `icons/`？**
 为了避免模板跨项目引用图标地址（你的项目或别人的项目）。26 个图标已整合进 `icons/`，模板全部以本仓库原始地址引用，并保留来源署名。

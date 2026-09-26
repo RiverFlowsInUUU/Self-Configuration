@@ -3,7 +3,7 @@
 > **何时读**：要产出一份加固后的 Surge profile 时。或者想对照现成模板检查自己配置缺了什么。
 >
 > 本文件是 [`surge/profiles/lazy.conf`](../../../surge/profiles/lazy.conf) 的完整复刻 + 逐行理由 ——
-> **刻意用最简的那份做教学载体**（3 组 / 14 条），把每一段的理由讲透。
+> **刻意用最简的那份做教学载体**（4 组 / 10 条），把每一段的理由讲透。
 > 只想直接拿走用 → 用仓库里的 `surge/profiles/lazy.conf`（带注释）或 `surge/profiles/lazy.min.conf`（纯配置）。
 >
 > 📌 **本文教的加固结构（`[General]` 段、规则顺序铁律、`no-resolve` 成对交付）
@@ -212,9 +212,10 @@ always-real-ip = *.lan, *.local, *.localdomain, *.home.arpa, *.srv.nintendo.net,
 ```
 Node-A = hysteria2, 203.0.113.10, 52341, password=REPLACE_WITH_YOUR_PASSWORD, sni=REPLACE_WITH_YOUR_SNI
 Node-B = hysteria2, 203.0.113.11, 52341, password=REPLACE_WITH_YOUR_PASSWORD, sni=REPLACE_WITH_YOUR_SNI
-Node-C = https, cdn-relay.example.com, 443, username="REPLACE_WITH_USERNAME", password="REPLACE_WITH_PASSWORD", underlying-proxy="Node-B", sni=cdn-relay.example.com
-Node-D = https, 203.0.113.20, 443, underlying-proxy="Node-A", skip-cert-verify=true, sni=203.0.113.20
 ```
+
+> 📌 旧版这里还有两条 `https` 中转链节点（`Node-C` / `Node-D`），2026-09-26 随
+> 「占位节点缩减成 2 条」移除。它们的机制仍见 §2.3，那是**你加链式节点时**要读的。
 
 ### 2.1 节点 `server` 用 IP 还是域名
 
@@ -231,6 +232,8 @@ Node-D = https, 203.0.113.20, 443, underlying-proxy="Node-A", skip-cert-verify=t
 填偏小 → 浪费带宽。除非服务商明确公布数字，否则留给服务端自适应。
 
 ### 2.3 `underlying-proxy` 中转链
+
+> 📌 当前模板不带中转链；这一节是**你自己加链式节点时**的机制与硬约束。
 
 ```
 Node-C = https, <目标>, 443, …, underlying-proxy="Node-B", …
@@ -278,10 +281,14 @@ AdBlock = reject
 ## 3 · `[Proxy Group]`
 
 ```
-Proxy = smart, "Node-A", "Node-B", icon-url=https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Proxy.png
-AI    = smart, "Node-C", "Node-D", icon-url=…/openai.png
-AD    = select, REJECT, DIRECT, icon-url=…/AdBlock.png
+Airport = select, policy-path=https://sub.example.com/api/v1/client/subscribe?token=REPLACE_WITH_YOUR_TOKEN, update-interval=86400, hidden=true, icon-url=…/Airport.png
+Proxy   = smart, "Node-A", include-other-group="Airport", icon-url=https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Proxy.png
+AI      = smart, "Node-B", include-other-group="Airport", icon-url=…/openai.png
+AD      = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 ```
+
+> 📌 懒人版的订阅节点直接进 `Proxy` / `AI`（`smart` 只能靠 `include-other-group` 复制
+> 具体节点）；分流版相反，那里的订阅节点只进 `Smart` / 地区组 / `MAX`。`AI` 不引用 `Proxy`。
 
 ### 3.1 `smart` 组
 

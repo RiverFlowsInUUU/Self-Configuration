@@ -272,7 +272,7 @@ Clash 是 TUN `dns-hijack: any:53` + fake-ip。**照抄等于把不存在的机�
 | 字段 | 占位形式 |
 |:-----|:---------|
 | 节点 IP | RFC 5737 文档段：`192.0.2.0/24` / `198.51.100.0/24` / `203.0.113.0/24` |
-| 中转域名 | `cdn-relay.example.com`（RFC 2606 保留域） |
+| 中转域名（旧版 `lazy` 的 AnyTLS 链，现已移除） | `cdn-relay.example.com`（RFC 2606 保留域） |
 | 密码 / 用户名 | `REPLACE_WITH_YOUR_PASSWORD` / `REPLACE_WITH_USERNAME` |
 | SNI | `REPLACE_WITH_YOUR_SNI` 或与 server 相同 |
 
