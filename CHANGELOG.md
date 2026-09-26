@@ -31,6 +31,10 @@
   （改前后同读数，作对拍基线）· `python skill/tests/surge/check_links.py .` rc 0（相对链接与现役层命令行完整路径全部可照抄）·
   `AGENTS.md` 换行符计数 0、无 BOM。
 
+- ✍️ **`manual/MANUAL.md` 术语收口与散文修订（q25 · t1）；`manual/99-版本历史.md` 本轮零改动**：入口层活件按已收敛术语表收口「冻结」裸词 4 处 —— 「已冻结专题文档」→「已就地冻结专题文档」· 「（冻结闸门文件）」→「（闸门冻结名单内）」· 两处「不再往已冻结(的旧)文档追加」→「已就地冻结」；散文修订 3 处（游指「三件事它刻意不抢」改主语前置 · 歧指「按这张表分流」后随实为列表改「按下面四条分流」· 「从任何一篇旧文档带来的问题」词面顺）。99 属 `check_doc_readings.py` HISTORY 沿革件，裸词「冻结」×4 与词序类 ×1 均为整合当时表述，沿革保真优先于术语统一，整篇字节不动。
+  **没动**：5 个 H2 标题文本与顺序（「三层地图」四字保留 —— CHANGELOG 沿革引语与之同名，改标题即沿革脱节）· 三不抢表 / 三层表 / 12 章总目录表 / 分流四条 / 维护规则四条的行列骨架、每格事实与全部相对链接（11 处入边路径引用不动）· 根 README · 不新增任何会漂读数。
+  **验收**：`bash skill/tests/all.sh --offline` rc 0 · `python skill/tests/surge/check_links.py .` rc 0 · `python skill/tests/check_doc_readings.py` 仍 18 passed 0 failed · 两文件 13 模式实扫 HITS=0/0 · `manual/MANUAL.md` 内「冻结」全部出现处带限定（就地冻结/闸门冻结）· `git diff` 不含 `manual/99-版本历史.md` · 换行符计数 0、无 BOM。
+
 ---
 
 ## 2026-09-26
