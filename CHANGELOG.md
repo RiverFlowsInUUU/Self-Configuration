@@ -10,6 +10,29 @@
 
 ---
 
+## 2026-09-27
+
+### 共享层
+
+- ✍️ **`AGENTS.md` 重写（q24 · t1）**：按已收敛的写作规格（S1–S8 + 页面模板 + 术语表）重写门面规则件，`wc -l` 145 → 135。
+  §0–§6 骨架与条目编号不变；散文改表格（§1 七项各守什么 / 固定读数 / 判据件，§4 换新会话三件事 / 理由）；交叉引用补 markdown 链接；
+  裸词「冻结」一律改成「闸门冻结名单」。
+  **没动**：12 件闸门名单围栏块与工作树版本逐字节相同（抽段比对 = True，12 槽无重复）· §2 条目编号与「下面 12 个文件是「闸」」标题串 ·
+  全部可照抄命令行与退出码 `0`/`1`/`2` 口径 · `check_doc_readings.py` 实扫 AGENTS.md 的 8 串及其行内过滤条件
+  （`七项检查`↔`all.sh` 同行 · `六阶段` · `两阶段` · 两处`固定 18 条规则`各与自己类别短语同行 · `六个 TOTAL` · `四件`↔`固定名` 同行 · `26 个策略组图标`）·
+  `check_assert_counts.py` C5/C6 行级锚点（`固定 8 条判据`与 `check_tools.py` 同行；`固定 6 条判据`行不含 `check_tools.py`）·
+  沿革与例外原文（`once_released()` 始末、q11 / q15、2026-09-24 版本常量退役、4 行 `q11-user-approved` 留痕）· 测试件零改动 ·
+  09-26 段原文不回改（只在本日新段追加）。
+  **一条新踩到的锚点**：§1 表格的判据件列不写 Surge / Egern runner 路径 —— `skill/tests/apply_edits.py:399` 的 A13 判别自证取
+  「AGENTS.md 里含 `skill/tests/egern/run.sh` 的第一行」追加一份造 13 槽反例；该串提前落在表格行 ⇒ 反例落不到围栏块上、
+  A13 的正例出声为空 ⇒ `--selftest` 判负一条。
+  **验收**：`bash skill/tests/all.sh --offline` rc 0（✅ 判据全过 · 6 项）· `bash skill/tests/all.sh` rc 0（7 项 19/24/18/18/18/8/6 全 passed）·
+  `python skill/tests/apply_edits.py --selftest` TOTAL: 14 passed, 0 failed · `python skill/tests/check_doc_readings.py` TOTAL: 18 passed, 0 failed
+  （改前后同读数，作对拍基线）· `python skill/tests/surge/check_links.py .` rc 0（相对链接与现役层命令行完整路径全部可照抄）·
+  `AGENTS.md` 换行符计数 0、无 BOM。
+
+---
+
 ## 2026-09-26
 
 ### Surge
