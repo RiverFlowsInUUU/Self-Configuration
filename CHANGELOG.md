@@ -107,11 +107,11 @@
   凡可照抄执行的命令以**仓根**为基准书写，要 `cd` 的显式写 `cd`，行文简写不作可执行路径。
   **没动**：判据 · 冻结 12 件 · profile · 根 README 零改动 · 断言数与文档读数无关（联网档 24 / 离线档 22 不变，
   缺陷只在路径不在数）· 两份 reference 文档里余下 33 处"行文简写"（`scripts/probe_doh.py` 一类，
-  合并进 skill 包后中间多了 `egern/` 一层；取数件 `.ai-loop/work/scan_q7c.py`，在 `0cc82ac` 现跑
+  合并进 skill 包后中间多了 `egern/` 一层；取数件 `scan_q7c.py`（循环协作盘临时件 · 不随仓发布），在 `0cc82ac` 现跑
   **33 = `checker.md` 17 · `pitfalls.md` 14 · `ruleset-weight.md` 2**）本条不动，另立 q 处理 · `egern/docs/07-文件版本沿革.md:444`
   的「`docs/09-注意事项.md`」是沿革史原文且链接已指现名 ⇒ 不改不算缺陷。
   **验收**（取数件写死为本条落地 commit 的父件 `7f86516` 与工作区，现势可跑）：
-  `PYTHONIOENCODING=utf-8 python .ai-loop/work/scan_q7.py` ⇒ 「按字面从仓根敲不出来的命令行」共 **0** 处（改前 4）；
+  复刻 `scan_q7.py` 判据（数「按字面从仓根敲不出来的命令行」、对跟踪树实跑）⇒ 「按字面从仓根敲不出来的命令行」共 **0** 处（改前 4）；
   `grep -c 'bash tests/run.sh' skill/reference/egern/pitfalls.md` = 0，非破坏式判别
   `git show 7f86516:skill/reference/egern/pitfalls.md | grep -c 'bash tests/run.sh'` = **3**（旧串必红）；
   `bash skill/tests/egern/run.sh` 从仓根直跑退出码 0；`grep -rn "为基准" skill/SKILL.md` = 1 处 且
@@ -131,7 +131,7 @@
   里以 `skill/` 为根可解析的简写（q9 域，本批不碰）· `egern/docs/` 与 `surge/docs/` 沿革快照层 ·
   `checker.md:30` 两处目录型全路径属扫描假阳性（取数件按判据计入 31，不属本批"改错"面）。
   **验收**（取数件写死父件 `dddbc38` 与工作区，现势可跑）：
-  `PYTHONIOENCODING=utf-8 python .ai-loop/work/scan_q8.py`（左边界收紧 + 目录纳入存在集）⇒ 「取不到的引用」共 **0** 处
+  复刻 `scan_q8.py` 判据（左边界收紧 + 目录纳入存在集）⇒ 「取不到的引用」共 **0** 处
   （改前 `dddbc38` = **31** = `checker.md` 15 · `pitfalls.md` 14 · `ruleset-weight.md` 2）；
   fixture 三条从仓根实跑退出码 1 / 1 / 0；`bash skill/tests/all.sh --offline` 退出码 0 ·
   「✅ 闸门未被动过（冻结 12 个文件）」在场 · `grep -c "^## 2026-09-26" CHANGELOG.md` = 1 · 改动文件 CR = 0。
@@ -141,20 +141,15 @@
   `can't open file '…\skill\scripts\check_surge_dns.py': [Errno 2] No such file or directory`、退出码一律 **2**。
   它不在 q7/q8 的取数面里：那两批按字面 token `scripts/…` 扫，`"$S/x.py"` 的字面串里没有 `scripts/`；
   q7 落进 `skill/SKILL.md` 的"仓根基准"声明管的是 cwd，管不到**变量拼接**。取数件因此按块内变量赋值回实路径
-  （`.ai-loop/work/scan_var.py`：活层 41 件 md 里块内变量赋值全仓只 1 处，它名下 12 行全取不到）。
+  （取数件 `scan_var.py`（循环协作盘临时件 · 不随仓发布）的判据：活层 41 件 md 里块内变量赋值全仓只 1 处，它名下 12 行全取不到）。
   **没动**：同块 `:49`·`:59`·`:60` 三行本就可跑（退出码 0）· `:61` 是文档故意的负例（退出码 2「前置检查失败：解释器不可用」，不算缺陷也不改）·
   `:58` 的「6 阶段，19 断言」读数 · 冻结 12 件（含 `skill/tests/surge/run.sh` 与 `architecture.sh`）· 文件名 · profile · 根 README。
   **验收**（取数件写死父件 `d429233` 与工作区，现势可跑）：
-  `PYTHONIOENCODING=utf-8 python .ai-loop/work/scan_var.py` ⇒「`$VAR/文件` 取不到」= **0**（改前 12），非破坏式判别
+  复刻 `scan_var.py` 判据 ⇒「`$VAR/文件` 取不到」= **0**（改前 12），非破坏式判别
   `git show d429233:skill/reference/surge/checker.md | grep -c "^S=./skill/scripts$"` = **1**、工作区同式 = **0**；
-  整块两模式对拍（`.ai-loop/work/run_surge_block.py`）⇒ 改前拼法「rc 0 = 3 · rc≠0 = 13」（12 行取不到件 + `:61` 负例）、
+  整块两模式对拍（复刻 `run_surge_block.py` 判据：把文档块按改前/改后两种拼法逐行实跑喂 bash）⇒ 改前拼法「rc 0 = 3 · rc≠0 = 13」（12 行取不到件 + `:61` 负例）、
   现拼法「rc 0 = 15 · rc≠0 = 1」（唯一红即 `:61` 负例，属预期）；`bash skill/tests/surge/run.sh` 末行
   「TOTAL: 19 passed, 0 failed」不变；`grep -c "^## 2026-09-26" CHANGELOG.md` = 1 · 改动文件 CR = 0。
-- 📍 **本日志里 `.ai-loop/work/*.py` 的取数件不随仓发布（q10）**：本段若干条「验收」里的
-  `PYTHONIOENCODING=utf-8 python .ai-loop/work/<名>.py` 属**循环协作盘上的临时取数件**，整目录经 `.git/info/exclude` 排除、
-  不在跟踪树里（`git ls-files .ai-loop` 计数 0）⇒ 新克隆照抄必 `can't open file`（q10 实测三条全退出码 2）。
-  **不改上面那 6 处指认本身**（沿革不抹，与 q5 快照读数同一口径）；仓外读者要复核相应判据，按各条目自述的判据与取数范围自行复刻即可 ——
-  它们都已写明「数什么、对哪个 commit 对拍、期望值多少」。
 - 🛡️ **`check_links.py` 扩出第二条判据：现役层可照抄命令行里的完整路径（q11 · 用户授权）**：q7 那 4 条断命令的根因
   是闸门只认「`]` 紧跟 `(`」这一种 markdown 链接语法、看不见反引号/代码围栏里的命令行路径。判据 ② 收口到最小面：只判「命令行触发词
   （python / python3 / bash / sh / PYTHONIOENCODING=utf-8）所在行里、以 `.py`/`.sh` 结尾且含 `/` 的完整路径 token」，
@@ -168,13 +163,20 @@
   判据 ①（链接与锚点）一字未改、`all.sh` 不放行自己、AGENTS.md · 根 README · manual · profile · fixture 零改动。
   **验收**（写死本条落地 commit 的父件 `25542ef`，现势可跑）：
   `PYTHONIOENCODING=utf-8 python skill/tests/surge/check_links.py .` ⇒ 退出码 **0** ·「扫描 59 个 markdown 文件，检查 462 条
-  相对链接 · 现役层命令行完整路径 **132** 处」—— 132 与收口扫描（`.ai-loop/work/closing_scan3.py` 面一 · q10 收口轮 0 取不到）同值；
+  相对链接 · 现役层命令行完整路径 **132** 处」—— 132 与收口扫描（复刻面一判据：现役层可照抄命令行的完整路径 token 对拍跟踪树 · q10 收口轮 0 取不到）同值；
   `python skill/tests/surge/check_links.py --selftest` ⇒ 退出码 0 · 新增两行「措辞润色正例 ✅ 0/0」「路径漂移负例 ✅ 1」；
   非破坏式判别 `git show 25542ef:skill/tests/surge/check_links.py | grep -c "q11-user-approved"` = **0** 对照工作区 = **1**；
   `python skill/tests/apply_edits.py --selftest` ⇒「TOTAL: 14 passed, 0 failed」（A9/A13 现读 all.sh 名单未被扩码破坏）·
   `python skill/tests/check_tools.py` ⇒「TOTAL: 8 passed, 0 failed」；`bash skill/tests/all.sh --offline` ⇒ 退出码 0，
   **提交后·推送前**读数「ℹ️ 闸门一次性放行 1 处 …check_links.py」+「⚠️ 闸门被改动 1 处 —— skill/tests/all.sh」（本件同批被授权改动、
   闸门不自放，此 ⚠️ 是预期读数非判负），推送后同一行回「✅ 闸门未被动过（冻结 12 个文件）」、`--landed` 三数全 0。
+- 🧹 **本日志的循环盘取数件引用清零（q12 · 经用户令 + 第三方 C 审指导）**：今天段原 10 处指向循环协作盘取数件的引用（改写前行号
+  `:110 :114 :134 :144 :148 :150 :153 :154 :155 :171`）已改写为**仓外读者可自复刻的判据描述**（数什么 / 对哪个 commit / 期望值），
+  判据数值、对拍 commit 与期望值**一字未动**、只删路径字面；q10 的自指说明块（📍 起 5 行）整条删除 —— 噪音清除后免责声明失去对象，
+  删除由 git 历史（`25542ef` 可回读）与本条双留痕。**没动**：`skill/tests/surge/check_links.py:83` 的 1 处散文引用（冻结件 ·
+  留待 q13 授权后同批去指）· 各条目判据数值与 `:151` 现拼法读数行（逐字未动）。**验收**：本日志内指向循环盘的字面引用
+  改前 10 → 改后 **0** · 全仓可照抄命令形改前 4 → **0** · 五锚逐字在位（「共 0 处（改前 4）」「共 0 处」「= 0（改前 12）」
+  「rc 0 = 3 · rc≠0 = 13」「**132** 处」）· `check_links.py .` rc 0 · `--offline` 与 `--landed` 读数见执行报文。
 
 ---
 
