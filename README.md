@@ -55,7 +55,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 |:---|:---:|:---:|
 | 🚀 `Proxy` | ✅ | ✅ |
 | ⚡ `Smart` | - | ✅ |
-| 🤖 `ChatGPT` · `Gemini` · `Claude` · `AI` | 只 `AI` | ✅ |
+| 🤖 `ChatGPT` · `Gemini` · `Claude` · `AI` | 仅 `AI` | ✅ |
 | 🎵 `Spotify` · 🎶 `YouTubeMusic` · ▶️ `YouTube` | - | ✅ |
 | 🐙 `GitHub` · 🔎 `Google` · 🪟 `Microsoft` | - | ✅ |
 | ✈️ `Telegram` · 🐦 `Twitter` · 💚 `WeChat` | - | ✅ |
