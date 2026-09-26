@@ -119,6 +119,22 @@
   `grep -c "09-注意事项" docs/跨内核差异对照.md` = 0（改前 1）；
   `bash skill/tests/all.sh --offline` 退出码 0 · 判据行「✅ 判据全过 · 6 项 · 12s —— 但状态未落地（未提交 5 · 落后 0 · 未推送 0）」
   +「✅ 闸门未被动过（冻结 12 个文件）」在场 · `grep -c "^## 2026-09-26" CHANGELOG.md` = 1 · 改动文件 CR = 0。
+- 🔧 **egern 引用层余下 31 处合并前路径全部改指现路径（q8）**：`skill/reference/egern/` 三份文档里
+  `scripts/…` / `tests/…` 式单内核布局残留（q7 自抓的延伸，合并进 skill 包后中间多了 `egern/` 一层）按仓根基准逐处写实——
+  ①可照敲命令行 16 处：`checker.md` 命令清单 12 行与 `ruleset-weight.md` 的实测命令改
+  `skill/scripts/egern/<脚本名>.py`，`pitfalls.md` 回归守卫表「命令」列 3 格改 `python skill/scripts/egern/check_egern_dns.py skill/tests/egern/<fixture>`
+  （三条从仓根实跑，退出码与表承诺 HIGH+1 / HIGH+1 / 通过+0 逐条一致）；
+  ②指认位置的叙述 15 处：含最硬的一条 `checker.md` 的 `scripts/../tests/run.sh`（任何 cwd 下都不存在）→
+  `skill/tests/egern/run.sh`，fixture 表首列 5 格与各处"配套脚本"通名一并写实；沿革叙述只在首次出现留一句括注
+  （合并前路径为 `scripts/…`，现 `skill/scripts/egern/…`），不逐处保留。
+  **没动**：文件名 · 冻结 12 件 · 根 README · profile · 断言数读数 22/24 零改动 · `AGENTS.md` / `skill/SKILL.md`
+  里以 `skill/` 为根可解析的简写（q9 域，本批不碰）· `egern/docs/` 与 `surge/docs/` 沿革快照层 ·
+  `checker.md:30` 两处目录型全路径属扫描假阳性（取数件按判据计入 31，不属本批"改错"面）。
+  **验收**（取数件写死父件 `dddbc38` 与工作区，现势可跑）：
+  `PYTHONIOENCODING=utf-8 python .ai-loop/work/scan_q8.py`（左边界收紧 + 目录纳入存在集）⇒ 「取不到的引用」共 **0** 处
+  （改前 `dddbc38` = **31** = `checker.md` 15 · `pitfalls.md` 14 · `ruleset-weight.md` 2）；
+  fixture 三条从仓根实跑退出码 1 / 1 / 0；`bash skill/tests/all.sh --offline` 退出码 0 ·
+  「✅ 闸门未被动过（冻结 12 个文件）」在场 · `grep -c "^## 2026-09-26" CHANGELOG.md` = 1 · 改动文件 CR = 0。
 
 ---
 
