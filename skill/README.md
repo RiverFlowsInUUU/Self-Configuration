@@ -21,7 +21,8 @@ python skill/tests/check_secrets.py                    # 占位符 / 凭据扫�
 python skill/tests/check_portability.py                # 行尾 / BOM / 命名 / 单机残留
 python skill/tests/check_min_pair.py                   # 固定名四件 + 两侧版本一致
 python skill/tests/check_links.py .                    # 全仓 markdown 链接与锚点
-python skill/scripts/surge/check_surge_dns.py surge/profiles/lazy.conf surge/profiles/routing.conf
+python skill/scripts/surge/check_surge_dns.py surge/profiles/lazy.conf
+python skill/scripts/surge/check_surge_dns.py surge/profiles/routing.conf
 python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/profiles/routing.yaml
 python skill/tests/make_min.py                         # 计划模式：四份 .min 应全部「已同步」
 ```

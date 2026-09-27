@@ -48,7 +48,7 @@ egern/DetailsReadme/DetailsReadme.md              # 完整技术文档（逐键�
 > 就是在仓库里直接改出来的。若将来要恢复"从自用配置生成"的流程，方法论见 skill
 > `github-publish-sanitized-repo`，需按它重建脚本。
 
-📌 **验证 = CI（`.github/workflows/ci.yml`，push / PR 自动）+ 本地同组命令复现。**
+📌 **验证 = CI（`.github/workflows/ci.yml`，push / PR 自动）+ 本地同组命令复现（命令清单见 [`skill/README.md`](../../README.md)）。**
 命令清单见 [`skill/README.md`](../../README.md)；探针 / 量测类脚本（`probe_*` / `weigh_*` / `profile_ruleset`）不在验证链上，是手工工具。
 
 **脱敏清单（这五类必须洗）**：节点 server/凭据/sni/reality 公钥 → 占位；

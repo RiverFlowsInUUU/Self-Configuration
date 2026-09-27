@@ -14,7 +14,7 @@
 | 网络 | 只有 `audit_ruleset_content.py` / `audit_routing_coverage.py` 需要；其余脚本与两个 `.sh` 全离线 |
 | 操作系统 | Windows（Git Bash）/ macOS / Linux 均可 |
 | 磁盘 | 规则集缓存约 6 MB（`direct.txt` 一份 11 万条） |
-| 输出编码 | 无需设置 —— `_surge_common` 在 import 时把 stdout 钉成 UTF-8（中文 Windows 默认 GBK，emoji 会崩成**退出码 1**）；CI 另设 `PYTHONIOENCODING=utf-8` |
+| 输出编码 | 无需设置 —— `_surge_common` 在 import 时把 stdout 钉成 UTF-8（中文 Windows 默认 GBK，emoji 会崩成**退出码 1**）|
 
 ⚠️ **Windows / Git Bash 的路径坑**：`pwd` 返回 `/c/Users/...`，
 Windows 版 Python 打不开（报 `can't open file 'C:\c\Users\...'`）。
@@ -56,7 +56,8 @@ python "$S/audit_routing_coverage.py" surge/profiles/routing.conf      # 期望 
 python "$S/audit_routing_coverage.py" surge/profiles/lazy.conf --show-all
 
 # ── 回归测试（6 阶段，19 断言）────────────────────────────────────
-python ./skill/scripts/surge/check_surge_dns.py surge/profiles/lazy.conf surge/profiles/routing.conf
+python ./skill/scripts/surge/check_surge_dns.py surge/profiles/lazy.conf
+python ./skill/scripts/surge/check_surge_dns.py surge/profiles/routing.conf
 ```
 
 ⭐ **「当前版」是固定名，不是一堆版本号**（2026-09-24 起）：顶层恒为 `routing` / `lazy`

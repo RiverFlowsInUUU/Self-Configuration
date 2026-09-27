@@ -2,7 +2,7 @@
 
 本仓是一个**公开的配置模板仓**：两份代理内核（Surge / Egern）的防 DNS 泄露模板，
 加一套给 AI 用的技能包与离线回归闸门。所有节点地址、凭据、订阅 token 一律是占位假值，
-由仓内判据把关：提交前在本地跑 `python skill/tests/check_secrets.py`（占位符 / 凭据扫描），push 后 CI（`.github/workflows/ci.yml`）会再扫一遍。
+由仓内判据把关：提交前在本地跑 `python skill/tests/check_secrets.py`（占位符 / 凭据扫描），push 后 CI 会再扫一遍。
 
 ## 请不要做的事
 

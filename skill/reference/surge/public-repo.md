@@ -299,7 +299,8 @@ grep -rn -iE '<你的私有域名|你的密码片段|你的用户名>' . \
 ## 5 · 全部验证都在本地 —— 刻意不挂 CI
 
 ```bash
-python skill/scripts/surge/check_surge_dns.py surge/profiles/lazy.conf surge/profiles/routing.conf
+python skill/scripts/surge/check_surge_dns.py surge/profiles/lazy.conf
+python skill/scripts/surge/check_surge_dns.py surge/profiles/routing.conf
 ```
 
 **本仓库刻意不挂 CI / 任何自动化。** 理由：

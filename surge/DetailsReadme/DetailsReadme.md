@@ -1055,7 +1055,8 @@ Surge iOS 版不支持本地文件配置，需要把 profile 内容托管到一�
 ### 18.3 全部验证都在本地
 
 ```bash
-python skill/scripts/surge/check_surge_dns.py surge/profiles/lazy.conf surge/profiles/routing.conf
+python skill/scripts/surge/check_surge_dns.py surge/profiles/lazy.conf
+python skill/scripts/surge/check_surge_dns.py surge/profiles/routing.conf
 ```
 
 ⚠️ **本仓库刻意不挂 CI / 任何自动化**。理由与替代做法见

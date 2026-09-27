@@ -111,7 +111,7 @@ Egern 侧删 `domain_suffix: cn` 并补上系统域名集。
 | 全仓链接与锚点 | `check_links.py`（共享） | 同左 | 相对链接 + 中文/emoji 锚点逐条可解析 |
 | 换设备可移植性 | `check_portability.py`（共享） | 同左 | 行尾 / BOM / 命名 / 单机残留 |
 
-以上检查由根目录 `.github/workflows/ci.yml` 在每次 push / PR 自动执行；本地手动跑同一组命令即可复现。
+以上检查由根目录 `.github/workflows/ci.yml` 在每次 push / PR 自动执行；本地手动跑同一组命令即可复现（见 [`skill/README.md`](../skill/README.md)）。
 
 ## 7 · 合并后共享的东西
 
