@@ -108,7 +108,7 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
              python skill/tests/make_min.py --family all --apply        # 确认后写盘
 ⑤ 收尾闸门（全过才算完）：
    python skill/tests/check_secrets.py && python skill/tests/check_portability.py
-   python skill/tests/check_min_pair.py && python skill/tests/check_links.py .
+   python skill/tests/check_min_pair.py && python skill/tests/check_badges.py && python skill/tests/check_links.py .
    python skill/scripts/surge/check_surge_dns.py surge/profiles/lazy.conf
    python skill/scripts/surge/check_surge_dns.py surge/profiles/routing.conf
    python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/profiles/routing.yaml
