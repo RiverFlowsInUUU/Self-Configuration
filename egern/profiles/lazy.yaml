@@ -136,19 +136,20 @@ policy_groups:
 # ⚠️ 把 URL 换成你自己的订阅。token 已用占位符，不含任何真实机场地址。
 - external:
     name: Airport
-    type: smart
+    type: select
     urls:
     - https://sub.example.com/api/v1/client/subscribe?token=REPLACE_WITH_YOUR_TOKEN
     hidden: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png
-# 手动选路入口：订阅池在前、自己那条占位节点在后。
-# 本组是 `select`（纯手动，首项即默认）⇒ `Airport` 写首位 = 默认跟随订阅节点，
-# `Node-A` 挂末位 = 没导订阅时的出口、或面板上想手动用它时点一下。
-- select:
+# 自动选优出口：smart 按真实连接的首字节延迟、TCP 重传丢包、UDP 响应延迟给成员
+# 打分（5 分钟一轮重测），自动择优。成员 = 自己那条占位节点在前 + 订阅里的节点；
+# `flatten: true` 把 Airport 的成员摊进本组逐个打分，而不是把整组当一个成员
+# —— 少了它，smart 的候选只剩「Airport」这一个组单位，自动选优直接退化。
+- smart:
     name: Proxy
     policies:
-    - Airport
     - Node-A
+    - Airport
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Proxy.png
 # AI 流量出口：另一条占位节点 + 订阅里的节点。

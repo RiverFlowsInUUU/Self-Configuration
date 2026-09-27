@@ -56,16 +56,16 @@ proxies:
 policy_groups:
 - external:
     name: Airport
-    type: smart
+    type: select
     urls:
     - https://sub.example.com/api/v1/client/subscribe?token=REPLACE_WITH_YOUR_TOKEN
     hidden: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png
-- select:
+- smart:
     name: Proxy
     policies:
-    - Airport
     - Node-A
+    - Airport
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Proxy.png
 - smart:
