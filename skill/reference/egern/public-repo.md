@@ -9,48 +9,34 @@
 **https://github.com/RiverFlowsInUUU/Self-Configuration**（Egern 分支在 `egern/`，与 Surge 版同仓）
 
 ```
-README.md                                   # 门面：内核选择 + 四份订阅地址 + 五类泄露面 + 隐私对照 + 按需查阅
+README.md                                   # 门面：四份订阅地址 + 分组表 + DNS 防泄露对照 + 文档导航
 CHANGELOG.md                                # **唯一一份**改动记录：只记两内核配置文件的修改（文档与脚本改动看 git log）
-LICENSE · .gitignore · AGENTS.md            # AGENTS.md = 维护者任务书：冻结名单 · 连带范围 · 推送规矩
-icons/                                      # 26 个 PNG —— 两内核共用（原各存一份且逐字节相同）
-manual/                                     # ★ 手册层：唯一权威操作层（MANUAL.md 入口 + 11 章 + 99 版本历史）
-docs/                                       # ★ 共享文档层（不再各内核一份）
-  活专题四篇：跨内核差异对照.md · 规则集与来源.md · 注意事项.md · 图标与许可.md
-  归档快照三篇 + _archive/：体检报告.md · 技能包合并与自包含.md · 日志旧版原文.md（首行各自标快照/存档、不随现状更新）
+LICENSE · .gitattributes · .gitignore
+icons/                                      # 26 个 PNG —— 两内核共用
+docs/                                       # ★ 共享文档（九篇，2026-09-27 精简后）：quick-start · dns-basics · hardening-checklist ·
+                                            #   no-resolve-pairing · cross-kernel-diff · rulesets · icon-license · ops · troubleshoot-faq
 skill/                                      # 本 skill：SKILL.md（§0 判内核 → 分支 A/B）
-  reference/{surge,egern}/ · scripts/{surge,egern}/ · tests/{surge,egern}/
-egern/profiles/lazy.yaml / lazy.min.yaml          # 懒人版 · 可选（4 组 / 10 条规则：Proxy · AI · AD + 隐藏订阅槽位 Airport；AD 只留 REJECT、无 Final 兜底组（policy 直写 Proxy））
-egern/profiles/routing.yaml / .min.yaml           # 分流版 · 推荐（脱敏模板：2 条占位节点 + 1 个机场槽位，凭据与订阅均为占位符、无真实证书）
-egern/profiles/config_old/                        # 历代版本按号留档、各含 `.min`，不参与检查（例外：`architecture.sh` ① 连归档一起扫）：
-                                                  #   v2.4（v3 前一版）· v2.3（与 v2.4 只差 rule_set 的 update_interval）
-                                                  #   v2.2（4 处修正）· v2.1（机场槽位 4 vs 2）· v2（多 52 行「值等于默认值」的冗余行）
-                                                  #   v1（分流线起点，dns 段较冗长、功能等价）· lazy_v1.0（懒人版快照）
-egern/docs/01-DNS是怎么工作的.md                  # 递归解析 / 加密 DNS / Fake IP / Egern 双轨模型
-egern/docs/02-DNS为什么会泄露.md                  # 5 个真实案例（每个：现象→机制→修法）
-egern/docs/03-加固清单-18项.md                    # 清单 + no_resolve 三层级 + 验收 6 条
-egern/docs/04-模板逐段讲解.md                     # 逐段讲模板，含「必须替换的清单」（routing_v2.3 起只需 1 处）
-egern/docs/05-分流与no_resolve必须成对交付.md     # f7→f8 事故复盘
-egern/docs/06-实测数据与版本谱系.md               # 端点实测表 / 污染实测表 / f1→f8 谱系
-egern/docs/07-文件版本沿革.md                     # 两条线 + 分流版 routing_v1→v2.4 逐个说明（含四次改名记录）；末节 = 本内核合并前的迭代史（原 egern/CHANGELOG.md 全文并入）
-egern/docs/08-审计读数.md                         # 6 个审计脚本的读数 / 2 条 LOW 的含义 / 回归测试
-egern/docs/12-分流顺序.md                         # 分流版 24 条规则的顺序与理由
-egern/DetailsReadme/DetailsReadme.md              # 完整技术文档
+  reference/{surge,egern}/ · scripts/{surge,egern}/ · tests/（check_secrets · check_portability · check_min_pair · check_links · make_min）
+egern/profiles/lazy.yaml / lazy.min.yaml          # 懒人版 · 可选（4 组 / 10 条规则；隐藏订阅槽位 Airport）
+egern/profiles/routing.yaml / .min.yaml           # 分流版 · 推荐（脱敏模板：2 条占位节点 + 1 个机场槽位，凭据与订阅均为占位符）
+egern/apple_system.list                           # 本仓自托管的 Apple 系统域名规则集
+egern/DetailsReadme/DetailsReadme.md              # 完整技术文档（逐键语义）
+.github/workflows/ci.yml                          # 最小 CI：五项检查（push / PR 自动）
 ```
 
 > ⚠️ **合并带来的四处职责变化**：① 首页只有根目录那**一份**；② 「注意事项 / 图标与许可 /
 > 规则集与来源」三篇升到共享 `docs/`，要改这三件事去那一份，**不要**在内核目录里另起一篇；
-> ③ 新增 [`docs/跨内核差异对照.md`](../../../docs/跨内核差异对照.md) ——
+> ③ 新增 [`docs/cross-kernel-diff.md`](../../../docs/cross-kernel-diff.md) ——
 > 凡「Egern 的结论搬到 Surge」之类的问题，答案写在那一篇里；
-> ④ **改动记录只有根 `CHANGELOG.md` 一份**（2026-09-24 起，内核目录里不再各留一份日志）——
-> 本内核合并前的迭代史存档在 [`docs/07-文件版本沿革.md`](../../../egern/docs/07-文件版本沿革.md) 末节。
+> ④ **改动记录只有根 `CHANGELOG.md` 一份** —— 更早的历史看 git（备份 tag：`pre-cleanup-20260927`）。
 
 
 > **可选版本只有两个** —— `routing`（分流版 · 推荐）与 `lazy`（懒人版），文件名不带版本号；
-> 当前是第哪一版写在头注 `#! version=routing_v3.4` 里。历代旧版在 `profiles/config_old/` 备对照。
+> 当前是第哪一版写在头注 `#! version=` 里；历史版本看 git（备份 tag：`pre-cleanup-20260927`）。
 
 **要更新模板时**：**直接在仓库里改 `profiles/*.yaml` 即可。** 这份模板早已完成脱敏
 （2 条占位节点 + 1 个占位订阅，全都连不出去，无真实证书），改它不需要"从自用配置重新生成"。改完跑
-`bash skill/tests/egern/run.sh`（两阶段 24 断言；SKIP_NET=1 时 22）+ 下面那批审计脚本，再提交推送。
+检查命令清单见 [`skill/README.md`](../../README.md)（CI 与本地同组命令），再提交推送。
 
 > 📦 **历史做法（已不再使用）**：早期由维护者本地的 `outputs/` 脚本链生成 ——
 > `_build_public_template.py`（从自用版做**带断言的行级替换** + 38 个敏感串零残留自检）、
@@ -62,19 +48,8 @@ egern/DetailsReadme/DetailsReadme.md              # 完整技术文档
 > 就是在仓库里直接改出来的。若将来要恢复"从自用配置生成"的流程，方法论见 skill
 > `github-publish-sanitized-repo`，需按它重建脚本。
 
-📌 **全部验证都在本地完成 —— 本仓库刻意不挂 CI / 任何自动化（2026-09-21 决定）。**
-这是个人模板仓库，不会有外部贡献者，"自动验 PR"没有服务对象；而本地跑一次
-`bash skill/tests/egern/run.sh` 只要几十秒。少一个对外暴露的面就少一份事。
-
-⇒ 全部验证用这**一条**本地命令复现：`bash skill/tests/egern/run.sh` —— 阶段 1 跑 fixture，
-阶段 2 逐份 profile 跑 DNS 面 / 地区组面 / 刷新面，联网档再跑分流覆盖面。具体脚本名
-**不抄在这里**，以该 runner 的头部注释为准：名单会随"某个面接进闸"而漂移，抄一份进文档
-就是下一个过期读数。
-
-闸外那几个不在验证链上：是手工探针 / 量测工具，另有一个需联网、尚未接闸的规则集条目级
-审计（`audit_ruleset_noresolve.py`）—— 名单与"刻意不进闸"的理由以
-`python skill/tests/check_tools.py` 的 T7 **现算**为准（同源就是它自己的 `MATRIX_WAIVED` 豁免表）。
-功能上没有任何损失。
+📌 **验证 = CI（`.github/workflows/ci.yml`，push / PR 自动）+ 本地同组命令复现。**
+命令清单见 [`skill/README.md`](../../README.md)；探针 / 量测类脚本（`probe_*` / `weigh_*` / `profile_ruleset`）不在验证链上，是手工工具。
 
 **脱敏清单（这五类必须洗）**：节点 server/凭据/sni/reality 公钥 → 占位；
 机场订阅 URL（含 token）→ 占位；`mitm.ca_p12` + `ca_passphrase`（个人 CA 私钥）→ **注释掉**；
@@ -88,9 +63,9 @@ README 是**产品介绍** —— 读者要知道「这东西是什么、怎么�
 
 - 🚫 **归类 / 设计自述** —— 「某组为什么不算开关」「**上面是分类顺序**」这类解释我们怎么想的话。
 - 🚫 **与评审 / 工单的对话** —— 「原写 X 属误标，已按功能拆开」。
-- 🚫 **内部判据与断言名** —— 「由 `architecture.sh` ④ 断言守着」。
+- 🚫 **内部判据与断言名** —— 「由某脚本某断言守着」。
 
-该放哪：**改动记录 → 根 [`CHANGELOG.md`](../../../CHANGELOG.md)（唯一一份）；判据与原理 → [`DetailsReadme/`](../../../egern/DetailsReadme/DetailsReadme.md) 或 [`docs/`](../../../egern/docs/)。**
+该放哪：**改动记录 → 根 [`CHANGELOG.md`](../../../CHANGELOG.md)（唯一一份）；判据与原理 → [`DetailsReadme/`](../../../egern/DetailsReadme/DetailsReadme.md) 或 [`docs/`](../../../docs/)。**
 
 **日志体例（2026-09-24 定 · 2026-09-27 收窄为只记配置）**：① 只记两内核 `profiles/`（含 `.min`）与它们引用的
 规则集素材，文档、脚本与判据的改动看 `git log`；② **一天一段**，当天后续改动往那段里增补，不开第二个同名日期段，
@@ -124,7 +99,7 @@ README 是**产品介绍** —— 读者要知道「这东西是什么、怎么�
 实测（2026-09-22）：首页原挂着「📚 规则来源」段 + 「分流版的应用规则」表 + 「排序约束」，
 用户连判两次 —— 先要求来源段下沉，随即补充：「不仅是规则集的来源，而且是有哪些规则集……
 我认为都没必要放在首页的 README 里面。」处理后新开
-[`docs/规则集与来源.md`](../../../docs/规则集与来源.md) 承接全部规则集信息，
+[`docs/rulesets.md`](../../../docs/rulesets.md) 承接全部规则集信息，
 首页只在「📖 按需查阅」表里留一个链接（原「文件结构 / 更多文档」两节已于 2026-09-25 合并为一）。
 
 闸门：`verify_readme_tone.py`（维护者本地的装配闸门，按仓库惯例不进公开仓）的「首页无规则集文件与来源仓库」一项

@@ -47,7 +47,7 @@ WIN_RESERVED |= {"LPT%d" % i for i in range(1, 10)}
 # ⚠️ 自检：清单里不许留下**未格式化**的模板串。
 #    2026-09-25 实测：上面那行原本写成 `{"LPT%d" for i in ...}`（漏了 `% i`），
 #    于是加进去的是字面量 `LPT%d` 而不是 `LPT1`…`LPT9` —— N3 声称覆盖 LPTn，实际一个都不判。
-#    这类"集合内容写错"`check_tools.py` 的 T5/T6 都判不到（它们只判绑定与引用），
+#    这类"集合内容写错"靠自带回归判，
 #    所以在源头立一条 fail-loud 自检：带 `%` 的名字一定是漏了格式化。
 if any("%" in n for n in WIN_RESERVED):
     raise SystemExit("❌ 前置：WIN_RESERVED 里有未格式化的模板串 %s ⇒ 检查集合推导式是不是漏了 `%% i`"
@@ -218,13 +218,13 @@ def main():
     print("TOTAL: %d passed, %d failed" % (total - bad, bad))
     if bad:
         print("   修法：换设备一致性靠 `.gitattributes` 与命名纪律，不靠任何人改本机 git 配置。")
-        print("   详见 docs/注意事项.md 的「换设备 / 双端一致」一节。")
+        print("   详见 docs/troubleshoot-faq.md 的「换设备 / 双端一致」一节。")
     return 1 if bad else 0
 
 
 if __name__ == "__main__":
     # Windows GBK 终端里 print 中文/emoji 会 UnicodeEncodeError ⇒ 退出码 1，
-    # 看着像判负、其实一条都没判。与 bump_version.py / make_min.py 同款兜底。
+    # 看着像判负、其实一条都没判。与 make_min.py 同款兜底。
     for s in (sys.stdout, sys.stderr):
         try:
             s.reconfigure(encoding="utf-8", errors="replace")

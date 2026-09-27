@@ -27,19 +27,19 @@
 "<venv>/Scripts/python.exe" skill/scripts/egern/profile_ruleset.py some.list    # 规则集类型分布
 "<venv>/Scripts/python.exe" skill/scripts/egern/weigh_ruleset.py some.list [--sub small.list] [--probe d]  # ★ 规则集"重量"：构成/冗余/深度/加载与匹配耗时/覆盖对比
 
-bash skill/tests/egern/run.sh                                        # ★★ 回归测试两阶段（fixture 在 `skill/tests/egern/`、脚本在 `skill/scripts/egern/`；10 + 12 + 2 = 24 断言；联网那 2 条 SKIP_NET=1 时跳过），退出码非 0 即失败
+python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/profiles/routing.yaml   # ★★ DNS 面回归，退出码非 0 即失败
 ```
 
 ⭐ **计数口径是「按脚本对账」**：阶段 1 的 5 行 fixture 每行校两个脚本（两条独立判据）⇒ 计 10 条；
    阶段 2 每份 profile 同时校 `check_egern_dns` / `audit_region_filters` / `audit_ruleset_refresh` 三条判据 ⇒ 顶层固定名四件 × 3 = 12 条；
    离线合计 22（`SKIP_NET=1` 实测），联网档再给两份完整版各加一条分流覆盖 = 24；runner 末尾的 `TOTAL:` 行就是这两个数。归档版不在检查路径上 ⇒ 这个数**不随版本累积**。
 ⭐ **「当前版」是固定名，不是一堆版本号**（2026-09-24 起）：顶层恒为 `routing` / `lazy`
-   四个文件名，阶段 2 的 `--strict` 名单由 `run.sh` 里那一行 `CURRENT="routing"` 派生。
+   四个文件名（固定名四件）。
    「哪一版」只剩 profile 头注 `#! version=routing_vX.Y`，形状与两内核一致性由
    `check_min_pair.py` 判（V1–V6 ×2 + 跨侧 2 条）。前置检查会在 `$PROFILES/$CURRENT.yaml`
    不存在时给**退出码 2** —— 否则那份名单一条都套不上，
    当前推荐版会被当成"历史存档版"只查非正值，**看着绿、其实没审**。
-   要复核归档版：带着路径直接调对应脚本（归档在 `profiles/config_old/`，不进检查路径）。
+   要复核历史版本：从 git 历史取出对应文件，带着路径直接调对应脚本。
    `.min` **不手工同步**：改完完整版跑 `python skill/tests/make_min.py --family routing|lazy|all`
    （默认只出计划，`--apply` 才写盘）—— Egern 侧它是纯函数（去注释 + 规范空白，与 `check_min_pair.py`
    共用同一套判据 ⇒ 生成即过拍）。
@@ -85,7 +85,7 @@ f10.2 起（2026-09-20，二次核查报告触发）：⑩ **「靠注释提醒�
 1. ⭐⭐ **共用逻辑必须收编成一个模块，不靠注释同步。** 现为 `skill/scripts/egern/_egern_common.py`，
    收 `DOMESTIC_RESOLVER_IPS` / `hostpart` / `ip_literal`；两个脚本都 import 它。
    **判据可以有两处调用点，但实现只能有一处。**
-2. ⭐⭐ **fixture 必须喂给"所有"脚本，而不是常跑的那一个。** 新增 `skill/tests/egern/run.sh`
+2. ⭐⭐ **构造的反例必须喂给"所有"脚本，而不是常跑的那一个。**（原 fixture 套件已随精简删除，反例直接构造临时 yaml 喂脚本）
    阶段 1（5 fixture × 2 脚本 = 10 断言）+ 阶段 2（全部 profile × 2 脚本），**改脚本 / 改 profile 后手动跑一次**。
    经验：**"只差一点就能抓到"的 bug，恰恰是因为守卫只覆盖了一半**。加守卫时要问："这条断言有没有在
    **每一个**消费方上跑过？"
@@ -96,7 +96,7 @@ f10.2 起（2026-09-20，二次核查报告触发）：⑩ **「靠注释提醒�
 5. ⭐⭐ **断言对象要选"能真正测到它的那个输入"—— 合成 fixture 测不到的东西，别硬塞进去当绿。**
    （2026-09-21 新增 `audit_region_filters.py` 时发现）该脚本校验的是 `policy_groups` 段的地区组 filter，
    而 `tests/` 那五份 fixture 是 **DNS 面的合成配置、根本没有地区组** —— 喂给它只会走"无需校验"分支，
-   **看着绿，其实一个断言都没执行**。所以 `run.sh` 的阶段 2 单独对**顶层固定名四件真实 profile** 跑它（归档版在 `config_old/`，不在通配里）。
+   **看着绿，其实一个断言都没执行**。所以对**顶层固定名四件真实 profile** 逐份跑它。
    判据：**如果一份输入必然走"跳过 / 无此项"分支，那它就不构成断言** —— 加守卫时先问
    "这份输入里，被判的东西**存在**吗？"
 

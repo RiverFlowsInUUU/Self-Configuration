@@ -21,8 +21,8 @@ agent_created: true
 
 | | 配置载体 | 分组段 | 规则段 | 脚本 | 测试 |
 |:--|:--|:--|:--|:--|:--|
-| Surge | `surge/profiles/*.conf` | `[Proxy Group]` | `[Rule]` | `skill/scripts/surge/` | `skill/tests/surge/run.sh` |
-| Egern | `egern/profiles/*.yaml` | `policy_groups:` | `rules:` | `skill/scripts/egern/` | `skill/tests/egern/run.sh` |
+| Surge | `surge/profiles/*.conf` | `[Proxy Group]` | `[Rule]` | `skill/scripts/surge/` | `skill/scripts/surge/check_surge_dns.py` |
+| Egern | `egern/profiles/*.yaml` | `policy_groups:` | `rules:` | `skill/scripts/egern/` | `skill/scripts/egern/check_egern_dns.py` |
 
 ## 1 · 两内核共享的骨架：泄露面只有五类
 
@@ -60,7 +60,7 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
 - ⚠️ **审计通过 ≠ 配置可用。** 两侧脚本只覆盖**静态可判定**的部分；拦截效果、误杀、节点可用性必须实测。
   这条来自 Egern 侧连续 5 次"脚本全绿、实测仍有问题"的代价。
 - 🔒 **本仓库刻意不挂 CI / 任何自动化。** 改动后在仓库根目录本地跑：
-  `bash skill/tests/all.sh`（七项一条跑完）；只查单内核时分别跑 `bash skill/tests/surge/run.sh` 与 `bash skill/tests/egern/run.sh`（联网审计阶段可用 `SKIP_NET=1` 跳过）。
+  检查命令清单见 [`skill/README.md`](README.md)：CI（push / PR 自动）与本地同组命令。
 - 📍 **命令的路径基准**：本文与 `skill/reference/` 里凡可照抄执行的命令，路径一律以**仓根**为基准书写（要 `cd` 的会显式写 `cd`）；
   行文里为省字出现的简写（如 `scripts/probe_doh.py`）不是可执行路径，取真身请以仓根全路径为准。
 - 🧷 **改配置的安全姿势**：Egern profile 含数千字符的超长单行，**不要用 YAML dump 重写整个文件**；
@@ -73,9 +73,9 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
 | 文件 | 何时读 |
 |:-----|:-------|
 | `reference/surge/*.md` · `reference/egern/*.md` | 六个主题各一侧：`hardening-template`（产出加固配置）· `pitfalls`（事故复盘）· `leak-localization`（用户报了具体运营商）· `checker`（跑脚本前 / 改判据前）· `ruleset-weight`（嫌规则集重）· `public-repo`（改模板 / 仓库结构） |
-| [`docs/跨内核差异对照.md`](../docs/跨内核差异对照.md) | 要在两内核间移植一份改动时——**必读**，含逐项语法映射与实测差异清单 |
-| [`docs/规则集与来源.md`](../docs/规则集与来源.md) | 想知道用了哪些规则集、来源、排序约束 |
-| [`surge/docs/`](../surge/docs/) · [`egern/docs/`](../egern/docs/) | 单内核的逐段讲解、加固清单、审计读数、版本沿革 |
+| [`docs/cross-kernel-diff.md`](../docs/cross-kernel-diff.md) | 要在两内核间移植一份改动时——**必读**，含逐项语法映射与实测差异清单 |
+| [`docs/rulesets.md`](../docs/rulesets.md) | 想知道用了哪些规则集、来源、排序约束 |
+| [`docs/hardening-checklist.md`](../docs/hardening-checklist.md) · [`docs/no-resolve-pairing.md`](../docs/no-resolve-pairing.md) | 单内核加固清单与 no-resolve 成对交付 |
 
 ---
 
@@ -218,7 +218,7 @@ FINAL,Proxy,dns-failed
 - [ ] `audit_ruleset_content.py` 通过（远程规则集无缺 `no-resolve` 的 IP 条目；直连集合域名条目 ≥1000）
 - [ ] `audit_routing_coverage.py` 通过（国内探针全部 DIRECT、境外探针**命中预期的组**、误杀探针不被 REJECT）
 - [ ] `audit_region_filters.py` 通过（仅分流配置：关键词同步 / 互斥 / 类型 smart）
-- [ ] `architecture.sh` 通过（占位符纪律 / 订阅 token 纪律 / 两组形态 DNS 段一致性 / 规则顺序）
+- [ ] `check_secrets.py` 通过（占位符纪律 / 订阅 token 纪律）
 - [ ] 手工实测：抓包确认冷启动无明文 `:53`
 - [ ] 手工实测：游戏机 / NAT 检测 / 时间同步正常（`always-real-ip` 生效）
 

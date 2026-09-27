@@ -9,19 +9,17 @@
 ```
 Self-Configuration/
 ├── README.md                    # 门面：内核选择 / 四份订阅地址 / 五类泄露面 / 隐私对照表 / 按需查阅表
-├── AGENTS.md                    # 维护者任务书：冻结名单 · 连带范围 · 推送规矩
 ├── CHANGELOG.md                 # **唯一一份**改动记录：只记两内核配置文件的修改（文档与脚本改动看 git log）
 ├── LICENSE                      # MIT
 ├── .gitignore
-├── manual/                      # ★ 手册层：唯一权威操作层（MANUAL.md 入口 + 11 章 + 99 版本历史）
-├── icons/                       # 26 个 PNG —— 两内核各存一份且逐字节相同，合并后只留一份
-├── docs/                        # 共享文档：活专题四篇（差异对照 · 规则集与来源 · 注意事项 · 图标与许可）+ 归档快照三篇（体检报告 · 技能包合并与自包含 · 日志旧版原文）+ _archive/
+├── icons/                       # 26 个 PNG —— 两内核共用
+├── docs/                        # 共享文档（九篇，2026-09-27 精简后）：quick-start · dns-basics · hardening-checklist · no-resolve-pairing · cross-kernel-diff · rulesets · icon-license · ops · troubleshoot-faq
 ├── skill/
 │   ├── SKILL.md                 # 单一入口：§0 判内核 → 分支 A(Surge) / 分支 B(Egern)
 │   ├── README.md                # 技能包用法
 │   ├── reference/{surge,egern}/ # 六个深度主题各一侧（含本文）
 │   ├── scripts/{surge,egern}/   # 审计脚本（Surge 5 + 1 共享模块 / Egern 10 + 1 共享模块）
-│   └── tests/{surge,egern}/     # 回归套件 + fixture
+│   └── tests/                   # check_secrets · check_portability · check_min_pair · check_links · make_min
 └── surge/                       ── 本内核的全部产品物 ──
     ├── README → 见根 README      # 不再各自一份首页
     ├── profiles/                 # 顶层固定名四件 = 2 种分工 × 2 种形态（订阅地址永久不变）
@@ -29,8 +27,6 @@ Self-Configuration/
     │   ├── lazy.min.conf         # 懒人版（纯配置）—— 导入用
     │   ├── routing.conf          # 分流版（带注释）—— 改这份
     │   ├── routing.min.conf      # 分流版（纯配置）—— 导入用
-    │   └── config_old/           # 被替代的旧版按版本号留档，不参与检查（例外：`architecture.sh` ① 连归档一起扫）
-    ├── docs/                     # 01–08 编号系列 + 11-分流版设计（07 末节 = 本内核合并前的迭代史）
     └── DetailsReadme/
         └── DetailsReadme.md      # 完整技术文档（18 节）
 ```
@@ -39,10 +35,9 @@ Self-Configuration/
 > ① 首页只有**一份**（根 `README.md`），内核目录里不再各留一份；
 > ② `icons/` 与「规则集与来源 / 注意事项 / 图标与许可」三篇专题**升到共享层**，
 >    要改这三件事去 `docs/`，改回内核 `docs/` 会造成两份互相漂移；
-> ③ 新增一篇共享层专属文档 [`docs/跨内核差异对照.md`](../../../docs/跨内核差异对照.md) ——
+> ③ 新增一篇共享层专属文档 [`docs/cross-kernel-diff.md`](../../../docs/cross-kernel-diff.md) ——
 >    **凡是「一侧的结论搬到另一侧」的问题，答案写在那一篇里**，不要塞进本内核的专题。
-> ④ **改动记录只有根 `CHANGELOG.md` 一份**（2026-09-24 起，内核目录里不再各留一份日志）——
->    本内核合并前的迭代史存档在 [`docs/07-文件版本沿革.md`](../../../surge/docs/07-文件版本沿革.md) 末节。
+> ④ **改动记录只有根 `CHANGELOG.md` 一份** —— 更早的历史看 git（备份 tag：`pre-cleanup-20260927`）。
 
 
 ### 1.1 各层的职责边界
@@ -50,9 +45,7 @@ Self-Configuration/
 | 层 | 装在什么 | **不装什么** |
 |:---|:---------|:-------------|
 | `README.md` | 能用起来所需的一切 | 原理推导、逐行理由 |
-| `manual/` | **唯一权威操作层**：装 · 改 · 验 · 修的日常与排障 | 实测读数（两侧 `docs/08`）、逐键语义（`DetailsReadme`） |
-| `docs/`（共享层） | **跨内核**的综合：差异对照 · 规则集 · 注意事项 · 许可 | 单内核的专题推导 |
-| `surge/docs/` | 每个专题一篇，**单一主题** | 跨主题的综合 |
+| `docs/`（共享层） | 操作（`ops.md`）与跨内核综合：差异对照 · 规则集 · DNS 基础 · 加固清单 · 排障 FAQ · 许可 | 单内核的逐键语义 |
 | `surge/DetailsReadme/` | 完整技术文档、原理推导、FAQ | 快速开始（README 有） |
 | `skill/` | 方法论与脚本 | 面向使用者的说明 |
 | `CHANGELOG.md`（根，唯一一份） | 面向用户的变更（两内核都写这一份） | **工作过程、内部重构** |
@@ -68,8 +61,7 @@ Self-Configuration/
 1. **只记配置**：文档、脚本与判据的改动一律看 `git log`，不进日志。
 2. **一天一段**：当天后续改动往那一段里增补，**不开第二个同名日期段**；没动配置文件就不开段。
 3. **一条一句**：动词开头，写清改到哪个文件、改了哪个行为，不写「哪里没动」与「验收」。推理过程、请示与授权、当时哪里判错了、
-   括号套括号的辩护 —— 都不进日志（要留证据就写进 `docs/体检报告.md` 那类专题）。
-   自查：删掉这句，事实会少吗？不会就删。
+   括号套括号的辩护 —— 都不进日志。自查：删掉这句，事实会少吗？不会就删。
 
 ⚠️ 细节该进 `DetailsReadme` / `docs`，不进 README。
 
@@ -131,7 +123,7 @@ README 是**产品介绍**：读者要知道「这东西是什么、怎么用」
 |:--------------|:-----|:-------|
 | 归类辩护 / 自我更正 | 「`WeChat` 为什么不算『开关』……」 | `CHANGELOG`（发生过什么）+ `DetailsReadme`（判据） |
 | 与评审 / 工单的对话 | 「原写 X 属误标，已按功能拆开」 | `CHANGELOG` |
-| 内部判据与断言名 | 「由 `architecture.sh` ④ 断言守着」 | `DetailsReadme` / `skill/` |
+| 内部判据与断言名 | 「由某脚本某断言守着」 | `DetailsReadme` / `skill/` |
 | 设计沿革 / 跨仓比对 | 「与 Surge · Egern 同构」「组序与 Egern v3 对齐」「姐妹仓」 | 直接删 —— 读者不需要 |
 | 逐键 / 推导 / 实测细节 | dns 逐键分工表、机制推导、审计读数 | `DetailsReadme` —— README 只留结论 |
 
@@ -235,14 +227,14 @@ Clash 是 TUN `dns-hijack: any:53` + fake-ip。**照抄等于把不存在的机�
 ⚠️ **判断标准**：两份是否在解决**不同的需求**？
 - 是 → 可以共存（`lazy` 一个出口够用 / `routing` 要按应用按地区分流）
 - 否、只是同一需求的两种取舍 → **那是版本分叉，必须消灭第二处**
-  （这就是 `v0` 被删的原因，见 [`docs/07`](../../../surge/docs/07-文件版本沿革.md) §3）
+  （`v0` 已删，见 git 历史）
 
 想让你手头那份更轻，就在**它上面直接删**，不另开第三份。
 
 ### 3.2 两种形态
 
 `.conf`（带注释，给人读）+ `.min.conf`（纯配置）。
-**内容必须一致，只差注释** —— 由 `architecture.sh` 的 16 键一致性断言兜底
+**内容必须一致，只差注释** —— 由 `check_min_pair.py` 的对拍判据兜底
 （②-a 管 lazy、②-b 管 routing、②-c 管两份之间）。
 
 ⚠️ `.min.conf` 里**必须保留 `# audit-waive:` 行** —— 那是有语义的注释。
@@ -262,7 +254,7 @@ Clash 是 TUN `dns-hijack: any:53` + fake-ip。**照抄等于把不存在的机�
 5. 节点全部占位化（`203.0.113.x` + `REPLACE_WITH_*`），订阅 token 用 `REPLACE_WITH_YOUR_TOKEN`
 6. 若有豁免，`# audit-waive:` 写在文件里
 
-这 6 条基本就是 `architecture.sh` 的全部断言。
+以上基本就是 `check_secrets.py` 的全部判据。
 **能过测试的才叫一份新配置，否则只是一个改坏了的副本。**
 
 ---
@@ -276,12 +268,12 @@ Clash 是 TUN `dns-hijack: any:53` + fake-ip。**照抄等于把不存在的机�
 | 密码 / 用户名 | `REPLACE_WITH_YOUR_PASSWORD` / `REPLACE_WITH_USERNAME` |
 | SNI | `REPLACE_WITH_YOUR_SNI` 或与 server 相同 |
 
-检验由 `architecture.sh` 第 ① 组断言自动完成。
+检验由 `check_secrets.py` 自动完成。
 
 ### 4.1 上传前的检查
 
 ```bash
-bash skill/tests/surge/architecture.sh     # 占位符纪律 + DNS 段一致性 + 规则顺序
+python skill/tests/check_secrets.py        # 占位符纪律（全仓 .conf + .yaml）
 ```
 
 ⚠️ **`git push` 前必须跑一次。** 它会拦住：
@@ -292,7 +284,7 @@ bash skill/tests/surge/architecture.sh     # 占位符纪律 + DNS 段一致性 
 
 ### 4.2 全仓扫描（补一道）
 
-`architecture.sh` ① 现在扫的是**全仓** `.conf` / `.yaml`（含 Egern 侧与 `config_old/` 归档），但它只认这两种扩展名 —— `docs/`、`manual/`、`skill/` 里的 markdown 与 Python 仍需另扫一遍：
+`check_secrets.py` 扫的是**全仓** `.conf` / `.yaml`（含 Egern 侧），但它只认这两种扩展名 —— markdown 与 Python 仍需另扫一遍：
 
 ```bash
 grep -rn -iE '<你的私有域名|你的密码片段|你的用户名>' . \
@@ -307,8 +299,7 @@ grep -rn -iE '<你的私有域名|你的密码片段|你的用户名>' . \
 ## 5 · 全部验证都在本地 —— 刻意不挂 CI
 
 ```bash
-bash skill/tests/surge/run.sh              # 6 阶段，19 个断言
-SKIP_NET=1 bash skill/tests/surge/run.sh   # 跳过联网阶段
+python skill/scripts/surge/check_surge_dns.py surge/profiles/lazy.conf surge/profiles/routing.conf
 ```
 
 **本仓库刻意不挂 CI / 任何自动化。** 理由：
@@ -328,17 +319,17 @@ SKIP_NET=1 bash skill/tests/surge/run.sh   # 跳过联网阶段
 改完任何东西之后：
 
 ```
-1. bash skill/tests/surge/run.sh                      → 15 passed, 0 failed
+1. python skill/scripts/surge/check_surge_dns.py …    → 退出码 0
 2. python skill/scripts/surge/check_surge_dns.py  surge/profiles/lazy.conf     → exit 0
 3. python skill/scripts/surge/check_surge_dns.py  surge/profiles/routing.conf  → exit 0
 4. （改了地区关键词时）python skill/scripts/surge/audit_region_filters.py surge/profiles/routing.conf  → 9 passed
 5. （改了规则集引用时）python skill/scripts/surge/audit_ruleset_content.py  profiles/{lazy,routing}.conf
 6. （改了规则时）      python skill/scripts/surge/audit_routing_coverage.py profiles/{lazy,routing}.conf
 7. （改了标题时）重算所有锚点，检查相对链接
-8. （push 前）grep 一遍敏感串 + 跑一次 `architecture.sh`
+8. （push 前）跑一次 `check_secrets.py`
 ```
 
-> 📌 `run.sh` 已经把上面第 2–6 步全跑了一遍（含联网阶段）。
+> 📌 CI 在 push 后把同组检查再跑一遍。
 > 单独跑这几条只在**定位失败原因**时用。
 
 ### 6.1 相对链接检查
@@ -359,14 +350,14 @@ grep -rnoE '\]\(([^)#][^)]*)\)' --include='*.md' . | sed 's/.*](//' | sed 's/)$/
 | # | 位置 | 改坏的症状 | 守它的东西 |
 |:-:|:-----|:-----------|:-----------|
 | 1 | `[Proxy]` 段的节点（填成真实值） | 隐私泄露 | `architecture.sh` ① |
-| 2 | `[Rule]` 的顺序（`direct.txt` 挪到 REJECT 前） | 广告拦截失效 | `architecture.sh` ③-b |
-| 3 | IP 类规则的 `no-resolve`（删掉） | DNS 泄露 | `architecture.sh` ③-d + `check_12` |
-| 4 | 只改 `.conf` 或只改 `.min.conf` 的 DNS 段 | 两份行为不一致；使用者拿到的与文档说的不一致 | `architecture.sh` ②（只覆盖 DNS 段） |
+| 2 | `[Rule]` 的顺序（`direct.txt` 挪到 REJECT 前） | 广告拦截失效 | 人工核对 |
+| 3 | IP 类规则的 `no-resolve`（删掉） | DNS 泄露 | `check_surge_dns.py` |
+| 4 | 只改 `.conf` 或只改 `.min.conf` | 两份行为不一致；使用者拿到的与文档说的不一致 | `check_min_pair.py` |
 | 5 | `pre-matching` 的策略（改成策略组） | **Surge 拒绝加载** | `check_10` |
 | 6 | `underlying-proxy` 指向的名字 | **Surge 拒绝加载** | `check_7` |
 | 7 | `# audit-waive:` 行（删掉） | 从 2 waived 变 2 high | 无（靠"知道它是有语义的"） |
 
-> ⚠️ **第 4 条的覆盖是部分的**：`architecture.sh` ② 只比对 **16 个 DNS 键**，
+> ⚠️ **第 4 条的覆盖是部分的**：`check_min_pair.py` 对拍整份去注释正文，
 > `.min.conf` 里其余部分（规则、组、节点）改歪了不会被拦住。
 > 第 7 条则完全没有自动化覆盖。
 >

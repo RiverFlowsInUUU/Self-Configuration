@@ -14,7 +14,7 @@
 | 网络 | 只有 `audit_ruleset_content.py` / `audit_routing_coverage.py` 需要；其余脚本与两个 `.sh` 全离线 |
 | 操作系统 | Windows（Git Bash）/ macOS / Linux 均可 |
 | 磁盘 | 规则集缓存约 6 MB（`direct.txt` 一份 11 万条） |
-| 输出编码 | 无需设置 —— `_surge_common` 在 import 时把 stdout 钉成 UTF-8（中文 Windows 默认 GBK，emoji 会崩成**退出码 1** ⇒ 判负 fixture 假绿）；`run.sh` / `architecture.sh` 另设 `PYTHONIOENCODING=utf-8` |
+| 输出编码 | 无需设置 —— `_surge_common` 在 import 时把 stdout 钉成 UTF-8（中文 Windows 默认 GBK，emoji 会崩成**退出码 1**）；CI 另设 `PYTHONIOENCODING=utf-8` |
 
 ⚠️ **Windows / Git Bash 的路径坑**：`pwd` 返回 `/c/Users/...`，
 Windows 版 Python 打不开（报 `can't open file 'C:\c\Users\...'`）。
@@ -46,7 +46,7 @@ python "$S/audit_region_filters.py" surge/profiles/routing.conf       # 期望 3
 python "$S/audit_region_filters.py" surge/profiles/routing.conf -v    # 逐个组的关键词数
 python "$S/audit_ruleset_refresh.py" surge/profiles/routing.conf --strict  # 期望 exit 0（全部钉在 604800）
 python "$S/audit_ruleset_refresh.py" surge/profiles/*.conf --quiet           # 逐份计数（顶层固定名四件；归档不在通配里）
-bash   ./skill/tests/surge/architecture.sh                           # 期望 exit 0
+python ./skill/tests/check_secrets.py                                # 期望 exit 0
 
 # ── 需要联网 ────────────────────────────────────────────────────────
 python "$S/audit_ruleset_content.py"  surge/profiles/lazy.conf         # 期望 exit 0
@@ -56,24 +56,22 @@ python "$S/audit_routing_coverage.py" surge/profiles/routing.conf      # 期望 
 python "$S/audit_routing_coverage.py" surge/profiles/lazy.conf --show-all
 
 # ── 回归测试（6 阶段，19 断言）────────────────────────────────────
-bash ./skill/tests/surge/run.sh
-SKIP_NET=1 bash ./skill/tests/surge/run.sh
-PY=/path/to/python bash ./skill/tests/surge/run.sh
+python ./skill/scripts/surge/check_surge_dns.py surge/profiles/lazy.conf surge/profiles/routing.conf
 ```
 
 ⭐ **「当前版」是固定名，不是一堆版本号**（2026-09-24 起）：顶层恒为 `routing` / `lazy`
    四个文件名，阶段 2 的 `--strict` 名单、阶段 4 的联网审计、阶段 5 的正则对账、
-   `architecture.sh` 的 ②-b / ④ 段都由 `run.sh` 里那一行 `CURRENT="routing"` 派生。
+   当前版本由 profile 头注 `#! version=` 标识。
    「哪一版」只剩 profile 头注 `#! version=routing_vX.Y`，形状与两内核一致性由
    `check_min_pair.py` 判（V1–V6 ×2 + 跨侧 2 条）。配套前置检查：固定名文件不存在 ⇒
    **退出码 2** —— 否则阶段 4 / 5 会对不存在的文件 `continue`，**静默少跑一整个阶段**还报绿。
-   要复核归档版：带着路径直接调对应脚本（归档在 `profiles/config_old/`，不进检查路径）。
+   要复核历史版本：从 git 历史取出对应文件，带着路径直接调对应脚本。
    `.min` **不手工同步**：改完完整版跑 `python skill/tests/make_min.py --family routing|lazy|all`
    （默认只出计划，`--apply` 才写盘）—— 它 import 本文件的判据函数，正文重算、注释按锚点继承，
    所以 `# audit-waive:` 那行不用补回去。
 
 ⚠️ **顶层固定名四件都要过 `check_surge_dns.py` 与 `audit_ruleset_refresh.py`**
-   （阶段 2 自动遍历 `profiles/*.conf`，`config_old/` 不在其中）。
+   （对 `profiles/*.conf` 逐份跑）。
 分流版同样要求 `0 high / 0 medium`，标准与 `lazy.conf` 一致。
 
 规则集缓存目录：
@@ -95,7 +93,7 @@ PY=/path/to/python bash ./skill/tests/surge/run.sh
 
 ⭐ **退出码 2 是必须的。**
 
-`run.sh` 的 `bad_*` fixture **期望退出码 1**。如果解释器坏掉，脚本也返回 1
+构造的反例**期望退出码 1**。如果解释器坏掉，脚本也返回 1
 —— 会被误判成"判负通过"。前置检查把这个歧义消掉：
 
 ```bash
@@ -335,13 +333,13 @@ APPLE_PROBES = [
 
 ---
 
-## 7 · 架构不变量（`architecture.sh`）
+## 7 · 架构不变量（`check_secrets.py`）
 
 ### ① 占位符纪律
 
 | 判据 | 细节 |
 |:-----|:-----|
-| 扫描面 | **全仓** walk 到的 `*.conf` / `*.yaml` / `*.yml`（不是只有 `surge/profiles/`）。三档同一套判据：`LIVE` 当前版 / `ARCHIVE` 两侧 `config_old/` / `FIXTURE` `skill/tests/`，档位只决定报错怎么点名 ⇒ **归档不享豁免**。跳过 `.` 开头目录 / `node_modules` / `__pycache__`；刻意不用 `git ls-files`（未提交的本地工作副本正是这道纪律要拦的东西） |
+| 扫描面 | **全仓** walk 到的 `*.conf` / `*.yaml` / `*.yml`（不是只有 `surge/profiles/`）。`LIVE` 当前版 / `FIXTURE` `skill/tests/`，档位只决定报错怎么点名。跳过 `.` 开头目录 / `node_modules` / `__pycache__`；刻意不用 `git ls-files`（未提交的本地工作副本正是这道纪律要拦的东西） |
 | 禁止子串 | `couldflare-cdn.com` / `tange365.com` / `wangxinyu` —— **注释里也不许出现** |
 | IPv4 白名单 | 必须是 `192.0.2.` / `198.51.100.` / `203.0.113.` 开头，或在 `KNOWN_DNS` 集合里 |
 | 凭据 | `password` / `username` / `auth` 的值必须以 `REPLACE_WITH_` 开头 |
@@ -428,12 +426,12 @@ DNS_KEYS = [
 | v2 | 拆成 ③-b (i)(ii) 两条独立约束 | 不变量本身写错了，见坑 9 |
 | v1 | ③-b 对「精简配置」也生效 | 初版 |
 | v2 | 对精简配置豁免 + 打印说明行 | 曾要求极简版改名成完整版，见坑 10 |
-| v3 | 取消豁免 —— 配置已收敛为单一版本 | 见 [`docs/07`](../../../surge/docs/07-文件版本沿革.md) §3 |
+| v3 | 取消豁免 —— 配置已收敛为单一版本 | 见 git 历史 |
 | — | 无豁免机制 | 初版：豁免只能写死在审计器里 |
 | — | 引入 `# audit-waive:` | 判据可以退让，但退让必须留痕，见坑 15 |
 | v1 | `audit_ruleset_content` 遍历原始行 | 初版 |
 | v2 | 先 `strip_comment()` | 注释行被当成引用，见坑 12 |
-| v1 | `run.sh` 只有"退出码非 0 即失败" | 初版 |
+| v1 | 只判"退出码非 0 即失败" | 初版 |
 | v2 | 加前置检查，环境故障用退出码 2 | 解释器坏了被算成"判负通过"，见坑 13 |
 
 ### 一条贯穿的规律

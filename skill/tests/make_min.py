@@ -24,11 +24,11 @@
    `--apply` 一次之后就是纯函数了 —— 这类改动只动空白，正文逐字不变（对拍器按 normalize 判，
    前后都绿），但订阅下载到的**字节**确实变了，所以要在 CHANGELOG 里写明。
 
-它**不**做：不碰 `config_old/`（归档是只读历史，一个字节都不写）；不改完整版本身；
+它**不**做：不改完整版本身；
    不判 `.min` 内容对不对（那是 `check_min_pair.py` + 各侧回归的活，本脚本只负责"搬得动"）。
-   ⚠️ 唯一要预先说清的连带：若某族当前版在 `config_old/` 里已有**同号快照**（现在只有 lazy 的
+   ⚠️ 唯一要预先说清的连带：若某族当前版已有**同号快照**（现在只有 lazy 的
    `lazy_v1.0.*` 种子），写盘就会让对拍器 V6 判负 —— 那是设计好的"内容改了没升版"告警，
-   本脚本只在计划里点名提醒，处置办法是升版（`bump_version.py`），不是代它改历史。
+   本脚本只在计划里点名提醒，处置办法是升版（改头注 `#! version=`），不是代它改历史。
 
 ⚠️ 换行：所有生成结果按 LF 写（仓根 `.gitattributes` 已把检出钉成 `eol=lf`）；
    读入时先归一化 CRLF，判据不受设备影响。
@@ -257,7 +257,7 @@ def main():
         if snap and (mt != gen):
             print("      ⚠️ " + rel(mp) + " 在归档里有同号快照 " + rel(snap)
                   + "，本脚本不碰它 ⇒ 对拍器 V6 会判负（'改了没升版'）。"
-                    "处置：跑 bump_version.py 升版（它保留已发布快照、照常升号），别手改归档。")
+                    "处置：升版（改四份 profile 头注 `#! version=`），别手改归档。")
     if not a.apply:
         print(NL + "确认后加 --apply")
         return 0
@@ -272,11 +272,11 @@ def main():
         if mt == gen:
             print("未动 " + rel(mp) + "（已是规则的输出）")
             continue
-        # `with` 收口（A-8）：写完必须确定性关闭，不依赖引用计数（同 `bump_version.write`）。
+        # `with` 收口（A-8）：写完必须确定性关闭，不依赖引用计数。
         with io.open(mp, "w", encoding="utf-8", newline="") as f:
             f.write(gen)
         print("已写 " + rel(mp))
-    print(NL + "验收：bash skill/tests/all.sh（第 3 项就是拿完整版逐字对拍这几份）")
+    print(NL + "验收：python skill/tests/check_min_pair.py（拿完整版逐字对拍这几份）")
     return 0
 
 

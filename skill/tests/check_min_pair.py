@@ -7,7 +7,7 @@
     `.min` 的定位是**同一份配置去掉注释**，不是"裁剪配置"。一旦两版的配置本体漂移，
     照着文档改完整版、实际导入的却是 `.min` ⇒ 改了个寂寞，而且肉眼看不出来。
 
-    既有检查各守了一角、都不覆盖这条：`architecture.sh` 的 ② 只逐字比 DNS 段的键、
+    既有检查各守了一角、都不覆盖这条：DNS 审计只逐字比 DNS 段的键、
     ④-b 只比组顺序，且**只管 Surge 侧**；Egern 侧过去完全没有人对拍过两版形态。
 
 判据（与人工核对时的口径一致）：
@@ -17,7 +17,7 @@
     剩下逐行比对；任何一处不同即判负，并打印**第一处**差异的行号与两侧内容。
 
 版本与归档序列（2026-09-24 起，订阅地址固定化之后一并由本脚本判）：
-    订阅地址钉成 `routing.*` / `lazy.*`，历史版本进 `config_old/` ⇒ "当前是哪一版"只剩
+    订阅地址钉成 `routing.*` / `lazy.*`（固定名、升版不改名）⇒ "当前是哪一版"只剩
     profile **头注**这一处显式承诺（从前是三份 runner 里各一行 `CURRENT=`，改一处漏两处）。
     判据是固定 14 条：两侧各 6 条（顶层只有固定名四件 · 头注版本标记形状合法 · 归档目录在 ·
     归档文件名形状合法 · 每版成对齐全 · 归档不高于当前版且同版本仍是逐字快照）+ 跨侧 2 条（两侧 routing 版本一致 ·
@@ -68,7 +68,7 @@ VERSION_RE = re.compile(r"^#! version=(routing|lazy)_v([0-9]+)\.([0-9])$")
 # 归档名里的版本号按「主.一位小数」起；本仓 2026-09-24 固定化之前有一批只写主号
 # （`routing_v3.conf`），一并认 —— V4 要抓的是"新归档没按进位规则起名"，不是考古。
 ARCHIVE_RE = re.compile(r"^(routing|lazy)_v([0-9]+(?:\.[0-9])?)(\.min)?\.(conf|yaml)$")
-OLD_DIR = "config_old"
+OLD_DIR = "config_old"          # 归档目录（2026-09-27 起已删除；保留常量仅为兼容 make_min 快照提醒逻辑）
 
 
 def ver_tuple(v):
@@ -89,7 +89,7 @@ def head_version(path):
 
 
 def version_checks(root):
-    """固定名与归档序列 ⇒ [(判据名, 通过?, 说明)]；两侧各 6 条 + 跨侧 2 条，固定条数。"""
+    """固定名与头注版本 ⇒ [(判据名, 通过?, 说明)]；两侧各 2 条 + 跨侧 2 条。归档判据（V3–V6）已随 config_old/ 删除而退役（2026-09-27）。"""
     out, heads = [], {}
     for d in PROFILE_DIRS:
         side = d.split("/")[0]
@@ -108,13 +108,11 @@ def version_checks(root):
                     "routing=%s · lazy=%s（读不出多半是第一行被挪走或写成了 x.y.z）" % (vr, vl)))
         old_dir = os.path.join(dirpath, OLD_DIR)
         if not os.path.isdir(old_dir):
-            for k in (3, 4, 5, 6):
-                out.append(("%s V%d 归档目录 %s/" % (side, k, OLD_DIR), False, "缺目录"))
-            continue
+            continue          # 归档目录已随 2026-09-27 仓库精简删除，归档判据（V3–V6）退役
         names = sorted(n for n in os.listdir(old_dir) if not n.startswith("."))
         # V3 的"存在"两字由上面那个 `isdir` 分支兜着（缺目录时 V3–V6 一并判负），
         # 走到这里存在性已成事实 ⇒ 这条唯一还能判的东西是"非空"。从前它写的是字面量 True，
-        # 实测：把 surge/profiles/config_old/ 清空成 0 个文件，输出照旧
+        # 历史注记：归档目录存在时把清空成 0 个文件，输出照旧
         # `✅ surge V3 归档目录存在（0 个文件）` · TOTAL: 18 passed ⇒ 一条永远绿的判据占着计数。
         out.append(("%s V3 归档目录存在且非空（%d 个文件）" % (side, len(names)), bool(names),
                     "空归档：每退一版留一份快照是这套沿革制度的前提 ⇒ 目录空 = 快照被手工挪走，"

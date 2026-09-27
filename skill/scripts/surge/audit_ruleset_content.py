@@ -68,7 +68,7 @@ def fetch(url, cache_dir, timeout=45, force=False, max_age=CACHE_MAX_AGE_DAYS * 
     为什么必须有 `max_age`：从前这里只看 `isfile`，缓存**永不过期**
     （全仓 grep `mtime` / `max_age` / `TTL` 在改动前零命中）。后果是联网阶段可能拿
     一份半年前落下的规则集判"通过"，而输出里那个（缓存）看不出新陈 ——
-    与 `bump_version.py` 头注讲的「当前版」同一条罪：读数说得出名字、说不出事实。
+    与「当前版」纪律同一条罪：读数说得出名字、说不出事实。
     """
     # ⚠️ 键的形状与 Egern 侧 `_egern_common.cache_key()` 一致：末段消毒名（可读）+
     #    全 URL 的 sha1 前 12 位（唯一）。早先这里取"整 URL 消毒后末 120 字符"，与 Egern 侧

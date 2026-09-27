@@ -9,7 +9,7 @@
 > 📌 **本文教的加固结构（`[General]` 段、规则顺序铁律、`no-resolve` 成对交付）
 > 对两份配置都适用** —— 分流版只是在 `[Proxy Group]` 与 `[Rule]` 上更细。
 > 分流版专属的设计约束（`flatten` 的对应写法、Smart 组不能嵌套组、地区关键词双份）
-> 见 [`docs/11`](../../../surge/docs/11-分流版设计.md)。
+
 
 ---
 
@@ -408,7 +408,7 @@ FINAL,Proxy,dns-failed
 RULE-SET,<url>,<策略>,"update-interval=604800"[,no-resolve]
 ```
 
-一周刷新。`no-resolve` **不是**这条的固定尾巴 —— 取舍是「实测零 IP 条目的规则集不写、真含 IP 条目的必须写」，纯域名集写上是空转（Surge 四份 profile 共用这一条，见 [`docs/规则集与来源.md`](../../../docs/规则集与来源.md) 原则 4b）。
+一周刷新。`no-resolve` **不是**这条的固定尾巴 —— 取舍是「实测零 IP 条目的规则集不写、真含 IP 条目的必须写」，纯域名集写上是空转（Surge 四份 profile 共用这一条，见 [`docs/rulesets.md`](../../../docs/rulesets.md) 原则 4b）。
 
 ⚠️ **别把这条判据说成"不写就不刷新"** —— Surge 手册写明该键缺省即 `86400`（24 小时），
 只有**负值**才关闭自动更新 ⇒ 漏写只是让周期不可见，不会让规则集停在首次下载的版本。
@@ -476,7 +476,7 @@ localhost = server:system
 [ ] python skill/scripts/surge/check_surge_dns.py <profile>              → exit 0
 [ ] python skill/scripts/surge/audit_ruleset_content.py <profile>        → exit 0
 [ ] python skill/scripts/surge/audit_routing_coverage.py <profile>       → exit 0
-[ ] bash skill/tests/surge/architecture.sh                               → exit 0
+[ ] python skill/tests/check_secrets.py                                  → exit 0
 [ ] 抓包实测：冷启动无明文 :53
 [ ] 实测：游戏机 NAT 检测 / 时间同步正常
 ```
