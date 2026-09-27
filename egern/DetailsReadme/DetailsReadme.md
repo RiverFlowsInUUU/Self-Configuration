@@ -3,7 +3,7 @@
 > **这份文档的定位**：`README.md` 只保留了「配置框架 + DNS 防泄漏」的精华，有意省略了大量推导、数据、谱系与工程方法。
 > 本文档是 README 的**详版 / 补集**——把那些被省略的信息全部展开、讲清楚。
 >
-> **隐私声明**：本文档**不包含任何私人信息**。本仓库的模板本身是脱敏模板（节点段为空、图标已整合进本仓库、无订阅地址 / 证书 / token）。
+> **隐私声明**：本文档**不包含任何私人信息**。本仓库的模板本身是脱敏模板（节点只有 2 条连不上任何真实主机的占位、图标已整合进本仓库、订阅地址与 token 都是占位符、无证书）。
 > 下文凡涉及「真实配置」之处，一律用抽象表述，不出现任何具体节点域名、订阅链接、证书串或个人凭据。
 > 文中提到的图标来源（公开 GitHub 仓库）仅作**署名归属**，它们已被下载整合进本仓库的 `icons/`，模板不再跨项目引用。
 
@@ -39,10 +39,10 @@
 - `default_proxy_group` —— **添加代理时自动加入的策略组名称**（官方：*Policy group to automatically add
   proxies to*，默认值为空；本模板写 `Proxy`）。⚠️ 它与兜底**无关** —— 未命中任何规则时走的是 `rules`
   最后那条 `default`（见 1.4）。它的用处是：你手动加一个节点，Egern 自动把它放进这个组，不用回来编辑
-  `policy_groups` —— 懒人版 `Proxy` 组为空，正靠这一行接住手动添加的节点。
+  `policy_groups` —— 懒人版 `Proxy` 只有 `Airport`（隐藏订阅槽）+ `Node-A` 两项，手动添加的节点正靠这一行接进来。
 
 **B. 核心三段**
-- `proxies` —— 节点定义（**模板为空 `[]`**，由你填写）。
+- `proxies` —— 节点定义（**模板带 2 条占位节点**，见 1.2；不用就整条删掉）。
 - `policy_groups` —— 分流组（见 1.3）。
 - `rules` —— 匹配表（见 1.4）。
 
@@ -78,11 +78,11 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 
 #### 组清单与要点（`routing_v3.4`）
 
-**节点来源**（2 个订阅槽位）：`Airport-A` / `Airport-B`（后者另带一条 `urls_disabled` 示例）。
+**节点来源**（1 个订阅槽位）：`Airport`（`external` · `type: smart` · `urls` 两条 + 一条 `urls_disabled` 示例 · `hidden: true`）。
 `routing_v2.1` 及更早为 4 个槽位（多出 `Airport-C` / `Airport-Free`）—— `routing_v2.2` 精简掉，选路能力不变。
 
 **`flatten: true`** —— 把子策略组**展开成全部具体节点**，而不是当成一个「组」单位。
-以 `Smart` 为例：不加时候选是「`Airport-A` 组」「`Airport-B` 组」两个单位（两级选优），
+以 `Smart` 为例（`policies: [Airport]`）：不加时候选是「`Airport` 组」这一个单位（两级选优），
 加上后才是订阅里的**全部具体节点**（一级选优）。官方「通用字段」明确它在
 `select` / `auto_test` / `smart` / `fallback` / `load_balance` 五种基础类型上通用。
 本模板的 `Smart` / `MAX` / `ChatGPT` / `Gemini` 与全部地区组都用了它。
@@ -127,9 +127,9 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 
 **规则的实际匹配顺序**（`rules` 按声明顺序求值，第一条命中即决定去向）：
 
-> 白名单 → 广告拦截（`Jinx` + `AWAvenue`）→ 内网 → 应用（13 条）→ `Proxy` → Apple 服务 → 微信 → 国内域名 → `.cn` → 国内 IP → 兜底（`Final`）
+> 白名单 → 广告拦截（`Jinx` + `AWAvenue`）→ 内网（`Lan` + `private`）→ 应用（13 条）→ Apple（`apple_system` + 全量集）→ 微信 → 国内域名 → 国内 IP（`geoip: CN`）→ 兜底（`Final`）
 
-其中 `Proxy` 那条为 `disabled: true`，**关着、不参与匹配**，仅在文件里占位（位于「应用」与「Apple 服务」之间）。
+`rules` 里**没有任何 `disabled` 条目**：原 `Proxy.list` 那条自 `routing_v3.2` 起改成**纯注释**、不再占规则位；内联 `domain_suffix: cn` 同期删除（`direct.txt` 已含 `DOMAIN-SUFFIX,cn`）。
 
 **默认出口链**：未命中任何规则集的域名 → `default` 规则（`policy: Final`）→ `Final` 组唯一成员是 `Proxy` → 走代理。这类流量由**节点远程解析**，不经过本地 `dns:` 段，日志里表现为 `default → Final → Proxy`。（`lazy` 无 `Final` 组，`policy` 直写 `Proxy`，日志里是 `default → Proxy`。）
 
@@ -249,7 +249,7 @@ forward:
 ### 每一版的验证结果
 
 > ⚠️ **读数说明（很重要）**：下表的所有数字都是**作者的「自用配置」**跑出来的 ——
-> 它带真实节点、且 f1–f8 时期 `rules` 里还有 DNS 端点路由规则。
+> 它带真实节点、且 **f2–f9** 时期 `rules` 里还有 DNS 端点路由规则（f2 引入 15 条、f10 删段 A ⇒ 「f1 起」与「止于 f8」两头都不准）。
 > **本仓库发布的是一份脱敏模板**（`proxies` 只有 2 条不可用的占位节点、订阅是占位 URL、f10 已删段 A 路由），
 > 它的审计读数**与下表不同**，且**从未声称全绿**。两者的差异见本节末尾「发布模板的审计读数」。
 
@@ -267,7 +267,7 @@ forward:
 
 | 脚本 | 发布模板读数 | 说明 |
 |---|---|---|
-| `check_egern_dns.py` | ✅ **0 high / 2 low / 24 ok（退出码 0）** | 见下方「f3.1 判据修正」；24 这个数对应 `routing_v2` 起的全部版本（`routing_v1` 是 30 ok，多出的 6 项来自它比 `routing_v2` 多的一批 DNS 端点路由规则） |
+| `check_egern_dns.py` | ✅ **0 high / 2 low / 24 ok（退出码 0）** | 见下方「f3.1 判据修正」；24 这个数对应 `routing_v2` 起的全部版本（`routing_v1` 是 30 ok。两版 `rules` 都是 24 条、都不含 DNS 端点路由规则 ⇒ 6 项差在**逐端点**：`routing_v1` 多 `223.6.6.6` / `1.12.12.12` 两个国内端点，各计一条 `upstreams` 与一条 `proxy_nameservers` 的「IP 字面量」OK（+4）、再各计一条判据 B 的「直连可达」（+2）。逐版读数见 [`docs/07-文件版本沿革.md`](../docs/07-文件版本沿革.md)） |
 | `audit_routing_coverage.py` | ✅ 15/15 国内探针 `DIRECT` | 分流正确性不受脱敏影响 |
 | `audit_dns_forward.py --drill` | ✅ 通过（退出码 0） | `forward` value 单值、订阅耦合 0 |
 | `audit_region_filters.py` | ✅ 6 个地区组关键词全部同步（退出码 0） | 负向断言与地区组 filter 逐字一致 |
@@ -397,7 +397,7 @@ forward:
 ## 6. 已知代价与取舍
 
 - **`Foreign-DNS` 已删除**：迭代 f10 起它就无任何引用（forward 兜底改国内组后不再需要境外组）；`routing_v1` 曾**整组注释**保留为 A/B 备用，**`routing_v2` 起整段删除**。要恢复境外解析答案，需自行在 `upstreams` 里加回该组。风险提醒：若用它作兜底且代理未就绪，会掉进明文 `:53`。
-- **两条线 × 双形态**：可选只有 `egern/profiles/lazy.yaml`（**懒人版**，4 组 / 10 条规则）与 `egern/profiles/routing.yaml`（**分流版 · 推荐**，26 组 / 24 条）；其余 `routing_v3.2` / `routing_v3` / `routing_v2.4` / `routing_v2.3` / `routing_v2.2` / `routing_v2.1` / `routing_v2` / `routing_v1` 都是分流线的历代旧版、保留以备对照（`routing_v1`~`routing_v2.1` 为 29 组 / 24 条，`routing_v2.2`~`routing_v2.4` 为 27 组 / 24 条）。**各版本逐项差异见 [`docs/07-文件版本沿革.md`](../docs/07-文件版本沿革.md)（权威版本）**。⚠️ 文件名 `routing_v1`…`routing_v3.2` 是**
+- **两条线 × 双形态**：可选只有 `egern/profiles/lazy.yaml`（**懒人版**，4 组 / 10 条规则）与 `egern/profiles/routing.yaml`（**分流版 · 推荐**，26 组 / 24 条）；其余 13 个版本（`routing_v3.3` … `routing_v1` 共 10 版 + `lazy_v1.2` / `lazy_v1.1` / `lazy_v1.0`）都在 `egern/profiles/config_old/` 保留以备对照（`routing_v1`~`routing_v2.1` 为 29 组 / 24 条，`routing_v2.2`~`routing_v2.4` 为 27 组 / 24 条）。**各版本逐项差异见 [`docs/07-文件版本沿革.md`](../docs/07-文件版本沿革.md)（权威版本）**。⚠️ 文件名里的 `v` 是**文件版本**，与 [`docs/06`](../docs/06-实测数据与版本谱系.md) 的 `f1`–`f10`（这份配置自身的历史迭代）是两套前缀、两个维度，别混。
 - **图标整合进本仓库**：26 个图标源自已整合进 `icons/`，模板不再跨项目引用图标地址。来源归属与许可见 [`docs/图标与许可.md`](../../docs/图标与许可.md)（公开仓库署名）。
 - **占位节点都被真实引用**：模板 `proxies` 带 2 条占位节点（`Node-A` → `Proxy` 末位、`Node-B` → `AI` 首项），不存在悬空引用（组间引用保留；`routing_v2.3` 起**已无空组**）。不用它们就整条删掉，并把对应组 `policies` 里的名字一并摘掉。
 - **与订阅解耦**：forward 不写任何节点 / 订阅域名，换订阅无需改动 DNS 段（清单 18 验证订阅耦合 4 → 0）。
@@ -431,19 +431,19 @@ forward:
 
 - **定位**：审计并加固 Egern 配置（Profile.yaml）的 DNS 泄露面与分流覆盖。
 - **触发词**：Egern 配置 / 防 DNS 泄露 / `proxy_nameservers` / `bootstrap` 泄露 / 节点域名明文解析 等。
-- **脚本清单**（9 个，各自看不同层）：
+- **脚本清单**（10 个，各自看不同层；另带共享模块 `_egern_common.py`）：
   | 脚本 | 层级 | 覆盖清单 |
   |---|---|---|
-  | `check_egern_dns.py` | profile 文本 | 1–15 |
-  | `audit_ruleset_noresolve.py` | 被引用的规则集文件 | 16 |
-  | `audit_routing_coverage.py` | 域名 → 命中规则 → 策略 | 17 |
-  | `audit_dns_forward.py` | forward 单值 / 订阅耦合 / 兜底可达 | 18 |
-  | `audit_region_filters.py` | 地区组 filter 与 `Other Regions` 负向断言的同步 | 辅助 |
-  | `audit_ruleset_refresh.py` | 远程规则集 `update_interval`（非正值 = 不再更新 → HIGH；偏离约定值 → `--strict` 判负） | 辅助 |
-  | `weigh_ruleset.py` | 规则集重量（构成/冗余/耗时/覆盖） | 辅助 |
-  | `probe_dns_endpoints.py` | 端点逐个实测（DoH 线格式 / DoT 握手） | 辅助 |
-  | `probe_doh.py` | 只测 DoH 线格式 | 辅助 |
-  | `profile_ruleset.py` | 规则集类型分布 | 辅助 |
+  | [`check_egern_dns.py`](../../skill/scripts/egern/check_egern_dns.py) | profile 文本 | 1–15 |
+  | [`audit_ruleset_noresolve.py`](../../skill/scripts/egern/audit_ruleset_noresolve.py) | 被引用的规则集文件 | 16 |
+  | [`audit_routing_coverage.py`](../../skill/scripts/egern/audit_routing_coverage.py) | 域名 → 命中规则 → 策略 | 17 |
+  | [`audit_dns_forward.py`](../../skill/scripts/egern/audit_dns_forward.py) | forward 单值 / 订阅耦合 / 兜底可达 | 18 |
+  | [`audit_region_filters.py`](../../skill/scripts/egern/audit_region_filters.py) | 地区组 filter 与 `Other Regions` 负向断言的同步 | 辅助 |
+  | [`audit_ruleset_refresh.py`](../../skill/scripts/egern/audit_ruleset_refresh.py) | 远程规则集 `update_interval`（非正值 = 不再更新 → HIGH；偏离约定值 → `--strict` 判负） | 辅助 |
+  | [`weigh_ruleset.py`](../../skill/scripts/egern/weigh_ruleset.py) | 规则集重量（构成/冗余/耗时/覆盖） | 辅助 |
+  | [`probe_dns_endpoints.py`](../../skill/scripts/egern/probe_dns_endpoints.py) | 端点逐个实测（DoH 线格式 / DoT 握手） | 辅助 |
+  | [`probe_doh.py`](../../skill/scripts/egern/probe_doh.py) | 只测 DoH 线格式 | 辅助 |
+  | [`profile_ruleset.py`](../../skill/scripts/egern/profile_ruleset.py) | 规则集类型分布 | 辅助 |
 - **核心价值**：把「审计通过 ≠ 配置可用」的教训固化成 **18 项可复跑清单**，尤其强调**规则集层（清单 16）**与**分流覆盖层（清单 17）**这两个 profile 文本审计看不见的维度。
 
 ### 8.2 `github-publish-sanitized-repo`
@@ -492,7 +492,7 @@ S="skill/scripts"
 "$PY" "$S/probe_dns_endpoints.py" Profile.yaml
 ```
 
-规则集缓存写在系统临时目录（约 5 MB），可离线复用（`--offline`）。
+规则集缓存写在系统临时目录（分流版 22 个远程规则集 · 写作时点实测 3.25 MB），可离线复用（`--offline`）。
 
 > 📌 **全部验证都在本地完成 —— 本仓库刻意不挂 CI / 任何自动化**（2026-09-21 决定）。
 > 这是个人模板仓库，不会有外部贡献者，"自动验 PR"没有服务对象，而本地跑一遍只要几十秒。
@@ -520,7 +520,7 @@ S="skill/scripts"
 
 一句话：**`no-resolve` 是「IP 规则的开关」，与域名规则无关。** 判据是「这条规则能不能匹配 IP」，而不是「别人的配置里写了没写」。代价见 Q3：给 IP 规则关掉解析判定后，必须用域名规则补回来。
 
-> **实证（本模板）**：profile 里 `no_resolve` **只出现 1 次**（`geoip: CN`）。模板引用的 **21 个**远程规则集中，**12 个是纯域名**（多出本仓自托管的 `apple_system.list`，18 条全域名）（`direct.txt` / Gemini / Claude / Anthropic / AI / GitHub / Microsoft / YouTubeMusic / AWAvenue-Ads / **Jinx white-guard** / **Jinx ads**，无需 `no-resolve`）、**9 个含 IP 条目**（Lan / ChatGPT / Spotify / YouTube / Google / Telegram / Twitter / WeChat / Apple；`Proxy.list` 已改纯注释、不再被引用），而这 9 个的 IP 条目**已在上游 `.list` 内全部自带 `,no-resolve`**（逐条核对：14/14、2/2、6+5、13/13、97/97 …）。所以「看起来到处是 `no-resolve`」是**上游规则集自带的**，不是 profile 在堆 —— profile 只需管好自己那一条 `geoip: CN`。
+> **实证（本模板）**：`no_resolve` 在 profile 里**作为配置键只出现 1 次**（`geoip: CN`；带注释版另有 7 处提及全在注释里）。模板引用的 **22 个**远程规则集中，**13 个是纯域名**（`direct.txt` / `private.txt` / Gemini / Claude / Anthropic / AI / GitHub / Microsoft / YouTubeMusic / AWAvenue-Ads / **Jinx white-guard** / **Jinx ads** / 本仓自托管的 `apple_system.list`，无需 `no-resolve`）、**9 个含 IP 条目**（Lan / ChatGPT / Spotify / YouTube / Google / Telegram / Twitter / WeChat / Apple；`Proxy.list` 已改纯注释、不再被引用），而这 9 个的 IP 条目**已在上游 `.list` 内全部自带 `,no-resolve`**（写作时点逐条核对：`Lan` 18/18、`ChatGPT` 2/2、`Spotify` 2/2、`YouTube` 3/3、`Google` 5/5、`Telegram` 10/10、`Twitter` 6/6、`WeChat` 67/67、`Apple` 13/13）。所以「看起来到处是 `no-resolve`」是**上游规则集自带的**，不是 profile 在堆 —— profile 只需管好自己那一条 `geoip: CN`。
 
 **Q5：`Foreign-DNS` 组去哪了？我还能用吗？**
 `routing_v2` 起已整段删除（迭代 f10 起它就无引用，`routing_v1` 曾注释保留为 A/B 备用）。想用境外解析答案，需自行在 `upstreams` 里加回该组（6 个境外 DoH/DoT 端点），并把 forward 兜底 `value` 改过去。但注意：若它作兜底且代理未就绪，会掉进明文 `:53` —— 迭代 f10 默认用国内组兜底正是为了避免这条路径。
@@ -532,7 +532,7 @@ S="skill/scripts"
 为了避免模板跨项目引用图标地址（你的项目或别人的项目）。26 个图标已整合进 `icons/`，模板全部以本仓库原始地址引用，并保留来源署名。
 
 **Q8：两个模板文件有什么区别？**
-内容完全一致，仅注释差异。`egern/profiles/routing.yaml` 带注释（每段附原理），`egern/profiles/routing.min.yaml` 纯配置。按习惯取用其一（其余版本同理：`lazy` / `routing_v1` / `routing_v2` / `routing_v2.1` / `routing_v2.2` / `routing_v2.3` / `routing_v2.4` / `routing_v3` / `routing_v3.2` 各有这两份）。
+内容完全一致，仅注释差异。`egern/profiles/routing.yaml` 带注释（每段附原理），`egern/profiles/routing.min.yaml` 纯配置。按习惯取用其一（其余版本同理：顶层 `lazy` / `routing` 加 `config_old/` 里的 `lazy_v1.0`~`lazy_v1.2` 与 `routing_v1`~`routing_v3.3`，15 个版本各有这两份）。
 
 **Q9：审计全绿就安全了吗？**
 不。本项目连续 5 次「脚本 0 high、实测仍有问题」，根因是审计维度缺失（没看规则集文件、没看分流覆盖）。必须把每个新维度补成可复跑脚本，而不是重跑同一脚本。详见第 3 节 / 清单 16、17。

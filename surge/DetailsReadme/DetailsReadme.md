@@ -28,22 +28,22 @@
 ## 1 · 文件结构与两份形态
 
 ```
-Surge/
-├── profiles/
-│   ├── lazy.conf        # 懒人配置（带注释）—— 改这份
-│   ├── lazy.min.conf    # 同一个配置（纯配置，注释剥掉）—— 导入用
-│   ├── routing.conf     # 分流配置（带注释）—— 改这份
-│   └── routing.min.conf # 同一个配置（纯配置，注释剥掉）—— 导入用
-├── icons/               # 26 个策略组图标（本地，不跨项目引用）
-├── docs/                # 01–11 专题（07 末节存着本内核合并前的迭代史）
-├── DetailsReadme/       # 本文件
-├── LICENSE
+Self-Configuration/                          # 两内核合并后同仓（2026-09-23）
+├── surge/                                   # 本文档讲的这一侧
+│   ├── profiles/                            # 固定名四件 + config_old/ 存档（当前版恒为 lazy / routing）
+│   │   ├── lazy.conf · lazy.min.conf        # 懒人版（带注释 / 纯配置，注释剥掉那份）
+│   │   └── routing.conf · routing.min.conf  # 分流版（带注释 / 纯配置，注释剥掉那份）
+│   ├── docs/                                # 01–08 + 11 专题（07 末节存着本内核合并前的迭代史）
+│   └── DetailsReadme/                       # 本文件
+├── egern/                                   # 姊妹内核一侧（同构：profiles / docs / DetailsReadme）
+├── icons/                                   # 26 个策略组图标（仓库根，两内核共用、不跨项目引用）
+├── docs/ · manual/ · LICENSE                # 跨内核文档 · 手册层（09 / 10 两篇升在这里）· 许可证
 └── skill/
-    ├── SKILL.md                  # 方法论
-    ├── README.md                 # 脚本用法
-    ├── reference/                # 逐条判据
-    ├── scripts/                  # 5 个审计脚本 + 1 个共享模块
-    └── tests/                    # 6 阶段回归（阶段 1 用 3 个 fixture）+ 1 个地区坏样例 + 链接检查
+    ├── SKILL.md                             # 方法论
+    ├── README.md                            # 脚本用法
+    ├── reference/                           # 逐条判据
+    ├── scripts/                             # surge/ 5 个审计脚本 + 1 个共享模块 · egern/ 10 个 + 1 个
+    └── tests/                               # 6 阶段回归（阶段 1 用 3 个 fixture）+ 1 个地区坏样例 + 链接检查
 ```
 
 **两份配置是分工关系，不是版本关系**：`lazy` 是懒人版（4 组 / 10 条，全量一个出口），
@@ -221,7 +221,7 @@ RULE-SET,…,AI.list,…,no-resolve
 |:---|:---|:-------|
 | `test-timeout` | `5` | 5 秒足够区分「慢」和「坏」 |
 | `internet-test-url` | `connect.rom.miui.com/generate_204` | 国内 204，低方差 |
-| `proxy-test-url` | `connect.rom.miui.com/generate_204` | **本模板相对源配置唯一一处实质改动** —— 见 §16.1 |
+| `proxy-test-url` | `www.gstatic.com/generate_204` | 保持源配置的境外端点**不改** —— 取向理由见 §16.1 |
 | `proxy-test-udp` | `apple.com@1.1.1.1` | `smart` 组的 UDP 评分要用；`1.1.1.1` 是 IP 字面量，不产生解析 |
 
 ### 3.5 流量处理
@@ -662,7 +662,7 @@ AD      = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 | 组 | 类型 | 承载 | 被谁引用 |
 |:---|:-----|:-----|:---------|
 | `Airport` | `select` | `policy-path` 订阅槽位（`hidden=true`） | `Proxy` / `AI` 的 `include-other-group` |
-| `Proxy` | `smart` | `Node-A` + 订阅节点 | `FINAL` + 3 条游戏机域名 |
+| `Proxy` | `smart` | `Node-A` + 订阅节点 | `FINAL,Proxy,dns-failed` 一处（游戏机那 3 条域名规则已于 2026-09-23 删除，见 §9.3） |
 | `AI` | `smart` | `Node-B` + 订阅节点 | `AI.list` |
 | `AD` | `select` | `REJECT` / `DIRECT` | 独立手动开关（不被规则引用，见 §13.3） |
 
@@ -672,7 +672,7 @@ AD      = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 
 **`routing.conf` —— 26 个组**
 
-组序与 Egern v3.3 **逐位对齐**（由 `skill/tests/surge/architecture.sh` 的 ④ 断言守着）。
+组序与 Egern 当前版 **v3.4** **逐位对齐**（由 `skill/tests/surge/architecture.sh` 的 ④ 断言守着）。
 
 | 层 | 组 | 类型 | 作用 |
 |:---|:---|:----:|:-----|
@@ -702,7 +702,7 @@ AD      = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 >
 > 完整推导见 [`docs/11` §2.2](../docs/11-分流版设计.md)。
 
-**应用组各自的默认取向**（首项即默认，与 Egern v3.3 对齐）：
+**应用组各自的默认取向**（首项即默认，与 Egern v3.4 对齐）：
 
 | 应用组 | 默认 | 备注 |
 |:-------|:----:|:-----|
@@ -855,13 +855,13 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 
 | 脚本 | 审什么 | 需要联网 |
 |:-----|:-------|:--------:|
-| `check_surge_dns.py` | 文件内部的**结构**（12 项检查） | ❌ |
-| `audit_ruleset_refresh.py` | 远程规则集的**刷新参数** `update-interval`（非正值 = 关掉自动更新 → HIGH；与约定值 604800 不同 → 仅 `--strict` 判负） | ❌ |
-| `audit_ruleset_content.py` | **远程规则集的内容**（缺 no-resolve 的 IP 条目 / 直连集合的域名体量） | ✅ |
-| `audit_routing_coverage.py` | 拿**真实域名走一遍** `[Rule]`，看最终去哪（期望表按配置自动切换） | ✅ |
-| `audit_region_filters.py` | **地区组正则的一致性**（`Other Regions` 的负向断言有没有漏词、组间有没有重叠） | ❌ |
-| `skill/tests/surge/architecture.sh` | 项目不变量（占位符纪律 / 订阅 token 纪律 / 两组形态一致性 / lazy↔routing 一致性 / 规则顺序铁律） | ❌ |
-| `skill/tests/surge/check_links.py` | markdown 相对链接与锚点（改标题后**静默失效**的那一类问题） | ❌ |
+| [`check_surge_dns.py`](../../skill/scripts/surge/check_surge_dns.py) | 文件内部的**结构**（12 项检查） | ❌ |
+| [`audit_ruleset_refresh.py`](../../skill/scripts/surge/audit_ruleset_refresh.py) | 远程规则集的**刷新参数** `update-interval`（非正值 = 关掉自动更新 → HIGH；与约定值 604800 不同 → 仅 `--strict` 判负） | ❌ |
+| [`audit_ruleset_content.py`](../../skill/scripts/surge/audit_ruleset_content.py) | **远程规则集的内容**（缺 no-resolve 的 IP 条目 / 直连集合的域名体量） | ✅ |
+| [`audit_routing_coverage.py`](../../skill/scripts/surge/audit_routing_coverage.py) | 拿**真实域名走一遍** `[Rule]`，看最终去哪（期望表按配置自动切换） | ✅ |
+| [`audit_region_filters.py`](../../skill/scripts/surge/audit_region_filters.py) | **地区组正则的一致性**（`Other Regions` 的负向断言有没有漏词、组间有没有重叠） | ❌ |
+| [`skill/tests/surge/architecture.sh`](../../skill/tests/surge/architecture.sh) | 项目不变量（占位符纪律 / 订阅 token 纪律 / 两组形态一致性 / lazy↔routing 一致性 / 规则顺序铁律） | ❌ |
+| [`skill/tests/surge/check_links.py`](../../skill/tests/surge/check_links.py) | markdown 相对链接与锚点（改标题后**静默失效**的那一类问题） | ❌ |
 
 > 📌 第 4 个（`audit_region_filters.py`）是分流版带来的：`Other Regions` 用的负向断言
 > 把另外 6 个地区组的关键词**抄了一遍**（68 个 token），而 Surge 的 `filter`
