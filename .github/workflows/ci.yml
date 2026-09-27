@@ -26,6 +26,9 @@ jobs:
       - name: Min-pair consistency
         run: python skill/tests/check_min_pair.py
 
+      - name: README badge ↔ profiles counts
+        run: python skill/tests/check_badges.py
+
       - name: Markdown links and anchors
         run: python skill/tests/check_links.py .
 
