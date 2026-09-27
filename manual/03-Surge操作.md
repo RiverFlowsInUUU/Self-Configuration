@@ -96,7 +96,7 @@ Egern 的 `flatten: true` 在 Surge 没有同名字段，语义对应 `include-o
 ChatGPT = select, include-other-group="Proxy"
 ```
 
-差异要说白：Egern 应用组是 `fallback` / `smart`（自动故障转移），Surge 的 `select` 是纯手动。想要自动选优就把某组换成 `smart, include-other-group="Proxy"`，代价是面板不能再手动挑节点。这是能力差异，不是配置疏漏。
+差异要说白：Egern 应用组自 `routing_v3` 起同为手动 `select`（旧版是 `fallback`），与 Surge 的 `select` 现版同形。想要应用组自动选优：Egern 换 `fallback` / `smart`、Surge 把某组换成 `smart, include-other-group="Proxy"`，代价是面板不能再手动挑节点。旧版这处确是能力差异，现已拉平 —— 史实写明，不假装一直没差过。
 
 ### ③ 地区组靠正则筛名字，且有两个开关要一起开
 

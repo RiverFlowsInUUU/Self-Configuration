@@ -695,9 +695,9 @@ AD      = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 > 其 Surge 等价写法就是 `select, include-other-group="Proxy"`。
 > 地区组用 `smart` 是因为它筛的是**具体节点**，需要打分。
 >
-> ⚠️ **能力差异（必须说清）**：Egern 的应用组是 `fallback` / `smart`（**自动**故障转移），
-> Surge 的 `select` 是**纯手动** ⇒ 本配置的应用组「默认走 `Proxy` 全部节点 + 面板可手动改」，
-> **没有自动故障转移**。想要自动选优就把某组换成 `smart, include-other-group="Proxy"`
+> ⚠️ **能力差异（必须说清）**：Egern 的应用组自 `routing_v3` 起同为手动 `select`（旧版才是 `fallback`），
+> Surge 的 `select` 是**纯手动** ⇒ 两侧应用组同形：「默认走 `Proxy` 全部节点 + 面板可手动改」，
+> **应用组没有自动故障转移**（两侧地区组均为 `smart` 自动选优）。想要应用组也自动选优：Egern 换 `fallback` / `smart`、Surge 换 `smart, include-other-group="Proxy"`
 > （代价：面板上不能再手动挑节点）。
 >
 > 完整推导见 [`docs/11` §2.2](../docs/11-分流版设计.md)。

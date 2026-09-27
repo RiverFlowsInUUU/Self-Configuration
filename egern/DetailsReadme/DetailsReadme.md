@@ -66,7 +66,7 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 |---|---|---|
 | `select` | 手动选路 | `Proxy` / `Final` / 各类 App 组 |
 | `smart` | 智能选优：组内多轮测速，按延迟 / 抖动 / 可靠性综合打分自动选最稳节点 | `Hong Kong` / `USA` / `Japan`（这些地区组另配 `filter` 正则从订阅里筛节点 —— 归类是 `filter` 的职责，不是 `smart` 的） |
-| `fallback` | 故障转移：按 `policies` 顺序依次尝试，选第一个可用的节点 | `ChatGPT` / `Gemini` |
+| `fallback` | 故障转移：按 `policies` 顺序依次尝试，选第一个可用的节点 | 现版模板无 `fallback` 组（`ChatGPT` / `Gemini` 至 `routing_v2.4` 为该类型，`routing_v3` 起为 `select`） |
 | `external` | 从订阅 URL 拉取节点 | 模板里是 `sub.example.com?token=REPLACE_WITH_YOUR_TOKEN` 占位 |
 
 要点：
@@ -87,10 +87,10 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 `select` / `auto_test` / `smart` / `fallback` / `load_balance` 五种基础类型上通用。
 本模板的 `Smart` / `MAX` / `ChatGPT` / `Gemini` 与全部地区组都用了它。
 
-**`ChatGPT` / `Gemini` 为什么必须配 `flatten`** —— 它们是 `fallback`，语义是**按顺序取第一个可用**。
-不加 `flatten` 时候选只有「`Proxy`」**一个**，等于没有故障转移能力，且 `Proxy` 一挂整组就断；
-加上后 `Proxy` 展开成全部具体节点，`fallback` 在节点级依次尝试
-⇒ 效果是给 `Proxy` 补一层**节点级故障转移**。
+**`ChatGPT` / `Gemini` 为什么必须配 `flatten`** —— 它们现为 `select`（`routing_v3` 前是 `fallback`，语义**按顺序取第一个可用**）。
+不加 `flatten` 时候选只有「`Proxy`」这一个组单位（`select` 下面板不能逐节点手选；旧版 `fallback` 下等于没有故障转移），且 `Proxy` 一挂整组就断；
+加上后 `Proxy` 展开成全部具体节点，面板可直接逐节点选（旧版 `fallback` 则是在节点级依次尝试）
+⇒ 效果是应用组拿到**节点级候选**，与 Surge `select, include-other-group="Proxy"` 的节点平铺同形。
 
 **`MAX`** —— 「带节点筛选的 `Smart`」：上游同 `Smart`，额外用
 `filter: (?<![\d.])0\.\d*[1-9]` 只留**倍率 < 1** 的节点。

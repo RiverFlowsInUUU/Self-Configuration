@@ -40,12 +40,12 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 
 ## 4.4 `policy_groups:`：四类组与三个易踩的坑
 
-组分四类：入口（`Proxy` / `Final`）、智能与回退（`Smart` / 各应用 `fallback`）、订阅槽位（`external` 组，`hidden: true`，当前版只有一个 `Airport`；旧版为 `Airport-A` / `Airport-B` 两槽、更早四槽）、地区组（`filter` 正则筛名 + `flatten: true`）。
+组分四类：入口（`Proxy` / `Final`）、智能与回退（`Smart` 与各地区组 `smart`；各应用组现行版为 `select`，旧版才是 `fallback`）、订阅槽位（`external` 组，`hidden: true`，当前版只有一个 `Airport`；旧版为 `Airport-A` / `Airport-B` 两槽、更早四槽）、地区组（`filter` 正则筛名 + `flatten: true`）。
 
 必须知道的三条：
 
 1. `flatten: true` 把组名展开成组内全部具体节点，让 `fallback` / `smart` 做节点级尝试。`fallback` 不给 `flatten` 时，`policies: [Proxy]` 只有一个候选单位，等于没有故障转移。官方明确 `flatten` 在 `select` / `auto_test` / `smart` / `fallback` / `load_balance` 五种类型通用。
-2. `fallback` 不做延迟择优，按顺序取第一个可用。想固定地区，把目标写首位；想自动挑最快，改 `smart`。`ChatGPT` / `Gemini` 在旧版曾是空组 `[]` 而规则直指它们，导入即静默断流；当前版已填 `[Proxy]` + `flatten`。
+2. `fallback` 不做延迟择优，按顺序取第一个可用。想固定地区，把目标写首位；想自动挑最快，改 `smart`。`ChatGPT` / `Gemini` 在旧版曾是空组 `[]` 而规则直指它们，导入即静默断流；当前版已填 `[Proxy]` + `flatten`，且这两组自 `routing_v3` 起已由 `fallback` 改为 `select`。
 3. `MAX` 组 = 带"低倍率节点"筛选的 `Smart`，它是 `Proxy` 首项，默认出口因此优先落低倍率节点。它的 filter 曾写错（只认字面 `0.01` / `0.1`，误收 `10.1`、漏收 `0.5`），现版用带左边界的负向后行断言。改任何地区组 filter 关键词，必须同步 `Other Regions` 的负向断言（`audit_region_filters.py` 守）。
 
 `lazy` 特有：只有 `Proxy` / `AI` / `AD` 三组；`Proxy` 组 `policies` 为空，必须自己填节点名；`AD` 子策略只有 `REJECT`（无 `DIRECT` 兜底）。临时放行单个域名，在 `rules` 更前面加一条 `DIRECT` 规则，别整组切走。
