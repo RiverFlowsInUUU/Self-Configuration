@@ -71,11 +71,11 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 
 | | Surge | Egern |
 |:--|:------|:------|
-| 🚫 盲⁠区⁠设⁠备 | `hijack-dns` 接管明文 `:53` | `hijack_dns: '*'` 全量接管 |
-| 🔐 加⁠密⁠通⁠道 | 端点尽量写 IP 字面量，主机名端点显式豁免 | 四条端点全是 IP 字面量 |
-| 🛡️ 明⁠文⁠回⁠退 | `dns-server` 裸 IP、绝不写 `system` | `forward` 兜底指向加密组 |
-| 🧭 规⁠则⁠克⁠制 | IP 类规则一律 `no-resolve`，零 IP 的规则集不写（实测判定） | 同一原则写在规则集文件里（`no_resolve` 对 `rule_set` 不生效） |
-| ✂️ 远⁠端⁠解⁠析 | 代理域名交节点解析，本地不留答案 | `proxy_nameservers` 专用通道、强制直连 |
+| 🚫 盲⁠区⁠设⁠备 | `hijack-dns` 接管明文 `:53`（六个知名解析器） | `hijack_dns` 接管明文 `:53`（全量） |
+| 🔐 加⁠密⁠通⁠道 | 主解析走 DoH，主机名端点经裸 IP 受控引导 | 主解析走 DoH/DoT，四条端点全是 IP 字面量 |
+| 🛡️ 明⁠文⁠回⁠退 | `dns-server` 全裸 IP，绝不写 `system` | `forward` 兜底只指加密组，绝不落明文 |
+| 🧭 规⁠则⁠克⁠制 | IP 类规则一律 `no-resolve`；零 IP 的规则集不写（实测判定） | IP 类规则一律 `no_resolve`；该键对 `rule_set` 不生效，原则写进规则集文件 |
+| ✂️ 远⁠端⁠解⁠析 | 代理域名交节点解析，本地不留答案 | 代理域名交节点解析，本地不留答案（`proxy_nameservers` 专用通道、强制直连） |
 | 📋 自⁠检⁠读⁠数 | 5 个审计脚本 + 6 阶段 · 19 断言 | 10 个审计脚本 + 2 阶段 · 24 断言 |
 
 ---
