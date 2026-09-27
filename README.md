@@ -93,7 +93,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 | 🎨 图⁠标⁠许⁠可 | [`icons/`](icons/) 26 个策略组图标 · [`来源与 MIT 许可`](docs/图标与许可.md) |
 | 🗃️ 归⁠档⁠去⁠向 | [`手册 99 章映射表`](manual/99-版本历史.md) |
 | 🧪 审⁠计⁠闸⁠门 | [`skill/`](skill/) —— `bash skill/tests/all.sh` 一条命令跑完七项检查 |
-| 🕘 改⁠动⁠记⁠录 | [`CHANGELOG.md`](CHANGELOG.md) —— 唯一改动记录 |
+| 🕘 改⁠动⁠记⁠录 | [`CHANGELOG.md`](CHANGELOG.md) —— 只记配置文件修改 |
 | 📦 仓⁠库⁠自⁠足 | [`为何不依赖外部仓库`](docs/技能包合并与自包含.md) · [`体检报告`](docs/体检报告.md) · `日志旧版原文` |
 
 > **说明**　就地冻结 = 原文可读、不再更新，操作以手册为准。编号沿旧：`surge/docs/11` 与 `egern/docs/12` 同一主题；09 / 10 两侧皆无，11 只有 Surge 侧有、Egern 侧空着 —— 都是历史缺口，不是漏了文件。

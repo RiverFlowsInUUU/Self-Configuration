@@ -108,8 +108,8 @@ def changelog_stub(fam, old, new, date):
     """升版说明的骨架：确定的部分（家族 · 号 · 订阅地址 · 归档去向）写全，正文留空给人。
 
     只出文本、**不写文件** —— `CHANGELOG.md` 是文案，机器不代笔（见开头"它**不**做"）。
-    根文件那三条体例里，脚本能钉的只有「一天一段」和「句首单 emoji」，
-    段落归属（`Surge` / `Egern` / `共享层`）与正文由人定 —— 升版两核都动，通常落在各自段里。
+    日志现只记配置文件的修改、一条一句、动词开头（见根日志开头注），脚本能钉的就这一条；
+    「这一轮实际改了什么」由人写 —— 升版两核通常都动，各记一条还是合记一条也由人定。
     """
     label = {"routing": "分流版", "lazy": "懒人版"}[fam]
     urls = []
@@ -118,16 +118,12 @@ def changelog_stub(fam, old, new, date):
         stem, ext = base.rsplit(".", 1)
         urls.append("`" + d + "/" + stem + ".{,.min}." + ext + "`")
     return NL.join([
-        "## " + date + "    ← 一天只有一段：仓里已有今天的段就把下面几条并进去，别开第二段",
+        "## " + date + "    ← 一天只有一段：仓里已有今天的段就把下面这条并进去，别开第二段",
         "",
-        "- 🏷️ **" + label + "升版 `" + old + "` → `" + new + "`**：订阅地址不变（"
-        + " · ".join(urls) + "），旧内容逐字节进各侧 `profiles/config_old/`。"
+        "- 升" + label + " `" + old + "` → `" + new + "`：订阅地址不变（"
+        + " · ".join(urls) + "，`.min` 由 `python skill/tests/make_min.py --family "
+        + fam + " --apply` 同步），旧快照逐字节进各侧 `profiles/config_old/`；"
           "这一轮实际改了什么：＿＿",
-        "- 🧷 `.min` 由 `python skill/tests/make_min.py --family " + fam + " --apply` 同步"
-          "（生成器不碰归档；同号快照存在时它只点名提醒）",
-        "- 🔢 验收：`bash skill/tests/all.sh` 七项 TOTAL ＿＿ · ＿＿ · ＿＿ · ＿＿ · ＿＿ · ＿＿ · ＿＿；"
-          "这轮若动了判据，README / 两侧 docs/08 / 两份 checker.md 的读数要同步"
-          "（**总数**由 `all.sh` 第 7 项对拍，逐阶段分项仍要手工同步）",
     ])
 
 
