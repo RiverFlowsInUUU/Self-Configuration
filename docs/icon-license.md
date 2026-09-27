@@ -16,7 +16,7 @@
 `Nfcloud` `Proxy` `Singapore` `Spotify` `Taiwan` `Telegram` `Twitter` `UnitedStates` `WeChat`
 `WorldMap` `YouTube` `YouTubeMusic` `claude-color` `gemini-color` `grok` `openai`
 
-命名风格的取舍口径以 [`manual/11-许可与图标.md`](../manual/11-许可与图标.md) §11.3 为唯一权威
+命名风格沿用既有约定：直用上游图标原名、仓内不做别名
 （小写连字符不扩员，其余与 PascalCase 同族），本处不另立口径。
 
 ---
@@ -26,11 +26,11 @@
 本项目采用 **MIT** 许可证，见 [`LICENSE`](../LICENSE)。
 
 第三方规则集（blackmatrix7 / ACL4SSR / Loyalsoldier / AWAvenue / Jinx / adysec / Qure 等）
-版权归其原作者，完整来源清单见 [`规则集与来源.md`](规则集与来源.md)。
+版权归其原作者，完整来源清单见 [`rulesets.md`](rulesets.md)。
 
 > ⚠️ Surge 与 Egern 均为**闭源商业软件**。本仓库提供的是配置文件与审计脚本，不含、也不授权任何一款软件本身。
 > 文档中凡标注「实测」的结论都是特定时版本下的经验值，版本更新后需重新验证。
 
 ---
 
-相关：[`规则集与来源.md`](规则集与来源.md) · [`注意事项.md`](注意事项.md) · [`../README.md`](../README.md)
+相关：[`rulesets.md`](rulesets.md) · [`troubleshoot-faq.md`](troubleshoot-faq.md) · [`../README.md`](../README.md)

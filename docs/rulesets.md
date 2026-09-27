@@ -7,7 +7,7 @@
 > 引用位口径（数的是 `rules` 段里指向规则集的条目，同一份规则集被两条规则各引用一次就占两位）：
 > 分流版 **22 条规则集引用**。
 > 懒人版 **8 条规则集引用**。
-> 这两个数是 `check_doc_readings.py` 的 D3 逐位对拍的对象，两内核实测相同；上一句的 21 / 6 是 **URL 交集**，另一个口径（D18），别混。
+> 这两个数以 `docs/rulesets.md` 与两侧 profile 的现算为准，别混。
 
 ## 1 · 共用规则集
 
@@ -46,7 +46,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 ✅ **懒人版两侧现已逐位同构**：各 10 条，白名单 → 广告 ×2 → 内网 ×2 → 系统集 → AI → 国内直连 → 地理 → 兜底。
 剩余差异只剩写法与内核能力：广告策略（Surge 字面量 `REJECT` ／ Egern `AD` 组）、内置 `LAN` ↔ `Lan.list`、
 内置 `SYSTEM` ↔ 本仓快照、`FINAL` ↔ `default`。Apple 全量集与 `.cn` 后缀兜底两侧现在**都没有**。
-逐项差异见 [`跨内核差异对照.md`](跨内核差异对照.md) 第 4 节。
+逐项差异见 [`cross-kernel-diff.md`](cross-kernel-diff.md) 第 4 节。
 
 ## 3 · 匹配顺序
 
@@ -69,7 +69,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 1. **白名单必须排在最前**，且在两条广告清单之前 —— Jinx 与 AWAvenue 存在重叠域名，白名单排到后面会被误杀。
 2. **厂商专属规则（`OpenAI` / `Gemini` / `Anthropic` / `Claude`）排在 `AI.list` 之前** —— 否则 AI 域名先被 `AI.list` 接走，专属组形同虚设。
 3. **`GitHub.list` 排在 `direct.txt` 之前** —— `github.com` 同时被国内直连清单收录，排到后面就接不到它。
-4. **IP 类规则排最后，且必须带 `no-resolve` / `no_resolve`** —— 否则每个走到它的域名都会被强制本地解析一次，那正是泄露来源。详见 [`surge/docs/05-分流与no_resolve必须成对交付.md`](../surge/docs/05-分流与no_resolve必须成对交付.md) · [`egern/docs/05-分流与no_resolve必须成对交付.md`](../egern/docs/05-分流与no_resolve必须成对交付.md)。
+4. **IP 类规则排最后，且必须带 `no-resolve` / `no_resolve`** —— 否则每个走到它的域名都会被强制本地解析一次，那正是泄露来源。详见 [`docs/no-resolve-pairing.md`](../docs/no-resolve-pairing.md) · [`docs/no-resolve-pairing.md`](../docs/no-resolve-pairing.md)。
 4b. ⭐ **规则级开关的取舍，四份 profile 共用一条原则**：**实测零 IP 条目的规则集不写，真含 IP 条目的必须写**。
     该开关只对规则集里的 IP 类条目起作用，纯域名集写上是空转 —— 本仓 2026-09-24 起把它从 12 条零 IP 规则上删掉。
     ⚠️ 判据是「实测零 IP」不是「纯域名」（`YouTubeMusic` 有 UA、`Microsoft` 还有 PROCESS-NAME，同样零 IP），
@@ -92,8 +92,8 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 | `GeoLite2-Country.mmdb` | Surge 侧 `GEOIP` 判定 | [adysec/IP_database](https://github.com/adysec/IP_database) |
 | `Country.mmdb` · `GeoLite2-ASN.mmdb` | Egern 侧 `geoip` / `asn` 判定 | [Loyalsoldier/geoip](https://github.com/Loyalsoldier/geoip) |
 
-许可见 [`图标与许可.md`](图标与许可.md)。第三方规则集版权归其原作者。
+许可见 [`icon-license.md`](icon-license.md)。第三方规则集版权归其原作者。
 
 ---
 
-相关：[`跨内核差异对照.md`](跨内核差异对照.md) · [`注意事项.md`](注意事项.md) · [`../README.md`](../README.md)
+相关：[`cross-kernel-diff.md`](cross-kernel-diff.md) · [`troubleshoot-faq.md`](troubleshoot-faq.md) · [`icon-license.md`](icon-license.md) · [`../README.md`](../README.md)
