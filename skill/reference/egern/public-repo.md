@@ -51,7 +51,6 @@ egern/apple_system.list                     # 本仓自托管的 Apple 系统域
 机场订阅 URL（含 token）→ 占位；`mitm.ca_p12` + `ca_passphrase`（个人 CA 私钥）→ **注释掉**；
 机场组名/节点名 → `Airport-A` / `Node-1`；`dns.forward` 里的**节点域名** → `example-node.com`。
 
----
 
 ## README 的边界：只讲产品，不讲改动过程
 
@@ -71,7 +70,6 @@ README 是**产品介绍** —— 读者要知道「这东西是什么、怎么�
 实测反例（2026-09-22）：在 README 里补「我们为什么这样归类 / 上面是分类顺序」这类说明，
 用户一句打回 —— 「readme 是产品介绍，不是自说自话的地方」。
 
----
 
 ## 首页不列规则集
 

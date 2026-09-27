@@ -4,7 +4,6 @@
 > 这一页是给"想把一侧的改动移植到另一侧"的人看的：哪些能直接照搬、哪些照搬就是错的。
 > 结论均来自对 `surge/profiles/routing.conf` 与 `egern/profiles/routing.yaml` 的逐条比对。
 
----
 
 ## 1 · 语法映射
 

@@ -156,7 +156,6 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 | 名词不认识、常见疑问没解决 | [FAQ 与术语表](troubleshoot-faq.md) |
 
 
----
 
 ## Egern 操作
 
@@ -264,7 +263,6 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/pro
 | 名词不认识、常见疑问没解决 | [FAQ 与术语表](troubleshoot-faq.md) |
 
 
----
 
 ## 日常维护
 

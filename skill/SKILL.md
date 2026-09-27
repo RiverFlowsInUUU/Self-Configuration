@@ -172,7 +172,6 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
 | [`reference/egern/ruleset-weight.md`](reference/egern/ruleset-weight.md) | 用户问「规则集是不是太重」时——内存 / 耗时实测 |
 | [`reference/egern/public-repo.md`](reference/egern/public-repo.md) | 要更新模板 / 了解仓库结构与脱敏清单时 |
 
----
 
 ## 分支 A · Surge 配置防 DNS 泄露
 
@@ -338,7 +337,6 @@ FINAL,Proxy,dns-failed
 > ⚠️ Surge 是闭源商业软件，**很多行为没有文档，只能实测**。
 > 本技能里凡是写「实测」的地方都请当作经验值 —— 版本更新后需重新验证。
 
----
 
 ## 分支 B · Egern 配置防 DNS 泄露
 

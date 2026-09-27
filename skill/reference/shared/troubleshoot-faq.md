@@ -116,7 +116,6 @@ Egern 日志速读：
 | 名词不认识、常见疑问没解决 | 本篇「FAQ 与术语表」章 |
 
 
----
 
 ## 验证与自检
 
@@ -226,7 +225,6 @@ python skill/tests/make_min.py            # 计划模式：四份 .min 应全部
 | 验证结论汇报要带的三样 | 本篇「汇报纪律」小节 |
 
 
----
 
 ## 注意事项
 
@@ -293,7 +291,6 @@ Egern 用本仓快照 `apple_system.list`，且若干内核级约束不可套用
 相关：[`rulesets.md`](rulesets.md) · [`cross-kernel-diff.md`](cross-kernel-diff.md)
 
 
----
 
 ## FAQ 与术语表
 

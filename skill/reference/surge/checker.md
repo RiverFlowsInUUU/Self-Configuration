@@ -4,7 +4,6 @@
 >
 > 逐条事故复盘见 [`pitfalls.md`](pitfalls.md)。
 
----
 
 ## 1 · 环境要求
 
@@ -31,7 +30,6 @@ fi
 ⚠️ 拼接路径**一律用 `/`**，不要用 `\\` —— `cygpath -w` 给的是 `C:\Users\...`（反斜杠），
 再拼 `\\check.py` 在 Linux 上会把反斜杠变成文件名的一部分 ⇒ file not found。
 
----
 
 ## 2 · 命令
 
@@ -82,7 +80,6 @@ python ./skill/scripts/surge/check_surge_dns.py surge/profiles/routing.conf
 
 用 `--cache-dir` 指定别处；用 `--force` 忽略缓存重下。
 
----
 
 ## 3 · 退出码约定
 
@@ -106,7 +103,6 @@ fi
 
 > **铁律：审计器的故障绝不能被计成一次成功的判负。**
 
----
 
 ## 4 · 12 项判据（`check_surge_dns.py`）
 
@@ -187,7 +183,6 @@ result: 0 high, 0 medium, 2 low, 12 ok, 2 waived
 
 `--quiet` 只打印最后两行。
 
----
 
 ## 5 · 规则集内容判据（`audit_ruleset_content.py`）
 
@@ -231,7 +226,6 @@ BUILTIN_SETS = {"system", "lan", "direct", "proxy", "final", "reject",
 `URLError` / `HTTPError` / `OSError` → 计 `medium`（"结论未知"），**不判 HIGH**。
 理由：网络抖动不该被报成一个配置缺陷。
 
----
 
 ## 6 · 分流覆盖判据（`audit_routing_coverage.py`）
 
@@ -332,7 +326,6 @@ APPLE_PROBES = [
 判据仍会通过（因为 `FINAL → Proxy` 对境外探针是正确的）。
 若将来有探针因此误判，应改成显式枚举内置集合的已知内容。
 
----
 
 ## 7 · 架构不变量（`check_secrets.py`）
 
@@ -398,7 +391,6 @@ DNS_KEYS = [
 ⚠️ ③-b 的两条是**独立的约束**，不是「DIRECT 在 REJECT 之前」一条。
 见 [`pitfalls.md`](pitfalls.md) 坑 9。
 
----
 
 ## 8 · 判据演进史
 
@@ -446,7 +438,6 @@ DNS_KEYS = [
 ⇒ 因此本项目对每一条判据都要求：**能说清"怎么做才算过"**，
 且**不能说清的就是判据没写好**。
 
----
 
 ## 9 · 全绿 ≠ 可用
 
