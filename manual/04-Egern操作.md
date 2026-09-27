@@ -40,7 +40,7 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 
 ## 4.4 `policy_groups:`：四类组与三个易踩的坑
 
-组分四类：入口（`Proxy` / `Final`）、智能与回退（`Smart` 与各地区组 `smart`；各应用组现行版为 `select`，旧版才是 `fallback`）、订阅槽位（`external` 组，`hidden: true`，当前版只有一个 `Airport`；旧版为 `Airport-A` / `Airport-B` 两槽、更早四槽）、地区组（`filter` 正则筛名 + `flatten: true`）。
+组分四类：入口（`Proxy` / `Final`）、应用组（`ChatGPT` / `Gemini` 等，现行版皆为 `select`，旧版才是 `fallback`）、智能组（`Smart` / `MAX` 与各地区组，皆 `smart`；地区组用 `filter` 正则筛名 + `flatten: true`）、订阅槽位（`external` 组，`hidden: true`，当前版只有一个 `Airport`；旧版为 `Airport-A` / `Airport-B` 两槽、更早四槽）。
 
 必须知道的三条：
 
