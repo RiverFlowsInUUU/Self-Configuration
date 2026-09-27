@@ -338,7 +338,7 @@ rules:
     update_interval: 604800
 - rule_set:
     name: System
-    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/apple_system.list
+    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/apple_system.list
     policy: DIRECT
     update_interval: 604800
 - rule_set:

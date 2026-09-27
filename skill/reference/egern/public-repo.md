@@ -12,6 +12,7 @@
 README.md                                   # 门面（人类看的唯一文档）：订阅地址 + 分组表 + 隐私对照 + AI 指路
 LICENSE · .gitattributes · .gitignore
 icons/                                      # 26 个 PNG —— 两内核共用
+rules/                                      # 本仓自托管的规则集（当前 1 份：Egern 用的 apple_system.list）
 skill/                                      # ★ AI 驱动的唯一知识库
   SKILL.md                                  # 单一入口：底线与纪律 → §0 判内核 → 分支 A/B
   reference/shared/                         # 跨内核主题七篇（cross-kernel-diff · rulesets · ops · troubleshoot-faq 等）
@@ -20,7 +21,6 @@ skill/                                      # ★ AI 驱动的唯一知识库
 egern/profiles/lazy.yaml / lazy.min.yaml    # 懒人版 · 可选（4 组 / 10 条规则；隐藏订阅槽位 Airport）
 egern/profiles/routing.yaml / .min.yaml     # 分流版 · 推荐（脱敏模板：2 条占位节点 + 1 个机场槽位，凭据与订阅均为占位符）
 egern/profiles/config_old/                  # 历史归档（配置变动时按规则入档，只增不删）
-egern/apple_system.list                     # 本仓自托管的 Apple 系统域名规则集
 .github/workflows/ci.yml                    # CI：六步检查（push / PR 自动）
 ```
 

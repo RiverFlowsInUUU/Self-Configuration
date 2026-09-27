@@ -600,7 +600,7 @@ rules:
 #   .push-apple.com.akadns.net / .ess.apple.com / .lcdn-locator / .lcdn-registration。
 - rule_set:
     name: System
-    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/apple_system.list
+    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/apple_system.list
     policy: DIRECT
     update_interval: 604800
 # ★ f7 核心改动：Apple_All.list -> Apple_All_No_Resolve.list

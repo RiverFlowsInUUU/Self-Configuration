@@ -40,7 +40,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 |:-------|:---------|:-----|
 | `LAN`（内置） | 仅 Surge | Surge 有内置局域网规则集 |
 | `Lan.list` | 仅 Egern | Egern 无内置 LAN，引用 [blackmatrix7](https://github.com/blackmatrix7/ios_rule_script) 的清单补位。与 `private.txt` **互补**：`Lan` 管 IP 段与路由管理域，`private` 管特殊 TLD 与 `miwifi.com` |
-| `SYSTEM`（内置）→ 快照 `apple_system.list` | Surge 内置 ／ Egern 引用快照 | 系统服务 → `DIRECT`。2026-09-24 起两侧同一位置各有一套：Egern 没有内置系统集，引用 [`../egern/apple_system.list`](../../../egern/apple_system.list) —— 内容 = 内置 `SYSTEM` 的 2026-09-24 时点快照，删掉 Egern 不支持的两条 `PROCESS-NAME`（`trustd` / `netbiosd`） |
+| `SYSTEM`（内置）→ 快照 `apple_system.list` | Surge 内置 ／ Egern 引用快照 | 系统服务 → `DIRECT`。2026-09-24 起两侧同一位置各有一套：Egern 没有内置系统集，引用 [`../rules/apple_system.list`](../../../rules/apple_system.list)（2026-09-27 起自 `egern/` 根提升到顶层 `rules/`，两侧文件夹布局就此对称）—— 内容 = 内置 `SYSTEM` 的 2026-09-24 时点快照，删掉 Egern 不支持的两条 `PROCESS-NAME`（`trustd` / `netbiosd`） |
 | ~~`domain_suffix: cn`~~ | 两侧均已删除 | 2026-09-24 懒人版也删了。理由与分流版 v3 同：`direct.txt` 本身含 `DOMAIN-SUFFIX,cn`（2026-09-24 快照第 23,829 行），留着只会把「规则集没接住」掩盖成「cn 直连正常」 |
 
 ✅ **懒人版两侧现已逐位同构**：各 10 条，白名单 → 广告 ×2 → 内网 ×2 → 系统集 → AI → 国内直连 → 地理 → 兜底。
@@ -81,7 +81,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
    （`ChinaMax.list` 名字像域名集，2026-09-24 快照里 **IP 类条目 12,472 条、域名类只有 64 条**）。
 6. **两条广告清单的策略与参数必须逐字相同**，否则同一广告域名因命中不同清单而进出不一致。
 
-> 🛡️ 本仓自托管的 `egern/apple_system.list` 没有第三方刷新审计 ⇒ 漂移只能靠人：Surge 大版本更新时把内置 `SYSTEM` 与这份快照比对一次
+> 🛡️ 本仓自托管的 `rules/apple_system.list` 没有第三方刷新审计 ⇒ 漂移只能靠人：Surge 大版本更新时把内置 `SYSTEM` 与这份快照比对一次
 > （这份快照同时是 `audit_routing_coverage.py` 里 `SYSTEM` 那条内置集的判定依据，见该脚本的 `BUILTIN_SET_SNAPSHOTS`）。
 
 ## 5 · 素材与许可

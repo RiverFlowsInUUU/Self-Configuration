@@ -56,16 +56,16 @@ proxies:
 policy_groups:
 - external:
     name: Airport
-    type: select
+    type: smart
     urls:
     - https://sub.example.com/api/v1/client/subscribe?token=REPLACE_WITH_YOUR_TOKEN
     hidden: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png
-- smart:
+- select:
     name: Proxy
     policies:
-    - Node-A
     - Airport
+    - Node-A
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Proxy.png
 - smart:
@@ -108,7 +108,7 @@ rules:
     update_interval: 604800
 - rule_set:
     name: System
-    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/apple_system.list
+    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/apple_system.list
     policy: DIRECT
     update_interval: 604800
 - rule_set:
