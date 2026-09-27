@@ -275,7 +275,7 @@ AdBlock = reject
 Airport = select, policy-path=https://sub.example.com/api/v1/client/subscribe?token=REPLACE_WITH_YOUR_TOKEN, update-interval=86400, hidden=true, icon-url=…/Airport.png
 Proxy   = smart, "Node-A", include-other-group="Airport", icon-url=https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Proxy.png
 AI      = smart, "Node-B", include-other-group="Airport", icon-url=…/openai.png
-AD      = select, REJECT, DIRECT, icon-url=…/AdBlock.png
+AD      = select, REJECT, icon-url=…/AdBlock.png
 ```
 
 > 📌 懒人版的订阅节点直接进 `Proxy` / `AI`（`smart` 只能靠 `include-other-group` 复制

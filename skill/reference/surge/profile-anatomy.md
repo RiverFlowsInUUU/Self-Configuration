@@ -645,7 +645,7 @@ GEOIP,CN,DIRECT,no-resolve    # 对未解析的主机名直接跳过
 Airport = select, policy-path=…, update-interval=86400, hidden=true, icon-url=…/Airport.png
 Proxy   = smart, "Node-A", include-other-group="Airport", icon-url=…/Proxy.png
 AI      = smart, "Node-B", include-other-group="Airport", icon-url=…/openai.png
-AD      = select, REJECT, DIRECT, icon-url=…/AdBlock.png
+AD      = select, REJECT, icon-url=…/AdBlock.png
 ```
 
 | 组 | 类型 | 承载 | 被谁引用 |
@@ -653,7 +653,7 @@ AD      = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 | `Airport` | `select` | `policy-path` 订阅槽位（`hidden=true`） | `Proxy` / `AI` 的 `include-other-group` |
 | `Proxy` | `smart` | `Node-A` + 订阅节点 | `FINAL,Proxy,dns-failed` 一处（游戏机那 3 条域名规则已于 2026-09-23 删除，见 §9.3） |
 | `AI` | `smart` | `Node-B` + 订阅节点 | `AI.list` |
-| `AD` | `select` | `REJECT` / `DIRECT` | 独立手动开关（不被规则引用，见 §13.3） |
+| `AD` | `select` | `REJECT` | 独立手动开关（不被规则引用，见 §13.3） |
 
 > 📌 懒人版的 `AI` **不引用 `Proxy`**（2026-09-26 定）：两组各挂自己那条占位节点、
 > 再各自 include 订阅槽。`smart` 组也不能把别的组当子策略，只有 `include-other-group`
