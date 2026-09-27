@@ -34,18 +34,17 @@ Self-Configuration/                          # 两内核合并后同仓（2026-0
 ├── surge/                                   # 本文档讲的这一侧
 │   ├── profiles/                            # 固定名四件（当前版恒为 lazy / routing，升版不改名）
 │   │   ├── lazy.conf · lazy.min.conf        # 懒人版（带注释 / 纯配置，注释剥掉那份）
-│   │   └── routing.conf · routing.min.conf  # 分流版（带注释 / 纯配置，注释剥掉那份）
-│   ├── docs/                                # 01–08 + 11 专题（07 末节存着本内核合并前的迭代史）
-│   └── （原 DetailsReadme/ 已并入 skill/reference/surge/profile-anatomy.md，即本文件）
+│   │   ├── routing.conf · routing.min.conf  # 分流版（带注释 / 纯配置，注释剥掉那份）
+│   │   └── config_old/                      # 历史版本归档（成对快照，永不删除）
+│   └── （原 docs/ 与 DetailsReadme/ 已并入 skill/，2026-09-27，git 历史可查）
 ├── egern/                                   # 姊妹内核一侧（同构：profiles / skill/reference/egern）
 ├── icons/                                   # 26 个策略组图标（仓库根，两内核共用、不跨项目引用）
-├── docs/ · LICENSE                          # 跨内核文档（九篇）· 许可证
-└── skill/
-    ├── SKILL.md                             # 方法论
-    ├── README.md                            # 脚本用法
-    ├── reference/                           # 逐条判据
+├── LICENSE · SECURITY.md · README.md        # 许可证 · 安全披露 · 门面（订阅入口 + 指路）
+└── skill/                                   # AI 知识库（本仓唯一文档区）
+    ├── SKILL.md                             # AI 唯一入口：六条底线 / 归档机制 / 动线 / 分支索引
+    ├── reference/                           # 逐条判据（shared/ 七篇 + surge/ · egern/ 各七篇）
     ├── scripts/                             # surge/ 5 个审计脚本 + 1 个共享模块 · egern/ 10 个 + 1 个
-    └── tests/                               # 6 阶段回归（阶段 1 用 3 个 fixture）+ 1 个地区坏样例 + 链接检查
+    └── tests/                               # 五个闸门脚本（secrets / portability / min_pair / links / make_min）
 ```
 
 **两份配置是分工关系，不是版本关系**：`lazy` 是懒人版（4 组 / 10 条，全量一个出口），
@@ -344,7 +343,7 @@ Node-B = hysteria2, 203.0.113.11, 52341, password=REPLACE_WITH_YOUR_PASSWORD, sn
 非文档段 IPv4、非 `REPLACE_WITH_*` 凭据、不在允许清单的节点主机名、以及若干
 禁止出现的敏感子串，任一命中即失败。
 
-> 🔐 `docs/troubleshoot-faq.md` 里明确写着：**不要把真实节点提交回来**。
+> 🔐 `skill/reference/shared/troubleshoot-faq.md` 里明确写着：**不要把真实节点提交回来**。
 > 改完本地用可以，`git push` 前跑一次 `check_secrets.py`。
 
 ---

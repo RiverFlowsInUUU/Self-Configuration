@@ -7,7 +7,7 @@
 > 引用位口径（数的是 `rules` 段里指向规则集的条目，同一份规则集被两条规则各引用一次就占两位）：
 > 分流版 **22 条规则集引用**。
 > 懒人版 **8 条规则集引用**。
-> 这两个数以 `docs/rulesets.md` 与两侧 profile 的现算为准，别混。
+> 这两个数以本文件与两侧 profile 的现算为准，别混。
 
 ## 1 · 共用规则集
 
@@ -69,7 +69,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 1. **白名单必须排在最前**，且在两条广告清单之前 —— Jinx 与 AWAvenue 存在重叠域名，白名单排到后面会被误杀。
 2. **厂商专属规则（`OpenAI` / `Gemini` / `Anthropic` / `Claude`）排在 `AI.list` 之前** —— 否则 AI 域名先被 `AI.list` 接走，专属组形同虚设。
 3. **`GitHub.list` 排在 `direct.txt` 之前** —— `github.com` 同时被国内直连清单收录，排到后面就接不到它。
-4. **IP 类规则排最后，且必须带 `no-resolve` / `no_resolve`** —— 否则每个走到它的域名都会被强制本地解析一次，那正是泄露来源。详见 [`docs/no-resolve-pairing.md`](no-resolve-pairing.md) · [`docs/no-resolve-pairing.md`](no-resolve-pairing.md)。
+4. **IP 类规则排最后，且必须带 `no-resolve` / `no_resolve`** —— 否则每个走到它的域名都会被强制本地解析一次，那正是泄露来源。详见 [`no-resolve-pairing.md`](no-resolve-pairing.md)。
 4b. ⭐ **规则级开关的取舍，四份 profile 共用一条原则**：**实测零 IP 条目的规则集不写，真含 IP 条目的必须写**。
     该开关只对规则集里的 IP 类条目起作用，纯域名集写上是空转 —— 本仓 2026-09-24 起把它从 12 条零 IP 规则上删掉。
     ⚠️ 判据是「实测零 IP」不是「纯域名」（`YouTubeMusic` 有 UA、`Microsoft` 还有 PROCESS-NAME，同样零 IP），

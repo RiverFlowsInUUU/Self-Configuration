@@ -140,7 +140,7 @@ Egern 日志速读：
 |:---|:-----|
 | Python | 3.8+；Surge 侧脚本仅标准库；Egern 侧需 PyYAML |
 | 网络 | 只有内容 / 覆盖 / 刷新类 `audit_*` 需要联网，其余全离线 |
-| 磁盘 | 规则集缓存数 MB 级、随上游漂移（实测读数见 [`../skill/reference/surge/checker.md`](../surge/checker.md) 「磁盘」行；`direct.txt` 一份十一万条，条数权威在 [`../docs/rulesets.md`](rulesets.md)），在系统临时目录（`surge-ruleset-cache` / `egern-ruleset-cache`）；`--cache-dir` 可换，`--force` 忽略缓存重下 |
+| 磁盘 | 规则集缓存数 MB 级、随上游漂移（实测读数见 [`../surge/checker.md`](../surge/checker.md) 「磁盘」行；`direct.txt` 一份十一万条，条数权威在 [`rulesets.md`](rulesets.md)），在系统临时目录（`surge-ruleset-cache` / `egern-ruleset-cache`）；`--cache-dir` 可换，`--force` 忽略缓存重下 |
 | Windows | 输出必须 UTF-8（脚本内部已钉；中文控制台默认 GBK 会把 emoji 崩成退出码 1，与"期望判负"撞码，造成假绿）。Git Bash 的 `pwd` 是 `/c/Users/...`，Windows 版 Python 打不开，`.sh` 里用 `cygpath -w` 转换；拼路径一律用 `/` |
 
 ---
@@ -313,7 +313,7 @@ Egern 用本仓快照 `apple_system.list`，且若干内核级约束不可套用
 ## FAQ 与术语表
 
 
-FAQ 从两侧 [`surge/DetailsReadme`](../surge/profile-anatomy.md) 与 [`egern/DetailsReadme`](../egern/profile-anatomy.md) 的问答节归并而来（答案与源文件同口径，冲突时以 `profile-anatomy` 为准）。
+FAQ 从两侧 [`profile-anatomy`](../surge/profile-anatomy.md) · [`profile-anatomy`](../egern/profile-anatomy.md) 的问答节归并而来（答案与源文件同口径，冲突时以 `profile-anatomy` 为准）。
 术语表是全手册的公共词汇，定义以本仓文档的实际用法为准。
 
 ---
@@ -391,7 +391,7 @@ Surge iOS 不支持本地文件配置 —— 把 profile 托管到可访问地�
 | `lazy` / `routing` | 懒人版 / 分流版。分工关系，不是版本关系，二选一不叠加 |
 | `flatten`（Egern）/ `include-other-group`（Surge） | 把组名展开成组内具体节点的两种写法，跨内核的语义对应物 |
 | f 谱系 / v 版本 | `f1…f10` = 排查迭代历史；`routing_vX.Y` = 文件版本。两套前缀刻意区分 |
-| `direct.txt` 承重 | 国内域名直连的主承重规则集（Loyalsoldier，十一万级纯域名）；条数与来源见 [`../docs/rulesets.md`](rulesets.md) |
+| `direct.txt` 承重 | 国内域名直连的主承重规则集（Loyalsoldier，十一万级纯域名）；条数与来源见 [`rulesets.md`](rulesets.md) |
 | 现算 | 期望值从源头（profile / 脚本源码）实时计算，禁止抄进文档 —— 本仓反漂移的第一纪律 |
 | 已合并 | 2026-09-27 起旧手册与专题文档已并入 `skill/reference/`，原 `docs/` 与两侧 `DetailsReadme/` 已删除（git 历史可查） |
 

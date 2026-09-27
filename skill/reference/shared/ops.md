@@ -6,7 +6,7 @@
 
 
 对象：`../surge/profiles/` 下 `lazy` / `routing` 两版（各含带注释完整版与 `.min` 版）。
-加固清单逐项与验收标准见 [`../docs/hardening-checklist.md`](hardening-checklist.md)（清单本体在那份文件，本章讲怎么用它）；逐键权威是 [`../surge/DetailsReadme/DetailsReadme.md`](../surge/profile-anatomy.md)。
+加固清单逐项与验收标准见 [`shared/hardening-checklist.md`](hardening-checklist.md)（清单本体在那份文件，本章讲怎么用它）；逐键权威是 [`surge/reference/profile-anatomy.md`](../surge/profile-anatomy.md)。
 
 ---
 
@@ -127,11 +127,11 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 
 ### 3.6 你必须替换 / 可以删除的
 
-必须替换（逐键语义见 [`Surge DetailsReadme`](../surge/profile-anatomy.md)）：
+必须替换（逐键语义见 [`surge/reference/profile-anatomy.md`](../surge/profile-anatomy.md)）：
 
 - `lazy` 的 `[Proxy]` 占位节点；
 - `routing` 的 `Airport` 组 `policy-path` 占位订阅地址；
-- 两份 `[SSID Setting]` 段里的 `SSID:MyHome` —— `MyHome` 是照官方示例留的占位网络名，不替换就匹配不到任何 Wi-Fi，「回家自动暂停」静默不生效。该段只有 Surge 侧有，Egern 无对等件（见 [`../docs/cross-kernel-diff.md`](cross-kernel-diff.md) §1「网络级暂停」）。
+- 两份 `[SSID Setting]` 段里的 `SSID:MyHome` —— `MyHome` 是照官方示例留的占位网络名，不替换就匹配不到任何 Wi-Fi，「回家自动暂停」静默不生效。该段只有 Surge 侧有，Egern 无对等件（见 [`cross-kernel-diff.md`](cross-kernel-diff.md) §1「网络级暂停」）。
 
 可以删（按收益排序，删完必须重跑分流覆盖审计）：
 
@@ -170,7 +170,7 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 
 
 对象：`egern/profiles/` 下 `routing.yaml`（推荐，完整分流）与 `lazy.yaml`（懒人配置），各含带注释完整版与 `.min.yaml` 形态，共四件，历史版本看 git。
-加固清单在 [`hardening-checklist.md`](hardening-checklist.md)；逐键权威是 [`Egern DetailsReadme`](../egern/profile-anatomy.md)。
+加固清单在 [`hardening-checklist.md`](hardening-checklist.md)；逐键权威是 [`egern/reference/profile-anatomy.md`](../egern/profile-anatomy.md)。
 
 ---
 
@@ -364,7 +364,7 @@ python skill/tests/check_portability.py
 ### 6.7 想加第三份配置
 
 先问：这是新分工，还是老配置的另一种写法？后者一律否掉（那是版本分叉）。
-确认是新分工后，走 [`surge/DetailsReadme`](../surge/profile-anatomy.md) 维护者一节 —— 一句话判据：能过全部检查的才算一份新配置（固定名、`.min` 对拍、DNS 段一致）。
+确认是新分工后，走 [`surge/reference/profile-anatomy.md`](../surge/profile-anatomy.md) 维护者一节 —— 一句话判据：能过全部检查的才算一份新配置（固定名、`.min` 对拍、DNS 段一致）。
 
 ---
 

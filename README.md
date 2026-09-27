@@ -13,7 +13,7 @@
 
 </div>
 
-> 🤖 **AI agent 请从这里开始** → [`skill/SKILL.md`](skill/SKILL.md)：改完必跑的那一条命令，和五条不要越的线。
+> 🤖 **AI agent 请从这里开始** → [`skill/SKILL.md`](skill/SKILL.md)：改完必跑的那一条命令，和六条不要越的线。
 
 ## 📥 两全其美 · 皆合心意
 

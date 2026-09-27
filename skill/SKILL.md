@@ -176,18 +176,8 @@ Egern（见分支 B）、Shadowrocket（`dns-server` 语义不同）。
 ### 引用文件（按需读取）
 
 本文件是**主干**：三条出口模型、12 项审计清单、加固模板、坑索引、验收判据。
-下列细节按需读取 —— 每个文件开头都写了「何时读」：
-
-| 文件 | 何时读 |
-|---|---|
-| [`reference/surge/profile-anatomy.md`](reference/surge/profile-anatomy.md) | 某个键 / 组 / 规则的语义与边界拿不准时（逐键权威，含已知取舍与 FAQ） |
-| [`reference/surge/hardening-template.md`](reference/surge/hardening-template.md) | 要产出一份加固后的 Surge profile 时 —— 逐段模板 + 逐行理由 |
-| [`reference/surge/pitfalls.md`](reference/surge/pitfalls.md) | 排查实际泄露、或改动判据 / 规则集之前 —— 坑的事故复盘 |
-| [`reference/surge/leak-localization.md`](reference/surge/leak-localization.md) | 用户报「leak test 显示某运营商」时 —— 网络侧实测流程 |
-| [`reference/surge/checker.md`](reference/surge/checker.md) | 跑审计脚本前（命令与环境要求）、或要改判据时（判据演进史） |
-| [`reference/surge/ruleset-weight.md`](reference/surge/ruleset-weight.md) | 用户问「规则集是不是太重」时 —— 按类型数条目、识破名字骗人 |
-| [`reference/surge/public-repo.md`](reference/surge/public-repo.md) | 要更新模板 / 了解仓库结构时 |
-| [`reference/shared/cross-kernel-diff.md`](reference/shared/cross-kernel-diff.md) | 把改动移植到 Egern 侧时（**必读**） |
+`reference/surge/` 七篇的「何时读」索引见 §4，不在此重复。**移植到 Egern 侧前必读
+[`reference/shared/cross-kernel-diff.md`](reference/shared/cross-kernel-diff.md)**。
 
 ---
 
@@ -308,10 +298,6 @@ FINAL,Proxy,dns-failed
 - [ ] 手工实测：抓包确认冷启动无明文 `:53`
 - [ ] 手工实测：游戏机 / NAT 检测 / 时间同步正常（`always-real-ip` 生效）
 
-> ⚠️ **审计通过 ≠ 配置可用。** 本项目审计脚本只覆盖**静态可判定**的部分。
-> 拦截效果、误杀、节点可用性必须实测 —— 这是 Egern 项目连续 5 次
-> "脚本全绿、实测仍有问题"换来的结论。
-
 ---
 
 ### 坑索引
@@ -357,18 +343,8 @@ FINAL,Proxy,dns-failed
 ### 引用文件（按需读取）
 
 本文件是**主干**：Egern 双轨 DNS 模型、18 项审计清单、加固模板、验收标准。
-下列细节按需读取 —— 每个文件开头都写了「何时读」：
-
-| 文件 | 何时读 |
-|---|---|
-| [`reference/egern/profile-anatomy.md`](reference/egern/profile-anatomy.md) | 某个顶层字段 / 组 / 规则的语义与边界拿不准时（逐键权威，含已知取舍） |
-| [`reference/egern/hardening-template.md`](reference/egern/hardening-template.md) | 要产出一份加固后的 `dns` 段 + `rules` 时 —— 完整 YAML，含逐行理由 |
-| [`reference/egern/pitfalls.md`](reference/egern/pitfalls.md) | 排查实际泄露、或改动判据 / 规则集之前 —— 18 个坑的事故复盘 |
-| [`reference/egern/leak-localization.md`](reference/egern/leak-localization.md) | 用户报「leak test 显示某运营商」时 —— 网络侧实测流程 |
-| [`reference/egern/ruleset-weight.md`](reference/egern/ruleset-weight.md) | 用户问「规则集是不是太重」时 —— 内存 / 耗时实测 |
-| [`reference/egern/checker.md`](reference/egern/checker.md) | 跑审计脚本前（命令与环境要求）、或要改判据时（审计演进史） |
-| [`reference/egern/public-repo.md`](reference/egern/public-repo.md) | 要更新模板 / 了解仓库结构与脱敏清单时 |
-| [`reference/shared/cross-kernel-diff.md`](reference/shared/cross-kernel-diff.md) | 把改动移植到 Surge 侧时（**必读**） |
+`reference/egern/` 七篇的「何时读」索引见 §4，不在此重复。**移植到 Surge 侧前必读
+[`reference/shared/cross-kernel-diff.md`](reference/shared/cross-kernel-diff.md)**。
 
 ---
 

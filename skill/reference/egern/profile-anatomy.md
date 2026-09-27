@@ -75,7 +75,7 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 - **组与组之间可以互相引用**（例如 `Final` 的成员是 `Proxy`，App 组的成员里混入地区组）。这种引用关系保留，是模板的正常结构。
 - **`routing_v2.3` 起已无空组**：`ChatGPT` / `Gemini` 曾是 `policies: []` 的空组，而规则直接指向它们
   ⇒ **导入即静默断流**；现已填成 `[Proxy]` + `flatten: true`（`flatten` 在这里起什么作用，
-  见下方「组清单与要点」；逐段讲解见 `docs/04-模板逐段讲解.md` §4）。
+  见下方「组清单与要点」起的逐段讲解）。
 - **图标**：模板用到的 26 个分流组图标（整合自 RiverFlowsInUUU/Rule、jnlaoshu/MySelf、Koolson/Qure 三个公开仓库）已统一下载进本仓库 `icons/`，全部以 `https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/<file>` 形式引用，**不再跨项目引用任何图标地址**。
 
 #### 组清单与要点（`routing_v3.4`）
@@ -102,7 +102,7 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 关键词**逐字抄了一遍** —— 改任何一组的关键词都要同步改它，
 用 [`skill/scripts/egern/audit_region_filters.py`](../../scripts/egern/audit_region_filters.py) 校验（漏改会被它拦下）。
 
-**服务组**（默认策略与承接的规则集）见 [`docs/rulesets.md`](../shared/rulesets.md)。
+**服务组**（默认策略与承接的规则集）见 [`shared/rulesets.md`](../shared/rulesets.md)。
 
 **`lazy` 的一处专属调整**（只属于它，不同步其他版本）：`AD` 组**只有 `REJECT`**（没有 `DIRECT` 兜底）。
 ⚠️ 分流版的 `Final` 兜底组，`lazy` **没有** —— 2026-09-23 起它的 `default` 规则 `policy` 直写 `Proxy`，
@@ -338,7 +338,7 @@ forward:
 
 ## 4. 审计清单（18 项）
 
-> 📌 本节是 [`docs/hardening-checklist.md`](../shared/hardening-checklist.md) 的摘要。**逐条判据与严重度的权威版本以 `docs/hardening-checklist` 为准** —— 要改清单请改那一份，本节跟着同步。
+> 📌 本节是 [`shared/hardening-checklist.md`](../shared/hardening-checklist.md) 的摘要。**逐条判据与严重度的权威版本以 `shared/hardening-checklist` 为准** —— 要改清单请改那一份，本节跟着同步。
 
 > 全部自动化：`check_egern_dns.py` 覆盖 1–15；`audit_ruleset_noresolve.py` 覆盖 16；`audit_routing_coverage.py` 覆盖 17；`audit_dns_forward.py` 覆盖 18。
 
