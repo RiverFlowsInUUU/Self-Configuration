@@ -15,7 +15,7 @@ reference/surge/*.md      深度主题 ×6（Surge 侧）
 reference/egern/*.md      深度主题 ×6（Egern 侧）
 scripts/surge/            5 个审计脚本 + _surge_common.py
 scripts/egern/            10 个审计/探测脚本 + _egern_common.py
-tests/                    all.sh（一条命令跑完全部本地检查）· check_min_pair.py · make_min.py（`.min` 生成器，与对拍共用判据）· check_portability.py · check_doc_readings.py · bump_version.py · apply_edits.py（批量编辑执行器，见下）
+tests/                    all.sh（一条命令跑完全部本地检查）· check_min_pair.py · make_min.py（`.min` 生成器，与对拍共用判据）· check_portability.py · check_doc_readings.py · check_tools.py（工具自检 + 覆盖矩阵）· check_assert_counts.py（断言数对拍）· bump_version.py · apply_edits.py（批量编辑执行器，见下）
 tests/surge/              run.sh · architecture.sh · check_links.py · 3 fixture + fixtures/
 tests/egern/              run.sh · 5 fixture
 ```
@@ -33,7 +33,7 @@ tests/egern/              run.sh · 5 fixture
 
 ## 两份正文不合并的理由
 
-两侧的 `SKILL.md` 是**同构但独立写成**的平行文档（实测逐行比对：同名章节重合度 0–4%，
+合并前两仓的 `SKILL.md` 是**同构但独立写成**的平行文档（合并时点实测逐行比对：同名章节重合度 0–4%，
 `reference/` 六篇同样几乎不重复）。压缩合并必然丢细节，而这里的细节大多是拿真实事故换来的判据。
 
 所以本技能包的合并发生在**门面层**：五类泄露面的归并、四条通用铁律、语法映射、不可套用清单——
@@ -45,7 +45,7 @@ tests/egern/              run.sh · 5 fixture
 脚本接收 profile 路径作为参数，不依赖当前目录，但测试入口按仓库结构定位，**在仓库根目录执行**：
 
 ```bash
-bash skill/tests/all.sh                          # ★★ 一条命令跑完下面全部 + 两版形态对拍 + 换设备可移植性 + 文档读数对拍 + 断言数对拍
+bash skill/tests/all.sh                          # ★★ 一条命令跑完下面全部 + 两版形态对拍 + 换设备可移植性 + 文档读数对拍 + 工具自检 + 断言数对拍
 bash skill/tests/surge/run.sh                  # Surge：6 阶段 · 19 断言
 bash skill/tests/surge/architecture.sh         #        ① 占位符 / 凭据（全仓 .conf+.yaml 三档）· ②③④ .conf↔.min 一致性与规则/组顺序
 bash skill/tests/egern/run.sh                  # Egern：两阶段 · 24 断言（阶段 1 · 5 fixture ×2；阶段 2 · 顶层固定名四件 ×3 + 完整版 2 份 ×1 联网项；SKIP_NET=1 时 22）
@@ -59,7 +59,7 @@ SKIP_NET=1 bash skill/tests/surge/run.sh       # 跳过需要联网的阶段
 Windows 的 Git Bash 下脚本会自动用 `cygpath -w` 转换路径，无需干预。
 ⚠️ **中文 Windows 必须注意输出编码**：控制台与管道默认是 GBK(cp936)，脚本一 print emoji 就
 `UnicodeEncodeError`、进程以**退出码 1** 结束 —— 而回归里「期望判负」的 fixture 期望的恰恰是 1，
-于是会**假绿**。所有脚本 import 共享模块时即把 stdout 钉成 UTF-8（`_common.force_utf8_stdout`），
+于是会**假绿**。所有脚本 import 共享模块时即把 stdout 钉成 UTF-8（`force_utf8_stdout()`，两侧各一份：`_surge_common.py` / `_egern_common.py`），
 两个 `.sh` 入口另设 `PYTHONIOENCODING=utf-8`；直连调用单个脚本也已覆盖。
 
 > 🔒 本仓库**刻意不挂 CI**。审计的意义在于改动后真跑一遍，而不是让它挂在网页上变绿——

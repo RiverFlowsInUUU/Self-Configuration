@@ -21,8 +21,8 @@ agent_created: true
 
 | | 配置载体 | 分组段 | 规则段 | 脚本 | 测试 |
 |:--|:--|:--|:--|:--|:--|
-| Surge | `surge/profiles/*.conf` | `[Proxy Group]` | `[Rule]` | `scripts/surge/` | `tests/surge/run.sh` |
-| Egern | `egern/profiles/*.yaml` | `policy_groups:` | `rules:` | `scripts/egern/` | `tests/egern/run.sh` |
+| Surge | `surge/profiles/*.conf` | `[Proxy Group]` | `[Rule]` | `skill/scripts/surge/` | `skill/tests/surge/run.sh` |
+| Egern | `egern/profiles/*.yaml` | `policy_groups:` | `rules:` | `skill/scripts/egern/` | `skill/tests/egern/run.sh` |
 
 ## 1 · 两内核共享的骨架：泄露面只有五类
 
@@ -45,7 +45,7 @@ Surge 侧把它归纳为「一条路径、三个明文出口」，Egern 侧归�
 1. **白名单 → 黑名单 → 常规分流**，顺序不可反。REJECT 排到国内直连规则之后就等于白加。
 2. ⭐ **`no-resolve` 与「域名条目足够多的国内直连规则集」必须成对交付。**
    补 `no-resolve` 会**同时**关掉"靠解析判 IP 归属"这条直连路径；只交一半 → 国内域名整片落 `FINAL / default → 代理`。
-   判据是**下载规则集数域名条目**，不是看名字（`ChinaMax.list` 名字像域名集，实测 12472 条里只有 64 条域名）。
+   判据是**下载规则集数域名条目**，不是看名字（`ChinaMax.list` 名字像域名集，实测 IP 类 12472 条、域名类只有 64 条）。
 3. **厂商专属规则排在通用 `AI.list` 之前**（`OpenAI` / `Gemini` / `Anthropic` / `Claude`），否则专属组形同虚设。
 4. ⭐ **兜底/默认出口的判据是「直连可达」，不是「指向境外」。**
    两内核同理：兜底承担的是"代理还没起来时的那次解析"。挂在必须经代理才可达的组上，
@@ -60,13 +60,13 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
 - ⚠️ **审计通过 ≠ 配置可用。** 两侧脚本只覆盖**静态可判定**的部分；拦截效果、误杀、节点可用性必须实测。
   这条来自 Egern 侧连续 5 次"脚本全绿、实测仍有问题"的代价。
 - 🔒 **本仓库刻意不挂 CI / 任何自动化。** 改动后在仓库根目录本地跑：
-  `bash skill/tests/surge/run.sh` 与 `bash skill/tests/egern/run.sh`（联网审计阶段可用 `SKIP_NET=1` 跳过）。
+  `bash skill/tests/all.sh`（七项一条跑完）；只查单内核时分别跑 `bash skill/tests/surge/run.sh` 与 `bash skill/tests/egern/run.sh`（联网审计阶段可用 `SKIP_NET=1` 跳过）。
 - 📍 **命令的路径基准**：本文与 `skill/reference/` 里凡可照抄执行的命令，路径一律以**仓根**为基准书写（要 `cd` 的会显式写 `cd`）；
   行文里为省字出现的简写（如 `scripts/probe_doh.py`）不是可执行路径，取真身请以仓根全路径为准。
 - 🧷 **改配置的安全姿势**：Egern profile 含数千字符的超长单行，**不要用 YAML dump 重写整个文件**；
   按行读入 + 内容定位 + 断言"全文恰好命中 1 行"，改完逐字段比对未触碰部分。详见分支 B。
 - 🚨 **凡写「实测」处皆为经验值**，两款都是闭源商业软件，很多行为无文档可依，版本更新后需重新验证。
-- 📊 **任何条数一律现抓，不要照抄本仓文档里的数。** 所有远程规则集都没锁 commit、随上游每周漂；文档为可读性写的条数只是**写作时点的约数**。要精确值就跑 `skill/scripts/surge/audit_ruleset_content.py <profile>`（Surge）/ `skill/scripts/egern/profile_ruleset.py <规则集 URL>`（Egern），两侧脚本都逐个数条目类型。
+- 📊 **任何条数一律现抓，不要照抄本仓文档里的数。** 远程规则集里除 `AI.list`（两内核都钉在 40 位 commit）外都没锁、随上游每周漂；文档为可读性写的条数只是**写作时点的约数**。要精确值就跑 `skill/scripts/surge/audit_ruleset_content.py <profile>`（Surge）/ `skill/scripts/egern/profile_ruleset.py <规则集 URL>`（Egern），两侧脚本都逐个数条目类型。
 
 ## 4 · 按需读取
 
@@ -96,12 +96,12 @@ Egern（见 `egern-profile-dns-hardening` 技能）、Shadowrocket（`dns-server
 
 | 文件 | 何时读 |
 |---|---|
-| `reference/surge/hardening-template.md` | 要产出一份加固后的 Surge profile 时 —— 逐段模板 + 逐行理由 |
-| `reference/surge/pitfalls.md` | 排查实际泄露、或改动判据 / 规则集之前 —— 坑的事故复盘 |
-| `reference/surge/leak-localization.md` | 用户报「leak test 显示某运营商」时 —— 网络侧实测流程 |
-| `reference/surge/checker.md` | 跑审计脚本前（命令与环境要求）、或要改判据时（判据演进史） |
-| `reference/surge/ruleset-weight.md` | 用户问「规则集是不是太重」时 —— 按类型数条目、识破名字骗人 |
-| `reference/surge/public-repo.md` | 要更新模板 / 了解公开仓库结构时 |
+| [`reference/surge/hardening-template.md`](reference/surge/hardening-template.md) | 要产出一份加固后的 Surge profile 时 —— 逐段模板 + 逐行理由 |
+| [`reference/surge/pitfalls.md`](reference/surge/pitfalls.md) | 排查实际泄露、或改动判据 / 规则集之前 —— 坑的事故复盘 |
+| [`reference/surge/leak-localization.md`](reference/surge/leak-localization.md) | 用户报「leak test 显示某运营商」时 —— 网络侧实测流程 |
+| [`reference/surge/checker.md`](reference/surge/checker.md) | 跑审计脚本前（命令与环境要求）、或要改判据时（判据演进史） |
+| [`reference/surge/ruleset-weight.md`](reference/surge/ruleset-weight.md) | 用户问「规则集是不是太重」时 —— 按类型数条目、识破名字骗人 |
+| [`reference/surge/public-repo.md`](reference/surge/public-repo.md) | 要更新模板 / 了解公开仓库结构时 |
 
 ---
 
@@ -151,13 +151,13 @@ Egern（见 `egern-profile-dns-hardening` 技能）、Shadowrocket（`dns-server
 | 11 | `always-real-ip` 主机名是否被前置域名规则接住 | MEDIUM / LOW |
 | 12 | 所有 IP 类规则是否带 `no-resolve`；FINAL 是否带 `dns-failed` | MEDIUM / LOW |
 
-另有四个**不在清单里但必须查**的东西（见 `reference/surge/checker.md`）：
+另有四个**不在清单里但必须查**的东西（下表三件 + 规则集刷新参数 `audit_ruleset_refresh.py`，见 `reference/surge/checker.md`）：
 
 | 脚本 | 查什么 | 联网 |
 |---|---|---|
-| `audit_ruleset_content.py` | ① 远程规则集里有没有**不带 `no-resolve` 的 IP 条目**；② 判给 DIRECT 的规则集**域名条目总量**是否够（判据是数域名条目，**不是**看规则集名字） | ✅ |
-| `audit_routing_coverage.py` | 拿真实域名**走一遍** `[Rule]`，看最终命中哪条。期望表按 profile 自动切换；**不得**放宽成"只要不是 DIRECT" | ✅ |
-| `audit_region_filters.py` | 分流配置里 7 个地区组的 `policy-regex-filter` 关键词是否同步（负向断言那份拷贝）、是否互斥、类型是否 `smart`。见坑 16 | ❌ |
+| [`audit_ruleset_content.py`](scripts/surge/audit_ruleset_content.py) | ① 远程规则集里有没有**不带 `no-resolve` 的 IP 条目**；② 判给 DIRECT 的规则集**域名条目总量**是否够（判据是数域名条目，**不是**看规则集名字） | ✅ |
+| [`audit_routing_coverage.py`](scripts/surge/audit_routing_coverage.py) | 拿真实域名**走一遍** `[Rule]`，看最终命中哪条。期望表按 profile 自动切换；**不得**放宽成"只要不是 DIRECT" | ✅ |
+| [`audit_region_filters.py`](scripts/surge/audit_region_filters.py) | 分流配置里 7 个地区组的 `policy-regex-filter` 关键词是否同步（负向断言那份拷贝）、是否互斥、类型是否 `smart`。见坑 16 | ❌ |
 
 ⚠️ **分流配置（按应用 / 按地区分组）另有三条 Surge 特有的硬约束**，
 与 Egern 等客户端的写法**不通用**：
@@ -175,7 +175,7 @@ Egern（见 `egern-profile-dns-hardening` 技能）、Shadowrocket（`dns-server
 
 ### 加固模板
 
-完整模板见 `reference/surge/hardening-template.md`。最小可用骨架：
+完整模板见 [`reference/surge/hardening-template.md`](reference/surge/hardening-template.md)。最小可用骨架：
 
 ```
 [General]
@@ -208,7 +208,7 @@ FINAL,Proxy,dns-failed
 2. **`no-resolve` 与「域名体量足够的国内直连规则集」必须成对交付。**
    给 IP 规则补 `no-resolve` 会**同时**关掉「解析后判 IP 归属」这条直连路径。
    只交一半 → 国内域名整片落 `FINAL → Proxy`。判据是「数**域名**条目」，
-   **不是**看规则集名字（`ChinaMax.list` 名字像国内域名集，实测 12472 条里只有 64 条域名）。
+   **不是**看规则集名字（`ChinaMax.list` 名字像国内域名集，实测 IP 类 12472 条、域名类只有 64 条）。
 3. **`pre-matching` 的规则策略必须是字面量 REJECT 族**，不能是策略组。
    策略组在运行时可能解析成 DIRECT，Surge 会**拒绝加载整份配置**。
 
@@ -230,7 +230,7 @@ FINAL,Proxy,dns-failed
 
 ### 坑索引
 
-完整复盘见 `reference/surge/pitfalls.md`。**高频坑速查**：
+完整复盘见 [`reference/surge/pitfalls.md`](reference/surge/pitfalls.md)。**高频坑速查**：
 
 | 症状 | 根因 | 修法 |
 |---|---|---|
@@ -241,7 +241,7 @@ FINAL,Proxy,dns-failed
 | 每个新域名首访卡一下 | `GEOIP,CN` 或其他 IP 规则缺 `no-resolve` | 全部加 `no-resolve`（注意同时补铁律 2） |
 | 端点选境内还是境外 | 是**性能取向**还是泄露问题？ | 它是**性能探针**：官方 KB 明确走代理时解析在代理服务器进行。`internet-test-url` 宜国内，`proxy-test-url` 宜境外（含国际段）。**别把境外端点当缺陷报** |
 | 游戏机 NAT 检测坏掉 | `always-real-ip` 缺游戏机主机名，或它们没被前置域名规则接住 | 补 `always-real-ip` + `DOMAIN-SUFFIX` 规则 |
-| 审计器把 `miui.com` 当境外域 | 国内域名判据只认 `.cn` 后缀 | 用显式后缀清单，见 `_surge_common.py` 的 `DOMESTIC_TEST_SUFFIXES` |
+| 审计器把 `miui.com` 当境外域 | 国内域名判据只认 `.cn` 后缀 | 用显式后缀清单，见 `check_surge_dns.py` 里的 `DOMESTIC_TEST_SUFFIXES` |
 | 审计器说「hijack-dns 只覆盖 6 个」 | 判据是"条数"，但 `:53` 地址空间无限、永远列不全 | 判据改成「还有多少**已知的**知名境外解析器没覆盖」 |
 | 只测 `.cn` 域名时全绿，实际分流是坏的 | 配置靠 `DOMAIN-SUFFIX,cn` 兜底，不是真的接住了国内域名 | 探针里**刻意混入非 `.cn`** 的国内域名（`qq.com`/`taobao.com`/`miui.com`） |
 
@@ -275,12 +275,12 @@ FINAL,Proxy,dns-failed
 
 | 文件 | 何时读 |
 |---|---|
-| `reference/egern/hardening-template.md` | 要产出一份加固后的 `dns` 段 + `rules` 时 —— 完整 YAML，含逐行理由 |
-| `reference/egern/pitfalls.md` | 排查实际泄露、或改动判据 / 规则集之前 —— 18 个坑的事故复盘 |
-| `reference/egern/leak-localization.md` | 用户报「leak test 显示某运营商」时 —— 网络侧实测流程 |
-| `reference/egern/ruleset-weight.md` | 用户问「规则集是不是太重」时 —— 内存 / 耗时实测 |
-| `reference/egern/checker.md` | 跑审计脚本前（命令与环境要求）、或要改判据时（审计演进史） |
-| `reference/egern/public-repo.md` | 要更新模板 / 了解公开仓库结构时 |
+| [`reference/egern/hardening-template.md`](reference/egern/hardening-template.md) | 要产出一份加固后的 `dns` 段 + `rules` 时 —— 完整 YAML，含逐行理由 |
+| [`reference/egern/pitfalls.md`](reference/egern/pitfalls.md) | 排查实际泄露、或改动判据 / 规则集之前 —— 18 个坑的事故复盘 |
+| [`reference/egern/leak-localization.md`](reference/egern/leak-localization.md) | 用户报「leak test 显示某运营商」时 —— 网络侧实测流程 |
+| [`reference/egern/ruleset-weight.md`](reference/egern/ruleset-weight.md) | 用户问「规则集是不是太重」时 —— 内存 / 耗时实测 |
+| [`reference/egern/checker.md`](reference/egern/checker.md) | 跑审计脚本前（命令与环境要求）、或要改判据时（审计演进史） |
+| [`reference/egern/public-repo.md`](reference/egern/public-repo.md) | 要更新模板 / 了解公开仓库结构时 |
 
 ---
 
@@ -511,7 +511,7 @@ for h in ['dns.alidns.com','doh.pub','doh.18bit.cn']:
 
 ### ⚠️ 已知缺陷索引
 
-**18 条，每条都是真实事故复盘。全文（含完整机制链与修法）见 `reference/egern/pitfalls.md`。**
+**18 条，每条都是真实事故复盘。全文（含完整机制链与修法）见 [`reference/egern/pitfalls.md`](reference/egern/pitfalls.md)。**
 排查实际泄露、或改动判据 / 规则集之前，先扫一眼这张表。
 
 | # | 一句话 |
