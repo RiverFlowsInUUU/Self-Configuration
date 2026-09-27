@@ -8,7 +8,6 @@
 对象：`../surge/profiles/` 下 `lazy` / `routing` 两版（各含带注释完整版与 `.min` 版）。
 加固清单逐项与验收标准见 [`shared/hardening-checklist.md`](hardening-checklist.md)（清单本体在那份文件，本章讲怎么用它）；逐键权威是 [`surge/reference/profile-anatomy.md`](../surge/profile-anatomy.md)。
 
----
 
 ### 3.1 文件结构速览
 
@@ -24,7 +23,6 @@ Surge 的 `.conf` 按节组织，模板里与防泄露相关的节：
 
 > **说明**　两份配置的 `[General]` DNS 相关键四份（`lazy` 与 `routing` 及各自 `.min`）保持逐字一致 —— 这是维护纪律，没有自动判据，改 DNS 段时四份一起改（流程见下文「日常维护」）。
 
----
 
 ### 3.2 `[General]` DNS 段：每行堵哪个出口
 
@@ -42,7 +40,6 @@ Surge 的 `.conf` 按节组织，模板里与防泄露相关的节：
 
 > **注意**　`# audit-waive: <编号> <理由>` 是有语义的注释，审计器真的会读它。删掉那行，读数立刻从「已豁免」变「HIGH/MEDIUM」；同文件内编号不重复。
 
----
 
 ### 3.3 广告拦截：pre-matching 与 AD 组的分层
 
@@ -54,7 +51,6 @@ Surge 的 `.conf` 按节组织，模板里与防泄露相关的节：
 
 想让面板开关接管拦截？可以，但要一并去掉 `pre-matching`，接受"先解析再拒"的代价。
 
----
 
 ### 3.4 `[Rule]` 顺序铁律
 
@@ -78,7 +74,6 @@ Surge 的 `.conf` 按节组织，模板里与防泄露相关的节：
 
 > **说明**　两版 `[Rule]` 都没有游戏机域名规则（`nintendo.net` 等只在 `always-real-ip` 里）—— 这些主机名照旧拿真实 IP，去向由常规规则链决定。别把"缺这三条"当 bug 来"修"。
 
----
 
 ### 3.5 分流版（`routing.conf`）要点
 
@@ -123,7 +118,6 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 | Apple 无独立策略组 | 走 `Apple` 规则 → DIRECT；要"给 Apple 挑地区"得自己复制 select 组 |
 | 段内顺序 | 与 Egern 逐位对齐（维护纪律）；"先写引用别人的，后写被引用的"，Surge 允许前向引用 |
 
----
 
 ### 3.6 你必须替换 / 可以删除的
 
@@ -143,7 +137,6 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 
 改 `routing.conf` 想加新应用组：照 §3.5 的写法复制一个 `select, include-other-group="Proxy"` 组，把它的规则插在国内直连集之前，并给 `audit_routing_coverage.py` 加对应探针（期望值精确到组名，不许放宽成"不是 DIRECT 就行"）。
 
----
 
 ### 3.7 官方文档入口
 
@@ -151,7 +144,6 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 - Smart 组限制（中文）：[kb.nssurge.com · smart-group](https://kb.nssurge.com/surge-knowledge-base/zh/guidelines/smart-group)
 - 其余逐节引用见 `profile-anatomy` 各节脚注。
 
----
 
 ### 相关页面
 
@@ -172,7 +164,6 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 对象：`egern/profiles/` 下 `routing.yaml`（推荐，完整分流）与 `lazy.yaml`（懒人配置），各含带注释完整版与 `.min.yaml` 形态，共四件，历史版本看 git。
 加固清单在 [`hardening-checklist.md`](hardening-checklist.md)；逐键权威是 [`egern/reference/profile-anatomy.md`](../egern/profile-anatomy.md)。
 
----
 
 ### 4.1 顶层字段：值等于默认的不写
 
@@ -182,7 +173,6 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 2. 非默认值必须显式写，尤其 `vif_only: true`（官方只有一句"虚拟网接口模式，默认 false"，细节无法确认）。遇到"某些 App 不走代理"，它是第一个 A/B 候选，但别凭猜测替用户改。
 3. `hijack_dns: ['*']` 接管 `:53` 并返回 Fake IP；`real_ip_domains`（`*.lan` / `*.local` / `*.push.apple.com`）让推送与内网发现拿真实 IP —— Fake IP 反而会让 APNs 异常。
 
----
 
 ### 4.2 `dns:` 段：五小节，一个原则
 
@@ -198,14 +188,12 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 
 已知代价（完整版见 `profile-anatomy` 的取舍节）：设置了 `proxy_nameservers` + 兜底国内组，需要本地解析的境外域名会拿到国内答案，实际影响面仅限 `DIRECT` 域名。审计里那两条 `LOW`（一条是 `proxy_nameservers` 成为代理侧解析唯一出口，一条是 `forward` 兜底指向国内组）就是它 —— 是取舍，不是缺陷。
 
----
 
 ### 4.3 `proxies:` 与节点形态
 
 - 模板 `proxies` 带 2 条占位节点（`Node-A` / `Node-B`），`server` 都写成 IP 字面量。
 - 自己填节点时，`server` 能写 IP 就写 IP：写域名必然产生一次"本机 + 直连 + 明文"解析（代理还没通）。这是从根上消除节点域名解析面的唯一办法；中转 `prev_hop` 同理，且无需为节点域名改 `forward`。
 
----
 
 ### 4.4 `policy_groups:`：四类组与三个易踩的坑
 
@@ -219,7 +207,6 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 
 `lazy` 特有：只有 `Proxy` / `AI` / `AD` 三组；`Proxy` 组 `policies` 为空，必须自己填节点名；`AD` 子策略只有 `REJECT`（无 `DIRECT` 兜底）。临时放行单个域名，在 `rules` 更前面加一条 `DIRECT` 规则，别整组切走。
 
----
 
 ### 4.5 `rules:`：分四段理解顺序
 
@@ -234,7 +221,6 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 
 `default_proxy_group: Proxy` 不是兜底：官方定义是"添加代理时自动加入的策略组"。改它不换出口，删它则手动新加的节点不进组。Egern 只有一条兜底通路，就是 `rules` 末尾的 `default`。
 
----
 
 ### 4.6 分流顺序与应用组默认出口
 
@@ -242,7 +228,6 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 两条与 Surge 侧共同的铁律同样成立：应用规则必须排在 `direct.txt` 之前；具体的在前、兜底在后。
 应用组的 `policies` 里只有 `Proxy` 一项（+ `flatten`）—— 这是设计，不是"忘了加地区"；想固定地区，改首位即可。
 
----
 
 ### 4.7 必须替换与环境
 
@@ -253,7 +238,6 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 
 > **注意**　`https://egernapp.com/zh-CN/docs` 与 `https://egernapp.com/docs/configuration/general` 是 404，别按其他客户端文档站的直觉找路径。
 
----
 
 ### 4.8 改完之后的验证
 
@@ -268,7 +252,6 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/pro
 判据逐项见 `skill/scripts/egern/check_egern_dns.py` 头注。
 最后在目标链路（尤其蜂窝）跑一次 leak test，并先写下"哪台设备、哪条链路、谁的 DNS" —— 混链路会让整轮结论作废。
 
----
 
 ### 相关页面
 
@@ -289,7 +272,6 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/pro
 面向"改这份配置的人"：改哪里、怎么升版、怎么同步、怎么记录。
 仓库级红线（节点不提交真实值等）见根 [`SECURITY.md`](../../../SECURITY.md)，本章不重复其条文，只讲操作动线。
 
----
 
 ### 6.1 固定名规矩：先记住这个，再碰任何文件
 
@@ -298,7 +280,6 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/pro
 - 配置变动时，变动前的旧配置归档进 `profiles/config_old/`：归档版本号 = 该目录内此分工最新号 + 0.1（v3.3 → v3.4，v3.9 → 进位 v4.0），完整版与 `.min` 成对，现役头注同步升为归档号 + 0.1；更早历史看 git（备份 tag：`pre-cleanup-20260927`）；
 - 因此：任何文档、脚本、README 里出现的"带版本号的订阅 URL"都是错的。
 
----
 
 ### 6.2 改配置的标准动线
 
@@ -317,7 +298,6 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/pro
 
 > **建议**　`make_min.py` 默认只出计划不写盘，`--apply` 才动文件 —— 先读计划再落盘是刻意设计。
 
----
 
 ### 6.3 DNS 段是"一份内容、四张脸"
 
@@ -325,7 +305,6 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/pro
 
 操作含义只有一条：改 DNS 段 = 一次改全套，闸门负责抓漏。想只给某一版加一条防泄露键，先问它为什么不是四条都要 —— 答案是"是"的才动手。
 
----
 
 ### 6.4 换设备与双端一致
 
@@ -339,7 +318,6 @@ python skill/tests/check_portability.py
 
 换机常见坑：行尾（本仓 `.gitattributes` 统一 `text=auto eol=lf`，不要动任何人的 git config）、编码（脚本内部已钉 UTF-8 输出）、路径分隔符（拼接一律用 `/`）。
 
----
 
 ### 6.6 精简配置（给自己瘦身）
 
@@ -359,20 +337,17 @@ python skill/tests/check_portability.py
 
 删完必做：重跑分流覆盖审计与单侧回归（见 [验证与自检](troubleshoot-faq.md)）。
 
----
 
 ### 6.7 想加第三份配置
 
 先问：这是新分工，还是老配置的另一种写法？后者一律否掉（那是版本分叉）。
 确认是新分工后，走 [`surge/reference/profile-anatomy.md`](../surge/profile-anatomy.md) 维护者一节 —— 一句话判据：能过全部检查的才算一份新配置（固定名、`.min` 对拍、DNS 段一致）。
 
----
 
 ### 6.8 判据脚本的纪律
 
 日常维护的正确姿势是：改配置与文档去适配判据，而不是改判据去适配配置。确实证明判据本身错了才动它，改动时写清"哪个反例会漏判、改后能抓住什么"。
 
----
 
 ### 相关页面
 

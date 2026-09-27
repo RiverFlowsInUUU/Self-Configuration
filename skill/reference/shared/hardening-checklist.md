@@ -13,7 +13,6 @@
 > 全部自动化：`python skill/scripts/surge/check_surge_dns.py Profile.conf` 覆盖第 1–12 项；
 > [`audit_ruleset_content.py`](../../scripts/surge/audit_ruleset_content.py) 覆盖第 13 项；[`audit_routing_coverage.py`](../../scripts/surge/audit_routing_coverage.py) 覆盖第 14 项。
 
----
 
 ### 清单
 
@@ -34,7 +33,6 @@
 | 13 | ⭐⭐ **远程规则集里有没有"不带 `no-resolve` 的 IP 类条目"** | 缺陷藏在**别人仓库的 `.list`** 里，profile 写得再干净也看不见。一条启用的 `RULE-SET` 里只要有**一条**这种条目，**每个走到该规则的域名都会被强制本地解析一次**。必须逐个下载 + 数 | **高** |
 | 14 | ⭐⭐ **国内域名有没有"域名类"规则兜底** | 给 IP 规则补 `no-resolve` 会**同时**关掉"靠解析判 IP 归属"这条直连路径。判据是**数域名条目**（不是看规则集名字）：`ChinaMax.list` 只有 64 条域名 / 12472 条 IP，名字叫 ChinaMax 但 99.5% 是 IP | **高** |
 
----
 
 ### `no-resolve` 的位置：两个层级
 
@@ -47,7 +45,6 @@
 > 是**给规则集里所有条目加的默认值**，Surge 支持这个写法。但如果规则集里**条目自带** `no-resolve`
 > 缺失，仅靠 profile 侧的写法并不能保证生效 —— 所以要**下载下来数**（第 13 项）。
 
----
 
 ### 验收标准（六条同时满足才算完）
 
@@ -100,7 +97,6 @@
 | 17 | ⭐⭐ **国内域名有没有"域名类"规则兜底**（不是"有没有一条叫 China 的规则"） | 给 IP 规则补 `no_resolve` 会**同时**关掉"靠解析判 IP 归属"这条直连路径。若没有一个**真正的域名规则集**接住国内域名，它们会整片落到 `default → Final → 代理`。判据：把规则集**下载下来数域名条目**，再用 [`audit_routing_coverage.py`](../../scripts/egern/audit_routing_coverage.py) 拿真实域名走一遍 | **高** |
 | 18 | ⭐ `forward` 的 **`value` 是否单值**、以及**订阅耦合度**（`forward` 里有没有把节点域名写死） | `value` 单值时，**规则顺序与域名清单都不影响结果** ⇒ 可塌缩为纯兜底、与订阅解耦。判据：`value` 集合只有 1 个元素 + `proxies[].server` 的域名在 `forward` 里出现 0 次。用 [`audit_dns_forward.py`](../../scripts/egern/audit_dns_forward.py)` --drill` 拿**合成的"未来订阅"域名**演练验证 | 中 |
 
----
 
 ### `no_resolve` 的三个层级
 
@@ -110,7 +106,6 @@
 | **规则集文件顶层** | Egern 原生 YAML 规则集里的 `no_resolve: true` | 影响该文件内所有 IP 相关规则 |
 | **规则集条目级** | Surge `.list` 里的 `IP-CIDR,x/y,no-resolve` | **第三方 `.list` 走的就是这一层** —— 也是第 16 项缺陷最常藏身的地方，profile 管不到它 |
 
----
 
 ### 验收标准（六条同时满足才算完）
 
@@ -128,7 +123,6 @@
    所以补 `no_resolve` 的同一时刻，必须确认 `default` 之前有一份**含大量域名条目**的国内规则集。
    **"DNS 审计全绿"不等于"配置可用"** —— f7 时两个审计脚本双双通过，分流却整片是坏的。
 
----
 
 ### 五个脚本的定位与分工
 
