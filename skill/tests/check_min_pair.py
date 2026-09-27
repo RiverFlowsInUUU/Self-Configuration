@@ -68,7 +68,7 @@ VERSION_RE = re.compile(r"^#! version=(routing|lazy)_v([0-9]+)\.([0-9])$")
 # 归档名里的版本号按「主.一位小数」起；本仓 2026-09-24 固定化之前有一批只写主号
 # （`routing_v3.conf`），一并认 —— V4 要抓的是"新归档没按进位规则起名"，不是考古。
 ARCHIVE_RE = re.compile(r"^(routing|lazy)_v([0-9]+(?:\.[0-9])?)(\.min)?\.(conf|yaml)$")
-OLD_DIR = "config_old"          # 归档目录（2026-09-27 起已删除；保留常量仅为兼容 make_min 快照提醒逻辑）
+OLD_DIR = "config_old"          # 归档目录（2026-09-27 恢复；每版完整版 + .min 成对）
 
 
 def ver_tuple(v):
@@ -89,7 +89,7 @@ def head_version(path):
 
 
 def version_checks(root):
-    """固定名与头注版本 ⇒ [(判据名, 通过?, 说明)]；两侧各 2 条 + 跨侧 2 条。归档判据（V3–V6）已随 config_old/ 删除而退役（2026-09-27）。"""
+    """固定名与头注版本 ⇒ [(判据名, 通过?, 说明)]；两侧各 2 条 + 跨侧 2 条。归档判据（V3–V6）在 config_old/ 目录存在时照常生效。"""
     out, heads = [], {}
     for d in PROFILE_DIRS:
         side = d.split("/")[0]
@@ -108,7 +108,7 @@ def version_checks(root):
                     "routing=%s · lazy=%s（读不出多半是第一行被挪走或写成了 x.y.z）" % (vr, vl)))
         old_dir = os.path.join(dirpath, OLD_DIR)
         if not os.path.isdir(old_dir):
-            continue          # 归档目录已随 2026-09-27 仓库精简删除，归档判据（V3–V6）退役
+            continue          # 缺归档目录：V3–V6 无从判起，只保 V1/V2 与跨侧 4 条
         names = sorted(n for n in os.listdir(old_dir) if not n.startswith("."))
         # V3 的"存在"两字由上面那个 `isdir` 分支兜着（缺目录时 V3–V6 一并判负），
         # 走到这里存在性已成事实 ⇒ 这条唯一还能判的东西是"非空"。从前它写的是字面量 True，

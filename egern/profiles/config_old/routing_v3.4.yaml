@@ -1,4 +1,4 @@
-#! version=routing_v3.5
+#! version=routing_v3.4
 # ================================================================ routing_v3.4（正式版 · 推荐）
 # 本版 = **routing_v2.4 + 规则段对齐 Surge**（内容与顺序均逐行对拍）：
 #   ① `dns.forward` 由单条 catch-all 扩为 4 层：
@@ -585,7 +585,7 @@ rules:
 # Egern 虽然有 `disabled: true`，但那条仍然算数组里的一个元素 ⇒ 会比 Surge 多占一位、
 # 把位 ⑲ 错开。Surge 的 `RULE-SET` 根本没有 disabled 字段（只认 no-resolve /
 # extended-matching / update-interval / pre-matching），想不生效只能注释。
-# 两边统一用注释写法，`docs/rulesets.md` §3 的「24 条逐位对齐」才成立。
+# 两边统一用注释写法，`docs/规则集与来源.md` §3 的「24 条逐位对齐」才成立。
 #   # - rule_set:
 #   #     name: Proxy
 #   #     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Proxy/Proxy.list

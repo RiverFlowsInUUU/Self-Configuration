@@ -5,6 +5,13 @@
 文档、检查脚本与判据的改动不进这里，看 `git log`。
 逐版史实看 git log；2026-09-27 仓库精简前的完整历史在备份 tag `pre-cleanup-20260927`。
 
+## 2026-09-27
+
+- 恢复 `surge/profiles/config_old/`（14 份）与 `egern/profiles/config_old/`（26 份）历史版本快照
+  —— 精简时误删，自备份 tag 原字节找回，归档判据（V3–V6）随之恢复生效。
+- 归档升版：变动前的 surge 懒人版与 Egern 分流版（v1.3 / v3.4）连同 `.min` 快照入档 `config_old/`；
+  四份当前版头注同号升 `lazy_v1.3 → v1.4`、`routing_v3.4 → v3.5`（两内核同步），正文与 `.min` 未动。
+
 ## 2026-09-26
 
 - 新增隐藏订阅入口 `Airport`（`surge/profiles/lazy.conf` 用 `select` + `policy-path` + `hidden=true`，

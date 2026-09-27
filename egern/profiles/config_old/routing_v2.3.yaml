@@ -1,34 +1,4 @@
-#! version=routing_v3.5
-# ================================================================ routing_v3.4（正式版 · 推荐）
-# 本版 = **routing_v2.4 + 规则段对齐 Surge**（内容与顺序均逐行对拍）：
-#   ① `dns.forward` 由单条 catch-all 扩为 4 层：
-#      白名单（white-guard → Domestic-DNS，抢在拦截前拿到解析）
-#      → Jinx-Ads / AWAvenue 两条广告清单（value: reject —— 官方语义
-#      "refuse the query and return an empty response"，解析阶段直接拒答，
-#      等价 Surge 的 pre-matching REJECT）→ catch-all 兜底。
-#      防泄露面不变：查询去向仍是 Domestic-DNS 加密组或拒答二选一，
-#      proxy_nameservers 绕过 Forward、bootstrap 依旧闲置。
-#   ② `rules` 补 `private.txt → DIRECT`（与 Surge 同源同策略；Lan.list 保留互补
-#      —— Lan 管 IP 段与路由管理域，private 管 .lan/.local 等特殊 TLD 与 miwifi.com）。
-#   ③ `rules` 删内联 `domain_suffix: cn` 兜底（direct.txt 本身已含 DOMAIN-SUFFIX,cn，
-#      正常路径 100% 重复；故障场景只是退化不是泄露）。
-#   ④ `rules` 顺序为本仓基准序，Surge `routing_v3.4.conf` 与本文件逐行对齐
-#      （仅两处引擎差异例外：Surge 独有内置 SYSTEM / 内置 LAN，Egern 用 blackmatrix7 Lan.list）。
-# `policy_groups`、`dns` 其余键逐字未动。
-# ⭐ 推荐版由 `routing_v2.4` 移交给本版；`routing_v2.4` 降为保留版（文件未动，留作对照）。
-#
-#   【为什么补】lazy / routing_v1 / routing_v2–routing_v2.3 **所有版本**的 `rule_set` 都缺这个字段（实测 21 条里 0 条有）。
-#      官方 `rule_set` 示例带 `update_interval: 86400`；缺省时规则集可能只在首次下载、
-#      之后不再刷新 ⇒ **规则集永远停在旧版本**。
-#      **实测症状（2026-09-21）**：`tuyacn.com` 明明在 `direct.txt` 里（第 90494 行，
-#      格式正常），却命不中；而同一列表里更老的域名能命中 —— 典型的新条目缺失。
-#      补上后规则集按天刷新，新收录的域名才能生效。
-#
-#   【为什么不做域名白名单】给单个域名加直连（如 `domain_suffix: tuyacn.com`）是治标：
-#      国内 `.com` 域名漏网是**结构性**问题（`geoip: CN` 带 `no_resolve`，只认已是 IP 的连接），
-#      逐个列举既列不全、也要长期维护。本版改的是「让规则集保持新鲜」，对所有域名一次性生效。
-#
-# ---- 以下为 routing_v2.3 的说明，保留以便对照 ----
+# ================================================================ routing_v2.3（正式版 · 推荐）
 # 本版 = **routing_v2.2 + 四处修正**，`dns` 段 / `rules` 段逐字相同。
 # ⭐ 推荐版由 `routing_v2.2` 移交给本版；`routing_v2.2` 降为保留版（文件未动，留作对照）。
 #
@@ -79,7 +49,7 @@
 #   【改】Smart         —— 上游从「Airport-Free · Airport-C」改为「Airport-A · Airport-B」
 #   【改】Japan         —— 上游去掉 Airport-C，只剩「Airport-A · Airport-B」
 #   【改】MAX           —— 不再自带订阅 URL，改为「带节点筛选的 Smart」。
-# ⇒ 机场订阅入口 4 → 2（Airport-A / Airport-B），URL 占位符 8 → 4 条（口径 = 仅 `urls:` 下条目；含 `urls_disabled:` 为 11 → 5）。
+# ⇒ 机场订阅入口 4 → 2（Airport-A / Airport-B），URL 占位符 9 → 4 条。
 #    保留 A、B 的理由：A 被 8 个组引用、B 被 7 个，是地区组的共同上游；
 #    C 与 Free 只服务 Smart，删掉后 Smart 仍有 A/B 可用，能力不降。
 vif_only: true
@@ -148,33 +118,9 @@ dns:
     - https://120.53.53.53/dns-query   # 腾讯 · DoH
     - tls://1.12.12.12                 # 腾讯 · DoT
   # ---------------------------------------------------------------- 转发规则
-  # 三层结构，与 Surge 的 [Rule] 次序逐层对齐（first-match-wins，官方语义：
-  # "Rules are evaluated in declaration order; the first matching rule routes
-  #  the query to its upstream"）：
-  #   ① 白名单首位：命中 → Domestic-DNS 正常加密解析。对应 Surge 的
-  #      RULE-SET white-guard,DIRECT —— 43 条会被广告清单误杀的功能域
-  #      （AWAvenue 命中其中 10 条：jpush.cn / appcfg.v.qq.com / apd-pcdnwx* /
-  #      tnc3-* 等）必须抢在 reject 之前拿到解析，否则流量层的白名单救不了
-  #      一个解析都失败的域名。
-  #   ② 广告拦截：对应 Surge 的 pre-matching REJECT —— 官方 value 字段：
-  #      "The special value reject — refuse the query and return an empty
-  #       response"。解析阶段直接拒答，连接根本不会发起。
-  #   ③ catch-all 兜底：官方「完整示例」的最后一条正是 domain_wildcard: '*'。
-  #      只要它在，任何域名都不会「未命中 Forward」⇒ 默认 DNS 永不回退 bootstrap。
-  # 防泄露面不变：①③ 的查询去向都是 Domestic-DNS（同一个加密组，无新解析器）；
-  # ② 是终止动作不是转发；proxy_nameservers 配置在，代理 DNS 完全绕过 Forward
-  # （官方："Forward rules are bypassed"）⇒ 四条规则只改「谁来处置」，不改
-  # 「任何一次查询去哪里解析」。
+  # 一条 catch-all 就够。官方「完整示例」的最后一条正是 domain_wildcard: '*'，
+  # 这是标准兜底写法。只要它在，任何域名都不会「未命中 Forward」⇒ 默认 DNS 永不回退 bootstrap。
   forward:
-  - proxy_rule_set:
-      match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-white-guard.list
-      value: Domestic-DNS
-  - proxy_rule_set:
-      match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-ads.list
-      value: reject
-  - proxy_rule_set:
-      match: https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Surge-RULE-SET.list
-      value: reject
   - domain_wildcard:
       match: '*'
       value: Domestic-DNS
@@ -195,34 +141,12 @@ dns:
   block_ips:
   - 0.0.0.0
   - 127.0.0.1
-# 两条占位节点：`Node-A` 归 `Proxy`（挂在成员末位，默认首项仍是 `MAX`），
-# `Node-B` 是 `AI` 的默认成员。协议 / 字段与 Surge 分流版那两条 hysteria2 一一对应
-# （`auth` ≙ Surge 的 `password`）。
-# ⚠️ 地址是 RFC 5737 文档段（203.0.113.0/24），请替换为你的真实信息；
-#    server 写成 IP 字面量 ⇒ 节点不产生"解析节点域名"这次查询。
-# 这两条**不进**任何地区组 / `Smart` / `MAX` —— 那些组只从 `Airport` 订阅取节点。
-# 要再加节点照这个格式写；名字里带上地区关键词（`HK` / `香港` …）时注意：
-# 显式写在本节的节点不会被地区组的正则筛到。
-proxies:
-- hysteria2:
-    name: Node-A
-    server: 203.0.113.10
-    port: 52341
-    auth: REPLACE_WITH_YOUR_PASSWORD
-    sni: REPLACE_WITH_YOUR_SNI
-- hysteria2:
-    name: Node-B
-    server: 203.0.113.11
-    port: 52341
-    auth: REPLACE_WITH_YOUR_PASSWORD
-    sni: REPLACE_WITH_YOUR_SNI
-# 再往下是你的节点池与分流组；新节点要么写进上面的 `proxies`，要么来自 `Airport` 订阅。
+proxies: []
+# 在此添加你的节点。本模板不附带任何示例 / 虚拟节点 —— 节点由你自行填写，
+# 再把下方分流组的 policies 填上对应的节点名（或订阅组名）。
 policy_groups:
 - select:
     name: Proxy
-    # 成员 = 各组名，末位再挂 `Node-A`（挂末位是刻意的：首项仍是 `MAX`，
-    # 默认出口没有被一条占位节点顶掉）。本组**不带** `flatten`，与 Surge 的
-    # `select, MAX, Smart, …, "Node-A"` 同形。
     policies:
     - MAX
     - Smart
@@ -233,82 +157,59 @@ policy_groups:
     - Japan
     - Korea
     - Other Regions
-    - Node-A
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Proxy.png
 - smart:
     name: Smart
-    # 【routing_v2.4】合并 Airport-A / Airport-B 为单一订阅入口 Airport。
-    #   ⚠️ `flatten: true` **必须保留**：它是 Surge `smart, include-other-group="Airport"` 的对应物
-    #   （Egern 官方：「展开嵌套策略组中的所有代理节点」）。少了它，smart 的候选只剩「Airport」
-    #   这**一个组单位**，测不到组内任何节点 ⇒ 「自动选优」直接退化。地区组 / MAX 同理。
+    # 【routing_v2.3 修 3】补上 flatten: true —— 与 MAX 对齐，候选变成「全部具体节点」而非「A 组 / B 组」两个单位。
+    #   routing_v2.2 及更早版本这里没有 flatten（Smart 只在两个订阅组之间做二级选优）。
     policies:
-    - Airport
+    - Airport-A
+    - Airport-B
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Auto.png
-# ================================================================ 应用组（本段 12 个）
-# ⚠️ 本段 12 个全部是 `select` + `flatten: true` —— 与 Surge 的 `select, include-other-group="Proxy"` 逐个等价。
-#   （`WeChat` 同为应用组，但已是纯 `select, policies:[DIRECT]` —— 不带 `flatten`、不引用任何其它组，
-#     见下方「订阅槽位 + 开关」段。）
-#
-#   Egern 的 `flatten: true`：把「Proxy」这个**组名**在求值期展开成组内**全部具体节点**
-#     （官方原文：「展开嵌套策略组中的所有代理节点……而不是只显示策略组名称」）。
-#   Surge 的 `include-other-group="Proxy"`：官方原文「includes the **resolved member
-#     policies** from other policy groups」—— 同一语义。
-#   ⇒ 两者**必须成对**。只写 `policies: [Proxy]` 却不加 `flatten`，成员就退化成
-#     「Proxy」这**一个组单位**（≈ Surge 的 `select, Proxy`，要先点进去再选），
-#     而不是 Surge 各应用组的「节点平铺」。本版即按此对齐。
-#
-#   首项 = 默认取向，逐组与 Surge 一致：ChatGPT / Gemini / AI / Spotify / YTMusic /
-#   YouTube / GitHub / Telegram / Twitter 默认 `Proxy`；Claude 默认 `Taiwan`；
-#   Google 默认 `Gemini`；Microsoft 默认 `DIRECT`。
-#   ⚠️ 本版有两处首项不是组名池：`AI` 首项是本文件的 `Node-B`（占位节点），
-#     `Spotify` / `YouTubeMusic` 首项是 `USA`。两侧（Surge / Egern）同写。
-# ================================================================
-- select:
+- fallback:
     name: ChatGPT
-    # 规则 4（OpenAI.list → ChatGPT）直接指向本组 ⇒ 必须始终有出口，默认 Proxy。
+    # 【routing_v2.3 正式版新增】原先 `policies: []` 是**空的** —— 而规则 4 直接指向本组
+    #   （OpenAI.list → ChatGPT）⇒ 导入即静默断流：ChatGPT 相关域名没有任何出口。
+    #   现在填 `Proxy` 作安全默认，并加 `flatten: true`。
+    #
+    #   为什么必须配 flatten（官方「通用字段」说明：flatten 在 select / auto_test / smart /
+    #   fallback / load_balance 五种基础类型上通用）：
+    #     · 不加 flatten ⇒ 候选是「Proxy」这**一个组单位**，fallback 只有 1 个候选，
+    #       等于没有故障转移能力，且 Proxy 一旦不可用整组就断。
+    #     · 加 flatten  ⇒ Proxy 被**展开成全部具体节点**，fallback 在节点级按顺序试第一个可用的。
+    #   组合效果 = 给 Proxy 补了一层「节点级故障转移」。
     policies:
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/openai.png
-- select:
+- fallback:
     name: Gemini
-    # 规则 5（Gemini.list → Gemini）直接指向本组；且 `Google` 组首项即本组。
+    # 【routing_v2.3 正式版新增】同 ChatGPT：原为空 `policies: []`，而规则 5 直接指向本组，
+    #   且 `Google` 组的**首项就是 `Gemini`**（默认选中它）⇒ 影响面比 ChatGPT 更大。
     policies:
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/gemini-color.png
-- select:
+- smart:
     name: Claude
-    # 默认走台湾（Claude 对台湾线路较友好）；Taiwan 之后是 Proxy 的全节点池。
     policies:
     - Taiwan
-    - Proxy
-    flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/claude-color.png
-- select:
+- smart:
     name: AI
-    # 默认走本文件的 `Node-B`（占位节点），其后才是 `Proxy` 摊平的整池节点。
-    # ⇒ 只填两条节点、不导订阅时 `Proxy` / `AI` 仍有出口；只导订阅不填节点时，
-    #   来面板把本组切到订阅节点即可（`Proxy` 首项是 `MAX`，不受影响）。
     policies:
-    - Node-B
     - Proxy
-    flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/grok.png
 - select:
     name: Spotify
-    # 默认走 `USA`（与 `YouTubeMusic` 同）；Spotify 的解锁地区以美区为准。
     policies:
-    - USA
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Spotify.png
 - select:
     name: YouTubeMusic
-    # 默认走 `USA`。
     policies:
-    - USA
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTubeMusic.png
@@ -326,15 +227,12 @@ policy_groups:
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/GitHub.png
 - select:
     name: Google
-    # 首项 `Gemini` ⇒「Google 走 Gemini → Proxy」。
     policies:
     - Gemini
     - Proxy
-    flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Google.png
 - select:
     name: Microsoft
-    # 首项 `DIRECT`：微软服务直连优先（走代理反而慢）。
     policies:
     - DIRECT
     - Proxy
@@ -352,26 +250,30 @@ policy_groups:
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Twitter.png
-# 【routing_v2.4】合并原 Airport-A / Airport-B 为单一订阅入口，对齐 Surge 的单个隐藏 Airport。
-#   所有原引用 Airport-A / Airport-B 的组，现统一引用 Airport（下方地区组 / Smart / MAX 均已更新）。
 - external:
-    name: Airport
+    name: Airport-A
+    type: smart
+    urls:
+    - https://sub.example.com/api/v1/client/subscribe?token=REPLACE_WITH_YOUR_TOKEN
+    - https://sub.example.com/api/v1/client/subscribe?token=REPLACE_WITH_YOUR_TOKEN
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png
+- external:
+    name: Airport-B
     type: smart
     urls:
     - https://sub.example.com/api/v1/client/subscribe?token=REPLACE_WITH_YOUR_TOKEN
     - https://sub.example.com/api/v1/client/subscribe?token=REPLACE_WITH_YOUR_TOKEN
     urls_disabled:
     - https://sub.example.com/api/v1/client/subscribe?token=REPLACE_WITH_YOUR_TOKEN
-    hidden: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png
-# 【routing_v2.2 删除】Airport-C 与 Airport-Free 两个订阅槽位原本在这里；【routing_v2.4】Airport-A / Airport-B 也已合并为单一 Airport。
-#   Airport-C / Free 只服务 Smart，删掉后 Smart 仍有 Airport 可用；A/B 合并为 Airport 后，所有地区组与 Smart / MAX 统一引用它。
+# 【routing_v2.2 删除】Airport-C 与 Airport-Free 两个订阅槽位原本在这里。
+#   Airport-C 只被 Smart / Japan 引用，Airport-Free 只被 Smart 引用；
+#   两者的上游引用已并入 Airport-A / Airport-B，删掉不损失任何选路能力。
 - select:
     name: WeChat
-    # 成员**只有 `DIRECT`**：微信直连。本组的真正作用是把微信**从兜底里摘出来**，避免被 Final 送进代理。
-    #   刻意不给其它出口 —— 不带 `flatten`、不引用任何其它分流组（与 Surge 的 `select, DIRECT` 一致）。
     policies:
     - DIRECT
+    flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/WeChat.png
 - select:
     name: AD
@@ -383,40 +285,45 @@ policy_groups:
 # ⚠️ 这 6 个地区组（+ 末尾的 Other Regions）的关键词是**两份拷贝**：
 #    每个地区组写自己的 filter，而 Other Regions 的负向断言把它们的全部关键词又抄了一遍。
 #    **改任何一个地区组的关键词，都要同步改 Other Regions。**
-#    校验：`python skill/scripts/egern/audit_region_filters.py egern/profiles/routing.yaml`
+#    校验：`python skill/scripts/audit_region_filters.py profiles/routing_v2.3.yaml`
 # ================================================================
 - smart:
     name: Hong Kong
     policies:
-    - Airport
+    - Airport-A
+    - Airport-B
     flatten: true
     filter: (?i)🇭🇰|香港|Hong\s*Kong|\bHKG?\b|(?:深|沪|京|广)港
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/HongKong.png
 - smart:
     name: USA
     policies:
-    - Airport
+    - Airport-A
+    - Airport-B
     flatten: true
     filter: (?i)🇺🇸|美国|United\s*States|America|\bUSA?\b|洛杉矶|硅谷|西雅图|芝加哥|达拉斯|凤凰城|阿什本|纽约|迈阿密|波士顿|休斯顿|亚特兰大|拉斯维加斯|圣地亚哥|盐湖城|奥斯汀|波特兰|丹佛|奥克兰|安大略|圣安娜|\b(?:LAX|SJC|SFO|SEA|ORD|JFK|DFW|IAD|PHX|ATL|BOS|MIA|EWR|LGA|IAH|HOU|DEN|OAK|ONT|SNA|LAS|PDX|DAL|SAN|SLC|MSP)\b
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/UnitedStates.png
 - smart:
     name: Japan
     policies:
-    - Airport
+    - Airport-A
+    - Airport-B
     flatten: true
     filter: (?i)🇯🇵|日本|东京|大阪|Japan|\b(?:JPN?|NRT|HND|KIX|FUK|NGO|OSA|CTS|SDJ|OKA)\b
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Japan.png
 - smart:
     name: Taiwan
     policies:
-    - Airport
+    - Airport-A
+    - Airport-B
     flatten: true
     filter: (?i)🇹🇼|台湾|Taiwan|\b(?:TWN?|TPE|Taipei)\b
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Taiwan.png
 - smart:
     name: Singapore
     policies:
-    - Airport
+    - Airport-A
+    - Airport-B
     flatten: true
     filter: (?i)🇸🇬|新加坡|狮城|Singapore|\b(?:SGP?|SIN)\b
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Singapore.png
@@ -426,7 +333,8 @@ policy_groups:
     #   是 (Airport-A ∪ Airport-B) 的子集，而下面已经直接引用了 A、B ⇒ Smart 冗余，候选会被重复展开。
     #   （routing_v2.1 及更早版本不冗余：那时 Smart = [Airport-Free, Airport-C]，能带来 C/Free 的节点。）
     policies:
-    - Airport
+    - Airport-A
+    - Airport-B
     flatten: true
     filter: (?i)🇰🇷|韩国|首尔|仁川|Korea|South\s*Korea|\b(?:KOR|KR|ICN|SEL)\b
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Korea.png
@@ -440,12 +348,13 @@ policy_groups:
     # 漏改的后果：该关键词不再被负向断言排除 ⇒ 属于那个地区的节点会**同时**出现在
     # 它自己的地区组和 Other Regions 里，两个组的内容不再互斥。
     #
-    # 自动校验：`python skill/scripts/egern/audit_region_filters.py egern/profiles/routing.yaml`
+    # 自动校验：`python skill/scripts/audit_region_filters.py profiles/routing_v2.3.yaml`
     #   它会把 6 个地区组的关键词集合与下面这段负向断言逐个比对，报出缺失项。
     #   ⚠️ 这段无法靠 YAML 变量消除（Egern 不支持 filter 引用），只能靠脚本守。
     # ================================================================
     policies:
-    - Airport
+    - Airport-A
+    - Airport-B
     flatten: true
     filter: |-
       (?xi) ^ (?! .* (?:
@@ -476,7 +385,8 @@ policy_groups:
     #   ⚠️ 残留风险：若订阅把「信息行」也塞成节点名（如 `剩余流量：0.5 TB`），仍会被收
     #      （0.5 < 1，从倍率语义看是对的）。真遇到时在下方 filter 前面加一段负向断言即可。
     policies:
-    - Airport
+    - Airport-A
+    - Airport-B
     flatten: true
     filter: (?<![\d.])0\.\d*[1-9]
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Nfcloud.png
@@ -494,115 +404,75 @@ rules:
     name: Jinx-CN
     match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-white-guard.list
     policy: DIRECT
-    update_interval: 604800
 - rule_set:
     name: Jinx-Ads
     match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-ads.list
     policy: AD
-    update_interval: 604800
 - rule_set:
     name: AWAvenue-Ads
     match: https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Surge-RULE-SET.list
     policy: AD
-    update_interval: 604800
 - rule_set:
     name: Lan
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Lan/Lan.list
     policy: DIRECT
-    update_interval: 604800
-- rule_set:
-    name: Private
-    match: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/private.txt
-    policy: DIRECT
-    update_interval: 604800
 - rule_set:
     name: ChatGPT
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/OpenAI/OpenAI.list
     policy: ChatGPT
-    update_interval: 604800
 - rule_set:
     name: Gemini
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Gemini/Gemini.list
     policy: Gemini
-    update_interval: 604800
 - rule_set:
     name: Anthropic
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Anthropic/Anthropic.list
     policy: Claude
-    update_interval: 604800
 - rule_set:
     name: Claude
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Claude/Claude.list
     policy: Claude
-    update_interval: 604800
 - rule_set:
     name: AI
     match: https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/75f0101039d71724b6e998b34604c2e053580e0c/Clash/Ruleset/AI.list
     policy: AI
-    update_interval: 604800
 - rule_set:
     name: Spotify
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Spotify/Spotify.list
     policy: Spotify
-    update_interval: 604800
 - rule_set:
     name: YTM
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/YouTubeMusic/YouTubeMusic.list
     policy: YouTubeMusic
-    update_interval: 604800
 - rule_set:
     name: YouTube
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/YouTube/YouTube.list
     policy: YouTube
-    update_interval: 604800
 - rule_set:
     name: Github
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/GitHub/GitHub.list
     policy: GitHub
-    update_interval: 604800
 - rule_set:
     name: Google
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Google/Google.list
     policy: Google
-    update_interval: 604800
 - rule_set:
     name: Microsoft
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Microsoft/Microsoft.list
     policy: Microsoft
-    update_interval: 604800
 - rule_set:
     name: Telegram
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Telegram/Telegram.list
     policy: Telegram
-    update_interval: 604800
 - rule_set:
     name: Twitter
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Twitter/Twitter.list
     policy: Twitter
-    update_interval: 604800
-# ---- 3e. 禁用条目（与 Surge 对齐）------------------------------------------
-# blackmatrix7 Proxy.list：改成**纯注释** = 不进 rules 数组、不占一位。
-# Egern 虽然有 `disabled: true`，但那条仍然算数组里的一个元素 ⇒ 会比 Surge 多占一位、
-# 把位 ⑲ 错开。Surge 的 `RULE-SET` 根本没有 disabled 字段（只认 no-resolve /
-# extended-matching / update-interval / pre-matching），想不生效只能注释。
-# 两边统一用注释写法，`docs/rulesets.md` §3 的「24 条逐位对齐」才成立。
-#   # - rule_set:
-#   #     name: Proxy
-#   #     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Proxy/Proxy.list
-#   #     policy: Proxy
-#   #     update_interval: 604800
-#   #     disabled: true
-# 位 ⑲ —— 对齐 Surge 内置的 `SYSTEM`：Egern 没有内置系统集，这里引用本仓自托管的时点快照
-#   （内容 = Surge 官方内置 `SYSTEM` 在 2026-09-24 的清单，删掉 Egern 不支持的两条
-#   `PROCESS-NAME`）。⚠️ 本仓自己维护 ⇒ 没有第三方刷新审计，Surge 大版本更新时人工比对一次。
-#   与下面那条 Apple 全量集重叠 12 条，重复无害（两条同为 DIRECT）；它独有、
-#   Apple 集与 direct.txt 都不含的是 6 条：.ls.apple.com / .push.apple.com /
-#   .push-apple.com.akadns.net / .ess.apple.com / .lcdn-locator / .lcdn-registration。
 - rule_set:
-    name: System
-    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/apple_system.list
-    policy: DIRECT
-    update_interval: 604800
+    name: Proxy
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Proxy/Proxy.list
+    policy: Proxy
+    disabled: true
 # ★ f7 核心改动：Apple_All.list -> Apple_All_No_Resolve.list
 #   官方 rules 文档原文：「no_resolve (bool)……设为 true 时仅匹配已解析的 IP 地址，
 #   **不会触发 DNS 解析**」—— 反过来说，不带 no_resolve 的 IP 类条目**会触发解析**。
@@ -617,29 +487,29 @@ rules:
     name: Apple
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Apple/Apple_All_No_Resolve.list
     policy: DIRECT
-    update_interval: 604800
 - rule_set:
     name: WeChat
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/WeChat/WeChat.list
     policy: WeChat
-    update_interval: 604800
 # ★ 国内域名直连的**主力**规则集。
 #   历史（f8）：f7 给 geoip:CN 加 no_resolve 治住泄露后，国内域名整片落到 default → Final → Proxy。
 #   根因不在 DNS、在**分流**：geoip 加了 no_resolve 便不再匹配域名，国内域名的直连必须由
 #   一份「域名条目足够多」的国内规则集承接。f8 起用 ChinaMax_All_No_Resolve.list
 #   （111,332 域名 + 同份 12,472 条带 no-resolve 的 IP）补齐——注意 ChinaMax.list 本身
 #   只是 IP 规则集（12,614 条里 12,472 条是 IP、域名仅 64 条），兜不住域名。
-#   现改为 Loyalsoldier `direct.txt`：约 11.1 万条**纯域名**、零 IP 条目
-#   （约 11.09 万条 `DOMAIN-SUFFIX` + 约 550 条 `DOMAIN`）。
-#   ⚠️ 条数**不写死** —— 该清单每周随上游更新，写进注释的精确数必然过期；要现值就现抓：
-#   `python skill/scripts/egern/profile_ruleset.py <下面这条 rule_set 的 match 地址>`。
+#   现改为 Loyalsoldier `direct.txt`：共 111,160 条，**纯域名**
+#   （110,607 条 DOMAIN-SUFFIX + 553 条 DOMAIN，零 IP 条目）。
 #   —— 纯域名规则集只做域名串匹配、**不触发任何解析**，因此与 no_resolve 无关；
 #      原先由 ChinaMax 的 IP 条目承担的「已是 IP 的连接」由下方 geoip:CN 兜住。
 - rule_set:
     name: CN
     match: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/direct.txt
     policy: DIRECT
-    update_interval: 604800
+# .cn 直连兜底：geoip 加了 no_resolve 后无法匹配域名。上面的国内域名规则集
+# 已覆盖绝大多数国内域名；这一条把整个 .cn TLD 再钉一次，不依赖规则集是否加载成功。
+- domain_suffix:
+    match: cn
+    policy: DIRECT
 - geoip:
     match: CN
     policy: DIRECT
