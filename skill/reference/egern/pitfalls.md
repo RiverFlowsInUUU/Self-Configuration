@@ -127,7 +127,7 @@ aaaa.dnsleaktest.com
   ⇒ 于是日志里"判定"与"解析"看起来矛盾：「default → Final → Proxy」但 upstream 是 bootstrap
 ```
 **诊断要点：`upstream: <明文标签>` 与"判定结果看起来没问题"同时出现 ⇒ 去找"为了判定某个规则而被迫发生的解析"。**
-排查顺序：把 profile 里**所有** `rule_set` / `proxy_rule_set` 的 URL 抓下来，逐个统计"IP 类条目里有多少条不带 `no-resolve`"，并确认该规则 `disabled` 与否。实测 22 个规则集的结论（含 2026-09-21 新增的 `white-guard` / `ads`，两条均为纯域名、无 IP 条目）：**只有 `Apple_All.list` 有问题（13/13 全裸；2026-09-27 现抓：上游已给这 13 条补上 `,no-resolve` ⇒ 现裸 0，本条按机制留档）**，其余（含 12614 条的 `ChinaMax.list`，12473 条 IP 全带）都干净 —— 所以这类问题不是"普遍存在"，而是**个别文件埋的雷，必须逐个核对**。
+排查顺序：把 profile 里**所有** `rule_set` / `proxy_rule_set` 的 URL 抓下来，逐个统计"IP 类条目里有多少条不带 `no-resolve`"，并确认该规则 `disabled` 与否。实测 22 个规则集的结论（含 2026-09-21 新增的 `white-guard` / `ads`，两条均为纯域名、无 IP 条目）：**只有 `Apple_All.list` 有问题（13/13 全裸；2026-09-27 复取仍全裸 —— 它与 `Apple_All_No_Resolve.list` 逐行只差这 13 枚 `,no-resolve`，字节差 143 = 13×11 ⇒ 本仓两侧 profile 引用的正是补好的那个变体）**，其余（含 12614 条的 `ChinaMax.list`，12473 条 IP 全带）都干净 —— 所以这类问题不是"普遍存在"，而是**个别文件埋的雷，必须逐个核对**。
 
 **修法优先级**：
 1. ⭐ **换用同源等价文件**。blackmatrix7 的命名约定：`XXX.list`（标准）/ **`XXX_No_Resolve.list`（IP 条目全带 no-resolve，首选）** / `XXX_Resolve.list`（全不带）/ `XXX_Domain.list`（纯域名）。Apple 实测 `Apple_All_No_Resolve.list` 与 `Apple_All.list` 在**去掉 `,no-resolve` 后 1616 条逐条相同** ⇒ 换 URL 就完事，覆盖范围零损失，**对 IP 形式的连接判定也完全不受影响**（IP 本就不需要解析）。

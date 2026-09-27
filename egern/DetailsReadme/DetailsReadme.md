@@ -292,7 +292,7 @@ forward:
   `audit_dns_forward.py` 把 `[2400:3200::1]` 截断成 `'[2400:3200:'`，
   **同一份 IPv6 profile 两个脚本给出相反结论**（0/1）。
   现已把 `DOMESTIC_RESOLVER_IPS` / `hostpart` / `ip_literal` 收编到共享模块
-  `skill/scripts/egern/_egern_common.py`，两个脚本都从它 import —— 从结构上消灭拷贝。
+  `skill/scripts/egern/_egern_common.py`，两个脚本都从它 import（2026-09-27 现抓：该目录 10 个脚本里已有 8 个 import 它）—— 从结构上消灭拷贝。
   并新增 `skill/tests/egern/run.sh`（阶段 1：5 fixture × 2 脚本）作为**防退化守卫**。
 - ⚠️ **（三次核查后）"收编"这个动作本身又引入了一次回归**：`hostpart` 剥 scheme 从
   「通用剥离」退化成「大小写敏感白名单」，端点写 `HTTPS://223.5.5.5/dns-query` 时
