@@ -10,8 +10,6 @@
 > 对两份配置都适用** —— 分流版只是在 `[Proxy Group]` 与 `[Rule]` 上更细。
 > 分流版专属的设计约束（`flatten` 的对应写法、Smart 组不能嵌套组、地区关键词双份）
 
-
-
 ## 0 · 结构总览
 
 ```
@@ -24,7 +22,6 @@
 ```
 
 **顺序有语义**：`[Rule]` 自上而下匹配，第一条命中即决定去向。
-
 
 ## 1 · `[General]`
 
@@ -203,7 +200,6 @@ always-real-ip = *.lan, *.local, *.localdomain, *.home.arpa, *.srv.nintendo.net,
 而那些规则带 `no-resolve`，对未解析的主机名**跳过**。所以需要在 `[Rule]` 里
 用 `DOMAIN-SUFFIX` 先接住（见 §3.4）。
 
-
 ## 2 · `[Proxy]`
 
 ```
@@ -273,7 +269,6 @@ AdBlock = reject
 ⚠️ 但 `pre-matching` 的规则**建议直接写字面量内置名** —— 别名的解析链路更长，
 字面量保证能过校验。
 
-
 ## 3 · `[Proxy Group]`
 
 ```
@@ -325,7 +320,6 @@ DIRECT**（组被切走 / 成员动态变化），Surge 无法保证"一定拦�
 `REJECT`，`AD` 组作为**面板上独立的手动开关**保留 —— 刻意的分层，不是遗漏。
 **职责边界**：改默认拦截行为要改规则那一行；想让 `AD` 接管开关，把策略改成
 `AD` 并**一并去掉 `pre-matching`**（这是明确的取舍）。
-
 
 ## 4 · `[Rule]`
 
@@ -423,7 +417,6 @@ RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/75f01010…/Clash/Rul
 
 代价：上游更新不自动跟进。要更新得手动换 hash。
 
-
 ## 5 · `[Host]`
 
 ```
@@ -436,7 +429,6 @@ localhost = server:system
 `localhost` 内部就能解析；`*.lan` 已被 `exclude-simple-hostnames` + LAN 规则覆盖，
 再映射一遍是冗余的 —— 但显式写入无害，且让意图清楚。
 
-
 ## 6 · `[URL Rewrite]`
 
 ```
@@ -445,7 +437,6 @@ localhost = server:system
 ```
 
 可选段，与防泄露无关，纯便利。不需要可整段删掉。
-
 
 ## 7 · 交付前自检清单
 

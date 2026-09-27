@@ -4,9 +4,7 @@
 
 ## 故障排查
 
-
 两条入口先分流："泄露了"（隐私面）与"国内网站走代理了"（分流面）。它们常常是同一处改动的两面，所以本章 7.5 节把"成对交付"的复盘放在两边共同的位置。
-
 
 ### 7.0 动手前的第一个动作：确认链路
 
@@ -25,7 +23,6 @@
 
 > **注意**　真实事故：整套"旁路由劫持"证据链做完后，用户一句"leak test 是 iPhone 蜂窝上跑的"，全部作废。测试链路要写进报告开头。
 
-
 ### 7.1 leak test 结果的解读
 
 | 现象 | 含义 |
@@ -33,7 +30,6 @@
 | 出现运营商 DNS 或国内运营商出口 IP | 真泄露，往下查 |
 | 出现境外公共解析器（`8.8.8.8` 等） | 也可能是泄露（你自己配的不算） |
 | 出现节点出口城市的 IP | 不是泄露 —— 那是代理在工作的证据，别去"修" |
-
 
 ### 7.2 定位三个出口（Surge 侧）
 
@@ -60,14 +56,12 @@ Egern 日志速读：
 - `default → Final → Proxy` = 正常分流决策，不是泄露；
 - 节点连不上，先注释 `proxy_nameservers`（硬覆盖，见 [操作手册](ops.md)）。
 
-
 ### 7.3 国内网站走代理了：排查序列
 
 1. 跑分流覆盖审计（两侧都叫 `audit_routing_coverage.py`，联网）—— 国内探针是否命中 `DIRECT`；
 2. 命中失败先看两条：`direct.txt` 那条规则还在不在；`GEOIP,CN` / `geoip: CN` 有没有被挪到域名规则前面；
 3. 引用了新的国内规则集顶替？数它的域名条目，别看名字（ChinaMax 教训见 [成对交付篇](no-resolve-pairing.md)）；
 4. 只测 `.cn` 通过不算数 —— 探针必须含 `jd.com` / `zhihu.com` 这类非 `.cn` 国内域名，否则一条后缀兜底就能造假通过。
-
 
 ### 7.4 两内核症状速查（改配置前也先扫一眼）
 
@@ -87,7 +81,6 @@ Egern 日志速读：
 更长的清单在原两侧坑档：[`../skill/reference/surge/pitfalls.md`](../surge/pitfalls.md) ·
 [`../skill/reference/egern/pitfalls.md`](../egern/pitfalls.md)（速查表在各自文件顶部）。
 
-
 ### 7.5 母题：审计绿不等于配置可用
 
 本项目反复出现"脚本全绿、实测仍有问题"。每次的结论都一样：存在审计器看不见的维度，把它补成一个可复跑的脚本，而不是重跑同一个脚本、或只解释为什么脚本是对的。
@@ -99,11 +92,9 @@ Egern 日志速读：
 
 由此固化的验收观：**"配置里写了什么"与"实际会发生什么"是两件事；结构正确不代表行为正确。**
 
-
 ### 7.6 汇报纪律
 
 给用户的结论必须带上三样：测试链路（设备 / 网络 / DNS）、复现命令、可证伪预期（"换上去之后应看到 X、不应看到 Y"）。缺任何一样，结论按未完成处理。
-
 
 ### 相关页面
 
@@ -115,14 +106,10 @@ Egern 日志速读：
 | 跑闸门收敛、核对读数落点 | 本篇「验证与自检」章 |
 | 名词不认识、常见疑问没解决 | 本篇「FAQ 与术语表」章 |
 
-
-
 ## 验证与自检
-
 
 一切改动的收尾都是这里。原则：本地先跑绿，CI 再把同一组检查跑一遍（`.github/workflows/ci.yml`，push / PR 自动触发）。
 本章只讲"用什么、怎么读"；读数一律以脚本当次输出为准，本文不抄数 —— 抄了就会漂。规则集条数与来源的权威清单在 [`rulesets.md`](rulesets.md)。
-
 
 ### 8.1 环境要求
 
@@ -132,7 +119,6 @@ Egern 日志速读：
 | 网络 | 只有内容 / 覆盖 / 刷新类 `audit_*` 需要联网，其余全离线 |
 | 磁盘 | 规则集缓存数 MB 级、随上游漂移（实测读数见 [`../surge/checker.md`](../surge/checker.md) 「磁盘」行；`direct.txt` 一份十一万条，条数权威在 [`rulesets.md`](rulesets.md)），在系统临时目录（`surge-ruleset-cache` / `egern-ruleset-cache`）；`--cache-dir` 可换，`--force` 忽略缓存重下 |
 | Windows | 输出必须 UTF-8（脚本内部已钉；中文控制台默认 GBK 会把 emoji 崩成退出码 1，与"期望判负"撞码，造成假绿）。Git Bash 的 `pwd` 是 `/c/Users/...`，Windows 版 Python 打不开，`.sh` 里用 `cygpath -w` 转换；拼路径一律用 `/` |
-
 
 ### 8.2 一条命令：全量闸门
 
@@ -157,7 +143,6 @@ python skill/tests/check_links.py .     # 全仓 markdown 链接与锚点
 
 两档口径要分清：默认档判"判据过了"，只报不判"未提交 / 落后 / 未推送"三数；`--landed` 才把三数计入判负，只在 push 之后跑。维护者说"先改本地、不提交不推送"的那批，按设计不跑 `--landed`（跑了必红，那是设计不是故障）。`--offline --landed` 组合直接退 2：离线少跑联网项还宣布落地，等于假绿。
 
-
 ### 8.3 单侧回归与常用参数
 
 ```bash
@@ -168,7 +153,6 @@ python skill/tests/make_min.py            # 计划模式：四份 .min 应全部
 ```
 
 > **说明**　判据构成以各脚本头注为准。"有一条红了"，先看输出点名的是哪份 profile、哪条判据。
-
 
 ### 8.4 脚本清单（按"我想知道什么"选）
 
@@ -195,7 +179,6 @@ python skill/tests/make_min.py            # 计划模式：四份 .min 应全部
 | 端点逐个实测死活 | `probe_dns_endpoints.py`（吃 profile）/ `probe_doh.py` | 是 |
 | 规则集类型分布（"数域名条目"判据的工具化） | `profile_ruleset.py` / `weigh_ruleset.py` | 是 |
 
-
 ### 8.5 什么在覆盖面之外
 
 刻意的边界，不是遗漏：
@@ -204,14 +187,12 @@ python skill/tests/make_min.py            # 计划模式：四份 .min 应全部
 - 提交前点名 stage，不一把 `git add -A` 扫进垃圾文件；
 - 远程规则集明天会不会变，不可静态判定 —— 所以刷新参数与覆盖审计成对存在。
 
-
 ### 8.6 判据自身的纪律
 
 - 判据演进史与逐条出处：[`../skill/reference/surge/checker.md`](../surge/checker.md)（Surge）· 两侧 [`surge/pitfalls.md`](../surge/pitfalls.md) / [`egern/pitfalls.md`](../egern/pitfalls.md)；
 - 为让脚本变绿而改判据，可以，但必须留痕 —— 写清为什么退让、退让后还能抓住什么；
 - 每条新判据要配能证伪它的坏 fixture（期望判负），否则它可能恒返回 0；
 - 判据脚本（`skill/tests/` 四件）改动前按"两要素"自证：哪个反例会漏判、改后能抓住什么。
-
 
 ### 相关页面
 
@@ -224,10 +205,7 @@ python skill/tests/make_min.py            # 计划模式：四份 .min 应全部
 | 把验证结论带到另一个内核 | [跨内核移植](cross-kernel-diff.md) |
 | 验证结论汇报要带的三样 | 本篇「汇报纪律」小节 |
 
-
-
 ## 注意事项
-
 
 > 使用前值得先看一遍的几条。订阅地址见 [`README`](../../../README.md)。
 
@@ -290,14 +268,10 @@ Egern 用本仓快照 `apple_system.list`，且若干内核级约束不可套用
 
 相关：[`rulesets.md`](rulesets.md) · [`cross-kernel-diff.md`](cross-kernel-diff.md)
 
-
-
 ## FAQ 与术语表
-
 
 FAQ 从两侧 [`profile-anatomy`](../surge/profile-anatomy.md) · [`profile-anatomy`](../egern/profile-anatomy.md) 的问答节归并而来（答案与源文件同口径，冲突时以 `profile-anatomy` 为准）。
 术语表是全手册的公共词汇，定义以本仓文档的实际用法为准。
-
 
 ### 10.1 FAQ
 
@@ -347,7 +321,6 @@ Surge iOS 不支持本地文件配置 —— 把 profile 托管到可访问地�
 **Q：审计全绿就安全了吗？**（双侧）
 不。本项目多次出现"脚本全绿、实测仍有问题"，根因都是审计维度缺失。每发现一次，就把那个维度补成可复跑脚本 —— 见本篇「7.5 母题：审计绿不等于配置可用」。
 
-
 ### 10.2 术语表
 
 | 术语 | 定义（本仓用法） |
@@ -374,7 +347,6 @@ Surge iOS 不支持本地文件配置 —— 把 profile 托管到可访问地�
 | `direct.txt` 承重 | 国内域名直连的主承重规则集（Loyalsoldier，十一万级纯域名）；条数与来源见 [`rulesets.md`](rulesets.md) |
 | 现算 | 期望值从源头（profile / 脚本源码）实时计算，禁止抄进文档 —— 本仓反漂移的第一纪律 |
 | 已合并 | 2026-09-27 起旧手册与专题文档已并入 `skill/reference/`，原 `docs/` 与两侧 `DetailsReadme/` 已删除（git 历史可查） |
-
 
 ### 相关页面
 

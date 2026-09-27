@@ -3,7 +3,6 @@
 > **何时读**：用户报「leak test 显示 China Telecom / 电信 / 联通 / 移动」，
 > 或者**只是感觉**有泄露但说不清哪里漏。
 
-
 ## 0 · 先分清三类"泄露"
 
 `leak test` 的结果需要**分类解读**，它们指向完全不同的修法：
@@ -16,7 +15,6 @@
 
 ⚠️ 第三类是常见误报。很多 leak test 网站会把"你从哪来"也列出来 ——
 那正是代理在工作的标志。
-
 
 ## 1 · 抓包定位（最可靠）
 
@@ -80,7 +78,6 @@ IP 192.168.1.50.51000 > 1.1.1.1.443: ...                             ← ✅ DoH
 
 只在"已经跑了一阵"的状态下抓，出口 ① 已经被掩盖了。
 
-
 ## 2 · 不抓包的近似判断
 
 如果没法抓包，按这个顺序排查：
@@ -138,7 +135,6 @@ grep 'proxy-test-url\|internet-test-url' <profile>
 
 > 这一条曾是本项目的**误报来源** —— 详见 `pitfalls.md` 坑 14。
 
-
 ## 3 · 修法对照表
 
 | 定位到的出口 | 修法 | 注意 |
@@ -161,7 +157,6 @@ python skill/scripts/surge/audit_routing_coverage.py <profile>
 
 期望国内探针全部命中 `DIRECT`。详见 [`pitfalls.md`](pitfalls.md) 坑 1。
 
-
 ## 4 · 验证修好了
 
 ```
@@ -174,7 +169,6 @@ python skill/scripts/surge/audit_routing_coverage.py <profile>
 ```
 
 ⚠️ 第 5 步的解读见 §0 —— **leak test 显示节点出口城市不是泄露**。
-
 
 ## 5 · 边界：什么情况不该"修"
 

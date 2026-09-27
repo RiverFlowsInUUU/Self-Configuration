@@ -172,7 +172,6 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
 | [`reference/egern/ruleset-weight.md`](reference/egern/ruleset-weight.md) | 用户问「规则集是不是太重」时——内存 / 耗时实测 |
 | [`reference/egern/public-repo.md`](reference/egern/public-repo.md) | 要更新模板 / 了解仓库结构与脱敏清单时 |
 
-
 ## 分支 A · Surge 配置防 DNS 泄露
 
 ### 适用
@@ -188,7 +187,6 @@ Egern（见分支 B）、Shadowrocket（`dns-server` 语义不同）。
 本文件是**主干**：三条出口模型、12 项审计清单、加固模板、坑索引、验收判据。
 `reference/surge/` 七篇的「何时读」索引见 §4，不在此重复。**移植到 Egern 侧前必读
 [`reference/shared/cross-kernel-diff.md`](reference/shared/cross-kernel-diff.md)**。
-
 
 ### Surge 的 DNS 模型（不理解这个就会改错地方）
 
@@ -214,7 +212,6 @@ Egern（见分支 B）、Shadowrocket（`dns-server` 语义不同）。
 ⭐ **`use-local-host-item-for-proxy` 必须 `false`。** 本地 DNS 映射只服务 DIRECT 路径；
 开启会把本地结果变成**硬性的代理目标**，破坏远端解析（走代理的域名应该由节点侧
 按地理就近解析，本地不该有它的答案）。
-
 
 ### 12 项审计清单
 
@@ -254,7 +251,6 @@ Egern（见分支 B）、Shadowrocket（`dns-server` 语义不同）。
 
 ⚠️ 空组是允许的（正则没筛到任何节点）—— Surge **不会**因此拒绝加载，
 但指向它的规则会断流。分流配置导入后要确认哪几个组是空的。
-
 
 ### 加固模板
 
@@ -305,7 +301,6 @@ FINAL,Proxy,dns-failed
 - [ ] 手工实测：抓包确认冷启动无明文 `:53`
 - [ ] 手工实测：游戏机 / NAT 检测 / 时间同步正常（`always-real-ip` 生效）
 
-
 ### 坑索引
 
 完整复盘见 [`reference/surge/pitfalls.md`](reference/surge/pitfalls.md)。**高频坑速查**：
@@ -323,7 +318,6 @@ FINAL,Proxy,dns-failed
 | 审计器说「hijack-dns 只覆盖 6 个」 | 判据是"条数"，但 `:53` 地址空间无限、永远列不全 | 判据改成「还有多少**已知的**知名境外解析器没覆盖」 |
 | 只测 `.cn` 域名时全绿，实际分流是坏的 | 配置靠 `DOMAIN-SUFFIX,cn` 兜底，不是真的接住了国内域名 | 探针里**刻意混入非 `.cn`** 的国内域名（`qq.com`/`taobao.com`/`miui.com`） |
 
-
 ### 引用文件与官方文档
 
 - Surge 官方文档：<https://manual.nssurge.com/>
@@ -337,7 +331,6 @@ FINAL,Proxy,dns-failed
 > ⚠️ Surge 是闭源商业软件，**很多行为没有文档，只能实测**。
 > 本技能里凡是写「实测」的地方都请当作经验值 —— 版本更新后需重新验证。
 
-
 ## 分支 B · Egern 配置防 DNS 泄露
 
 ### 适用
@@ -349,7 +342,6 @@ FINAL,Proxy,dns-failed
 本文件是**主干**：Egern 双轨 DNS 模型、18 项审计清单、模板骨架速览、验收标准。
 `reference/egern/` 七篇的「何时读」索引见 §4，不在此重复。**移植到 Surge 侧前必读
 [`reference/shared/cross-kernel-diff.md`](reference/shared/cross-kernel-diff.md)**。
-
 
 ### Egern 的 DNS 模型（不理解这个就会改错地方）
 
@@ -475,7 +467,6 @@ for h in ['dns.alidns.com','doh.pub','doh.18bit.cn']:
 改动判据时最高频的三条：**13**（兜底挂在"必须经代理才可达"的组上 → 审计 OK、实测 `upstream: bootstrap`）·
 **16**（强制解析藏在别人仓库的 `.list` 里——`Apple_All.list` 实测 13 条裸 IP）·
 **17**（治好 DNS 泄露的那一手会顺手砍掉国内域名分流——`no_resolve` 与域名兜底必须成对交付）。
-
 
 ### 改配置的安全姿势
 

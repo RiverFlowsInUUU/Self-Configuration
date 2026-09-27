@@ -25,7 +25,6 @@
 > [17 · FAQ](#17--faq) ·
 > [18 · 维护者须知](#18--维护者须知)
 
-
 ## 0 · 目录
 
 | # | 节 | # | 节 |
@@ -39,7 +38,6 @@
 | 7 | `underlying-proxy` 中转链 | 16 | 已知取舍 |
 | 8 | `pre-matching` 与 `extended-matching` | 17 | FAQ |
 | 9 | `always-real-ip` 与 Fake-IP | 18 | 维护者须知 |
-
 
 ## 1 · 文件结构与两份形态
 
@@ -78,7 +76,6 @@ Self-Configuration/                          # 两内核合并后同仓（2026-0
 
 > ⚠️ `.min.conf` 里仍保留 `# audit-waive:` 那行 —— 它是**有语义的注释**，不是说明文字。
 > 删掉它，审计读数就从「2 waived」变成「2 high」。
-
 
 ## 2 · 防泄露原理：从机制到推导
 
@@ -184,7 +181,6 @@ RULE-SET,…,AI.list,…,no-resolve
 一个从没访问过的域名、一次极端网络切换，仍可能产生零星明文。**任何声称
 "绝对零泄露"的配置都在夸大**。
 
-
 ## 3 · `[General]` 逐键
 
 ### 3.1 DNS 段（防泄露本体）
@@ -275,7 +271,6 @@ always-real-ip = *.lan, *.local, *.localdomain, *.home.arpa,
 ⚠️ `always-real-ip` **只改变返回真实 IP 还是 Fake-IP，不改变流量的目的地**。
 它不参与分流 —— 想让游戏机流量走代理，还得靠 `[Rule]` 里的 `DOMAIN-SUFFIX` 规则。
 
-
 ## 4 · `[Proxy]` 与占位符
 
 ### 4.1 占位节点：两份都是 2 条
@@ -336,7 +331,6 @@ Node-B = hysteria2, 203.0.113.11, 52341, password=REPLACE_WITH_YOUR_PASSWORD, sn
 只增加解析噪音；给从 Clash 迁过来的读者提个醒。⚠️ 这个知识点仍然成立，只是模板里
 那一行注释已随「节点缩减成 2 条」一起删掉了。
 
-
 ## 5 · 占位符与脱敏规则
 
 本仓库是公开模板，**所有节点信息都是占位符**。脱敏规则：
@@ -355,7 +349,6 @@ Node-B = hysteria2, 203.0.113.11, 52341, password=REPLACE_WITH_YOUR_PASSWORD, sn
 
 > 🔐 `skill/reference/shared/troubleshoot-faq.md` 里明确写着：**不要把真实节点提交回来**。
 > 改完本地用可以，`git push` 前跑一次 `check_secrets.py`。
-
 
 ## 6 · `smart` / `select` 组的差别
 
@@ -392,7 +385,6 @@ Node-B = hysteria2, 203.0.113.11, 52341, password=REPLACE_WITH_YOUR_PASSWORD, sn
 | `Airport` | `select` | 订阅槽位，`hidden=true`（不在面板显示，只被上两组 include） |
 | `AD` | `select` | 手动开关（独立于规则链路） |
 
-
 ## 7 · `underlying-proxy` 中转链
 
 > 📌 **当前模板不带中转链** —— 旧版 `lazy` 的 `Node-C` / `Node-D` 是这一形态，
@@ -421,7 +413,6 @@ Node-C = https, cdn-relay.example.com, 443, …, underlying-proxy="Node-B", …
 
 改了节点名之后，**先确认 `underlying-proxy` 引用的新名字存在，再保存**。
 这是本文件里唯一需要「按顺序改」的地方 —— 顺序错了会直接导致配置无法加载。
-
 
 ## 8 · `pre-matching` 与 `extended-matching`
 
@@ -456,7 +447,6 @@ Node-C = https, cdn-relay.example.com, 443, …, underlying-proxy="Node-B", …
 `check_surge_dns.py` 的 `check_10` 只对带 `pre-matching` 的规则提示缺
 `extended-matching`，不给非拦截规则报负。
 
-
 ## 9 · `always-real-ip` 与 Fake-IP
 
 ### 9.1 两种模式
@@ -489,7 +479,6 @@ NAT 类型检测（STUN）、时间同步（NTP）、游戏机配对，都需要
 最终落 `FINAL → Final`，解析由节点远端完成（远端解析更准）——
 **结果去向与原先三条规则一致**（同为代理链），差别只在不再单独占一节。
 
-
 ## 10 · `hijack-dns` 的边界
 
 ### 10.1 能拦什么
@@ -520,7 +509,6 @@ NAT 类型检测（STUN）、时间同步（NTP）、游戏机配对，都需要
 > ⚠️ 审计器**不会**因为「列得少」判负 —— 第一版按条数判负是错的（`:53` 的地址空间
 > 是无限的，列举永远不可能「列全」）。现在的判据是「还有多少**已知的**知名境外
 > 解析器没被覆盖」，且只报 LOW。
-
 
 ## 11 · 规则集与刷新
 
@@ -597,7 +585,6 @@ Surge 这边指向**字面量 `REJECT`** 而不是 `AD` 组，理由见 §13.3�
 
 见 §12。
 
-
 ## 12 · `no-resolve` 的双刃
 
 这是全项目最需要注意的一处，也是 [`docs/no-resolve-pairing.md`](../shared/no-resolve-pairing.md)
@@ -647,7 +634,6 @@ GEOIP,CN,DIRECT,no-resolve    # 对未解析的主机名直接跳过
 `audit_routing_coverage.py` 的 17 个国内探针里**刻意混入非 `.cn`** 的：
 `qq.com` / `taobao.com` / `miui.com` / `bilibili.com` / `jd.com` …
 （见脚本里的注释：「只有 `.cn` 后缀能直连的配置是**假通过**」）。
-
 
 ## 13 · `[Proxy Group]`：组结构与两处「不能用组」的地方
 
@@ -729,7 +715,7 @@ AD      = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 也不可以用作 `url-test` / `load-balance` 组的子策略。
 想要"把一个组的成员并进来"，正确写法是 `include-other-group="X"`
 （把 X 的**已解析成员**复制过来），而不是把 `X` 当成成员名写进去。
-详见 `docs/11` §2.1 / §2.2（原文档已随仓库精简移除）。
+原见 `docs/11` §2.1 / §2.2（原文档已随仓库精简移除）。
 
 ### 13.3 `AD` 组的定位：独立的手动开关
 
@@ -760,7 +746,6 @@ AD      = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 
 Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check_surge_dns.py`
 的 `check_7` 会同时按原名与全小写匹配，避免把 `Proxy` 与 `proxy` 判成两个东西。
-
 
 ## 14 · `[Rule]`：两版规则顺序
 
@@ -849,7 +834,6 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 > 后者多一层间接，换来的是**面板上可手动改道**。见
 > `docs/11` §5（原文档已随仓库精简移除）。
 
-
 ## 15 · 审计体系
 
 ### 15.1 五个脚本 + 两个测试
@@ -922,7 +906,6 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 审计脚本只覆盖**静态可判定**的部分。拦截效果、误杀、节点可用性必须实测。
 这是 Egern 项目连续 5 次「脚本全绿、实测仍有问题」换来的结论。
 
-
 ## 16 · 已知取舍
 
 ### 16.1 `proxy-test-url` 保持境外端点（性能取向）
@@ -990,7 +973,6 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 两者都**不做**「分流兜底的境内 / 境外切分」。国内直连靠 `direct.txt` + `GEOIP,CN`
 正面覆盖，不靠兜底。
 
-
 ## 17 · FAQ
 
 **Q：我照抄了，但国内网站慢 / 打不开。**
@@ -1030,7 +1012,6 @@ Surge iOS 版不支持本地文件配置，需要把 profile 内容托管到一�
 （Gist / 自己仓库），再用 URL 导入。`icons/` 里的图标地址已是绝对 URL，
 不依赖本地路径。
 
-
 ## 18 · 维护者须知
 
 ### 18.1 改动前必须知道的三条
@@ -1045,7 +1026,7 @@ Surge iOS 版不支持本地文件配置，需要把 profile 内容托管到一�
 ### 18.2 想加第三份配置
 
 **先问：这是新分工，还是老配置的另一种写法？** 后者不推荐（那就是版本分叉，
-见 `docs/07` §3.2 / §6，原文档已随仓库精简移除）。确认是新分工后，对照
+原见 `docs/07` §3.2 / §6，原文档已随仓库精简移除）。确认是新分工后，对照
 `check_secrets.py` 的 6 条清单 ——
 以上基本就是 `check_secrets.py` 的全部判据。
 **能过测试的才算一份新配置。**
