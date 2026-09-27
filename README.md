@@ -7,9 +7,9 @@
 [![Surge](https://img.shields.io/badge/Surge-iOS%20%7C%20macOS-1f6feb?style=flat-square)](#-两全其美--皆合心意)
 [![Egern](https://img.shields.io/badge/Egern-iOS%20%7C%20macOS-0969da?style=flat-square)](#-两全其美--皆合心意)
 [![Groups](https://img.shields.io/badge/Groups-26%20%7C%2026-8250df?style=flat-square)](#-井然有序)
-[![Rules](https://img.shields.io/badge/Rules-24%20%7C%2024%20%E5%B7%B2%E5%AF%B9%E9%BD%90-dc3545?style=flat-square)](docs/cross-kernel-diff.md)
+[![Rules](https://img.shields.io/badge/Rules-24%20%7C%2024%20%E5%B7%B2%E5%AF%B9%E9%BD%90-dc3545?style=flat-square)](skill/reference/shared/cross-kernel-diff.md)
 [![DNS](https://img.shields.io/badge/DNS-Zero%20Leak-2ea043?style=flat-square)](#-隐私至上--无-dns-泄露)
-[![License](https://img.shields.io/badge/License-MIT-dfb317?style=flat-square)](docs/icon-license.md)
+[![License](https://img.shields.io/badge/License-MIT-dfb317?style=flat-square)](LICENSE)
 
 </div>
 
@@ -82,17 +82,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/
 
 ## 📖 按需查阅
 
-| 想查 | 去哪 |
-|:-----|:-----|
-| 👉 装⁠改⁠验⁠修 | 从 [快速开始](docs/quick-start.md) 读起，操作细节见 [操作手册](docs/ops.md) |
-| 🔀 语⁠法⁠映⁠射 | [语法映射与移植边界](docs/cross-kernel-diff.md) |
-| 📜 规⁠则⁠来⁠源 | [规则集的指向与来源](docs/rulesets.md) |
-| ❗ 注⁠意⁠事⁠项 | [使用前必看](docs/troubleshoot-faq.md) |
-| ⌨️ 逐⁠键⁠语⁠义 | [Surge](surge/DetailsReadme/DetailsReadme.md) · [Egern](egern/DetailsReadme/DetailsReadme.md) `DetailsReadme` |
-| 📊 审⁠计⁠读⁠数 | [验证与自检](docs/troubleshoot-faq.md) —— 发布模板读数在两侧 `DetailsReadme` |
-| 🎨 图⁠标⁠许⁠可 | [icons/](icons/) 26 个策略组图标 · [来源与 MIT 许可](docs/icon-license.md) |
-| 🧪 审⁠计⁠闸⁠门 | [skill/](skill/) —— 四项检查 · 每次 push 由 CI 自动跑，本地命令见 [skill/README.md](skill/README.md) |
-| 🕘 改⁠动⁠记⁠录 | [CHANGELOG.md](CHANGELOG.md) —— 只记配置文件修改 |
+操作文档、逐键语义与审计判据已全部整合进 [`skill/`](skill/SKILL.md)（AI 驱动仓库的唯一知识库）。
 
 ---
 

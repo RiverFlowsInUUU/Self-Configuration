@@ -1,10 +1,13 @@
 ---
 name: profile-dns-hardening
-description: 审计并加固 Surge / Egern 配置（.conf 与 Profile.yaml）的 DNS 泄露面与分流覆盖。触发词：Surge 配置、Egern 配置、防 DNS 泄露、DNS 裸奔、leak test 显示 china telecom、upstream 显示 bootstrap、dns-server = system、encrypted-dns-server 是域名、proxy_nameservers、hijack-dns / hijack_dns、bootstrap 泄露、明文 :53 旁路、HomePod / Apple TV DNS 泄露、no-resolve / no_resolve、GEOIP CN 缺 no-resolve、IP 规则触发 DNS 解析、加了 no-resolve 之后分流坏了、国内域名全落 FINAL、国内网站不是直连、direct.txt、ChinaMax 只有 IP、规则集 IP 条目缺 no-resolve、Apple_All.list 强制解析、pre-matching、pre-matching 指向策略组、underlying-proxy 无法解析、smart 组评分、policy-regex-filter、flatten 的等价写法、always-real-ip、fake-ip、延迟测试域名泄露、cp.cloudflare.com 泄露、图标域名泄露、dns.forward 兜底、白名单排在 REJECT 之后、profile 模板、Egern dns 段、Egern dnsleak、Egern YAML 配置优化、DNS 泄露到运营商（电信/联通/移动）、日志里规则判定正常但 upstream 是 bootstrap、节点域名明文解析、系统 DNS 回退泄露、rule_set 触发 DNS 解析、blackmatrix7 No_Resolve 变体、ChinaMax.list 没有域名规则、ChinaMax_All_No_Resolve、国内域名走代理、分流覆盖审计、dns.google 泄露、引导解析泄露、extended-matching、Surge 拒绝加载配置、proxy-test-url 泄露、gstatic generate_204。命中本技能时优先加载本文件并按内核进入对应分支，不要凭记忆答语法。
+description: 审计并加固 Surge / Egern 配置（.conf 与 Profile.yaml）的 DNS 泄露面与分流覆盖。触发词：Surge 配置、Egern 配置、防 DNS 泄露、DNS 裸奔、leak test 显示 china telecom、upstream 显示 bootstrap、dns-server = system、encrypted-dns-server 是域名、proxy_nameservers、hijack-dns / hijack_dns、bootstrap 泄露、明文 :53 旁路、HomePod / Apple TV DNS 泄露、no-resolve / no_resolve、GEOIP CN 缺 no-resolve、IP 规则触发 DNS 解析、加了 no-resolve 之后分流坏了、国内域名全落 FINAL、国内网站不是直连、direct.txt、ChinaMax 只有 IP、规则集 IP 条目缺 no-resolve、Apple_All.list 强制解析、pre-matching、pre-matching 指向策略组、underlying-proxy 无法解析、smart 组评分、policy-regex-filter、flatten 的等价写法、always-real-ip、fake-ip、延迟测试域名泄露、cp.cloudflare.com 泄露、图标域名泄露、dns.forward 兜底、白名单排在 REJECT 之后、profile 模板、Egern dns 段、Egern dnsleak、Egern YAML 配置优化、DNS 泄露到运营商（电信/联通/移动）、日志里规则判定正常但 upstream 是 bootstrap、节点域名明文解析、系统 DNS 回退泄露、rule_set 触发 DNS 解析、blackmatrix7 No_Resolve 变体、ChinaMax.list 没有域名规则、ChinaMax_All_No_Resolve、国内域名走代理、分流覆盖审计、dns.google 泄露、引导解析泄露、extended-matching、Surge 拒绝加载配置、proxy-test-url 泄露、gstatic generate_204、归档配置、升版本号、config_old。命中本技能时优先加载本文件并按内核进入对应分支，不要凭记忆答语法。
 agent_created: true
 ---
 
 # 配置防 DNS 泄露 · Surge / Egern 双内核
+
+本仓库是 **AI 驱动的配置模板仓**：全部操作文档、逐键语义与审计判据都整合在本 skill 里，
+没有面向人类的 docs / DetailsReadme。AI 按用户需求 + 内核官方语法修改配置，闸门守底线。
 
 本技能覆盖两款客户端。**先定内核，再进对应分支**——两者的模型不通用，
 把一侧的结论套到另一侧是本项目记录在案的头号误用来源。
@@ -55,27 +58,103 @@ Surge 侧把它归纳为「一条路径、三个明文出口」，Egern 侧归�
 **内核专属、不可互相套用的一条**：Surge 的 `pre-matching` 规则策略**必须是字面量 REJECT 族**，写成策略组会导致
 Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价约束是 `proxy_nameservers` 一设就**跳过 `forward`**。
 
-## 3 · 共享纪律
+## 3 · 底线与纪律（AI 改配置前必读）
 
-- ⚠️ **审计通过 ≠ 配置可用。** 两侧脚本只覆盖**静态可判定**的部分；拦截效果、误杀、节点可用性必须实测。
+### 五条底线
+
+1. 🚫 **不得删除项目文件。** `profiles/` 顶层固定名四件（`lazy` / `routing` × 完整版 / `.min`，两内核）
+   与 `profiles/config_old/` 归档永远保留；配置文件的位置与组织形式不得移动或调整。
+2. 🎯 **修改必须按用户意愿在原有配置上改。** 固定名 `lazy` / `routing` 不得擅自改名；不擅自重构结构；
+   一侧的写法**不得**套到另一侧（先读 `reference/shared/cross-kernel-diff.md`）。
+3. 🛡️ **符合防 DNS 泄露判据 + 对应内核官方语法。** 改前读本文件对应分支与 `profile-anatomy`；
+   改后跑闸门（下方动线第 ⑤ 步）。官方文档入口在分支 A / B 末尾。
+4. 🔐 **占位符凭据纪律。** 节点 IP 用 RFC 5737（`192.0.2.x` 等）、凭据用 `REPLACE_WITH_*`、
+   订阅 token 用 `REPLACE_WITH_YOUR_TOKEN`。`check_secrets.py` 全仓扫描，push 前必过。
+5. 🧬 **`.min` 对拍与可移植性。** `.min` 永远由 `make_min.py` 生成、不手工编辑；
+   完整版与 `.min` 的 DNS 段逐字一致（`check_min_pair.py` 守）；行尾 / BOM / 命名由 `check_portability.py` 守。
+
+### 归档机制（配置变动时执行）
+
+- `profiles/` 顶层永远只有固定名四件——它们是永久订阅地址的落点，**升版不改名**；
+- 「当前是哪一版」只写在文件头注 `#! version=` 里；
+- **配置发生变动时**：变动前的现役内容归档进 `profiles/config_old/`，
+  **归档版本号 = 该目录内此分工最新号 + 0.1**（v3.3 → v3.4；v3.9 → 进位 v4.0），
+  **完整版与 `.min` 成对归档**（`.min` 不带头注行），**现役头注同步升为归档号 + 0.1**；
+- 任何文档、脚本、README 里出现"带版本号的订阅 URL"都是错的。
+
+### 改配置标准动线
+
+```
+① 只读诊断：跑相关审计脚本，列出可优化项，等用户确认再动手
+② 归档：变动前的现役四份（若该分工要动）按上行规则复制进 config_old/，现役头注升号
+③ 改带注释完整版（lazy.conf / routing.conf / *.yaml）—— .min 不手工碰
+④ 生成 .min：python skill/tests/make_min.py --family lazy|routing|all   # 默认只出计划
+             python skill/tests/make_min.py --family all --apply        # 确认后写盘
+⑤ 收尾闸门（全过才算完）：
+   python skill/tests/check_secrets.py && python skill/tests/check_portability.py
+   python skill/tests/check_min_pair.py && python skill/tests/check_links.py .
+   python skill/scripts/surge/check_surge_dns.py surge/profiles/lazy.conf
+   python skill/scripts/surge/check_surge_dns.py surge/profiles/routing.conf
+   python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/profiles/routing.yaml
+   python skill/tests/make_min.py                 # 漂移检查：四份 .min 应全部「已同步」
+⑥ 提交推送（CI 在 push / PR 自动重跑同一组检查）
+```
+
+> **注意**　mutating 步骤（②③④⑥）必须等用户明确确认后再执行；①是只读的，随时可跑。
+> **注意**　改 DNS 段 = 一次改全套：`lazy` / `routing` × 完整版 / `.min` 四份（跨 lazy/routing 的
+> 16 键逐字一致由 `check_min_pair.py` 的 ②-c 断言守）。想只给某一版加防泄露键，先问它为什么不是四条都要。
+
+### 其他共享纪律
+
+- ⚠️ **审计通过 ≠ 配置可用。** 脚本只覆盖**静态可判定**的部分；拦截效果、误杀、节点可用性必须实测。
   这条来自 Egern 侧连续 5 次"脚本全绿、实测仍有问题"的代价。
-- 🔒 **本仓库刻意不挂 CI / 任何自动化。** 改动后在仓库根目录本地跑：
-  检查命令清单见 [`skill/README.md`](README.md)：CI（push / PR 自动）与本地同组命令。
-- 📍 **命令的路径基准**：本文与 `skill/reference/` 里凡可照抄执行的命令，路径一律以**仓根**为基准书写（要 `cd` 的会显式写 `cd`）；
+- 📍 **命令的路径基准**：本文与 `reference/` 里凡可照抄执行的命令，路径一律以**仓根**为基准书写（要 `cd` 的会显式写 `cd`）；
   行文里为省字出现的简写（如 `scripts/probe_doh.py`）不是可执行路径，取真身请以仓根全路径为准。
-- 🧷 **改配置的安全姿势**：Egern profile 含数千字符的超长单行，**不要用 YAML dump 重写整个文件**；
+- 🧷 **Egern 改配置的安全姿势**：profile 含数千字符的超长单行，**不要用 YAML dump 重写整个文件**；
   按行读入 + 内容定位 + 断言"全文恰好命中 1 行"，改完逐字段比对未触碰部分。详见分支 B。
 - 🚨 **凡写「实测」处皆为经验值**，两款都是闭源商业软件，很多行为无文档可依，版本更新后需重新验证。
-- 📊 **任何条数一律现抓，不要照抄本仓文档里的数。** 远程规则集里除 `AI.list`（两内核都钉在 40 位 commit）外都没锁、随上游每周漂；文档为可读性写的条数只是**写作时点的约数**。要精确值就跑 `skill/scripts/surge/audit_ruleset_content.py <profile>`（Surge）/ `skill/scripts/egern/profile_ruleset.py <规则集 URL>`（Egern），两侧脚本都逐个数条目类型。
+- 📊 **任何条数一律现抓，不要照抄文档里的数。** 远程规则集里除 `AI.list`（两内核都钉在 40 位 commit）外都没锁、随上游每周漂；
+  文档为可读性写的条数只是**写作时点的约数**。要精确值就跑 `skill/scripts/surge/audit_ruleset_content.py <profile>`（Surge）/
+  `skill/scripts/egern/profile_ruleset.py <规则集 URL>`（Egern），两侧脚本都逐个数条目类型。
+- 🚷 **没有用户明确指令，不连接、不操作任何网络设备**（旁路由等）。验证配置用本地脚本，不动用户的路由器。
 
 ## 4 · 按需读取
 
+### reference/shared/（跨内核主题）
+
 | 文件 | 何时读 |
 |:-----|:-------|
-| `reference/surge/*.md` · `reference/egern/*.md` | 六个主题各一侧：`hardening-template`（产出加固配置）· `pitfalls`（事故复盘）· `leak-localization`（用户报了具体运营商）· `checker`（跑脚本前 / 改判据前）· `ruleset-weight`（嫌规则集重）· `public-repo`（改模板 / 仓库结构） |
-| [`docs/cross-kernel-diff.md`](../docs/cross-kernel-diff.md) | 要在两内核间移植一份改动时——**必读**，含逐项语法映射与实测差异清单 |
-| [`docs/rulesets.md`](../docs/rulesets.md) | 想知道用了哪些规则集、来源、排序约束 |
-| [`docs/hardening-checklist.md`](../docs/hardening-checklist.md) · [`docs/no-resolve-pairing.md`](../docs/no-resolve-pairing.md) | 单内核加固清单与 no-resolve 成对交付 |
+| [`reference/shared/cross-kernel-diff.md`](reference/shared/cross-kernel-diff.md) | 要在两内核间移植一份改动时——**必读**，含逐项语法映射与实测差异清单 |
+| [`reference/shared/rulesets.md`](reference/shared/rulesets.md) | 换 / 加 / 删任何规则集之前——清单、来源、匹配顺序、排序与选材约束 |
+| [`reference/shared/hardening-checklist.md`](reference/shared/hardening-checklist.md) | 人工逐条对照加固清单时（Surge 14 项 / Egern 18 项完整判据） |
+| [`reference/shared/no-resolve-pairing.md`](reference/shared/no-resolve-pairing.md) | 动 `no-resolve` / 换国内直连规则集之前——成对交付的完整事故复盘 |
+| [`reference/shared/dns-basics.md`](reference/shared/dns-basics.md) | 需要向用户解释泄露机制时——五个真实泄露案例（现象 → 机制 → 修法） |
+| [`reference/shared/ops.md`](reference/shared/ops.md) | 按内核的逐段操作要点 + 日常维护动线 |
+| [`reference/shared/troubleshoot-faq.md`](reference/shared/troubleshoot-faq.md) | 出了问题——排查序列、两内核症状速查、全量闸门用法、FAQ 与术语表 |
+
+### reference/surge/（单侧主题）
+
+| 文件 | 何时读 |
+|:-----|:-------|
+| [`reference/surge/profile-anatomy.md`](reference/surge/profile-anatomy.md) | 改 Surge 配置需要确认某个键 / 组 / 规则的语义与边界时（逐键权威） |
+| [`reference/surge/hardening-template.md`](reference/surge/hardening-template.md) | 要产出一份加固后的 Surge profile 时——逐段模板 + 逐行理由 |
+| [`reference/surge/pitfalls.md`](reference/surge/pitfalls.md) | 排查实际泄露、或改动判据 / 规则集之前——坑的事故复盘 |
+| [`reference/surge/leak-localization.md`](reference/surge/leak-localization.md) | 用户报「leak test 显示某运营商」时——网络侧实测流程 |
+| [`reference/surge/checker.md`](reference/surge/checker.md) | 跑审计脚本前（命令与环境要求）、或要改判据时（判据演进史） |
+| [`reference/surge/ruleset-weight.md`](reference/surge/ruleset-weight.md) | 用户问「规则集是不是太重」时——按类型数条目、识破名字骗人 |
+| [`reference/surge/public-repo.md`](reference/surge/public-repo.md) | 要更新模板 / 了解仓库结构与门面纪律时 |
+
+### reference/egern/（单侧主题）
+
+| 文件 | 何时读 |
+|:-----|:-------|
+| [`reference/egern/profile-anatomy.md`](reference/egern/profile-anatomy.md) | 改 Egern 配置需要确认某个顶层字段 / 组 / 规则的语义与边界时（逐键权威） |
+| [`reference/egern/hardening-template.md`](reference/egern/hardening-template.md) | 要产出一份加固后的 `dns` 段 + `rules` 时——完整 YAML，含逐行理由 |
+| [`reference/egern/pitfalls.md`](reference/egern/pitfalls.md) | 排查实际泄露、或改动判据 / 规则集之前——18 个坑的事故复盘 |
+| [`reference/egern/leak-localization.md`](reference/egern/leak-localization.md) | 用户报「leak test 显示某运营商」时——网络侧实测流程 |
+| [`reference/egern/checker.md`](reference/egern/checker.md) | 跑审计脚本前（命令与环境要求）、或要改判据时（审计演进史） |
+| [`reference/egern/ruleset-weight.md`](reference/egern/ruleset-weight.md) | 用户问「规则集是不是太重」时——内存 / 耗时实测 |
+| [`reference/egern/public-repo.md`](reference/egern/public-repo.md) | 要更新模板 / 了解仓库结构与脱敏清单时 |
 
 ---
 
@@ -87,7 +166,7 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
 检查 DNS 配置」，或反馈「实测有 DNS 泄露」「国内网站不是直连」。也可用于交付前自检。
 
 **不适用**：Clash / mihomo（`no-resolve` 语义不同，`fake-ip-filter` 是另一套）、
-Egern（见 `egern-profile-dns-hardening` 技能）、Shadowrocket（`dns-server` 语义不同）。
+Egern（见分支 B）、Shadowrocket（`dns-server` 语义不同）。
 
 ### 引用文件（按需读取）
 
@@ -96,12 +175,14 @@ Egern（见 `egern-profile-dns-hardening` 技能）、Shadowrocket（`dns-server
 
 | 文件 | 何时读 |
 |---|---|
+| [`reference/surge/profile-anatomy.md`](reference/surge/profile-anatomy.md) | 某个键 / 组 / 规则的语义与边界拿不准时（逐键权威，含已知取舍与 FAQ） |
 | [`reference/surge/hardening-template.md`](reference/surge/hardening-template.md) | 要产出一份加固后的 Surge profile 时 —— 逐段模板 + 逐行理由 |
 | [`reference/surge/pitfalls.md`](reference/surge/pitfalls.md) | 排查实际泄露、或改动判据 / 规则集之前 —— 坑的事故复盘 |
 | [`reference/surge/leak-localization.md`](reference/surge/leak-localization.md) | 用户报「leak test 显示某运营商」时 —— 网络侧实测流程 |
 | [`reference/surge/checker.md`](reference/surge/checker.md) | 跑审计脚本前（命令与环境要求）、或要改判据时（判据演进史） |
 | [`reference/surge/ruleset-weight.md`](reference/surge/ruleset-weight.md) | 用户问「规则集是不是太重」时 —— 按类型数条目、识破名字骗人 |
-| [`reference/surge/public-repo.md`](reference/surge/public-repo.md) | 要更新模板 / 了解公开仓库结构时 |
+| [`reference/surge/public-repo.md`](reference/surge/public-repo.md) | 要更新模板 / 了解仓库结构时 |
+| [`reference/shared/cross-kernel-diff.md`](reference/shared/cross-kernel-diff.md) | 把改动移植到 Egern 侧时（**必读**） |
 
 ---
 
@@ -151,7 +232,7 @@ Egern（见 `egern-profile-dns-hardening` 技能）、Shadowrocket（`dns-server
 | 11 | `always-real-ip` 主机名是否被前置域名规则接住 | MEDIUM / LOW |
 | 12 | 所有 IP 类规则是否带 `no-resolve`；FINAL 是否带 `dns-failed` | MEDIUM / LOW |
 
-另有四个**不在清单里但必须查**的东西（下表三件 + 规则集刷新参数 `audit_ruleset_refresh.py`，见 `reference/surge/checker.md`）：
+另有三个**不在清单里但必须查**的审计脚本（+ 规则集刷新参数 `audit_ruleset_refresh.py`，见 `reference/surge/checker.md`）：
 
 | 脚本 | 查什么 | 联网 |
 |---|---|---|
@@ -275,12 +356,14 @@ FINAL,Proxy,dns-failed
 
 | 文件 | 何时读 |
 |---|---|
+| [`reference/egern/profile-anatomy.md`](reference/egern/profile-anatomy.md) | 某个顶层字段 / 组 / 规则的语义与边界拿不准时（逐键权威，含已知取舍） |
 | [`reference/egern/hardening-template.md`](reference/egern/hardening-template.md) | 要产出一份加固后的 `dns` 段 + `rules` 时 —— 完整 YAML，含逐行理由 |
 | [`reference/egern/pitfalls.md`](reference/egern/pitfalls.md) | 排查实际泄露、或改动判据 / 规则集之前 —— 18 个坑的事故复盘 |
 | [`reference/egern/leak-localization.md`](reference/egern/leak-localization.md) | 用户报「leak test 显示某运营商」时 —— 网络侧实测流程 |
 | [`reference/egern/ruleset-weight.md`](reference/egern/ruleset-weight.md) | 用户问「规则集是不是太重」时 —— 内存 / 耗时实测 |
 | [`reference/egern/checker.md`](reference/egern/checker.md) | 跑审计脚本前（命令与环境要求）、或要改判据时（审计演进史） |
-| [`reference/egern/public-repo.md`](reference/egern/public-repo.md) | 要更新模板 / 了解公开仓库结构时 |
+| [`reference/egern/public-repo.md`](reference/egern/public-repo.md) | 要更新模板 / 了解仓库结构与脱敏清单时 |
+| [`reference/shared/cross-kernel-diff.md`](reference/shared/cross-kernel-diff.md) | 把改动移植到 Surge 侧时（**必读**） |
 
 ---
 
@@ -299,7 +382,6 @@ FINAL,Proxy,dns-failed
 ```bash
 python -c "import yaml;d=yaml.safe_load(open('Profile.yaml',encoding='utf-8'));print([(list(p.values())[0].get('name'),list(p.values())[0].get('server')) for p in d['proxies']])"
 ```
-
 
 **社区事实标准配置（Repcz，被 Toperlock 等多仓库引用）有一句比官方文档更实用的话：**
 
@@ -344,7 +426,7 @@ python -c "import yaml;d=yaml.safe_load(open('Profile.yaml',encoding='utf-8'));p
 1. **它只约束"本地解析"这条路径。** 官方 DNS 文档 + 社区共识：**已经匹配到走节点的域名由节点远程解析**，本地 `dns:` 段只为"需要本地解析"的名字服务（DIRECT 域名、节点域名、profile 自身依赖）。所以**兜底指国内组，不会让"要访问的境外网站"拿到污染答案** —— 它只影响那些本来就走直连的域名。
 2. **"泄露到运营商"和"答案被污染"是两个不同的问题，致命的是前者。** 一份把兜底挂在境外组、却在代理未就绪时回退明文的配置，比一份兜底用国内加密组的配置**危险得多**：前者泄露给运营商（不可撤销），后者最坏只是本地解析的 DIRECT 域名拿到国内答案（可接受，且对国内/Apple 域名反而更快更准）。
 
-⇒ **兜底组的唯一判据是「直连可达」，不是「指向境外」。** 这条判据的代价是：我上一版审计里"兜底指国内 = HIGH"是**错判**，已撤回（见坑 13）。
+⇒ **兜底组的唯一判据是「直连可达」，不是「指向境外」。** 这条判据的代价是：早期审计里"兜底指国内 = HIGH"是**错判**，已撤回（见坑 13）。
 
 ### 审计清单
 
@@ -354,7 +436,7 @@ python -c "import yaml;d=yaml.safe_load(open('Profile.yaml',encoding='utf-8'));p
 | 2 | ⭐ **`proxies[].server` 是域名的节点，它的解析走哪条路** | 节点域名走的是**代理 DNS**。f7 起 `proxy_nameservers` 已被显式设置 ⇒ 代理 DNS **跳过 `forward`**，只用那组 IP 字面量端点 ⇒ **不需要、也不应该**在 `forward` 里为节点域名写规则（那是死代码，见坑 18 / 清单 18）。判据从"forward 有没有接住"改成「**`proxy_nameservers` 是否显式设置、端点是否全为 IP 字面量**」 | **高** |
 | 2b | `proxy_nameservers` 是否存在 | **f7 起必须显式写。** 它是**硬覆盖**：一设就绕过 `forward`、强制直连。**"不写"才是问题** —— 官方语义「未配置时，代理 DNS 与默认 DNS 共用 Forward 规则，**未命中回退 Bootstrap**」，等于留下一条通往明文 UDP:53 的兜底分支。只能用**国内**端点（代理 DNS 强制直连，境外解析器在电信线路上不可达） | **高（缺失时）** |
 | 3 | ⭐ **DNS 端点是否有显式路由** | `geoip` 加了 `no_resolve` 就**不再匹配域名**；主机名形式的端点会落到 `default` → 国内端点被绕到境外出口 / 境外端点直连被阻断。**国内端点必须显式 → DIRECT，境外端点必须显式 → Proxy** | **高** |
-| 4 | ⭐ **`forward` 里是否存在「捕获一切」的兜底，且该兜底组「直连可达」** | 兜底存在的意义只有一个：让"未命中的域名"不回退 bootstrap 明文。**判据是"这组在代理没起来时能不能工作"，不是"它指国内还是境外"** —— 组内端点必须全是 IP 字面量，**且至少一个端点在 `rules` 里被判给 `DIRECT`**。只判给 Proxy 的组 = 依赖代理 = 启动期（规则集/DB 下载、首轮测速）会掉进 bootstrap 明文。**兜底指国内组才是对的**（见"铁律修正"）。**写法要认全**：`domain_wildcard: '*'` **和** `domain_regex: '.'`（官方 PCRE2 find 式，命中任意子串）都算兜底 —— 别只认前一种（审计器 f2 就误判过）。推荐**两条都写**（互不依赖的双保险），并让 `domain_wildcard` 放最后便于人/工具识别 | **高** |
+| 4 | ⭐ **`forward` 里是否存在「捕获一切」的兜底，且该兜底组「直连可达」** | 兜底存在的意义只有一个：让"未命中的域名"不回退 bootstrap 明文。**判据是"这组在代理没起来时能不能工作"，不是"它指国内还是境外"** —— 组内端点必须全是 IP 字面量，**且至少一个端点在 `rules` 里被判给 `DIRECT`（判据 A），或至少一个是已知国内公共解析器 IP（判据 B，f10 引入）**。只判给 Proxy 的组 = 依赖代理 = 启动期（规则集/DB 下载、首轮测速）会掉进 bootstrap 明文。**兜底指国内组才是对的**（见"铁律修正"）。**写法要认全**：`domain_wildcard: '*'` **和** `domain_regex: '.'`（官方 PCRE2 find 式，命中任意子串）都算兜底 —— 别只认前一种（审计器 f2 就误判过）。推荐**两条都写**（互不依赖的双保险），并让 `domain_wildcard` 放最后便于人/工具识别 | **高** |
 | 5 | `geoip` / `ip_cidr` / `ip_cidr6` / `asn` 是否带 `no_resolve` | 官方：`no_resolve` **仅适用这四类**；不加则规则会触发解析 | 高 |
 | 6 | ⭐ **规则引用的策略能否解析** | `policy` 是嵌在类型字典里的（`{domain: {match, policy}}`），要读 `r[type]['policy']`。抓 `负载均衡` 这类笔误 | 高 |
 | 7 | 硬编码 DoH IP（8.8.8.8 / 1.1.1.1 / 9.9.9.9 / OpenDNS…）是否有启用规则 → 代理 | `hijack_dns` 只覆盖 **:53**，App 用 DoH on **:443** 会绕过 | 中 |

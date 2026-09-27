@@ -6,7 +6,7 @@
 
 
 对象：`../surge/profiles/` 下 `lazy` / `routing` 两版（各含带注释完整版与 `.min` 版）。
-加固清单逐项与验收标准见 [`../docs/hardening-checklist.md`](../docs/hardening-checklist.md)（清单本体在那份文件，本章讲怎么用它）；逐键权威是 [`../surge/DetailsReadme/DetailsReadme.md`](../surge/DetailsReadme/DetailsReadme.md)。
+加固清单逐项与验收标准见 [`../docs/hardening-checklist.md`](hardening-checklist.md)（清单本体在那份文件，本章讲怎么用它）；逐键权威是 [`../surge/DetailsReadme/DetailsReadme.md`](../surge/profile-anatomy.md)。
 
 ---
 
@@ -34,11 +34,11 @@ Surge 的 `.conf` 按节组织，模板里与防泄露相关的节：
 |:---|:-----|:-----|
 | `dns-server` | 引导与连通性测试用的本地上游 | 全 IP 字面量，不放 `system`。不要删它来"减少解析面"：删了 Surge 会用系统 DNS（运营商下发），正是出口 ① |
 | `encrypted-dns-server` | 日常解析走加密通道 | 端点尽量 IP 字面量；保留的 2 个主机名端点已用 `# audit-waive:` 记录豁免与理由 |
-| `hijack-dns` | 旁路设备（出口 ②） | 模板列出最常见的境外解析器地址把它们收进本地；想一网打尽可写 `hijack-dns = *`（有取舍，见 `DetailsReadme` §10.3） |
-| `encrypted-dns-follow-outbound-mode` | 防止"出站走代理、解析也跟着出境"的意外 | 模板显式设 `false`，理由在 `DetailsReadme` |
-| `use-local-host-item-for-proxy` | 防止本地 hosts 条目污染代理侧解析 | 理由在 `DetailsReadme` |
+| `hijack-dns` | 旁路设备（出口 ②） | 模板列出最常见的境外解析器地址把它们收进本地；想一网打尽可写 `hijack-dns = *`（有取舍，见 `profile-anatomy` §10.3） |
+| `encrypted-dns-follow-outbound-mode` | 防止"出站走代理、解析也跟着出境"的意外 | 模板显式设 `false`，理由在 `profile-anatomy` |
+| `use-local-host-item-for-proxy` | 防止本地 hosts 条目污染代理侧解析 | 理由在 `profile-anatomy` |
 | `always-real-ip` | Fake-IP 模式下游戏机 / NTP / STUN 拿到假 IP | 是功能清单，不是可选装饰。里面的主机名应能被 `[Rule]` 域名规则接住，`check_surge_dns.py` 第 11 项专查这条 |
-| `internet-test-url` / `proxy-test-url` | — | 性能探针，不是泄露通道：前者国内 204（测"能不能上网"），后者保持境外 `gstatic.com`（`smart` 打分要含国际段才是真实路径）。把后者"为防泄露"改成国内是典型的原则误套用，见 `DetailsReadme` §16 |
+| `internet-test-url` / `proxy-test-url` | — | 性能探针，不是泄露通道：前者国内 204（测"能不能上网"），后者保持境外 `gstatic.com`（`smart` 打分要含国际段才是真实路径）。把后者"为防泄露"改成国内是典型的原则误套用，见 `profile-anatomy` §16 |
 
 > **注意**　`# audit-waive: <编号> <理由>` 是有语义的注释，审计器真的会读它。删掉那行，读数立刻从「已豁免」变「HIGH/MEDIUM」；同文件内编号不重复。
 
@@ -82,7 +82,7 @@ Surge 的 `.conf` 按节组织，模板里与防泄露相关的节：
 
 ### 3.5 分流版（`routing.conf`）要点
 
-完整的分组层次与逐条规则表直接读 [`routing.conf`](../surge/profiles/routing.conf) 本体（注释齐全）。这里只讲动手最容易撞的四条墙。
+完整的分组层次与逐条规则表直接读 [`routing.conf`](../../../surge/profiles/routing.conf) 本体（注释齐全）。这里只讲动手最容易撞的四条墙。
 
 #### ① smart 组不能拿组名当子策略
 
@@ -127,11 +127,11 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 
 ### 3.6 你必须替换 / 可以删除的
 
-必须替换（逐键语义见 [`Surge DetailsReadme`](../surge/DetailsReadme/DetailsReadme.md)）：
+必须替换（逐键语义见 [`Surge DetailsReadme`](../surge/profile-anatomy.md)）：
 
 - `lazy` 的 `[Proxy]` 占位节点；
 - `routing` 的 `Airport` 组 `policy-path` 占位订阅地址；
-- 两份 `[SSID Setting]` 段里的 `SSID:MyHome` —— `MyHome` 是照官方示例留的占位网络名，不替换就匹配不到任何 Wi-Fi，「回家自动暂停」静默不生效。该段只有 Surge 侧有，Egern 无对等件（见 [`../docs/cross-kernel-diff.md`](../docs/cross-kernel-diff.md) §1「网络级暂停」）。
+- 两份 `[SSID Setting]` 段里的 `SSID:MyHome` —— `MyHome` 是照官方示例留的占位网络名，不替换就匹配不到任何 Wi-Fi，「回家自动暂停」静默不生效。该段只有 Surge 侧有，Egern 无对等件（见 [`../docs/cross-kernel-diff.md`](cross-kernel-diff.md) §1「网络级暂停」）。
 
 可以删（按收益排序，删完必须重跑分流覆盖审计）：
 
@@ -149,7 +149,7 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 
 - 策略组 / `include-other-group`：[manual.nssurge.com/policy-groups/policy-including.html](https://manual.nssurge.com/policy-groups/policy-including.html)
 - Smart 组限制（中文）：[kb.nssurge.com · smart-group](https://kb.nssurge.com/surge-knowledge-base/zh/guidelines/smart-group)
-- 其余逐节引用见 `DetailsReadme` 各节脚注。
+- 其余逐节引用见 `profile-anatomy` 各节脚注。
 
 ---
 
@@ -157,7 +157,6 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 
 | 下一步 | 去处 |
 |:-------|:-----|
-| 装好、跑通再看本篇 | [快速开始](quick-start.md) |
 | 对侧内核的操作章 | 本篇「Egern 操作」章（已并入本篇） |
 | 换、加、删任何规则集之前 | [规则集与素材](rulesets.md) |
 | 出问题了 | [故障排查 · FAQ](troubleshoot-faq.md) |
@@ -171,7 +170,7 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 
 
 对象：`egern/profiles/` 下 `routing.yaml`（推荐，完整分流）与 `lazy.yaml`（懒人配置），各含带注释完整版与 `.min.yaml` 形态，共四件，历史版本看 git。
-加固清单在 [`hardening-checklist.md`](hardening-checklist.md)；逐键权威是 [`Egern DetailsReadme`](../egern/DetailsReadme/DetailsReadme.md)。
+加固清单在 [`hardening-checklist.md`](hardening-checklist.md)；逐键权威是 [`Egern DetailsReadme`](../egern/profile-anatomy.md)。
 
 ---
 
@@ -197,7 +196,7 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 | `proxy_nameservers` | 硬覆盖：一设就绕过 `forward`、强制直连、成为代理侧解析的唯一出口。"不设"本身也留了一条"未命中回退 Bootstrap"的明文分支 —— 模板最终选择显式设置 + 国内端点（它是强制直连的，境外解析器在国内线路不可达）。排障口诀：节点连不上，第一件事注释掉这个列表 |
 | `hosts` / `block_ips` | `hosts` 是"端点写主机名"时代的补救，端点全 IP 后无引用点、已删；`block_ips` 丢弃空路由式污染应答，刻意不含私网段，免误伤内网 |
 
-已知代价（完整版见 `DetailsReadme` 的取舍节）：设置了 `proxy_nameservers` + 兜底国内组，需要本地解析的境外域名会拿到国内答案，实际影响面仅限 `DIRECT` 域名。审计里那两条 `LOW`（一条是 `proxy_nameservers` 成为代理侧解析唯一出口，一条是 `forward` 兜底指向国内组）就是它 —— 是取舍，不是缺陷。
+已知代价（完整版见 `profile-anatomy` 的取舍节）：设置了 `proxy_nameservers` + 兜底国内组，需要本地解析的境外域名会拿到国内答案，实际影响面仅限 `DIRECT` 域名。审计里那两条 `LOW`（一条是 `proxy_nameservers` 成为代理侧解析唯一出口，一条是 `forward` 兜底指向国内组）就是它 —— 是取舍，不是缺陷。
 
 ---
 
@@ -239,7 +238,7 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 
 ### 4.6 分流顺序与应用组默认出口
 
-逐位匹配顺序表直接读 [`routing.yaml`](../egern/profiles/routing.yaml) 的 `rules:` 段注释。
+逐位匹配顺序表直接读 [`routing.yaml`](../../../egern/profiles/routing.yaml) 的 `rules:` 段注释。
 两条与 Surge 侧共同的铁律同样成立：应用规则必须排在 `direct.txt` 之前；具体的在前、兜底在后。
 应用组的 `policies` 里只有 `Proxy` 一项（+ `flatten`）—— 这是设计，不是"忘了加地区"；想固定地区，改首位即可。
 
@@ -275,7 +274,6 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/pro
 
 | 下一步 | 去处 |
 |:-------|:-----|
-| 装好、跑通再看本篇 | [快速开始](quick-start.md) |
 | 对侧内核的操作章 | 本篇「Surge 操作」章（已并入本篇） |
 | 换、加、删任何规则集之前 | [规则集与素材](rulesets.md) |
 | 出问题了 | [故障排查 · FAQ](troubleshoot-faq.md) |
@@ -289,7 +287,7 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/pro
 
 
 面向"改这份配置的人"：改哪里、怎么升版、怎么同步、怎么记录。
-仓库级红线（节点不提交真实值等）见根 [`SECURITY.md`](../SECURITY.md)，本章不重复其条文，只讲操作动线。
+仓库级红线（节点不提交真实值等）见根 [`SECURITY.md`](../../../SECURITY.md)，本章不重复其条文，只讲操作动线。
 
 ---
 
@@ -297,7 +295,7 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/pro
 
 - 顶层永远只有四个固定名 × 两内核（`.conf` / `.yaml` 各一对）：`routing` / `lazy` 的完整版与 `.min` 版。它们是永久订阅地址的落点，不随版本改名；
 - "当前是哪一版"只写在文件头注 `#! version=…` 里；
-- 退役版本不再归档（历史版本看 git，备份 tag：`pre-cleanup-20260927`）；
+- 配置变动时，变动前的旧配置归档进 `profiles/config_old/`：归档版本号 = 该目录内此分工最新号 + 0.1（v3.3 → v3.4，v3.9 → 进位 v4.0），完整版与 `.min` 成对，现役头注同步升为归档号 + 0.1；更早历史看 git（备份 tag：`pre-cleanup-20260927`）；
 - 因此：任何文档、脚本、README 里出现的"带版本号的订阅 URL"都是错的。
 
 ---
@@ -310,8 +308,7 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/pro
                    python skill/tests/make_min.py --family all --apply              # 确认后写盘
 ③ 核豁免行：       .min 由生成器重算正文、按锚点继承注释 —— 仍要肉眼确认 `# audit-waive:` 那几行在 min 版里读得到
 ④ 升版（要对外发布时）：直接改四份 profile 头注里的 `#! version=`（`.min` 由生成器重算继承）
-⑤ CHANGELOG 记一笔（体例见 6.5）
-⑥ 收尾：`python skill/tests/check_secrets.py && python skill/tests/check_portability.py && python skill/tests/check_min_pair.py && python skill/tests/check_links.py .`（push 后 CI 会再跑一遍同组检查）
+⑤ 收尾：`python skill/tests/check_secrets.py && python skill/tests/check_portability.py && python skill/tests/check_min_pair.py && python skill/tests/check_links.py .`（push 后 CI 会再跑一遍同组检查）
 ```
 
 > **注意**　`.min` 不手工编辑。手工同步迟早漂 —— `check_min_pair.py` 会拿完整版对拍 `.min`，漂了就红。
@@ -344,18 +341,6 @@ python skill/tests/check_portability.py
 
 ---
 
-### 6.5 CHANGELOG 体例
-
-只记**配置文件的修改** —— 两内核 `profiles/`（含 `.min`）与它们引用的规则集素材。一天一个日期段（当天追加进当日段），没动配置文件就不开段。三条：
-
-1. 一条一句，动词开头，写清改到哪个文件、改了哪个行为；
-2. 文档、检查脚本与判据的改动不写在这里，看 `git log`；
-3. 推理过程、请示与授权、当时的纠结都不进日志。
-
-不写心路历程。历史沿革与逐版读数归各侧 `docs/07`，断言数归 `docs/08`。
-
----
-
 ### 6.6 精简配置（给自己瘦身）
 
 不要另开第三份配置 —— 历史教训是"同一件事写在两个地方，早晚会只改一处"（`v0` / `v1` 分叉就是这么砍掉的）。在你要用的那份上直接删，按收益排序：
@@ -379,7 +364,7 @@ python skill/tests/check_portability.py
 ### 6.7 想加第三份配置
 
 先问：这是新分工，还是老配置的另一种写法？后者一律否掉（那是版本分叉）。
-确认是新分工后，走 [`surge/DetailsReadme`](../surge/DetailsReadme/DetailsReadme.md) 维护者一节 —— 一句话判据：能过全部检查的才算一份新配置（固定名、`.min` 对拍、DNS 段一致）。
+确认是新分工后，走 [`surge/DetailsReadme`](../surge/profile-anatomy.md) 维护者一节 —— 一句话判据：能过全部检查的才算一份新配置（固定名、`.min` 对拍、DNS 段一致）。
 
 ---
 
@@ -393,7 +378,6 @@ python skill/tests/check_portability.py
 
 | 下一步 | 去处 |
 |:-------|:-----|
-| 装好、跑通再看本篇 | [快速开始](quick-start.md) |
 | 改 DNS 段之前先读泄露面 | [DNS 基础](dns-basics.md) |
 | Surge 侧的操作动线 | 本篇「Surge 操作」章 |
 | Egern 侧的操作动线 | 本篇「Egern 操作」章 |

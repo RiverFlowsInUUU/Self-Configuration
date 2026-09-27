@@ -54,8 +54,8 @@ sudo tcpdump -i en0 -n 'udp port 53'
 | 明文查询来自别的设备 | ② 旁路设备 | 第 3 项：`hijack-dns` 缺失或覆盖不全；家里有没有 HomePod / 电视 / 游戏机 |
 | 明文查询的域名是你要访问的站点 | ③ 规则触发 | 第 12 项 + `audit_ruleset_content.py`：远程规则集里缺 `no-resolve` 的 IP 条目最容易漏（它不在你 profile 里，本地静态审计看不见） |
 
-修法对照与"什么不该修"（可接受的一次性明文通路）见 [`../skill/reference/surge/leak-localization.md`](../skill/reference/surge/leak-localization.md)。
-Egern 侧网络层流程（IP 归属 `ipinfo.io`、`whoami.akamai.net` 问真实递归方、换 bootstrap IP 复测、查配置描述文件、路由器侧把 WAN DNS 改国内公共解析器）见 [`../skill/reference/egern/leak-localization.md`](../skill/reference/egern/leak-localization.md)。
+修法对照与"什么不该修"（可接受的一次性明文通路）见 [`../skill/reference/surge/leak-localization.md`](../surge/leak-localization.md)。
+Egern 侧网络层流程（IP 归属 `ipinfo.io`、`whoami.akamai.net` 问真实递归方、换 bootstrap IP 复测、查配置描述文件、路由器侧把 WAN DNS 改国内公共解析器）见 [`../skill/reference/egern/leak-localization.md`](../egern/leak-localization.md)。
 
 Egern 日志速读：
 
@@ -89,8 +89,8 @@ Egern 日志速读：
 | UDP 应用在某节点上不通 | `https` 类型节点不支持 UDP 中继 | Surge |
 | 改判据后"坏 fixture 反而通过" | 环境坏了也返回 1 —— 看退出码 2 的语义是不是被吞了 | — |
 
-更长的清单在原两侧坑档：[`../skill/reference/surge/pitfalls.md`](../skill/reference/surge/pitfalls.md) ·
-[`../skill/reference/egern/pitfalls.md`](../skill/reference/egern/pitfalls.md)（速查表在各自文件顶部）。
+更长的清单在原两侧坑档：[`../skill/reference/surge/pitfalls.md`](../surge/pitfalls.md) ·
+[`../skill/reference/egern/pitfalls.md`](../egern/pitfalls.md)（速查表在各自文件顶部）。
 
 ---
 
@@ -117,7 +117,6 @@ Egern 日志速读：
 
 | 下一步 | 去处 |
 |:-------|:-----|
-| 链路都没确认、设备还没装好 | [快速开始](quick-start.md) |
 | Surge 侧规则顺序与组写法 | [操作手册](ops.md) |
 | 怀疑规则集本身（条数、裸 IP 条目） | [规则集与素材](rulesets.md) |
 | 确定要改配置：标准动线与精简指引 | [操作手册 · 日常维护](ops.md) |
@@ -141,7 +140,7 @@ Egern 日志速读：
 |:---|:-----|
 | Python | 3.8+；Surge 侧脚本仅标准库；Egern 侧需 PyYAML |
 | 网络 | 只有内容 / 覆盖 / 刷新类 `audit_*` 需要联网，其余全离线 |
-| 磁盘 | 规则集缓存数 MB 级、随上游漂移（实测读数见 [`../skill/reference/surge/checker.md`](../skill/reference/surge/checker.md) 「磁盘」行；`direct.txt` 一份十一万条，条数权威在 [`../docs/rulesets.md`](../docs/rulesets.md)），在系统临时目录（`surge-ruleset-cache` / `egern-ruleset-cache`）；`--cache-dir` 可换，`--force` 忽略缓存重下 |
+| 磁盘 | 规则集缓存数 MB 级、随上游漂移（实测读数见 [`../skill/reference/surge/checker.md`](../surge/checker.md) 「磁盘」行；`direct.txt` 一份十一万条，条数权威在 [`../docs/rulesets.md`](rulesets.md)），在系统临时目录（`surge-ruleset-cache` / `egern-ruleset-cache`）；`--cache-dir` 可换，`--force` 忽略缓存重下 |
 | Windows | 输出必须 UTF-8（脚本内部已钉；中文控制台默认 GBK 会把 emoji 崩成退出码 1，与"期望判负"撞码，造成假绿）。Git Bash 的 `pwd` 是 `/c/Users/...`，Windows 版 Python 打不开，`.sh` 里用 `cygpath -w` 转换；拼路径一律用 `/` |
 
 ---
@@ -223,7 +222,7 @@ python skill/tests/make_min.py            # 计划模式：四份 .min 应全部
 
 ### 8.6 判据自身的纪律
 
-- 判据演进史与逐条出处：[`../skill/reference/surge/checker.md`](../skill/reference/surge/checker.md)（Surge）· 两侧 [`surge/pitfalls.md`](../skill/reference/surge/pitfalls.md) / [`egern/pitfalls.md`](../skill/reference/egern/pitfalls.md)；
+- 判据演进史与逐条出处：[`../skill/reference/surge/checker.md`](../surge/checker.md)（Surge）· 两侧 [`surge/pitfalls.md`](../surge/pitfalls.md) / [`egern/pitfalls.md`](../egern/pitfalls.md)；
 - 为让脚本变绿而改判据，可以，但必须留痕 —— 写清为什么退让、退让后还能抓住什么；
 - 每条新判据要配能证伪它的坏 fixture（期望判负），否则它可能恒返回 0；
 - 判据脚本（`skill/tests/` 四件）改动前按"两要素"自证：哪个反例会漏判、改后能抓住什么。
@@ -234,7 +233,6 @@ python skill/tests/make_min.py            # 计划模式：四份 .min 应全部
 
 | 下一步 | 去处 |
 |:-------|:-----|
-| 环境与链路还没就位 | [快速开始](quick-start.md) |
 | 判据为什么长这样：泄露面全景 | [DNS 基础](dns-basics.md) |
 | Surge 侧改完之后的验证对象 | [操作手册](ops.md) |
 | 引入或更换规则集前的预检 | [规则集与素材](rulesets.md) |
@@ -248,7 +246,7 @@ python skill/tests/make_min.py            # 计划模式：四份 .min 应全部
 ## 注意事项
 
 
-> 使用前值得先看一遍的几条。订阅地址见 [`README`](../README.md)。
+> 使用前值得先看一遍的几条。订阅地址见 [`README`](../../../README.md)。
 
 ### 通用
 
@@ -278,8 +276,8 @@ python skill/tests/make_min.py            # 计划模式：四份 .min 应全部
 |:----:|:-----|
 | 🧩 **`lazy` 两处占位至少填一处** | 它也有隐藏订阅槽位 `Airport`，另带 2 条占位节点（`Node-A` → `Proxy`、`Node-B` → `AI`）；两者都不填则所有走代理的流量不通 |
 | ✈️ **分流版填 1 处订阅槽位** | 单一隐藏组 `Airport`（`routing_v3` 起把 A/B 合并为单入口） |
-| 📜 **历史版本看 git** | 订阅地址用固定名，升版只改文件内容与头注 `#! version=`，不改名；当前版永远只有顶层那四件。被替代版本不再归档，历史与理由看 git log（备份 tag：`pre-cleanup-20260927`） |
-| 🔒 **`proxy_nameservers` 一设就跳过 `forward`** | 这是硬覆盖。设了它之后，写在 `forward` 里的节点域名规则就是**死代码**（Egern [`坑 18`](../skill/reference/egern/pitfalls.md)） |
+| 📜 **历史版本看 git** | 订阅地址用固定名，升版只改文件内容与头注 `#! version=`，不改名；当前版永远只有顶层那四件。配置变动时，变动前的旧配置归档进 `profiles/config_old/`：归档版本号 = 该目录内此分工最新号 + 0.1（v3.3 → v3.4，v3.9 → 进位 v4.0），完整版与 `.min` 成对，现役头注同步升为归档号 + 0.1；更早历史看 git（备份 tag：`pre-cleanup-20260927`） |
+| 🔒 **`proxy_nameservers` 一设就跳过 `forward`** | 这是硬覆盖。设了它之后，写在 `forward` 里的节点域名规则就是**死代码**（Egern [`坑 18`](../egern/pitfalls.md)） |
 | 🧷 **不要用 YAML dump 重写 profile** | 含数千字符的超长单行（如 CA 证书 base64），dump 会丢注释、改格式。按行读入 + 断言「全文恰好命中 1 行」 |
 
 ### 换设备 / 双端一致
@@ -288,10 +286,10 @@ python skill/tests/make_min.py            # 计划模式：四份 .min 应全部
 
 | 项目 | 说明 |
 |:----:|:-----|
-| 🧮 **磁盘字节 = 提交字节 = 线上字节** | 根在 [`.gitattributes`](../.gitattributes)：`* text=auto eol=lf`。Windows 版 Git 安装器会把 `core.autocrlf=true` 写进**系统级**配置，没有这个文件时同一个 commit 在 Windows 上落盘成 CRLF、在 Linux / macOS 上落盘成 LF ⇒ 换台机器磁盘内容就变了，按 `\n` 写的正则也可能失配。`eol=lf` 的优先级高于 `core.autocrlf`，**不需要任何人改自己机器的 git 配置** |
+| 🧮 **磁盘字节 = 提交字节 = 线上字节** | 根在 [`.gitattributes`](../../../.gitattributes)：`* text=auto eol=lf`。Windows 版 Git 安装器会把 `core.autocrlf=true` 写进**系统级**配置，没有这个文件时同一个 commit 在 Windows 上落盘成 CRLF、在 Linux / macOS 上落盘成 LF ⇒ 换台机器磁盘内容就变了，按 `\n` 写的正则也可能失配。`eol=lf` 的优先级高于 `core.autocrlf`，**不需要任何人改自己机器的 git 配置** |
 | 🩹 **今天之前 clone 的旧克隆要手动重检出一次** | `.gitattributes` 只约束 git **写盘的那一刻**，不会回头改写已经在磁盘上的文件。老克隆 `git pull` 之后：磁盘仍是 CRLF，而 `git status` **照样干净**（比对时 git 会先把工作树归一回 LF）⇒ 这是一处隐形差异，只有检查会抓到。两种解法任选：`git rm -r --cached . && git reset --hard`（实测 CRLF 94 → 0、`all.sh` 第 4 项 17 → 18 全绿），或干脆**删掉整个目录重新 clone** —— 反正仓内不留任何单机事实 |
-| 🔤 **文件名不构成风险** | 全树实测：路径全部 NFC 归一、无 Windows/macOS 非法字符、无保留设备名（`CON`/`NUL`/`COM1`…）、大小写折叠零冲突（Windows 的 `core.ignorecase=true` 会让只差大小写的两个文件互相覆盖）、最长相对路径 49 字符（Windows 260 上限内留足余量）。**中文文件名能正常上传 GitHub**，但只在人读的 `docs/` 下允许；脚本 / profile / 图标 / 测试这些被程序消费的路径必须纯 ASCII —— 由 [`../skill/tests/check_portability.py`](../skill/tests/check_portability.py) 常驻守着（**18 条规则，不随文件数增长**） |
-| 🤖 **agent 的入口** | [`skill/SKILL.md`](../skill/SKILL.md) 是 agent 技能包门面：按内核分支的语法知识、检查入口与引用面。判"不对"前先 grep `audit-waive`（明知故犯处都有豁免条目与理由）。改配置遵循 [`ops.md`](ops.md) 的标准动线 |
+| 🔤 **文件名不构成风险** | 全树实测：路径全部 NFC 归一、无 Windows/macOS 非法字符、无保留设备名（`CON`/`NUL`/`COM1`…）、大小写折叠零冲突（Windows 的 `core.ignorecase=true` 会让只差大小写的两个文件互相覆盖）、最长相对路径 49 字符（Windows 260 上限内留足余量）。**中文文件名能正常上传 GitHub**，但只在人读的文档路径下允许；脚本 / profile / 图标 / 测试这些被程序消费的路径必须纯 ASCII —— 由 [`../skill/tests/check_portability.py`](../../tests/check_portability.py) 常驻守着（**18 条规则，不随文件数增长**） |
+| 🤖 **agent 的入口** | [`skill/SKILL.md`](../../SKILL.md) 是 agent 技能包门面：按内核分支的语法知识、检查入口与引用面。判"不对"前先 grep `audit-waive`（明知故犯处都有豁免条目与理由）。改配置遵循 [`ops.md`](ops.md) 的标准动线 |
 | 🧑‍💻 **换机器只做四件事** | ① `git clone https://github.com/RiverFlowsInUUU/Self-Configuration.git`（公开仓读不需要登录）；② 配身份：`git config --global user.name` 与 `user.email`；③ 配推送凭据：`gh auth login` 或 Git 凭据管理器。**token 不写进仓内任何文件，也不写进 `git remote` 的 URL**——凭据是单机事实，仓不代管；④ `pip install pyyaml`（Egern 侧脚本依赖，Windows 的 Git Bash 不自带；缺它闸门前置就 rc=2） |
 | 🔁 **改完的固定动作** | 五项检查全过 → 点名 stage、提交、push → CI 在线上把同一组检查再跑一遍，红了就修 |
 | 🧊 **`git status` 里中文显示成八进制** | 看到 `docs/\345\233\276...` 是 git 的 `core.quotepath` 默认转义，**不是文件名坏了**。想看清：`git config --global core.quotepath false`。macOS 另建议 `git config --global core.precomposeunicode true`（文件系统以 NFD 落盘，否则同一个中文名会被认成两个文件） |
@@ -307,7 +305,7 @@ Egern 用本仓快照 `apple_system.list`，且若干内核级约束不可套用
 
 ---
 
-相关：[`rulesets.md`](rulesets.md) · [`cross-kernel-diff.md`](cross-kernel-diff.md) · [`icon-license.md`](icon-license.md)
+相关：[`rulesets.md`](rulesets.md) · [`cross-kernel-diff.md`](cross-kernel-diff.md)
 
 
 ---
@@ -315,7 +313,7 @@ Egern 用本仓快照 `apple_system.list`，且若干内核级约束不可套用
 ## FAQ 与术语表
 
 
-FAQ 从两侧 [`surge/DetailsReadme`](../surge/DetailsReadme/DetailsReadme.md) 与 [`egern/DetailsReadme`](../egern/DetailsReadme/DetailsReadme.md) 的问答节归并而来（答案与源文件同口径，冲突时以 `DetailsReadme` 为准）。
+FAQ 从两侧 [`surge/DetailsReadme`](../surge/profile-anatomy.md) 与 [`egern/DetailsReadme`](../egern/profile-anatomy.md) 的问答节归并而来（答案与源文件同口径，冲突时以 `profile-anatomy` 为准）。
 术语表是全手册的公共词汇，定义以本仓文档的实际用法为准。
 
 ---
@@ -393,9 +391,9 @@ Surge iOS 不支持本地文件配置 —— 把 profile 托管到可访问地�
 | `lazy` / `routing` | 懒人版 / 分流版。分工关系，不是版本关系，二选一不叠加 |
 | `flatten`（Egern）/ `include-other-group`（Surge） | 把组名展开成组内具体节点的两种写法，跨内核的语义对应物 |
 | f 谱系 / v 版本 | `f1…f10` = 排查迭代历史；`routing_vX.Y` = 文件版本。两套前缀刻意区分 |
-| `direct.txt` 承重 | 国内域名直连的主承重规则集（Loyalsoldier，十一万级纯域名）；条数与来源见 [`../docs/rulesets.md`](../docs/rulesets.md) |
+| `direct.txt` 承重 | 国内域名直连的主承重规则集（Loyalsoldier，十一万级纯域名）；条数与来源见 [`../docs/rulesets.md`](rulesets.md) |
 | 现算 | 期望值从源头（profile / 脚本源码）实时计算，禁止抄进文档 —— 本仓反漂移的第一纪律 |
-| 已合并 | 2026-09-27 精简后，旧手册与专题文档已合并进 `docs/` 九篇，原路径文件已删除（git 历史可查） |
+| 已合并 | 2026-09-27 起旧手册与专题文档已并入 `skill/reference/`，原 `docs/` 与两侧 `DetailsReadme/` 已删除（git 历史可查） |
 
 ---
 
@@ -403,11 +401,9 @@ Surge iOS 不支持本地文件配置 —— 把 profile 托管到可访问地�
 
 | 下一步 | 去处 |
 |:-------|:-----|
-| 环境还没装好、链路没确认 | [快速开始](quick-start.md) |
 | 名词背后的原理：三类明文出口 | [DNS 基础](dns-basics.md) |
 | Surge 侧的操作动线 | [操作手册](ops.md) |
 | 规则集的条数、体积、来源 | [规则集与素材](rulesets.md) |
 | 改配置的标准动线与收尾顺序 | [操作手册 · 日常维护](ops.md) |
 | 审计全绿后还要核什么 | 本篇「验证与自检」章 |
 | 把结论带到另一个内核 | [跨内核移植](cross-kernel-diff.md) |
-| 图标与许可的常见疑问 | [图标与许可](icon-license.md) |

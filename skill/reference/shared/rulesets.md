@@ -40,7 +40,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 |:-------|:---------|:-----|
 | `LAN`（内置） | 仅 Surge | Surge 有内置局域网规则集 |
 | `Lan.list` | 仅 Egern | Egern 无内置 LAN，引用 [blackmatrix7](https://github.com/blackmatrix7/ios_rule_script) 的清单补位。与 `private.txt` **互补**：`Lan` 管 IP 段与路由管理域，`private` 管特殊 TLD 与 `miwifi.com` |
-| `SYSTEM`（内置）→ 快照 `apple_system.list` | Surge 内置 ／ Egern 引用快照 | 系统服务 → `DIRECT`。2026-09-24 起两侧同一位置各有一套：Egern 没有内置系统集，引用 [`../egern/apple_system.list`](../egern/apple_system.list) —— 内容 = 内置 `SYSTEM` 的 2026-09-24 时点快照，删掉 Egern 不支持的两条 `PROCESS-NAME`（`trustd` / `netbiosd`） |
+| `SYSTEM`（内置）→ 快照 `apple_system.list` | Surge 内置 ／ Egern 引用快照 | 系统服务 → `DIRECT`。2026-09-24 起两侧同一位置各有一套：Egern 没有内置系统集，引用 [`../egern/apple_system.list`](../../../egern/apple_system.list) —— 内容 = 内置 `SYSTEM` 的 2026-09-24 时点快照，删掉 Egern 不支持的两条 `PROCESS-NAME`（`trustd` / `netbiosd`） |
 | ~~`domain_suffix: cn`~~ | 两侧均已删除 | 2026-09-24 懒人版也删了。理由与分流版 v3 同：`direct.txt` 本身含 `DOMAIN-SUFFIX,cn`（2026-09-24 快照第 23,829 行），留着只会把「规则集没接住」掩盖成「cn 直连正常」 |
 
 ✅ **懒人版两侧现已逐位同构**：各 10 条，白名单 → 广告 ×2 → 内网 ×2 → 系统集 → AI → 国内直连 → 地理 → 兜底。
@@ -69,7 +69,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 1. **白名单必须排在最前**，且在两条广告清单之前 —— Jinx 与 AWAvenue 存在重叠域名，白名单排到后面会被误杀。
 2. **厂商专属规则（`OpenAI` / `Gemini` / `Anthropic` / `Claude`）排在 `AI.list` 之前** —— 否则 AI 域名先被 `AI.list` 接走，专属组形同虚设。
 3. **`GitHub.list` 排在 `direct.txt` 之前** —— `github.com` 同时被国内直连清单收录，排到后面就接不到它。
-4. **IP 类规则排最后，且必须带 `no-resolve` / `no_resolve`** —— 否则每个走到它的域名都会被强制本地解析一次，那正是泄露来源。详见 [`docs/no-resolve-pairing.md`](../docs/no-resolve-pairing.md) · [`docs/no-resolve-pairing.md`](../docs/no-resolve-pairing.md)。
+4. **IP 类规则排最后，且必须带 `no-resolve` / `no_resolve`** —— 否则每个走到它的域名都会被强制本地解析一次，那正是泄露来源。详见 [`docs/no-resolve-pairing.md`](no-resolve-pairing.md) · [`docs/no-resolve-pairing.md`](no-resolve-pairing.md)。
 4b. ⭐ **规则级开关的取舍，四份 profile 共用一条原则**：**实测零 IP 条目的规则集不写，真含 IP 条目的必须写**。
     该开关只对规则集里的 IP 类条目起作用，纯域名集写上是空转 —— 本仓 2026-09-24 起把它从 12 条零 IP 规则上删掉。
     ⚠️ 判据是「实测零 IP」不是「纯域名」（`YouTubeMusic` 有 UA、`Microsoft` 还有 PROCESS-NAME，同样零 IP），
@@ -92,8 +92,8 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 | `GeoLite2-Country.mmdb` | Surge 侧 `GEOIP` 判定 | [adysec/IP_database](https://github.com/adysec/IP_database) |
 | `Country.mmdb` · `GeoLite2-ASN.mmdb` | Egern 侧 `geoip` / `asn` 判定 | [Loyalsoldier/geoip](https://github.com/Loyalsoldier/geoip) |
 
-许可见 [`icon-license.md`](icon-license.md)。第三方规则集版权归其原作者。
+本仓按 MIT 许可分发（根 `LICENSE`）；图标来源见上表。第三方规则集版权归其原作者。
 
 ---
 
-相关：[`cross-kernel-diff.md`](cross-kernel-diff.md) · [`troubleshoot-faq.md`](troubleshoot-faq.md) · [`icon-license.md`](icon-license.md) · [`../README.md`](../README.md)
+相关：[`cross-kernel-diff.md`](cross-kernel-diff.md) · [`troubleshoot-faq.md`](troubleshoot-faq.md) · [`../README.md`](../../../README.md)

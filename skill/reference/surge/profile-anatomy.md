@@ -1,7 +1,9 @@
-# Surge 配置模板 · 完整技术文档
+# Surge 配置模板 · 逐键语义与内核行为（profile-anatomy）
+
+> **何时读**：改 Surge 配置需要确认某个键 / 组 / 规则的语义与边界时。本文件原为 `surge/DetailsReadme/DetailsReadme.md`，2026-09-27 起并入 skill。
 
 > 面向想彻底弄明白「为什么这么写」的读者。
-> 只想赶紧用起来 → 看 [`README`](../../README.md) 的 [📥 两份配置](../../README.md#-两全其美--皆合心意)。
+> 只想赶紧用起来 → 看 [`README`](../../../README.md) 的 [📥 两份配置](../../../README.md#-两全其美--皆合心意)。
 >
 > 目录
 > [1 · 文件结构与两份形态](#1--文件结构与两份形态) ·
@@ -34,8 +36,8 @@ Self-Configuration/                          # 两内核合并后同仓（2026-0
 │   │   ├── lazy.conf · lazy.min.conf        # 懒人版（带注释 / 纯配置，注释剥掉那份）
 │   │   └── routing.conf · routing.min.conf  # 分流版（带注释 / 纯配置，注释剥掉那份）
 │   ├── docs/                                # 01–08 + 11 专题（07 末节存着本内核合并前的迭代史）
-│   └── DetailsReadme/                       # 本文件
-├── egern/                                   # 姊妹内核一侧（同构：profiles / docs / DetailsReadme）
+│   └── （原 DetailsReadme/ 已并入 skill/reference/surge/profile-anatomy.md，即本文件）
+├── egern/                                   # 姊妹内核一侧（同构：profiles / skill/reference/egern）
 ├── icons/                                   # 26 个策略组图标（仓库根，两内核共用、不跨项目引用）
 ├── docs/ · LICENSE                          # 跨内核文档（九篇）· 许可证
 └── skill/
@@ -269,7 +271,7 @@ always-real-ip = *.lan, *.local, *.localdomain, *.home.arpa,
 ### 4.1 占位节点：两份都是 2 条
 
 **`lazy.conf` 与 `routing.conf` 各带 2 条**，分工完全一致 —— `Node-A` 归 `Proxy`、
-`Node-B` 归 `AI`（Egern 侧那两份同形，见 [`egern/DetailsReadme`](../../egern/DetailsReadme/DetailsReadme.md)）：
+`Node-B` 归 `AI`（Egern 侧那两份同形，见 [Egern 侧 profile-anatomy](../egern/profile-anatomy.md)）：
 
 ```
 Node-A = hysteria2, 203.0.113.10, 52341, password=REPLACE_WITH_YOUR_PASSWORD, sni=REPLACE_WITH_YOUR_SNI
@@ -596,7 +598,7 @@ Surge 这边指向**字面量 `REJECT`** 而不是 `AD` 组，理由见 §13.3�
 
 ## 12 · `no-resolve` 的双刃
 
-这是全项目最需要注意的一处，也是 [`docs/no-resolve-pairing.md`](../../docs/no-resolve-pairing.md)
+这是全项目最需要注意的一处，也是 [`docs/no-resolve-pairing.md`](../shared/no-resolve-pairing.md)
 整篇复盘的由来。
 
 ### 12.1 刀刃一：不带 `no-resolve` → 触发解析
@@ -855,19 +857,19 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 
 | 脚本 | 审什么 | 需要联网 |
 |:-----|:-------|:--------:|
-| [`check_surge_dns.py`](../../skill/scripts/surge/check_surge_dns.py) | 文件内部的**结构**（12 项检查） | ❌ |
-| [`audit_ruleset_refresh.py`](../../skill/scripts/surge/audit_ruleset_refresh.py) | 远程规则集的**刷新参数** `update-interval`（非正值 = 关掉自动更新 → HIGH；与约定值 604800 不同 → 仅 `--strict` 判负） | ❌ |
-| [`audit_ruleset_content.py`](../../skill/scripts/surge/audit_ruleset_content.py) | **远程规则集的内容**（缺 no-resolve 的 IP 条目 / 直连集合的域名体量） | ✅ |
-| [`audit_routing_coverage.py`](../../skill/scripts/surge/audit_routing_coverage.py) | 拿**真实域名走一遍** `[Rule]`，看最终去哪（期望表按配置自动切换） | ✅ |
-| [`audit_region_filters.py`](../../skill/scripts/surge/audit_region_filters.py) | **地区组正则的一致性**（`Other Regions` 的负向断言有没有漏词、组间有没有重叠） | ❌ |
-| [`skill/tests/check_secrets.py`](../../skill/tests/check_secrets.py) | 项目不变量（占位符纪律 / 订阅 token 纪律，全仓 `.conf` + `.yaml`） | ❌ |
-| [`skill/tests/check_links.py`](../../skill/tests/check_links.py) | markdown 相对链接与锚点（改标题后**静默失效**的那一类问题） | ❌ |
+| [`check_surge_dns.py`](../../scripts/surge/check_surge_dns.py) | 文件内部的**结构**（12 项检查） | ❌ |
+| [`audit_ruleset_refresh.py`](../../scripts/surge/audit_ruleset_refresh.py) | 远程规则集的**刷新参数** `update-interval`（非正值 = 关掉自动更新 → HIGH；与约定值 604800 不同 → 仅 `--strict` 判负） | ❌ |
+| [`audit_ruleset_content.py`](../../scripts/surge/audit_ruleset_content.py) | **远程规则集的内容**（缺 no-resolve 的 IP 条目 / 直连集合的域名体量） | ✅ |
+| [`audit_routing_coverage.py`](../../scripts/surge/audit_routing_coverage.py) | 拿**真实域名走一遍** `[Rule]`，看最终去哪（期望表按配置自动切换） | ✅ |
+| [`audit_region_filters.py`](../../scripts/surge/audit_region_filters.py) | **地区组正则的一致性**（`Other Regions` 的负向断言有没有漏词、组间有没有重叠） | ❌ |
+| [`skill/tests/check_secrets.py`](../../tests/check_secrets.py) | 项目不变量（占位符纪律 / 订阅 token 纪律，全仓 `.conf` + `.yaml`） | ❌ |
+| [`skill/tests/check_links.py`](../../tests/check_links.py) | markdown 相对链接与锚点（改标题后**静默失效**的那一类问题） | ❌ |
 
 > 📌 第 4 个（`audit_region_filters.py`）是分流版带来的：`Other Regions` 用的负向断言
 > 把另外 6 个地区组的关键词**抄了一遍**（68 个 token），而 Surge 的 `filter`
 > 只吃字面正则、不支持变量 ⇒ 结构上消灭不掉这份拷贝。
 > **兜底做法是给拷贝配一个比对器，并给比对器配一个判负样本** ——
-> 见 [`skill/reference/surge/pitfalls.md` 坑 16](../../skill/reference/surge/pitfalls.md)。
+> 见 [`skill/reference/surge/pitfalls.md` 坑 16](pitfalls.md)。
 
 ### 15.2 需要多个而非一个的原因
 
@@ -1059,8 +1061,7 @@ python skill/scripts/surge/check_surge_dns.py surge/profiles/lazy.conf
 python skill/scripts/surge/check_surge_dns.py surge/profiles/routing.conf
 ```
 
-⚠️ **本仓库刻意不挂 CI / 任何自动化**。理由与替代做法见
-[`skill/README.md`](../../skill/README.md)。
+CI（根 `.github/workflows/ci.yml`）在 push / PR 自动跑同一组检查；本地可随时手动复跑同组命令。
 
 ### 18.4 退出码约定
 

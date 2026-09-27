@@ -1,4 +1,6 @@
-# DetailsReadme · Egern 配置模板 · 完整技术文档
+# Egern 配置模板 · 逐段语义与内核行为（profile-anatomy）
+
+> **何时读**：改 Egern 配置需要确认某个顶层字段 / 组 / 规则的语义与边界时。本文件原为 `egern/DetailsReadme/DetailsReadme.md`，2026-09-27 起并入 skill。
 
 > **这份文档的定位**：`README.md` 只保留了「配置框架 + DNS 防泄漏」的精华，有意省略了大量推导、数据、谱系与工程方法。
 > 本文档是 README 的**详版 / 补集**——把那些被省略的信息全部展开、讲清楚。
@@ -98,9 +100,9 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 **地区组** —— 「按正则把节点归类」是 **`filter`** 干的，不是 `smart` 本身；
 `smart` 只负责在筛出来的节点里选最优。`Other Regions` 的负向断言把其余 6 个地区组的
 关键词**逐字抄了一遍** —— 改任何一组的关键词都要同步改它，
-用 [`skill/scripts/egern/audit_region_filters.py`](../../skill/scripts/egern/audit_region_filters.py) 校验（漏改会被它拦下）。
+用 [`skill/scripts/egern/audit_region_filters.py`](../../scripts/egern/audit_region_filters.py) 校验（漏改会被它拦下）。
 
-**服务组**（默认策略与承接的规则集）见 [`docs/rulesets.md`](../../docs/rulesets.md)。
+**服务组**（默认策略与承接的规则集）见 [`docs/rulesets.md`](../shared/rulesets.md)。
 
 **`lazy` 的一处专属调整**（只属于它，不同步其他版本）：`AD` 组**只有 `REJECT`**（没有 `DIRECT` 兜底）。
 ⚠️ 分流版的 `Final` 兜底组，`lazy` **没有** —— 2026-09-23 起它的 `default` 规则 `policy` 直写 `Proxy`，
@@ -336,7 +338,7 @@ forward:
 
 ## 4. 审计清单（18 项）
 
-> 📌 本节是 [`docs/hardening-checklist.md`](../../docs/hardening-checklist.md) 的摘要。**逐条判据与严重度的权威版本以 `docs/hardening-checklist` 为准** —— 要改清单请改那一份，本节跟着同步。
+> 📌 本节是 [`docs/hardening-checklist.md`](../shared/hardening-checklist.md) 的摘要。**逐条判据与严重度的权威版本以 `docs/hardening-checklist` 为准** —— 要改清单请改那一份，本节跟着同步。
 
 > 全部自动化：`check_egern_dns.py` 覆盖 1–15；`audit_ruleset_noresolve.py` 覆盖 16；`audit_routing_coverage.py` 覆盖 17；`audit_dns_forward.py` 覆盖 18。
 
@@ -397,8 +399,8 @@ forward:
 ## 6. 已知代价与取舍
 
 - **`Foreign-DNS` 已删除**：迭代 f10 起它就无任何引用（forward 兜底改国内组后不再需要境外组）；`routing_v1` 曾**整组注释**保留为 A/B 备用，**`routing_v2` 起整段删除**。要恢复境外解析答案，需自行在 `upstreams` 里加回该组。风险提醒：若用它作兜底且代理未就绪，会掉进明文 `:53`。
-- **两条线 × 双形态**：可选只有 `egern/profiles/lazy.yaml`（**懒人版**，4 组 / 10 条规则）与 `egern/profiles/routing.yaml`（**分流版 · 推荐**，26 组 / 24 条），固定名四件，升版不改名。⚠️ 头注 `#! version=` 里的 `v` 是**文件版本**；历史版本看 git（备份 tag：`pre-cleanup-20260927`）。
-- **图标整合进本仓库**：26 个图标源自已整合进 `icons/`，模板不再跨项目引用图标地址。来源归属与许可见 [`docs/icon-license.md`](../../docs/icon-license.md)（公开仓库署名）。
+- **两条线 × 双形态**：可选只有 `egern/profiles/lazy.yaml`（**懒人版**，4 组 / 10 条规则）与 `egern/profiles/routing.yaml`（**分流版 · 推荐**，26 组 / 24 条），固定名四件，升版不改名。⚠️ 头注 `#! version=` 里的 `v` 是**文件版本**；配置变动时变动前的旧配置归档进 `profiles/config_old/`（归档号 = 目录内最新号 + 0.1，v3.3 → v3.4、v3.9 → 进位 v4.0，完整版与 `.min` 成对，现役头注同步升为归档号 + 0.1）；更早历史看 git（备份 tag：`pre-cleanup-20260927`）。
+- **图标整合进本仓库**：26 个图标源自已整合进 `icons/`，模板不再跨项目引用图标地址。来源归属见上表；本仓按 MIT 许可分发（根 `LICENSE`）。
 - **占位节点都被真实引用**：模板 `proxies` 带 2 条占位节点（`Node-A` → `Proxy` 末位、`Node-B` → `AI` 首项），不存在悬空引用（组间引用保留；`routing_v2.3` 起**已无空组**）。不用它们就整条删掉，并把对应组 `policies` 里的名字一并摘掉。
 - **与订阅解耦**：forward 不写任何节点 / 订阅域名，换订阅无需改动 DNS 段（清单 18 验证订阅耦合 4 → 0）。
 - **审计脚本报的 2 条 `LOW`（刻意为之，不是缺陷）**：`check_egern_dns.py` 对本模板的读数是 `0 high, 2 low`。两条都属「安全性 vs 可用性」的自觉取舍，不是配置错误：
@@ -434,16 +436,16 @@ forward:
 - **脚本清单**（10 个，各自看不同层；另带共享模块 `_egern_common.py`）：
   | 脚本 | 层级 | 覆盖清单 |
   |---|---|---|
-  | [`check_egern_dns.py`](../../skill/scripts/egern/check_egern_dns.py) | profile 文本 | 1–15 |
-  | [`audit_ruleset_noresolve.py`](../../skill/scripts/egern/audit_ruleset_noresolve.py) | 被引用的规则集文件 | 16 |
-  | [`audit_routing_coverage.py`](../../skill/scripts/egern/audit_routing_coverage.py) | 域名 → 命中规则 → 策略 | 17 |
-  | [`audit_dns_forward.py`](../../skill/scripts/egern/audit_dns_forward.py) | forward 单值 / 订阅耦合 / 兜底可达 | 18 |
-  | [`audit_region_filters.py`](../../skill/scripts/egern/audit_region_filters.py) | 地区组 filter 与 `Other Regions` 负向断言的同步 | 辅助 |
-  | [`audit_ruleset_refresh.py`](../../skill/scripts/egern/audit_ruleset_refresh.py) | 远程规则集 `update_interval`（非正值 = 不再更新 → HIGH；偏离约定值 → `--strict` 判负） | 辅助 |
-  | [`weigh_ruleset.py`](../../skill/scripts/egern/weigh_ruleset.py) | 规则集重量（构成/冗余/耗时/覆盖） | 辅助 |
-  | [`probe_dns_endpoints.py`](../../skill/scripts/egern/probe_dns_endpoints.py) | 端点逐个实测（DoH 线格式 / DoT 握手） | 辅助 |
-  | [`probe_doh.py`](../../skill/scripts/egern/probe_doh.py) | 只测 DoH 线格式 | 辅助 |
-  | [`profile_ruleset.py`](../../skill/scripts/egern/profile_ruleset.py) | 规则集类型分布 | 辅助 |
+  | [`check_egern_dns.py`](../../scripts/egern/check_egern_dns.py) | profile 文本 | 1–15 |
+  | [`audit_ruleset_noresolve.py`](../../scripts/egern/audit_ruleset_noresolve.py) | 被引用的规则集文件 | 16 |
+  | [`audit_routing_coverage.py`](../../scripts/egern/audit_routing_coverage.py) | 域名 → 命中规则 → 策略 | 17 |
+  | [`audit_dns_forward.py`](../../scripts/egern/audit_dns_forward.py) | forward 单值 / 订阅耦合 / 兜底可达 | 18 |
+  | [`audit_region_filters.py`](../../scripts/egern/audit_region_filters.py) | 地区组 filter 与 `Other Regions` 负向断言的同步 | 辅助 |
+  | [`audit_ruleset_refresh.py`](../../scripts/egern/audit_ruleset_refresh.py) | 远程规则集 `update_interval`（非正值 = 不再更新 → HIGH；偏离约定值 → `--strict` 判负） | 辅助 |
+  | [`weigh_ruleset.py`](../../scripts/egern/weigh_ruleset.py) | 规则集重量（构成/冗余/耗时/覆盖） | 辅助 |
+  | [`probe_dns_endpoints.py`](../../scripts/egern/probe_dns_endpoints.py) | 端点逐个实测（DoH 线格式 / DoT 握手） | 辅助 |
+  | [`probe_doh.py`](../../scripts/egern/probe_doh.py) | 只测 DoH 线格式 | 辅助 |
+  | [`profile_ruleset.py`](../../scripts/egern/profile_ruleset.py) | 规则集类型分布 | 辅助 |
 - **核心价值**：把「审计通过 ≠ 配置可用」的教训固化成 **18 项可复跑清单**，尤其强调**规则集层（清单 16）**与**分流覆盖层（清单 17）**这两个 profile 文本审计看不见的维度。
 
 ### 8.2 `github-publish-sanitized-repo`
@@ -475,7 +477,7 @@ forward:
 ## 9. 如何自行审计
 
 三个主审计脚本**退出码 0 = 通过**，可直接用于提交前检查。
-**本仓库刻意不挂 CI**（理由见下），全部验证都在本地跑：
+CI（根 `.github/workflows/ci.yml`）在 push / PR 自动跑同一组检查；本地同组命令：
 
 ```bash
 PY="<你的 python（含 pyyaml）>"
@@ -494,10 +496,10 @@ S="skill/scripts"
 
 规则集缓存写在系统临时目录（分流版 22 个远程规则集 · 写作时点实测 3.25 MB），可离线复用（`--offline`）。
 
-> 📌 **全部验证都在本地完成 —— 本仓库刻意不挂 CI / 任何自动化**（2026-09-21 决定）。
+> 📌 全部检查可在本地完整复现；push / PR 时 CI（`.github/workflows/ci.yml`）自动再跑一遍。
 > 这是个人模板仓库，不会有外部贡献者，"自动验 PR"没有服务对象，而本地跑一遍只要几十秒。
 > 上表那批本地命令已覆盖自动化做过的全部断言，**功能上没有任何损失**。
-> 详细说明见 [`skill/reference/egern/public-repo.md`](../../skill/reference/egern/public-repo.md)。
+> 详细说明见 [`skill/reference/egern/public-repo.md`](public-repo.md)。
 
 ---
 
@@ -539,4 +541,4 @@ S="skill/scripts"
 
 ---
 
-回到 [README](../../README.md) ｜ 原理与案例见 [DNS 基础](../../docs/dns-basics.md) ｜ 清单见 [加固清单](../../docs/hardening-checklist.md)
+回到 [README](../../../README.md) ｜ 原理与案例见 [DNS 基础](../shared/dns-basics.md) ｜ 清单见 [加固清单](../shared/hardening-checklist.md)

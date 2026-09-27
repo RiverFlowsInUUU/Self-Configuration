@@ -92,7 +92,7 @@ Egern 侧删 `domain_suffix: cn` 并补上系统域名集。
 ## 5 · 版本保留策略
 
 - `profiles/` 顶层只有固定名四件 —— `routing` 分流版 + `lazy` 懒人版，各含带注释版与 `.min` 版；订阅地址就是这个永久文件名，升版不改名。
-- 「当前是哪一版」只写在 profile 头注 `#! version=` 里；被替代版本不再归档，历史看 git（备份 tag：`pre-cleanup-20260927`）。
+- 「当前是哪一版」只写在 profile 头注 `#! version=` 里；配置变动时，变动前的旧配置归档进 `profiles/config_old/`：归档版本号 = 该目录内此分工最新号 + 0.1（v3.3 → v3.4，v3.9 → 进位 v4.0），完整版与 `.min` 成对，现役头注同步升为归档号 + 0.1；更早历史看 git（备份 tag：`pre-cleanup-20260927`）。
 
 ## 6 · 脚本与测试
 
@@ -111,7 +111,7 @@ Egern 侧删 `domain_suffix: cn` 并补上系统域名集。
 | 全仓链接与锚点 | `check_links.py`（共享） | 同左 | 相对链接 + 中文/emoji 锚点逐条可解析 |
 | 换设备可移植性 | `check_portability.py`（共享） | 同左 | 行尾 / BOM / 命名 / 单机残留 |
 
-以上检查由根目录 `.github/workflows/ci.yml` 在每次 push / PR 自动执行；本地手动跑同一组命令即可复现（见 [`skill/README.md`](../skill/README.md)）。
+以上检查由根目录 `.github/workflows/ci.yml` 在每次 push / PR 自动执行；本地手动跑同一组命令即可复现（见 [`skill/SKILL.md`](../../SKILL.md)）。
 
 ## 7 · 合并后共享的东西
 
@@ -120,7 +120,7 @@ Egern 侧删 `domain_suffix: cn` 并补上系统域名集。
 - **规则集清单**：分流版 21 个远程规则集两侧**逐字共用**（同一批 URL，含两侧都注释掉的 `Proxy.list`）；
   Egern 另有 2 个独有项 —— `Lan.list`（补内置 `LAN`）与 `apple_system.list`（补内置 `SYSTEM`，本仓自托管）
   —— 见 [`rulesets.md`](rulesets.md)。
-- **排序约束**：以 [`SKILL 门面`](../skill/SKILL.md) §2 的四条共同铁律 + 一条内核专属为准；逐条确认面见 [`rulesets.md`](rulesets.md) §4。
+- **排序约束**：以 [`SKILL 门面`](../../SKILL.md) §2 的四条共同铁律 + 一条内核专属为准；逐条确认面见 [`rulesets.md`](rulesets.md) §4。
 
 ## 8 · 保持原样的差异
 
@@ -136,10 +136,10 @@ Egern 侧删 `domain_suffix: cn` 并补上系统域名集。
    审计器的豁免只把 finding 降级成 `WAIVED:` 并照常打印，不改判据本身；判据写在 profile 里，可 grep、可复核。
 3. **规则集刷新参数**：Surge 官方文档写明 `RULE-SET` 缺省 `86400`、**负值才关闭自动更新**；
    Egern 官方只在示例里出现 `update_interval: 86400`，字段节未写缺省值 ⇒ 两侧都显式写死一周。
-4. **换设备一致性**：仓根 [`.gitattributes`](../.gitattributes) 钉死 `* text=auto eol=lf`，
+4. **换设备一致性**：仓根 [`.gitattributes`](../../../.gitattributes) 钉死 `* text=auto eol=lf`，
    优先级高于任何人本机的 `core.autocrlf`；`check_portability.py` 守行尾 / BOM / 命名。
    老克隆若磁盘仍是 CRLF 而 `git status` 干净，解法：`git rm -r --cached . && git reset --hard` 或重 clone。
 
 ---
 
-相关：[`rulesets.md`](rulesets.md) · [`troubleshoot-faq.md`](troubleshoot-faq.md) · [`../skill/SKILL.md`](../skill/SKILL.md)
+相关：[`rulesets.md`](rulesets.md) · [`troubleshoot-faq.md`](troubleshoot-faq.md) · [`../skill/SKILL.md`](../../SKILL.md)
