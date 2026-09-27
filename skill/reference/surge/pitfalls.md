@@ -97,7 +97,7 @@ www.huawei.com  www.iqiyi.com  www.douyin.com  www.meituan.com
 
 ⚠️ 这些是**真会用到**的域名 —— 它们跑不出来，用户一定报障。
 
-**已固化**：`audit_routing_coverage.py` 的 17 个国内探针里有 12 个是非 `.cn`，
+**已固化**：`audit_routing_coverage.py` 的 17 个国内探针里有 14 个是非 `.cn`，
 脚本注释里写明了这条理由。
 
 ---

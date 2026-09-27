@@ -68,11 +68,11 @@ python skill/scripts/surge/audit_ruleset_content.py surge/profiles/lazy.conf
 输出里每条规则集都有：
 
 ```
-── 第 189 行 · surge-ads.list （新下载） → REJECT
+── 第 193 行 · surge-ads.list （新下载） → REJECT
    共 3889 条：域名类 3889 / IP 类 0 / 其他 0
    域名类型：{'DOMAIN-SUFFIX': 3740, 'DOMAIN-WILDCARD': 149}
 
-── 第 206 行 · AWAvenue-Ads-Rule-Surge-RULE-SET.list （新下载） → REJECT
+── 第 210 行 · AWAvenue-Ads-Rule-Surge-RULE-SET.list （新下载） → REJECT
    共 965 条：域名类 965 / IP 类 0 / 其他 0
    域名类型：{'DOMAIN': 949, 'DOMAIN-SUFFIX': 12, 'DOMAIN-KEYWORD': 4}
 ```
@@ -163,7 +163,7 @@ _OTHER_TYPES = {"URL-REGEX", "USER-AGENT", "PROCESS-NAME", "PROTOCOL",
 
 ## 6 · 缓存
 
-规则集下载后会缓存在系统临时目录（约 10 MB）：
+规则集下载后会缓存在系统临时目录（约 6 MB）：
 
 - Windows：`%TEMP%\surge-ruleset-cache`
 - macOS / Linux：`/tmp/surge-ruleset-cache`

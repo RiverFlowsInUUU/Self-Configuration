@@ -150,7 +150,7 @@ grep 'proxy-test-url\|internet-test-url' <profile>
 | ① 引导解析 | `encrypted-dns-server` 端点改 IP 字面量；`dns-server` 去掉 `system` 与主机名 | 换成 IP 会失去"按域名走 CDN 就近解析"与 ECS 合规 |
 | ② 旁路设备 | 配 `hijack-dns`；想全量写 `*` | `hijack-dns` **拦不住 DoH**（走 443） |
 | ③ 规则触发 | 所有 IP 类规则加 `no-resolve`（本地 + 远程规则集） | ⚠️ **必须同时确认 `FINAL` 前有域名体量足够的国内直连集**，见下 |
-| 测速端点 | 换国内 204 | 见 `reference/hardening-template.md` §1.4 |
+| 测速端点 | 换国内 204 | 见 [`hardening-template.md`](hardening-template.md) §1.4 |
 
 ### ⚠️ 出口 ③ 的修法有个陷阱
 

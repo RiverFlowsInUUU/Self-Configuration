@@ -10,7 +10,7 @@
 Self-Configuration/
 ├── README.md                    # 门面：内核选择 / 四份订阅地址 / 五类泄露面 / 隐私对照表 / 按需查阅表
 ├── AGENTS.md                    # 维护者任务书：冻结名单 · 连带范围 · 推送规矩
-├── CHANGELOG.md                 # **唯一一份**改动记录：装配史 + 两内核的迭代都写在这里
+├── CHANGELOG.md                 # **唯一一份**改动记录：只记两内核配置文件的修改（文档与脚本改动看 git log）
 ├── LICENSE                      # MIT
 ├── .gitignore
 ├── manual/                      # ★ 手册层：唯一权威操作层（MANUAL.md 入口 + 11 章 + 99 版本历史）

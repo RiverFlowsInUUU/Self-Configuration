@@ -343,16 +343,16 @@ RULE-SET,<surge-ads.list>,REJECT,pre-matching,extended-matching
 
 # 3. 局域网 / 内网（IP 段带 no-resolve ⇒ 提前不触发解析）
 RULE-SET,LAN,DIRECT,no-resolve
-RULE-SET,<private.txt>,DIRECT,no-resolve
+RULE-SET,<private.txt>,DIRECT          # 实测零 IP ⇒ 按 4.6 的取舍不写开关
 
 # 4. AI 分流
-RULE-SET,<AI.list>,AI,"update-interval=604800",no-resolve
+RULE-SET,<AI.list>,AI,"update-interval=604800"   # 钉 commit、实测零 IP ⇒ 同上
 
 # 5. Apple 系统
 RULE-SET,SYSTEM,DIRECT
 
 # 6. 国内直连（主承重墙）
-RULE-SET,<direct.txt>,DIRECT,no-resolve
+RULE-SET,<direct.txt>,DIRECT           # 主承重墙；实测零 IP ⇒ 同上
 
 # 7. IP 规则，放最后
 GEOIP,CN,DIRECT,no-resolve
@@ -405,10 +405,10 @@ FINAL,Proxy,dns-failed
 远程 `RULE-SET` 都应带：
 
 ```
-RULE-SET,<url>,<策略>,"update-interval=604800",no-resolve
+RULE-SET,<url>,<策略>,"update-interval=604800"[,no-resolve]
 ```
 
-一周刷新。
+一周刷新。`no-resolve` **不是**这条的固定尾巴 —— 取舍是「实测零 IP 条目的规则集不写、真含 IP 条目的必须写」，纯域名集写上是空转（Surge 四份 profile 共用这一条，见 [`docs/规则集与来源.md`](../../../docs/规则集与来源.md) 原则 4b）。
 
 ⚠️ **别把这条判据说成"不写就不刷新"** —— Surge 手册写明该键缺省即 `86400`（24 小时），
 只有**负值**才关闭自动更新 ⇒ 漏写只是让周期不可见，不会让规则集停在首次下载的版本。

@@ -31,8 +31,8 @@ bash skill/tests/egern/run.sh                                        # ★★ �
 ```
 
 ⭐ **计数口径是「按脚本对账」**：阶段 1 的 5 行 fixture 每行校两个脚本（两条独立判据）⇒ 计 10 条；
-   阶段 2 每份 profile 校 `audit_region_filters` 与 `audit_ruleset_refresh` ⇒ 顶层固定名四件 × 2 = 8 条；
-   合计 18，runner 末尾的 `TOTAL:` 行就是这个数。归档版不在检查路径上 ⇒ 这个数**不随版本累积**。
+   阶段 2 每份 profile 同时校 `check_egern_dns` / `audit_region_filters` / `audit_ruleset_refresh` 三条判据 ⇒ 顶层固定名四件 × 3 = 12 条；
+   离线合计 22（`SKIP_NET=1` 实测），联网档再给两份完整版各加一条分流覆盖 = 24；runner 末尾的 `TOTAL:` 行就是这两个数。归档版不在检查路径上 ⇒ 这个数**不随版本累积**。
 ⭐ **「当前版」是固定名，不是一堆版本号**（2026-09-24 起）：顶层恒为 `routing` / `lazy`
    四个文件名，阶段 2 的 `--strict` 名单由 `run.sh` 里那一行 `CURRENT="routing"` 派生。
    「哪一版」只剩 profile 头注 `#! version=routing_vX.Y`，形状与两内核一致性由
@@ -44,8 +44,8 @@ bash skill/tests/egern/run.sh                                        # ★★ �
    （默认只出计划，`--apply` 才写盘）—— Egern 侧它是纯函数（去注释 + 规范空白，与 `check_min_pair.py`
    共用同一套判据 ⇒ 生成即过拍）。
 
-⚠️ **运行目录要求**：`check_egern_dns.py` 与 `audit_dns_forward.py` 会 import 同目录的
-`_egern_common.py`（共享工具）。**这三个文件必须在一起**，否则报 `ModuleNotFoundError`。
+⚠️ **运行目录要求**：`skill/scripts/egern/` 的 10 个脚本里有 8 个 import 同目录的
+`_egern_common.py`（共享工具）。**它必须和被调用的脚本同目录**，否则报 `ModuleNotFoundError`。
 `_egern_common.py` 收编了 `DOMESTIC_RESOLVER_IPS` / `hostpart` / `ip_literal` —— 从结构上消灭了
 "同一判据两份拷贝、改一处漏另一处"的隐患（详见"审计演进"节 f10.2）。
 
@@ -55,7 +55,7 @@ bash skill/tests/egern/run.sh                                        # ★★ �
 误判成「待解析域名」，同一份配置读数从 0 high 翻成 9 high。`skill/tests/egern/scheme_case.yaml` 是这条的守卫。
 
 `check_egern_dns.py` 输出 `OK / LOW / HIGH` 三类，有 `HIGH` 时退出码 1，覆盖上面清单 1–15 项。
-清单 16 由 `audit_ruleset_noresolve.py` 单独覆盖（要下载**全部被引用的**规则集，几十秒，不塞进同一个脚本；有 `.ruleset-cache/` 本地缓存，加 `--offline` 可只读缓存）。实测判别力：**原始配置 → HIGH（`Apple_All.list` 13 条），f7 → OK（20 个全过）**。⚠️ 数量会随配置变化：f10 是 **19 个**（少的那 1 个 = `forward` 不再引用 `ChinaDomain.list`）；2026-09-21 新增 `white-guard` / `ads` 两条后为 **21 个** —— 报数变化时先确认是"少引用"而不是"漏扫"。
+清单 16 由 `audit_ruleset_noresolve.py` 单独覆盖（要下载**全部被引用的**规则集，几十秒，不塞进同一个脚本；有 `.ruleset-cache/` 本地缓存，加 `--offline` 可只读缓存）。实测判别力：**原始配置 → HIGH（`Apple_All.list` 13 条），f7 → OK（20 个全过）**。⚠️ 数量会随配置变化：f10 是 **19 个**（少的那 1 个 = `forward` 不再引用 `ChinaDomain.list`）；2026-09-21 新增 `white-guard` / `ads` 两条后为 **21 个**，`routing_v3.4` 现抓 **22 个** —— 报数变化时先确认是"少引用"而不是"漏扫"。
 
 f3 起新增：① **节点域名覆盖检查**（从 `proxies[].server` 自动提取域名，逐个查 `forward` 是否有非兜底规则接住）；② **兜底语义识别**（`domain_wildcard:'*'` 与 `domain_regex:'.'` 都认，不再依赖"必须在最后一条"）。
 ⚠️ **①在 f7/f10 后已反转**：`proxy_nameservers` 一旦显式设置，代理 DNS 就跳过 `forward` ⇒ 该检查的判据改为"`proxy_nameservers` 是否显式设置且端点全为 IP 字面量"，而"forward 里有没有为节点域名单列规则"变成**要主动避免的事**（坑 18）。
@@ -92,7 +92,7 @@ f10.2 起（2026-09-20，二次核查报告触发）：⑩ **「靠注释提醒�
 3. ⭐ **文档里给的命令必须逐条照着执行一遍。** 这次崩溃的命令就印在 README / docs/04 / skill/README 里。
    文档里的命令是**接口契约**，改脚本后要回填验证（`--drill` 这类可选参数尤其要显式标注"可选"）。
 4. ⭐ **`_egern_common.py` 必须与调用它的脚本同目录。** 用户如果只拷走单个脚本会报 `ModuleNotFoundError`；
-   分发/打包时三个文件（`_egern_common.py` + 两个审计脚本）要一起走。
+   分发/打包时整个 `skill/scripts/egern/` 目录（11 件，含 `_egern_common.py`）要一起走。
 5. ⭐⭐ **断言对象要选"能真正测到它的那个输入"—— 合成 fixture 测不到的东西，别硬塞进去当绿。**
    （2026-09-21 新增 `audit_region_filters.py` 时发现）该脚本校验的是 `policy_groups` 段的地区组 filter，
    而 `tests/` 那五份 fixture 是 **DNS 面的合成配置、根本没有地区组** —— 喂给它只会走"无需校验"分支，

@@ -3,7 +3,7 @@
 > 本文是 [`SKILL.md`](../../SKILL.md) 的引用文件。 **何时读**：排查实际泄露、或改动审计判据 / 规则集之前。
 
 每条都是真实事故复盘。**「审计通过 ≠ 配置可用」是贯穿全部 18 条的母题** ——
-连续 6 次出现「脚本全绿、实测仍有问题」，每次的结论都一样：
+连续 5 次出现「脚本全绿、实测仍有问题」，每次的结论都一样：
 必须假设「存在审计器看不见的维度」，并把它补成一个可复跑的脚本。
 
 ## 目录
@@ -37,7 +37,7 @@
 
 **坑 3：自己的审计脚本只能验证自己编码进去的假设。** 脚本报 `0 high` 不等于真的没泄露。用户实测出泄露时，必须回到**机制层**重新推导（回退链 / 端点路由 / 分组兜底），而不是重跑同一个脚本。
 
-**坑 4：别假定 `.list` 是域名表。** 实测 `ChinaMax.list`：12614 条里 **12472 条是 IP-CIDR/IP-CIDR6**，域名只有 64 条，还含 65 条 `USER-AGENT` 和 **12 条 `PROCESS-NAME`（Egern 未文档化）**。用之前**下载 + 统计类型分布**（见 `skill/scripts/egern/profile_ruleset.py`）。这类巨型 IP 集合没有 `no_resolve`，是个持续触发本地解析的开销源。
+**坑 4：别假定 `.list` 是域名表。** 实测 `ChinaMax.list`：12614 条里 **12472 条是 IP-CIDR/IP-CIDR6** 另有 1 条 `IP-ASN`（IP 类合计 12473），域名只有 64 条，还含 65 条 `USER-AGENT` 和 **12 条 `PROCESS-NAME`（Egern 未文档化）** —— 这几档相加恰好等于 12614。用之前**下载 + 统计类型分布**（见 `skill/scripts/egern/profile_ruleset.py`）。⚠️ 但"IP 多"不等于"会触发解析"：2026-09-27 现抓该文件的 IP 条目**全部带 `,no-resolve`** ⇒ 它的代价是体积与匹配，不是解析（裸 IP 条目那种雷见坑 16）。
 　→ ⚠️ **这条不只是"别误判"，它还有直接的后果**：把它当"国内域名走直连"的兜底规则用，等于没有兜底。真正能兜住的是 `ChinaMax_All_No_Resolve.list`（111k 域名 + 同份 IP，IP 条目全带 `no-resolve`）。详见**坑 17**。
 
 **坑 5：`policy` 嵌在类型字典里。** `- domain: {match: x, policy: Proxy}` —— 读 `r.get('policy')` 永远得到 `None`（审计器 f1 就是这么废掉的）。要读 `r[type]['policy']`。
@@ -127,7 +127,7 @@ aaaa.dnsleaktest.com
   ⇒ 于是日志里"判定"与"解析"看起来矛盾：「default → Final → Proxy」但 upstream 是 bootstrap
 ```
 **诊断要点：`upstream: <明文标签>` 与"判定结果看起来没问题"同时出现 ⇒ 去找"为了判定某个规则而被迫发生的解析"。**
-排查顺序：把 profile 里**所有** `rule_set` / `proxy_rule_set` 的 URL 抓下来，逐个统计"IP 类条目里有多少条不带 `no-resolve`"，并确认该规则 `disabled` 与否。实测 22 个规则集的结论（含 2026-09-21 新增的 `white-guard` / `ads`，两条均为纯域名、无 IP 条目）：**只有 `Apple_All.list` 有问题（13/13 全裸）**，其余（含 12614 条的 `ChinaMax.list`，12473 条 IP 全带）都干净 —— 所以这类问题不是"普遍存在"，而是**个别文件埋的雷，必须逐个核对**。
+排查顺序：把 profile 里**所有** `rule_set` / `proxy_rule_set` 的 URL 抓下来，逐个统计"IP 类条目里有多少条不带 `no-resolve`"，并确认该规则 `disabled` 与否。实测 22 个规则集的结论（含 2026-09-21 新增的 `white-guard` / `ads`，两条均为纯域名、无 IP 条目）：**只有 `Apple_All.list` 有问题（13/13 全裸；2026-09-27 现抓：上游已给这 13 条补上 `,no-resolve` ⇒ 现裸 0，本条按机制留档）**，其余（含 12614 条的 `ChinaMax.list`，12473 条 IP 全带）都干净 —— 所以这类问题不是"普遍存在"，而是**个别文件埋的雷，必须逐个核对**。
 
 **修法优先级**：
 1. ⭐ **换用同源等价文件**。blackmatrix7 的命名约定：`XXX.list`（标准）/ **`XXX_No_Resolve.list`（IP 条目全带 no-resolve，首选）** / `XXX_Resolve.list`（全不带）/ `XXX_Domain.list`（纯域名）。Apple 实测 `Apple_All_No_Resolve.list` 与 `Apple_All.list` 在**去掉 `,no-resolve` 后 1616 条逐条相同** ⇒ 换 URL 就完事，覆盖范围零损失，**对 IP 形式的连接判定也完全不受影响**（IP 本就不需要解析）。
@@ -156,7 +156,7 @@ f7 改动：geoip:CN 补上 no_resolve: true（官方：不再触发解析）
 
 ⚠️ **认知陷阱：`no_resolve` 不是"纯安全加固"，它是"用解析换分流"的开关。** 补它之前必须先确认"国内域名的直连已由域名类规则承担"。
 
-⚠️ **第二个陷阱：规则集的名字骗人。** `ChinaMax.list` 看起来最像"中国域名表"，实际 **98.6% 是 IP**（实测 12,627 行：8251 `IP-CIDR` + 4221 `IP-CIDR6` + 65 `USER-AGENT` + 12 `PROCESS-NAME` + 1 `IP-ASN`，域名只有 **51 `DOMAIN-SUFFIX` + 13 `DOMAIN-KEYWORD`**）。该仓库自己的 `ChinaMax/README.md` 明写：
+⚠️ **第二个陷阱：规则集的名字骗人。** `ChinaMax.list` 看起来最像"中国域名表"，实际 **99.5% 是 IP**（实测 12,627 行 / 12,614 条：8251 `IP-CIDR` + 4221 `IP-CIDR6` + 1 `IP-ASN` = **12,473 条 IP 类**，域名只有 **51 `DOMAIN-SUFFIX` + 13 `DOMAIN-KEYWORD` = 64 条**，另 65 `USER-AGENT` + 12 `PROCESS-NAME`。99.5% 取的是 IP 类 ∶ 域名类两类的比 —— 按 12,614 条全量算是 98.9%）。该仓库自己的 `ChinaMax/README.md` 明写：
 
 > `ChinaMax.list`，请使用 RULE-SET。
 > **`ChinaMax.list`、`ChinaMax_Domain.list` 共同使用。**
@@ -171,7 +171,7 @@ f7 改动：geoip:CN 补上 no_resolve: true（官方：不再触发解析）
 | 域名覆盖 | 111,332 条（111051 后缀 + 268 精确 + 13 关键词） |
 | 旧覆盖是否丢失 | 旧文件那 64 条**全被包含**，差集 = 0 |
 | IP 覆盖是否变化 | 12,472 条 IP **去掉 `,no-resolve` 后逐条相同**（diff 为空） |
-| 会不会重新触发解析 | 12,473 条 IP **全部带 `,no-resolve`** ⇒ 不会（别用标准版 `ChinaMax_All.list`，它的 IP 条目**不带**） |
+| 会不会重新触发解析 | 12,473 条 IP 类（12,472 条 CIDR + 1 条 `IP-ASN`）**全部带 `,no-resolve`** ⇒ 不会（别用标准版 `ChinaMax_All.list`，它的 IP 条目**不带**） |
 | 效果 | 15/15 国内探针 `DIRECT`；境外探针仍命中各自的 Google/GitHub/ChatGPT 组，无过宽误判 |
 
 ⇒ **凡是要"用 IP 规则判归属"的配置，都必须有一份域名类国内规则集兜底。这一步和补 `no_resolve` 是同一次改动，不能分两次做。**

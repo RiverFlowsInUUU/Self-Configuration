@@ -194,8 +194,8 @@ RULE-SET,<白名单>,DIRECT
 RULE-SET,<广告黑名单>,REJECT,pre-matching,extended-matching
 RULE-SET,SYSTEM,DIRECT
 RULE-SET,LAN,DIRECT,no-resolve
-RULE-SET,<private.txt>,DIRECT,no-resolve
-RULE-SET,<direct.txt>,DIRECT,no-resolve        ← 主承重墙，见下方铁律
+RULE-SET,<private.txt>,DIRECT       ← 实测零 IP ⇒ 不写规则级开关
+RULE-SET,<direct.txt>,DIRECT        ← 主承重墙，见下方铁律（实测零 IP ⇒ 不写开关）
 GEOIP,CN,DIRECT,no-resolve
 FINAL,Proxy,dns-failed
 ```

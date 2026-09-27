@@ -13,7 +13,7 @@
 | Python | 3.8+，**仅标准库** |
 | 网络 | 只有 `audit_ruleset_content.py` / `audit_routing_coverage.py` 需要；其余脚本与两个 `.sh` 全离线 |
 | 操作系统 | Windows（Git Bash）/ macOS / Linux 均可 |
-| 磁盘 | 规则集缓存约 10 MB（`direct.txt` 一份 11 万条） |
+| 磁盘 | 规则集缓存约 6 MB（`direct.txt` 一份 11 万条） |
 | 输出编码 | 无需设置 —— `_surge_common` 在 import 时把 stdout 钉成 UTF-8（中文 Windows 默认 GBK，emoji 会崩成**退出码 1** ⇒ 判负 fixture 假绿）；`run.sh` / `architecture.sh` 另设 `PYTHONIOENCODING=utf-8` |
 
 ⚠️ **Windows / Git Bash 的路径坑**：`pwd` 返回 `/c/Users/...`，
@@ -252,7 +252,7 @@ www.iqiyi.com    www.douyin.com   www.meituan.com   www.12306.cn
 www.gov.cn       www.people.com.cn
 ```
 
-17 个里 12 个非 `.cn`。**只测 `.cn` 会假通过** —— 见 [`pitfalls.md`](pitfalls.md) 坑 2。
+17 个里 14 个非 `.cn`。**只测 `.cn` 会假通过** —— 见 [`pitfalls.md`](pitfalls.md) 坑 2。
 
 ### B 的 `allow` 集合
 
