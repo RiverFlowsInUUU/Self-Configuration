@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: pip install pyyaml
+
+      - name: Placeholder / credential scan
+        run: python skill/tests/check_secrets.py
+
+      - name: Portability (EOL / BOM / naming)
+        run: python skill/tests/check_portability.py
+
+      - name: Min-pair consistency
+        run: python skill/tests/check_min_pair.py
+
+      - name: Markdown links and anchors
+        run: python skill/tests/check_links.py .
+
+      - name: Surge DNS audit
+        run: |
+          python skill/scripts/surge/check_surge_dns.py surge/profiles/lazy.conf
+          python skill/scripts/surge/check_surge_dns.py surge/profiles/routing.conf
+
+      - name: Egern DNS audit
+        run: python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/profiles/routing.yaml
+
+      - name: .min drift check
+        run: |
+          python skill/tests/make_min.py
+          git diff --exit-code

@@ -30,14 +30,14 @@
 ```
 Self-Configuration/                          # 两内核合并后同仓（2026-09-23）
 ├── surge/                                   # 本文档讲的这一侧
-│   ├── profiles/                            # 固定名四件 + config_old/ 存档（当前版恒为 lazy / routing）
+│   ├── profiles/                            # 固定名四件（当前版恒为 lazy / routing，升版不改名）
 │   │   ├── lazy.conf · lazy.min.conf        # 懒人版（带注释 / 纯配置，注释剥掉那份）
 │   │   └── routing.conf · routing.min.conf  # 分流版（带注释 / 纯配置，注释剥掉那份）
 │   ├── docs/                                # 01–08 + 11 专题（07 末节存着本内核合并前的迭代史）
 │   └── DetailsReadme/                       # 本文件
 ├── egern/                                   # 姊妹内核一侧（同构：profiles / docs / DetailsReadme）
 ├── icons/                                   # 26 个策略组图标（仓库根，两内核共用、不跨项目引用）
-├── docs/ · manual/ · LICENSE                # 跨内核文档 · 手册层（09 / 10 两篇升在这里）· 许可证
+├── docs/ · LICENSE                          # 跨内核文档（九篇）· 许可证
 └── skill/
     ├── SKILL.md                             # 方法论
     ├── README.md                            # 脚本用法
@@ -58,7 +58,7 @@ Self-Configuration/                          # 两内核合并后同仓（2026-0
 | `.conf` | 想读懂的人 | 每个键上方有理由；结构分段带标题 |
 | `.min.conf` | 只想导进去的人 / 机器处理 | 同内容，无注释，行数少一半 |
 
-两者**内容必须一致，只差注释**。这条由 `skill/tests/surge/architecture.sh` 的一致性断言兜底
+两者**内容必须一致，只差注释**。这条由 `skill/tests/check_min_pair.py` 的对拍判据兜底
 （比对 16 个 DNS 相关键的逐字相等）。
 
 > ⚠️ `.min.conf` 里仍保留 `# audit-waive:` 那行 —— 它是**有语义的注释**，不是说明文字。
@@ -338,12 +338,12 @@ Node-B = hysteria2, 203.0.113.11, 52341, password=REPLACE_WITH_YOUR_PASSWORD, sn
 
 这三类都是**国际标准保留给文档用的**，不会指向任何真实主机，也不会误导使用者。
 
-检验由 `skill/tests/surge/architecture.sh` 的第 ① 组断言自动完成：
+检验由 `skill/tests/check_secrets.py`（原 architecture.sh ① 提炼）自动完成：
 非文档段 IPv4、非 `REPLACE_WITH_*` 凭据、不在允许清单的节点主机名、以及若干
 禁止出现的敏感子串，任一命中即失败。
 
-> 🔐 `docs/注意事项.md` 里明确写着：**不要把真实节点提交回来**。
-> 改完本地用可以，`git push` 前跑一次 `architecture.sh`。
+> 🔐 `docs/troubleshoot-faq.md` 里明确写着：**不要把真实节点提交回来**。
+> 改完本地用可以，`git push` 前跑一次 `check_secrets.py`。
 
 ---
 
@@ -633,7 +633,7 @@ GEOIP,CN,DIRECT,no-resolve    # 对未解析的主机名直接跳过
 只交 A 会漏分流，只交 B 会漏 DNS。**必须一起。**
 
 本模板的 B 是 `direct.txt`（11 万条**域名**条目）。
-`skill/tests/surge/architecture.sh` 把这两条都写成了断言。
+`skill/tests/check_secrets.py` 把这两条写成了断言。
 
 ### 12.5 一个配套的假通过陷阱
 
@@ -672,7 +672,7 @@ AD      = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 
 **`routing.conf` —— 26 个组**
 
-组序与 Egern 当前版 **v3.4** **逐位对齐**（由 `skill/tests/surge/architecture.sh` 的 ④ 断言守着）。
+组序与 Egern 当前版 **v3.4** **逐位对齐**（维护纪律，无自动判据）。
 
 | 层 | 组 | 类型 | 作用 |
 |:---|:---|:----:|:-----|
@@ -685,7 +685,7 @@ AD      = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 | ⑤ 兜底 | `Final` | `select` | `include-other-group="Proxy"` |
 
 > 📌 **`WeChat` 的位置说明（别被分节编号误导）**：它在 `[Proxy Group]` 里排在 `Airport` 之后、
-> `AD` 之前，这是**位置**，随 Egern v3 的组序（`architecture.sh` ④ 断言守着），**不是功能归类**。
+> `AD` 之前，这是**位置**，随 Egern v3 的组序（维护纪律），**不是功能归类**。
 > 判据是「有没有被规则引用」：`WeChat` 被 `RULE-SET,…,WeChat.list,WeChat` 引用 ⇒ 它是**应用组**；
 > `AD` 被刻意设计成**不被任何规则引用**（§13.3）⇒ 它才是本仓唯一的「开关」。
 > 配置里 `# --- ③ 订阅槽位 + 开关 ---` 这个分节标题同样是按**位置**切的。
@@ -860,7 +860,7 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 | [`audit_ruleset_content.py`](../../skill/scripts/surge/audit_ruleset_content.py) | **远程规则集的内容**（缺 no-resolve 的 IP 条目 / 直连集合的域名体量） | ✅ |
 | [`audit_routing_coverage.py`](../../skill/scripts/surge/audit_routing_coverage.py) | 拿**真实域名走一遍** `[Rule]`，看最终去哪（期望表按配置自动切换） | ✅ |
 | [`audit_region_filters.py`](../../skill/scripts/surge/audit_region_filters.py) | **地区组正则的一致性**（`Other Regions` 的负向断言有没有漏词、组间有没有重叠） | ❌ |
-| [`skill/tests/surge/architecture.sh`](../../skill/tests/surge/architecture.sh) | 项目不变量（占位符纪律 / 订阅 token 纪律 / 两组形态一致性 / lazy↔routing 一致性 / 规则顺序铁律） | ❌ |
+| [`skill/tests/check_secrets.py`](../../skill/tests/check_secrets.py) | 项目不变量（占位符纪律 / 订阅 token 纪律，全仓 `.conf` + `.yaml`） | ❌ |
 | [`skill/tests/surge/check_links.py`](../../skill/tests/surge/check_links.py) | markdown 相对链接与锚点（改标题后**静默失效**的那一类问题） | ❌ |
 
 > 📌 第 4 个（`audit_region_filters.py`）是分流版带来的：`Other Regions` 用的负向断言
@@ -1042,21 +1042,20 @@ Surge iOS 版不支持本地文件配置，需要把 profile 内容托管到一�
    ⚠️ 注意 `routing.min.conf` 是从 `routing.conf` 生成的，生成脚本会丢掉注释 ——
    新加 `# audit-waive:` 行后要**手动补回 min 版**，否则审计器会对 min 版报 HIGH。
 2. **规则顺序铁律不许破。** 白名单 → REJECT → 域名类直连 → IP 类 → `FINAL`。
-3. **节点不许提交真实值。** `architecture.sh` 会拦。
+3. **节点不许提交真实值。** `check_secrets.py` 会拦。
 
 ### 18.2 想加第三份配置
 
 **先问：这是新分工，还是老配置的另一种写法？** 后者不推荐（那就是版本分叉，
 见 [`docs/07`](../docs/07-文件版本沿革.md) §3.2 / §6）。确认是新分工后，见
 [`docs/07` §6](../docs/07-文件版本沿革.md) 的 6 条清单 ——
-那 6 条基本就是 `architecture.sh` 的全部断言。
+以上基本就是 `check_secrets.py` 的全部判据。
 **能过测试的才算一份新配置。**
 
 ### 18.3 全部验证都在本地
 
 ```bash
-bash skill/tests/surge/run.sh              # 6 阶段，19 个断言
-SKIP_NET=1 bash skill/tests/surge/run.sh   # 跳过联网阶段
+python skill/scripts/surge/check_surge_dns.py surge/profiles/lazy.conf surge/profiles/routing.conf
 ```
 
 ⚠️ **本仓库刻意不挂 CI / 任何自动化**。理由与替代做法见
@@ -1070,6 +1069,6 @@ SKIP_NET=1 bash skill/tests/surge/run.sh   # 跳过联网阶段
 | 1 | 有发现（审计器）/ 有断言失败（测试） |
 | 2 | **环境故障**（解释器坏、文件缺失、用法错误） |
 
-⚠️ 退出码 2 是必须的：`run.sh` 的 `bad_*` fixture **期望退出码 1**。
+退出码 `0` 全过 · `1` 有判负。
 如果解释器坏掉，脚本也返回 1 —— 会被误判成「判负通过」。**审计器的故障
 绝不能被计成一次成功的判负。**

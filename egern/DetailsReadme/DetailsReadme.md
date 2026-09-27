@@ -100,7 +100,7 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 关键词**逐字抄了一遍** —— 改任何一组的关键词都要同步改它，
 用 [`skill/scripts/egern/audit_region_filters.py`](../../skill/scripts/egern/audit_region_filters.py) 校验（漏改会被它拦下）。
 
-**服务组**（默认策略与承接的规则集）见 [`docs/规则集与来源.md`](../../docs/规则集与来源.md)。
+**服务组**（默认策略与承接的规则集）见 [`docs/rulesets.md`](../../docs/rulesets.md)。
 
 **`lazy` 的一处专属调整**（只属于它，不同步其他版本）：`AD` 组**只有 `REJECT`**（没有 `DIRECT` 兜底）。
 ⚠️ 分流版的 `Final` 兜底组，`lazy` **没有** —— 2026-09-23 起它的 `default` 规则 `policy` 直写 `Proxy`，
@@ -397,8 +397,8 @@ forward:
 ## 6. 已知代价与取舍
 
 - **`Foreign-DNS` 已删除**：迭代 f10 起它就无任何引用（forward 兜底改国内组后不再需要境外组）；`routing_v1` 曾**整组注释**保留为 A/B 备用，**`routing_v2` 起整段删除**。要恢复境外解析答案，需自行在 `upstreams` 里加回该组。风险提醒：若用它作兜底且代理未就绪，会掉进明文 `:53`。
-- **两条线 × 双形态**：可选只有 `egern/profiles/lazy.yaml`（**懒人版**，4 组 / 10 条规则）与 `egern/profiles/routing.yaml`（**分流版 · 推荐**，26 组 / 24 条）；其余 13 个版本（`routing_v3.3` … `routing_v1` 共 10 版 + `lazy_v1.2` / `lazy_v1.1` / `lazy_v1.0`）都在 `egern/profiles/config_old/` 保留以备对照（`routing_v1`~`routing_v2.1` 为 29 组 / 24 条，`routing_v2.2`~`routing_v2.4` 为 27 组 / 24 条）。**各版本逐项差异见 [`docs/07-文件版本沿革.md`](../docs/07-文件版本沿革.md)（权威版本）**。⚠️ 文件名里的 `v` 是**文件版本**，与 [`docs/06`](../docs/06-实测数据与版本谱系.md) 的 `f1`–`f10`（这份配置自身的历史迭代）是两套前缀、两个维度，别混。
-- **图标整合进本仓库**：26 个图标源自已整合进 `icons/`，模板不再跨项目引用图标地址。来源归属与许可见 [`docs/图标与许可.md`](../../docs/图标与许可.md)（公开仓库署名）。
+- **两条线 × 双形态**：可选只有 `egern/profiles/lazy.yaml`（**懒人版**，4 组 / 10 条规则）与 `egern/profiles/routing.yaml`（**分流版 · 推荐**，26 组 / 24 条），固定名四件，升版不改名。⚠️ 头注 `#! version=` 里的 `v` 是**文件版本**；历史版本看 git（备份 tag：`pre-cleanup-20260927`）。
+- **图标整合进本仓库**：26 个图标源自已整合进 `icons/`，模板不再跨项目引用图标地址。来源归属与许可见 [`docs/icon-license.md`](../../docs/icon-license.md)（公开仓库署名）。
 - **占位节点都被真实引用**：模板 `proxies` 带 2 条占位节点（`Node-A` → `Proxy` 末位、`Node-B` → `AI` 首项），不存在悬空引用（组间引用保留；`routing_v2.3` 起**已无空组**）。不用它们就整条删掉，并把对应组 `policies` 里的名字一并摘掉。
 - **与订阅解耦**：forward 不写任何节点 / 订阅域名，换订阅无需改动 DNS 段（清单 18 验证订阅耦合 4 → 0）。
 - **审计脚本报的 2 条 `LOW`（刻意为之，不是缺陷）**：`check_egern_dns.py` 对本模板的读数是 `0 high, 2 low`。两条都属「安全性 vs 可用性」的自觉取舍，不是配置错误：
@@ -532,7 +532,7 @@ S="skill/scripts"
 为了避免模板跨项目引用图标地址（你的项目或别人的项目）。26 个图标已整合进 `icons/`，模板全部以本仓库原始地址引用，并保留来源署名。
 
 **Q8：两个模板文件有什么区别？**
-内容完全一致，仅注释差异。`egern/profiles/routing.yaml` 带注释（每段附原理），`egern/profiles/routing.min.yaml` 纯配置。按习惯取用其一（其余版本同理：顶层 `lazy` / `routing` 加 `config_old/` 里的 `lazy_v1.0`~`lazy_v1.2` 与 `routing_v1`~`routing_v3.3`，15 个版本各有这两份）。
+内容完全一致，仅注释差异。`egern/profiles/routing.yaml` 带注释（每段附原理），`egern/profiles/routing.min.yaml` 纯配置。按习惯取用其一（历史版本看 git）。
 
 **Q9：审计全绿就安全了吗？**
 不。本项目连续 5 次「脚本 0 high、实测仍有问题」，根因是审计维度缺失（没看规则集文件、没看分流覆盖）。必须把每个新维度补成可复跑脚本，而不是重跑同一脚本。详见第 3 节 / 清单 16、17。
