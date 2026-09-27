@@ -81,7 +81,7 @@ sys.path.insert(0, os.path.join(ROOT, "skill", "scripts", "surge"))
 
 # 扫描范围：只有"讲当前状态"的文档参与对拍
 LIVE = ["README.md", "AGENTS.md", "docs/注意事项.md", "docs/规则集与来源.md",
-        "docs/跨内核差异对照.md", "skill/README.md",
+        "docs/跨内核差异对照.md", "skill/README.md", "skill/SKILL.md",
         "surge/docs/11-分流版设计.md", "surge/docs/08-审计读数.md",
         "egern/docs/08-审计读数.md", "surge/DetailsReadme/DetailsReadme.md",
         "egern/DetailsReadme/DetailsReadme.md",

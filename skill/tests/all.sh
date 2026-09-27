@@ -104,10 +104,15 @@ item() {
   local dt=$((SECONDS - t0))
   local total
   total="$(grep -o 'TOTAL: [0-9]* passed, [0-9]* failed' "$log" | tail -1)"
-  # 把通过数交给调用方：第 7 项拿这六个数去对文档里写死的断言数（check_assert_counts.py）。
+  # 把**判据总数**（passed + failed）交给调用方：第 7 项拿这六个数去对文档里写死的断言数（check_assert_counts.py）。
+  # 为什么是总数而不是通过数：文档写的是"这条管线有几条判据"，判负一条时总数不变 ——
+  # 取通过数会把"有判据没过"失真成"判据变少"（2026-09-27 实测：文档读数判负一项，第 7 项跟着报「文档写 18，实测 17」）。
+  # 全绿时 failed=0，两种取法同值 ⇒ 现役读数（19/24/18/18/18/8）零漂移。
   # 没有 TOTAL 行时置空 —— 第 7 项据此判"前置不达标"，而不是拿一个缺失值当 0 去对拍。
   if [ -n "$total" ]; then
-    LAST_NUM="${total#TOTAL: }"; LAST_NUM="${LAST_NUM%% passed*}"
+    _p="${total#TOTAL: }"; _p="${_p%% passed*}"
+    _f="${total##*, }"; _f="${_f%% failed*}"
+    LAST_NUM=$((_p + _f))
   else
     LAST_NUM=""
   fi
@@ -144,7 +149,7 @@ printf '订阅地址固定名 · 当前版：%s   联网：%s   档位：%s\n\n'
   "$([ "$OFFLINE" = "1" ] && echo 跳过 || echo 开)" \
   "$([ "$LANDED" = "1" ] && echo '落地复核（三数计入判负）' || echo '默认（三数只报不判）')"
 
-# MEASURED：本轮前 6 项的通过数，按 key 交给第 7 项去和文档里写死的断言数对拍。
+# MEASURED：本轮前 6 项的判据总数（passed+failed），按 key 交给第 7 项去和文档里写死的断言数对拍。
 # key 就写在各条命令旁边（不另立一张位置表）—— 位置表会跟着调顺序漂，键不会。
 MEASURED=()
 item "Surge 回归（六阶段）"  bash skill/tests/surge/run.sh;      MEASURED+=("surge=$LAST_NUM")
