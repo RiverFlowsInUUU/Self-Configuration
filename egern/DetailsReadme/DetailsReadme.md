@@ -267,7 +267,7 @@ forward:
 
 | 脚本 | 发布模板读数 | 说明 |
 |---|---|---|
-| `check_egern_dns.py` | ✅ **0 high / 2 low / 24 ok（退出码 0）** | 见下方「f3.1 判据修正」；24 这个数对应 `routing_v2` 起的全部版本（`routing_v1` 是 30 ok。两版 `rules` 都是 24 条、都不含 DNS 端点路由规则 ⇒ 6 项差在**逐端点**：`routing_v1` 多 `223.6.6.6` / `1.12.12.12` 两个国内端点，各计一条 `upstreams` 与一条 `proxy_nameservers` 的「IP 字面量」OK（+4）、再各计一条判据 B 的「直连可达」（+2）。逐版读数见 [`docs/07-文件版本沿革.md`](../docs/07-文件版本沿革.md)） |
+| `check_egern_dns.py` | ✅ **0 high / 2 low / 24 ok（退出码 0）** | 见下方「f3.1 判据修正」；24 这个数对应 `routing_v2` 起的全部版本（`routing_v1` 是 30 ok。两版 `rules` 都是 24 条、都不含 DNS 端点路由规则 ⇒ 6 项差在**逐端点**：`routing_v1` 多 `223.6.6.6` / `1.12.12.12` 两个国内端点，各计一条 `upstreams` 与一条 `proxy_nameservers` 的「IP 字面量」OK（+4）、再各计一条判据 B 的「直连可达」（+2）。逐版读数见 `docs/07-文件版本沿革.md`，该文件已随仓库精简移除） |
 | `audit_routing_coverage.py` | ✅ 15/15 国内探针 `DIRECT` | 分流正确性不受脱敏影响 |
 | `audit_dns_forward.py --drill` | ✅ 通过（退出码 0） | `forward` value 单值、订阅耦合 0 |
 | `audit_region_filters.py` | ✅ 6 个地区组关键词全部同步（退出码 0） | 负向断言与地区组 filter 逐字一致 |
@@ -336,7 +336,7 @@ forward:
 
 ## 4. 审计清单（18 项）
 
-> 📌 本节是 [`docs/03-加固清单-18项.md`](../docs/03-加固清单-18项.md) 的摘要。**逐条判据与严重度的权威版本以 `docs/03` 为准** —— 要改清单请改那一份，本节跟着同步。
+> 📌 本节是 [`docs/hardening-checklist.md`](../../docs/hardening-checklist.md) 的摘要。**逐条判据与严重度的权威版本以 `docs/hardening-checklist` 为准** —— 要改清单请改那一份，本节跟着同步。
 
 > 全部自动化：`check_egern_dns.py` 覆盖 1–15；`audit_ruleset_noresolve.py` 覆盖 16；`audit_routing_coverage.py` 覆盖 17；`audit_dns_forward.py` 覆盖 18。
 
@@ -539,4 +539,4 @@ S="skill/scripts"
 
 ---
 
-回到 [README](../../README.md) ｜ 原理见 [docs/01](../docs/01-DNS是怎么工作的.md) ｜ 案例见 [docs/02](../docs/02-DNS为什么会泄露.md) ｜ 清单见 [docs/03](../docs/03-加固清单-18项.md)
+回到 [README](../../README.md) ｜ 原理与案例见 [DNS 基础](../../docs/dns-basics.md) ｜ 清单见 [加固清单](../../docs/hardening-checklist.md)

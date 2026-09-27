@@ -1,7 +1,7 @@
 # Surge 配置模板 · 完整技术文档
 
 > 面向想彻底弄明白「为什么这么写」的读者。
-> 只想赶紧用起来 → 看 [`README`](../../README.md) 的 [📥 两份配置](../../README.md#-两全其美--皆合心意)。
+> 只想赶紧用起来 → 看 [`README`](../../README.md) 的 [📥 订阅地址](../../README.md#-订阅地址四选一)。
 >
 > 目录
 > [1 · 文件结构与两份形态](#1--文件结构与两份形态) ·
@@ -48,8 +48,8 @@ Self-Configuration/                          # 两内核合并后同仓（2026-0
 
 **两份配置是分工关系，不是版本关系**：`lazy` 是懒人版（4 组 / 10 条，全量一个出口），
 `routing` 是分流版（26 组 / 24 条，按应用 + 按地区）。选一份用，不要叠加。
-分流版的设计约束（`flatten` 的对应写法、Smart 组不能嵌套组、地区关键词双份）见
-[`docs/11-分流版设计.md`](../docs/11-分流版设计.md)。
+分流版的设计约束（`flatten` 的对应写法、Smart 组不能嵌套组、地区关键词双份）原见
+`docs/11-分流版设计.md`（已随 2026-09-27 仓库精简移除）。
 
 ### 1.1 两份形态的由来
 
@@ -288,7 +288,7 @@ Node-B = hysteria2, 203.0.113.11, 52341, password=REPLACE_WITH_YOUR_PASSWORD, sn
 > ⚠️ **命名不是装饰，是功能**（只影响分流版的地区组）—— 地区组用 `policy-regex-filter`
 > 按**节点名**筛节点。叫 `HK-01` 会进 `Hong Kong` 组，叫 `香港一号` 也会，叫 `node1`
 > 则哪个地区组都进不去。命名规则与关键词表见
-> [`docs/11` §4](../docs/11-分流版设计.md#4--地区名的筛选正则)。
+> `docs/11` §4（原文档已随仓库精简移除）。
 > ⚠️ 另有一条官方限制：正则**对显式写在 `[Proxy]` 的成员不生效**，所以 `Node-A` / `Node-B`
 > 这类手写节点想进地区组，得给对应组补 `include-all-proxies=true`。本模板刻意没让它们进地区组。
 
@@ -596,7 +596,7 @@ Surge 这边指向**字面量 `REJECT`** 而不是 `AD` 组，理由见 §13.3�
 
 ## 12 · `no-resolve` 的双刃
 
-这是全项目最需要注意的一处，也是 [`docs/05`](../docs/05-分流与no_resolve必须成对交付.md)
+这是全项目最需要注意的一处，也是 [`docs/no-resolve-pairing.md`](../../docs/no-resolve-pairing.md)
 整篇复盘的由来。
 
 ### 12.1 刀刃一：不带 `no-resolve` → 触发解析
@@ -700,7 +700,7 @@ AD      = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 > **应用组没有自动故障转移**（两侧地区组均为 `smart` 自动选优）。想要应用组也自动选优：Egern 换 `fallback` / `smart`、Surge 换 `smart, include-other-group="Proxy"`
 > （代价：面板上不能再手动挑节点）。
 >
-> 完整推导见 [`docs/11` §2.2](../docs/11-分流版设计.md)。
+> 完整推导原见 `docs/11` §2.2（已随 2026-09-27 仓库精简移除）。
 
 **应用组各自的默认取向**（首项即默认，与 Egern v3.4 对齐）：
 
@@ -726,7 +726,7 @@ AD      = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 也不可以用作 `url-test` / `load-balance` 组的子策略。
 想要"把一个组的成员并进来"，正确写法是 `include-other-group="X"`
 （把 X 的**已解析成员**复制过来），而不是把 `X` 当成成员名写进去。
-详见 [`docs/11` §2.1 / §2.2](../docs/11-分流版设计.md)。
+详见 `docs/11` §2.1 / §2.2（原文档已随仓库精简移除）。
 
 ### 13.3 `AD` 组的定位：独立的手动开关
 
@@ -845,7 +845,7 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 > 📌 两版的 `FINAL` 策略不同：`lazy` 直接写 `Proxy`（`smart` 组，自动选最快节点）；
 > `routing` 写 `Final`（`select` 组，默认第一成员是 `Proxy`）。
 > 后者多一层间接，换来的是**面板上可手动改道**。见
-> [`docs/11` §5](../docs/11-分流版设计.md#兜底不直接写-proxy-的原因)。
+> `docs/11` §5（原文档已随仓库精简移除）。
 
 ---
 
@@ -861,7 +861,7 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 | [`audit_routing_coverage.py`](../../skill/scripts/surge/audit_routing_coverage.py) | 拿**真实域名走一遍** `[Rule]`，看最终去哪（期望表按配置自动切换） | ✅ |
 | [`audit_region_filters.py`](../../skill/scripts/surge/audit_region_filters.py) | **地区组正则的一致性**（`Other Regions` 的负向断言有没有漏词、组间有没有重叠） | ❌ |
 | [`skill/tests/check_secrets.py`](../../skill/tests/check_secrets.py) | 项目不变量（占位符纪律 / 订阅 token 纪律，全仓 `.conf` + `.yaml`） | ❌ |
-| [`skill/tests/surge/check_links.py`](../../skill/tests/surge/check_links.py) | markdown 相对链接与锚点（改标题后**静默失效**的那一类问题） | ❌ |
+| [`skill/tests/check_links.py`](../../skill/tests/check_links.py) | markdown 相对链接与锚点（改标题后**静默失效**的那一类问题） | ❌ |
 
 > 📌 第 4 个（`audit_region_filters.py`）是分流版带来的：`Other Regions` 用的负向断言
 > 把另外 6 个地区组的关键词**抄了一遍**（68 个 token），而 Surge 的 `filter`
@@ -1047,8 +1047,8 @@ Surge iOS 版不支持本地文件配置，需要把 profile 内容托管到一�
 ### 18.2 想加第三份配置
 
 **先问：这是新分工，还是老配置的另一种写法？** 后者不推荐（那就是版本分叉，
-见 [`docs/07`](../docs/07-文件版本沿革.md) §3.2 / §6）。确认是新分工后，见
-[`docs/07` §6](../docs/07-文件版本沿革.md) 的 6 条清单 ——
+见 `docs/07` §3.2 / §6，原文档已随仓库精简移除）。确认是新分工后，对照
+`check_secrets.py` 的 6 条清单 ——
 以上基本就是 `check_secrets.py` 的全部判据。
 **能过测试的才算一份新配置。**
 

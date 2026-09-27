@@ -157,7 +157,7 @@ www.iqiyi.com     www.douyin.com    www.meituan.com   …（共 17 个）
 > `no_resolve (bool)`，可选 —— 仅适用于 IP 类规则（`geoip`、`ip_cidr`、`ip_cidr6`、`asn`）。
 > **设为 `true` 时仅匹配已解析的 IP 地址，不会触发 DNS 解析。**
 
-反过来说：**不带 `no_resolve` 的 IP 类规则会触发一次解析** —— 这正是泄露源（见 [docs/02 案例 ④](02-DNS为什么会泄露.md)）。
+反过来说：**不带 `no_resolve` 的 IP 类规则会触发一次解析** —— 这正是泄露源（见 [DNS 为什么会泄露](dns-basics.md#dns-为什么会泄露)）。
 
 但很多人没注意到的是这条的**另一半**：
 
@@ -307,4 +307,4 @@ comm -23 dA.txt dB.txt | wc -l    # 期望 0
 
 ---
 
-下一步：[docs/06 实测数据与版本谱系](06-实测数据与版本谱系.md)。
+下一步：[操作：Surge · Egern · 日常维护](ops.md)。

@@ -28,7 +28,7 @@ Surge 的 `.conf` 按节组织，模板里与防泄露相关的节：
 
 ### 3.2 `[General]` DNS 段：每行堵哪个出口
 
-对照 [02 章的泄露面全景](02-DNS原理与泄露面.md)，这些键各自堵一条通路：
+对照 [DNS 基础的泄露面全景](dns-basics.md)，这些键各自堵一条通路：
 
 | 键 | 堵哪 | 注意 |
 |:---|:-----|:-----|
@@ -74,7 +74,7 @@ Surge 的 `.conf` 按节组织，模板里与防泄露相关的节：
 
 1. 白名单必须在 REJECT 之前。"DIRECT 永远在 REJECT 前"这种一刀切不变量本身是错的 —— 白名单就是 DIRECT，且必须排在 REJECT 前。
 2. 应用类规则必须排在 `direct.txt` 之前。否则域名恰好被国内清单收录的 AI / GitHub 会被直连接走：`github.com` 同时被 `direct.txt` 收录，`GitHub.list` 排后面分流就失效。
-3. `GEOIP` 必须带 `no-resolve`，且必须与 ⑤ 成对。见 [02 章 2.5](02-DNS原理与泄露面.md)。
+3. `GEOIP` 必须带 `no-resolve`，且必须与 ⑤ 成对。见 [DNS 基础](dns-basics.md)。
 
 > **说明**　两版 `[Rule]` 都没有游戏机域名规则（`nintendo.net` 等只在 `always-real-ip` 里）—— 这些主机名照旧拿真实 IP，去向由常规规则链决定。别把"缺这三条"当 bug 来"修"。
 
@@ -111,7 +111,7 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 
 - `policy-regex-filter` 对显式列出的成员无效 —— 手写在 `[Proxy]` 里的节点，必须靠 `include-all-proxies=true` 才会被筛到；
 - 正则别写太宽：`(?i)us` 会同时命中 `Russia` / `Belarus` / `AUStralia`，保守用 `\b` 锁词边界；
-- `Other Regions` 是负向断言，把其余地区组的关键词逐字抄了一遍 —— 任何组加关键词必须同步改它，漏改不报错、面板也看不出（节点会同时出现在两个组）。这条拷贝在配置层面消灭不掉，靠 `audit_region_filters.py` 守（用法见 [08](08-验证与自检.md)）。
+- `Other Regions` 是负向断言，把其余地区组的关键词逐字抄了一遍 —— 任何组加关键词必须同步改它，漏改不报错、面板也看不出（节点会同时出现在两个组）。这条拷贝在配置层面消灭不掉，靠 `audit_region_filters.py` 守（用法见 [验证与自检](troubleshoot-faq.md)）。
 
 #### ④ 已知边界（都是设计，不是 bug）
 
@@ -139,7 +139,7 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 - AI 分流（`AI` 组 + 对应规则）；
 - `AD` 组（反正不被规则引用）。
 
-不能删：`direct.txt` 规则、`GEOIP,CN`（连同 `no-resolve` 是一对）、白名单 guard。删任何一个都会立刻构成 [02 章](02-DNS原理与泄露面.md) 说的"只交一半"。
+不能删：`direct.txt` 规则、`GEOIP,CN`（连同 `no-resolve` 是一对）、白名单 guard。删任何一个都会立刻构成 [DNS 基础](dns-basics.md) 说的"只交一半"。
 
 改 `routing.conf` 想加新应用组：照 §3.5 的写法复制一个 `select, include-other-group="Proxy"` 组，把它的规则插在国内直连集之前，并给 `audit_routing_coverage.py` 加对应探针（期望值精确到组名，不许放宽成"不是 DIRECT 就行"）。
 
@@ -157,12 +157,12 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 
 | 下一步 | 去处 |
 |:-------|:-----|
-| 装好、跑通再看本篇 | [01-快速开始](01-快速开始.md) |
-| 对侧内核的操作章 | [04-Egern操作](04-Egern操作.md) |
-| 换、加、删任何规则集之前 | [05-规则集与素材](05-规则集与素材.md) |
-| 出问题了 | [07-故障排查](07-故障排查.md) |
-| 把本篇改动搬到 Egern 侧 | [09-跨内核移植](09-跨内核移植.md) |
-| 名词不认识、常见疑问没解决 | [10-FAQ与术语表](10-FAQ与术语表.md) |
+| 装好、跑通再看本篇 | [快速开始](quick-start.md) |
+| 对侧内核的操作章 | 本篇「Egern 操作」章（已并入本篇） |
+| 换、加、删任何规则集之前 | [规则集与素材](rulesets.md) |
+| 出问题了 | [故障排查 · FAQ](troubleshoot-faq.md) |
+| 把本篇改动搬到 Egern 侧 | [跨内核移植](cross-kernel-diff.md) |
+| 名词不认识、常见疑问没解决 | [FAQ 与术语表](troubleshoot-faq.md) |
 
 
 ---
@@ -191,7 +191,7 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 
 | 小节 | 要点 |
 |:-----|:-----|
-| `bootstrap` | 全国内明文 IP，绝不写 `system`（等于把运营商接进回退链）。也别指望"换更好的 bootstrap IP"：实测换 IP 后泄露仍来自透明重定向 / 回退，机制见 [02 章](02-DNS原理与泄露面.md) 2.1 / 2.4 出口 |
+| `bootstrap` | 全国内明文 IP，绝不写 `system`（等于把运营商接进回退链）。也别指望"换更好的 bootstrap IP"：实测换 IP 后泄露仍来自透明重定向 / 回退，机制见 [DNS 基础](dns-basics.md) 的泄露面各出口 |
 | `upstreams` | `Domestic-DNS` 端点全部 IP 字面量（消灭 bootstrap 用途①）；「两家机构 × 两种协议」的冗余结构，同组并发竞速、全组失败才触发回退。`Foreign-DNS` 整组已注释保留：它必须经代理才可达，不能当兜底（启动期解析会掉进明文）。Quad9 教训：`https://9.9.9.9/dns-query` 静默失效（只提供 HTTP/3），`tls://9.9.9.9` 可用 |
 | `forward` | f10 起塌缩为纯兜底（指向 `Domestic-DNS`）—— 换订阅、换节点域名，本段一个字都不用改。两条兜底与一条等价的原因：value 单值 + 顺序求值，删任何一条行为不变（`audit_dns_forward.py` 可证） |
 | `proxy_nameservers` | 硬覆盖：一设就绕过 `forward`、强制直连、成为代理侧解析的唯一出口。"不设"本身也留了一条"未命中回退 Bootstrap"的明文分支 —— 模板最终选择显式设置 + 国内端点（它是强制直连的，境外解析器在国内线路不可达）。排障口诀：节点连不上，第一件事注释掉这个列表 |
@@ -228,7 +228,7 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 |:--:|:-----|:-----|
 | A | DNS 端点固定路由 | 已整体移除。端点全是 IP 字面量，解析器直接以 IP 访问，不需要在 `rules` 里钉。只有你自己把 DNS 端点写成主机名时，才需要补一条 `DIRECT` 路由，否则它落 `default → Proxy` |
 | B | 白名单 guard → 广告 → 内网 → 各应用规则集 | 顺序即优先级；`Proxy.list` 类"默认 `disabled: true`"的规则由 `Final` 兜底；AI 规则集 URL 钉 commit 防上游漂移；每条 `rule_set` 各自带 `update_interval`（现值两侧统一钉 `604800`，别只写第一条） |
-| C | Apple（No_Resolve 版）→ `direct.txt` → `.cn` 后缀 → `geoip: CN` + `no_resolve` | 这就是 [02 章判据 A+B](02-DNS原理与泄露面.md) 在本内核的落点：`geoip` 带 `no_resolve` 后不匹配域名，国内域名直连完全依赖 `direct.txt` 那条纯域名规则集，动一条必须看另一条。Apple 必须用 `Apple_All_No_Resolve.list`（原版藏 13 条裸 IP，会强制解析） |
+| C | Apple（No_Resolve 版）→ `direct.txt` → `.cn` 后缀 → `geoip: CN` + `no_resolve` | 这就是 [成对交付篇的判据 A+B](no-resolve-pairing.md) 在本内核的落点：`geoip` 带 `no_resolve` 后不匹配域名，国内域名直连完全依赖 `direct.txt` 那条纯域名规则集，动一条必须看另一条。Apple 必须用 `Apple_All_No_Resolve.list`（原版藏 13 条裸 IP，会强制解析） |
 | D | `default: {name: Final, policy: Final}` | 未命中走代理，由节点远程解析、不经过 `dns` 段 —— 日志里的 `default → Final → Proxy` 是正常决策，不是泄露。`lazy` 没有 `Final` 这层组，`policy` 直写 `Proxy`；`name: Final` 只是日志标签 |
 
 > **注意**　`no_resolve` 有三层，写之前先确认自己在哪一层：规则级（`geoip` / `ip_cidr` 的 `no_resolve`）、`rule_set` 级（在这里写不生效，这是坑）、条目级（`.list` 每条自带的 `,no-resolve`）。
@@ -275,12 +275,12 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/pro
 
 | 下一步 | 去处 |
 |:-------|:-----|
-| 装好、跑通再看本篇 | [01-快速开始](01-快速开始.md) |
-| 对侧内核的操作章 | [03-Surge操作](03-Surge操作.md) |
-| 换、加、删任何规则集之前 | [05-规则集与素材](05-规则集与素材.md) |
-| 出问题了 | [07-故障排查](07-故障排查.md) |
-| 把本篇改动搬到 Surge 侧 | [09-跨内核移植](09-跨内核移植.md) |
-| 名词不认识、常见疑问没解决 | [10-FAQ与术语表](10-FAQ与术语表.md) |
+| 装好、跑通再看本篇 | [快速开始](quick-start.md) |
+| 对侧内核的操作章 | 本篇「Surge 操作」章（已并入本篇） |
+| 换、加、删任何规则集之前 | [规则集与素材](rulesets.md) |
+| 出问题了 | [故障排查 · FAQ](troubleshoot-faq.md) |
+| 把本篇改动搬到 Surge 侧 | [跨内核移植](cross-kernel-diff.md) |
+| 名词不认识、常见疑问没解决 | [FAQ 与术语表](troubleshoot-faq.md) |
 
 
 ---
@@ -372,7 +372,7 @@ python skill/tests/check_portability.py
 | `GEOIP,CN` / `geoip: CN`（连同 `no-resolve` 语义） | 判据 A 的一半；两条拆开即"只交一半" |
 | 白名单 guard | 它必须排在 REJECT 之前，删了广告清单会开始误杀 |
 
-删完必做：重跑分流覆盖审计与单侧回归（见 [08 章](08-验证与自检.md)）。
+删完必做：重跑分流覆盖审计与单侧回归（见 [验证与自检](troubleshoot-faq.md)）。
 
 ---
 
@@ -393,10 +393,10 @@ python skill/tests/check_portability.py
 
 | 下一步 | 去处 |
 |:-------|:-----|
-| 装好、跑通再看本篇 | [01-快速开始](01-快速开始.md) |
-| 改 DNS 段之前先读泄露面 | [02-DNS原理与泄露面](02-DNS原理与泄露面.md) |
-| Surge 侧的操作动线 | [03-Surge操作](03-Surge操作.md) |
-| Egern 侧的操作动线 | [04-Egern操作](04-Egern操作.md) |
-| 换、加、删任何规则集之前 | [05-规则集与素材](05-规则集与素材.md) |
-| 出问题了 | [07-故障排查](07-故障排查.md) |
-| 把本篇改动同步到对侧内核 | [09-跨内核移植](09-跨内核移植.md) |
+| 装好、跑通再看本篇 | [快速开始](quick-start.md) |
+| 改 DNS 段之前先读泄露面 | [DNS 基础](dns-basics.md) |
+| Surge 侧的操作动线 | 本篇「Surge 操作」章 |
+| Egern 侧的操作动线 | 本篇「Egern 操作」章 |
+| 换、加、删任何规则集之前 | [规则集与素材](rulesets.md) |
+| 出问题了 | [故障排查 · FAQ](troubleshoot-faq.md) |
+| 把本篇改动同步到对侧内核 | [跨内核移植](cross-kernel-diff.md) |

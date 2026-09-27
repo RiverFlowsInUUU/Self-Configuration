@@ -1,6 +1,6 @@
 # 01 · 快速开始
 
-从零到「装好、能通、确认没泄露」，全程只改你需要改的地方。想先懂原理再动手，读 [02-DNS原理与泄露面](02-DNS原理与泄露面.md)。
+从零到「装好、能通、确认没泄露」，全程只改你需要改的地方。想先懂原理再动手，读 [DNS 基础](dns-basics.md)。
 
 ---
 
@@ -89,7 +89,7 @@ python skill/scripts/surge/check_surge_dns.py surge/profiles/routing.conf
 python skill/scripts/egern/check_egern_dns.py egern/profiles/routing.yaml
 ```
 
-期望退出码 `0`。脚本怎么用、退出码含义、联网审计见 [08-验证与自检](08-验证与自检.md)。
+期望退出码 `0`。脚本怎么用、退出码含义、联网审计见 [验证与自检](troubleshoot-faq.md)。
 
 ---
 
@@ -99,10 +99,10 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/routing.yaml
 |:---------|:-----|
 | 某个键到底什么语义、有什么取值 | 两侧 `DetailsReadme`（逐键权威，仍是活文档）—— [Surge](../surge/DetailsReadme/DetailsReadme.md) · [Egern](../egern/DetailsReadme/DetailsReadme.md) |
 | 官方文档 | [Surge manual](https://manual.nssurge.com) / [Surge KB](https://kb.nssurge.com) · [Egern docs](https://egernapp.com/docs/configuration/dns)，各章开头也贴了本页涉及的具体条目 |
-| 出问题了 | [07-故障排查](07-故障排查.md) |
-| 名词不认识 | [10-FAQ与术语表](10-FAQ与术语表.md) |
+| 出问题了 | [故障排查](troubleshoot-faq.md) |
+| 名词不认识 | [FAQ 与术语表](troubleshoot-faq.md) |
 
-> **注意**　Egern 官方文档站部分路径已 404，以本仓库文档内链接过的可用入口为准（见 [04](04-Egern操作.md) 文末）。
+> **注意**　Egern 官方文档站部分路径已 404，以本仓库文档内链接过的可用入口为准（见 [操作手册](ops.md) 的 Egern 官方文档入口注意事项）。
 
 ---
 
@@ -110,7 +110,7 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/routing.yaml
 
 | 下一步 | 去处 |
 |:-------|:-----|
-| 装好后按内核深入操作 | [03-Surge操作](03-Surge操作.md) · [04-Egern操作](04-Egern操作.md) |
-| 换、加、删任何规则集之前 | [05-规则集与素材](05-规则集与素材.md) |
-| 改完配置要升版、归档、同步双端 | [06-日常维护](06-日常维护.md) |
-| 把一侧的改动搬到另一侧 | [09-跨内核移植](09-跨内核移植.md) |
+| 装好后按内核深入操作 | [操作手册](ops.md)（Surge · Egern · 日常维护合一篇） |
+| 换、加、删任何规则集之前 | [规则集与素材](rulesets.md) |
+| 改完配置要升版、归档、同步双端 | [日常维护](ops.md) |
+| 把一侧的改动搬到另一侧 | [跨内核移植](cross-kernel-diff.md) |
