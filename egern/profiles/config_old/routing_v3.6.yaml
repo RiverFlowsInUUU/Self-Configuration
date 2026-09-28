@@ -1,4 +1,4 @@
-#! version=routing_v3.7
+#! version=routing_v3.6
 # ================================================================ routing_v3.4（正式版 · 推荐）
 # 本版 = **routing_v2.4 + 规则段对齐 Surge**（内容与顺序均逐行对拍）：
 #   ① `dns.forward` 由单条 catch-all 扩为 4 层：
@@ -636,7 +636,7 @@ rules:
 #   —— 纯域名规则集只做域名串匹配、**不触发任何解析**，因此与 no_resolve 无关；
 #      原先由 ChinaMax 的 IP 条目承担的「已是 IP 的连接」由下方 geoip:CN 兜住。
 - rule_set:
-    name: CN-Domains
+    name: CN
     match: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/direct.txt
     policy: DIRECT
     update_interval: 604800

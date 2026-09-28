@@ -1,4 +1,4 @@
-#! version=lazy_v1.7
+#! version=lazy_v1.6
 # ============================================================================
 # lazy · 懒人版
 #
@@ -232,7 +232,7 @@ rules:
 #    （2026-09-24 ④ 位补了 System 快照，系统级主机那部分恢复直连；全量 Apple 集仍未引用。）
 #    Loyalsoldier direct.txt：11 万条纯域名，是国内直连的主承重墙。
 - rule_set:
-    name: CN-Domains
+    name: CN
     match: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/direct.txt
     policy: DIRECT
     update_interval: 604800
