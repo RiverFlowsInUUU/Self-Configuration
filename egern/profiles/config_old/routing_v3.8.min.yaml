@@ -297,11 +297,6 @@ rules:
     policy: AI
     update_interval: 604800
 - rule_set:
-    name: AI_Domains
-    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/AI.list
-    policy: AI
-    update_interval: 604800
-- rule_set:
     name: Spotify
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Spotify/Spotify.list
     policy: Spotify

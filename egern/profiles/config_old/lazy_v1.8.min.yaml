@@ -68,7 +68,7 @@ policy_groups:
     - Airport
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Proxy.png
-- select:
+- smart:
     name: AI
     policies:
     - Node-B
@@ -114,11 +114,6 @@ rules:
 - rule_set:
     name: AI
     match: https://raw.githubusercontent.com/Repcz/Tool/X/Surge/Rules/AI.list
-    policy: AI
-    update_interval: 604800
-- rule_set:
-    name: AI_Domains
-    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/AI.list
     policy: AI
     update_interval: 604800
 - rule_set:
