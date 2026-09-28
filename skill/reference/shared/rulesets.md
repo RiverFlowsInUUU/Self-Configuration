@@ -27,6 +27,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 | `Gemini.list` | → `Gemini` | ✅ | ✅ | 同上 |
 | `Anthropic.list` · `Claude.list` | → `Claude` | ✅ | ✅ | 同上 |
 | `AI.list` | → `AI`（通用 AI，必须排在上面三条**之后**） | ✅ | ✅ | [Repcz/Tool](https://github.com/Repcz/Tool)（分支头 · 活跃维护；2026-09-28 自 ACL4SSR 换入） |
+| `AI_Domains`（本仓自托管） | → `AI`（伴生域/宽后缀/基础设施域，**必须紧跟 `AI.list`**） | ✅ | ✅ | 本仓 `rules/AI.list`（269 条静态整合 · 生成器 `skill/scripts/ai_domains_build.py`） |
 | `Spotify.list` · `YouTubeMusic.list` · `YouTube.list` | 各自应用组 | ✅ | ✅ | [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) |
 | `GitHub.list` · `Google.list` · `Microsoft.list` | 各自应用组 | ✅ | ✅ | 同上 |
 | `Telegram.list` · `Twitter.list` · `WeChat.list` | 各自应用组 | ✅ | ✅ | 同上 |
