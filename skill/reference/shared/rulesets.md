@@ -26,7 +26,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 | `OpenAI.list` | → `ChatGPT` | ✅ | ✅ | [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) |
 | `Gemini.list` | → `Gemini` | ✅ | ✅ | 同上 |
 | `Anthropic.list` · `Claude.list` | → `Claude` | ✅ | ✅ | 同上 |
-| `AI.list` | → `AI`（通用 AI，必须排在上面三条**之后**） | ✅ | ✅ | [Repcz/Tool](https://github.com/Repcz/Tool)（分支头 · 活跃维护；2026-09-28 自 ACL4SSR 换入） |
+| `AI.list` | → `AI`（通用 AI，必须排在上面三条**之后**） | ✅ | ✅ | [ACL4SSR/ACL4SSR](https://github.com/ACL4SSR/ACL4SSR)（固定 commit） |
 | `Spotify.list` · `YouTubeMusic.list` · `YouTube.list` | 各自应用组 | ✅ | ✅ | [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) |
 | `GitHub.list` · `Google.list` · `Microsoft.list` | 各自应用组 | ✅ | ✅ | 同上 |
 | `Telegram.list` · `Twitter.list` · `WeChat.list` | 各自应用组 | ✅ | ✅ | 同上 |

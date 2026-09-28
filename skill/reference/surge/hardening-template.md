@@ -405,22 +405,17 @@ RULE-SET,<url>,<策略>,"update-interval=604800"[,no-resolve]
 本仓两侧统一钉成 604800：同周期、写法一致、文件里看得见。审计时**只报两件事**：
 出现负值（= 关掉自动更新），或 Egern 的远程 `rule_set` 缺这个字段。
 
-### 4.7 AI 集曾钉 commit，2026-09-28 改跟分支头
-
-（原设计）AI 组的出口隔离是有意设计：AI.list 内容变没变，决定「哪些域名走 AI 组」。
-钉 commit 让集合**可复现** —— 但代价是上游更新不自动跟进，要手动换 hash。
-
-实测这个代价爆发了：ACL4SSR 的 AI.list 长期停在 51 行，Gemini 新形态
-（aistudio / notebooklm / antigravity / sora / grok 等）全部缺失，AI 分流名存实亡。
-
-⇒ 2026-09-28 起换 [Repcz/Tool](https://github.com/Repcz/Tool) 的 AI.list 并**改跟分支头**：
-   该仓滚动维护、新 AI 域名进集快，「可复现」让位给「及时跟进」。集内 52 条纯域名系
-   （DOMAIN / DOMAIN-SUFFIX / DOMAIN-KEYWORD / URL-REGEX，零 IP 条目），两内核语法均原生支持。
+### 4.7 部分规则集钉 commit 的理由
 
 ```
-RULE-SET,https://raw.githubusercontent.com/Repcz/Tool/X/Surge/Rules/AI.list,AI,…
-                                                      ^^^^^^^ 分支名（X = 该仓主分支）
+RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/75f01010…/Clash/Ruleset/AI.list,AI,…
+                                                      ^^^^^^^^ 40 位 commit hash
 ```
+
+当"这个集合的内容"本身是有意设计的一部分（例如 AI 组的出口隔离），
+用分支名会让它随上游漂移。钉 commit 让集合**可复现**。
+
+代价：上游更新不自动跟进。要更新得手动换 hash。
 
 ## 5 · `[Host]`
 

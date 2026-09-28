@@ -1,4 +1,4 @@
-#! version=lazy_v1.8
+#! version=lazy_v1.7
 # ============================================================================
 # lazy · 懒人版
 #
@@ -220,12 +220,10 @@ rules:
     match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/apple_system.list
     policy: DIRECT
     update_interval: 604800
-# ⑤ AI 分流 —— 命中即走 AI 组（→ Proxy）。集源 Repcz/Tool（2026-09-28 自 ACL4SSR 换入：
-#    后者 AI.list 停更、Gemini 新形态缺失；本集活跃维护，覆盖 gemini/bard/aistudio/
-#    notebooklm/antigravity/sora/grok 全家，零 IP 条目）。
+# ⑤ AI 分流 —— 命中即走 AI 组（→ Proxy）。
 - rule_set:
     name: AI
-    match: https://raw.githubusercontent.com/Repcz/Tool/X/Surge/Rules/AI.list
+    match: https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/75f0101039d71724b6e998b34604c2e053580e0c/Clash/Ruleset/AI.list
     policy: AI
     update_interval: 604800
 # ⑥ 直连集合 —— 以下 2 条共同承担「国内流量直连」。
