@@ -3,6 +3,8 @@
 # 来源: Repcz/Tool (Surge) | ddgksf2013 gist 快照 + 用户补遗 (Clash payload) | ACL4SSR (Clash classical) | blackmatrix7 OpenAI | blackmatrix7 Gemini | blackmatrix7 Claude | blackmatrix7 Copilot | blackmatrix7 BardAI | MetaCubeX geosite category-ai-!cn
 # 分工: 本集管「Gemini 专属后端 + 伴生域 + 基础设施域」(静态)；新 AI 域由 Repcz AI.list(滚动)承接，两者同指 AI 组
 # 拍板: googleapis.com 宽后缀改窄(YouTube 误伤实测)；play.googleapis.com 精确收编(GMS 主网关随 Gemini)；零 IP 条目
+# 三修: 2026-09-28 实测漏网收编 —— oauth2 / oauthaccountmanager(账号 OAuth 基础设施·低频) 精确补入；
+#       DOMAIN-KEYWORD,-pa.googleapis.com 一条封死 -pa 动态命名空间(signaler/growth/notifications 等未来新后端全兜)
 #
 # ==== 00 宽后缀(伴生域收编) ====
 DOMAIN-SUFFIX,googleusercontent.com
@@ -23,8 +25,11 @@ DOMAIN,generativelanguage.googleapis.com
 DOMAIN,jules.google.com
 DOMAIN,makersuite.google.com
 DOMAIN,notebooklm.google.com
+DOMAIN,oauth2.googleapis.com
+DOMAIN,oauthaccountmanager.googleapis.com
 DOMAIN,play.googleapis.com
 DOMAIN,robinfrontend-pa.googleapis.com
+DOMAIN-KEYWORD,-pa.googleapis.com
 DOMAIN-SUFFIX,ai.google.dev
 DOMAIN-SUFFIX,aicode.googleapis.com
 DOMAIN-SUFFIX,aida.googleapis.com
