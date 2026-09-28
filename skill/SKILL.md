@@ -113,7 +113,9 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
    python skill/scripts/surge/check_surge_dns.py surge/profiles/routing.conf
    python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/profiles/routing.yaml
    python skill/tests/make_min.py                 # 漂移检查：四份 .min 应全部「已同步」
-⑥ 提交推送（CI 在 push / PR 自动重跑同一组检查）
+⑥ 本地 commit → **停在推送前**。`git push` 永远是独立确认项：用户说「换掉 / 改吧 /
+   找个新的」只授权改动本身，讨论与调研阶段的产物一律停在本地 + 汇报表格；
+   拿到用户单独的「推」指令（如「推吧 / 没问题就推」）才 push（CI 在 push / PR 自动重跑同一组检查）
 ```
 
 > **注意**　mutating 步骤（②③④⑥）必须等用户明确确认后再执行；①是只读的，随时可跑。
