@@ -519,7 +519,7 @@ NAT 类型检测（STUN）、时间同步（NTP）、游戏机配对，都需要
 | `surge-white-guard.list` | 43 | 纯域名 | Jinx |
 | `surge-ads.list` | 3889 | 纯域名 | Jinx |
 | `AWAvenue-Ads-Rule-Surge-RULE-SET.list` | 965 | 纯域名 | TG-Twilight（⚠️ **必须用 RULE-SET 版**） |
-| `AI.list` | 49 | 纯域名 | ACL4SSR（**钉 commit**） |
+| `AI.list` | 52 | 域名系（零 IP；含 KEYWORD×2 + URL-REGEX×1） | Repcz/Tool（分支头，活跃维护） |
 | `private.txt` | 130 | 域名 + 可能含 IP | Loyalsoldier |
 | `direct.txt` | 111169 | 纯域名 | Loyalsoldier |
 | `SYSTEM` / `LAN` | — | 内置 | Surge |
@@ -538,17 +538,13 @@ NAT 类型检测（STUN）、时间同步（NTP）、游戏机配对，都需要
 ⚠️ 同一个键只应该写在一处。源配置里 `update-interval=3600` 曾写在 `[Proxy Group]`
 的 `smart` 组上 —— 那只对订阅型组有意义，写在那里是空转。本模板已移除。
 
-### 11.3 `AI.list` 钉 commit 的原因
+### 11.3 `AI.list` 曾钉 commit，2026-09-28 改跟分支头
 
-```
-RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/75f01010…/Clash/Ruleset/AI.list,AI,…
-                                                      ^^^^^^^^ 40 位 commit hash
-```
+（原设计）`AI` 组的出口隔离是有意设计，钉 commit 让「哪些域名走 AI 组」可复现 ——
+代价是上游更新不跟进，实测 ACL4SSR 的 AI.list 长期停在 51 行，Gemini 新形态全部缺失。
 
-`AI` 组的出口隔离是有意设计的，如果 `AI.list` 的内容随上游分支漂移，
-「哪些域名走 AI 组」就会悄悄改变。钉 commit 让这个集合**可复现**。
-
-代价：上游更新了不会自动跟进。要更新得手动换 hash。
+⇒ 2026-09-28 起换 [Repcz/Tool](https://github.com/Repcz/Tool) 的 AI.list 并改跟分支头（该仓滚动维护），
+   取舍细节见 [`hardening-template.md` §4.7](hardening-template.md)。bm7 四条专属集不受影响。
 
 ### 11.4 广告拦截的两条清单与 `-RULE-SET` 版地址
 
