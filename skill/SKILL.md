@@ -459,6 +459,8 @@ for h in ['dns.alidns.com','doh.pub','doh.18bit.cn']:
     print(h, sorted({a[4][0] for a in socket.getaddrinfo(h,443)}))"
 ```
 
+> 🪟 **Windows Git Bash 用户**：此命令含多行，粘入双引号会被 MSYS 参数转换**静默扭曲**（实测 `\n` → `/n`）——改存 .py 文件执行（任何平台通用）。
+
 实测参考：`dns.alidns.com`→223.5.5.5/223.6.6.6（固定 ✅）、`doh.pub`→1.12.12.12/120.53.53.53（固定 ✅）、`doh.18bit.cn`→**11 个 IP 的 CDN 池（不可钉 ❌）**，且它落在 **42.51.x.x（中国联通）** 上的自建服务 —— 能用作国内上游，但别让它承担"所有国内域名"。
 
 ### ⚠️ 已知缺陷索引

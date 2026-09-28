@@ -1,5 +1,6 @@
 # NAME: AI_Domains (AI 全量整合集 · Surge ruleset)
 # 生成: 2026-09-28（三次迭代）· 本仓自托管静态整合快照
+# 生成脚本: skill/scripts/ai_domains_build.py（源目录: skill/scripts/ai_sources/）
 #
 # ============ 上游来源详细信息 ============
 #
@@ -24,7 +25,7 @@
 # 5. MetaCubeX/meta-rules-dat —— 每日构建，本集最大覆盖源
 #    https://github.com/MetaCubeX/meta-rules-dat  (meta 分支 · geo/geosite/category-ai-!cn.list, 180 条)
 #    v2fly domain-list-community 的 category-ai-!cn 展开版。贡献：Gemini 后端全清单
-#    (antigravity/notebooklm/cloudcode/aicode 等) + 新兴 AI 服务全家(cohere/deepseek/等等)。
+#    (antigravity/notebooklm/cloudcode/aicode 等) + 新兴 AI 服务全家(cohere/deepseek 等)。
 #    youtubei 等 YouTube 域天然不在该分类(已实测验证)。
 #
 # 6. 用户自有补充 (RiverFlowsInUUU/Rule) —— 上游即本集 2 的快照 + notebooklm 2 条
@@ -34,7 +35,7 @@
 # · 零 IP 条目：所有 IP-CIDR/IP-ASN 一律丢弃(纯域名集不触发解析，无 DNS 泄露面)
 # · googleapis.com 宽后缀已收窄：它是全 Google API 域(含 youtubei=YouTube 信令)，
 #   整域收编会误拉 YouTube/GMS 其他服务；改为 Gemini 专属后端精确枚举 + play 网关 1 条
-# · 域名形态：DOMAIN 52 · DOMAIN-SUFFIX 208 · DOMAIN-KEYWORD 8 · URL-REGEX 1 (共 269 条)
+# · 域名形态：DOMAIN / DOMAIN-SUFFIX / DOMAIN-KEYWORD / URL-REGEX（零 IP）
 #
 # ============ 分工与拍板记录 ============
 # 分工: 本集管「Gemini 专属后端 + 伴生域 + 基础设施域」(静态)；新 AI 域由 Repcz AI.list(滚动)承接，两者同指 AI 组

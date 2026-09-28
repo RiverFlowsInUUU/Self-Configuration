@@ -1,0 +1,208 @@
+# -*- coding: utf-8 -*-
+"""AI_Domains 整合生成器：多源 AI 规则集合并 → rules/AI.list（Surge ruleset 格式）
+
+用法（仓库根目录）:
+    python skill/scripts/ai_domains_build.py
+可选参数:
+    --src-dir  源规则集目录（默认: skill/scripts/ai_sources/，内含 9 份上游抓取快照）
+    --out      输出路径（默认: rules/AI.list）
+
+上游来源与维护状态见生成文件的头部档案。纪律: 零 IP 条目（防 DNS 泄露面）；
+googleapis.com 宽后缀已收窄（YouTube 误伤实测）；-pa 动态命名空间用 DOMAIN-KEYWORD 一条封死。
+"""
+import re, os, sys, argparse
+from collections import defaultdict
+
+# (文件名, 来源标签)
+SOURCES = [
+    ('repcz-ai.list',   'Repcz/Tool (Surge)'),
+    ('my-ai.list',      'ddgksf2013 gist 快照 + 用户补遗 (Clash payload)'),
+    ('acl4ssr-ai.list', 'ACL4SSR (Clash classical)'),
+    ('bm7-OpenAI.list',     'blackmatrix7 OpenAI'),
+    ('bm7-Gemini.list',     'blackmatrix7 Gemini'),
+    ('bm7-Claude.list',     'blackmatrix7 Claude'),
+    ('bm7-Copilot.list',    'blackmatrix7 Copilot'),
+    ('bm7-BardAI.list',     'blackmatrix7 BardAI'),
+    ('meta-ai.list',    'MetaCubeX geosite category-ai-!cn'),
+]
+# 用户拍板：googleusercontent.com 宽后缀保留（静态 CDN，无账号判定语义）；
+# googleapis.com 宽后缀 2026-09-28 二次修正改窄 —— 它是全 Google API 域（youtubei.googleapis.com
+# 是 YouTube App 的核心 API），整域收编会误拉 YouTube/GMS 其他服务进 AI 组（用户实测 IP 乱跳）。
+WIDE_REQUIRED = ['googleusercontent.com']
+# 精确补入：GMS 主网关 + 账号 OAuth 基础设施（oauth2 令牌端点为全 Google 共享·低频，随 Gemini 走 AI 出口）
+EXTRA_EXACT = [('DOMAIN', 'play.googleapis.com'),
+               ('DOMAIN', 'oauthaccountmanager.googleapis.com'),
+               ('DOMAIN', 'oauth2.googleapis.com')]
+# 关键词兜底：-pa.googleapis.com 是 Google 助手后端的动态命名空间
+# （signaler/growth/notifications/robinfrontend/geller/cloudcode/aisandbox… 永远会冒新的），
+# 一条 KEYWORD 兜住现有与未来的全部 xxx-pa 后端；子串高度特异，youtubei 等非 -pa 域不受影响
+EXTRA_KEYWORD = [('-pa.googleapis.com')]
+# 人工过审剔除：过宽云/CDN/支付后缀（误伤面巨大）+ Envato 素材市场误收 + googleapis.com 宽后缀
+BLACKLIST = {'amazonaws.com', 'cloudflare.com', 'wp.com', 'imgix.net', 'sentry.io', 'stripe.com',
+             'envato.com', 'envato-static.com', 'envatousercontent.com', 'themeforest.net',
+             'googleapis.com'}
+
+OK_TYPES = {'DOMAIN', 'DOMAIN-SUFFIX', 'DOMAIN-KEYWORD', 'URL-REGEX'}
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--src-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ai_sources'))
+    ap.add_argument('--out', default=None)
+    a = ap.parse_args()
+    repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    out_path = a.out or os.path.join(repo_root, 'rules', 'AI.list')
+
+    dropped = defaultdict(list)   # 源 -> [(type, value, 原因)]
+    rules = {}                    # (type, value) -> set(来源)
+
+    def add(t, v, src):
+        t, v = t.strip().upper(), v.strip().rstrip('.')
+        if t not in OK_TYPES:
+            dropped[src].append((t, v, '类型不支持')); return
+        if not v or ' ' in v:
+            dropped[src].append((t, v, '空值/含空格')); return
+        if v.endswith('.cn') or v == 'cn':          # 防国内域混入
+            dropped[src].append((t, v, '国内域剔除')); return
+        if v in BLACKLIST:                          # 过宽云/CDN/支付后缀人工剔除
+            dropped[src].append((t, v, '过宽后缀人工剔除')); return
+        rules.setdefault((t, v), set()).add(src)
+
+    for fname, src in SOURCES:
+        path = os.path.join(a.src_dir, fname)
+        if not os.path.exists(path):
+            print(f'[跳过] 源缺失: {fname}')
+            continue
+        for raw in open(path, encoding='utf-8', errors='replace'):
+            line = raw.strip()
+            if not line or line.startswith(('#', '//', ';')):
+                continue
+            if line == 'payload:':
+                continue
+            line = re.sub(r'^-\s*', '', line).strip()   # payload/geosite 列表前缀
+            if not line: continue
+            if line.startswith('+.'):                   # geosite 展开的 suffix 标记
+                add('DOMAIN-SUFFIX', line[2:], src); continue
+            if line.startswith('full:'):  add('DOMAIN', line[5:], src); continue
+            if line.startswith('domain:'): add('DOMAIN-SUFFIX', line[7:], src); continue
+            if line.startswith('keyword:'): add('DOMAIN-KEYWORD', line[8:], src); continue
+            if line.startswith('regexp:'):
+                dropped[src].append((line, '', 'geosite regexp 无 Surge 对应')); continue
+            if '@' in line and ' ' in line:             # geosite 属性行
+                line = line.split('@')[0].strip()
+                if not line: continue
+            parts = line.split(',')
+            if len(parts) == 1:                         # geosite 裸域名 → SUFFIX
+                add('DOMAIN-SUFFIX', parts[0], src); continue
+            t = parts[0].strip().upper()
+            if t in ('IP-CIDR', 'IP-CIDR6', 'IP-ASN'):  # 零 IP 纪律
+                dropped[src].append((t, parts[1] if len(parts) > 1 else '', 'IP 条目丢弃(AI 集零 IP 纪律)')); continue
+            if len(parts) >= 2:
+                add(t, parts[1], src)                   # 只取 type+value，多余参数(策略等)不进集
+            else:
+                dropped[src].append((line, '', '无法解析'))
+
+    # 用户拍板宽后缀强制收录
+    for w in WIDE_REQUIRED:
+        if ('DOMAIN-SUFFIX', w) not in rules:
+            rules[('DOMAIN-SUFFIX', w)] = {'用户拍板收录'}
+            print('[补入宽后缀]', w)
+    # 用户拍板精确补入（GMS 主网关 + 账号 OAuth 基础设施）
+    for t, v in EXTRA_EXACT:
+        if (t, v) not in rules:
+            rules[(t, v)] = {'用户拍板精确补入'}
+            print('[补入精确]', t, v)
+    # 用户拍板关键词兜底（-pa 动态命名空间一条封死）
+    for kw in EXTRA_KEYWORD:
+        if ('DOMAIN-KEYWORD', kw) not in rules:
+            rules[('DOMAIN-KEYWORD', kw)] = {'用户拍板关键词兜底'}
+            print('[补入关键词]', kw)
+
+    # 归并：KEYWORD 与 SUFFIX 同值 → 删 KEYWORD（后缀更精确宽）
+    for (t, v) in list(rules):
+        if t == 'DOMAIN-KEYWORD' and ('DOMAIN-SUFFIX', v) in rules:
+            del rules[('DOMAIN-KEYWORD', v)]
+            print('[归并] KEYWORD→SUFFIX 覆盖:', v)
+
+    # 排序：按服务商分组
+    def bucket(t, v):
+        lv = v.lower()
+        if t == 'DOMAIN-SUFFIX' and lv in ('googleusercontent.com',): return '00 宽后缀(伴生域收编)'
+        if 'google' in lv or 'gstatic' in lv or 'ggpht' in lv or lv.endswith('.goog') or lv == 'goog' or 'deepmind' in lv or lv in ('android.com','chrome.com'): return '01 Google/Gemini 系'
+        if 'openai' in lv or 'chatgpt' in lv or 'oai' in lv or lv in ('ai.com','chat.com','sora.com'): return '02 OpenAI/ChatGPT 系'
+        if 'claude' in lv or 'anthropic' in lv: return '03 Claude/Anthropic 系'
+        if 'grok' in lv or lv == 'x.ai' or 'xai' in lv: return '04 Grok/xAI 系'
+        if 'copilot' in lv or 'microsoft' in lv or 'bing' in lv or 'github' in lv or 'jetbrains' in lv or 'azureedge' in lv or 'githubnext' in lv or 'msn.com' in lv or 'appcenter' in lv or 'officeapps' in lv or 'blob.core.windows' in lv: return '05 Copilot/微软系'
+        if 'meta.ai' in lv: return '06 Meta 系'
+        if any(k in lv for k in ('perplexity','pplx-','poe.com','openrouter','groq','mistral','huggingface','together','deepseek','clipdrop','openart','jasper','dify.ai','cursor','notebooklm','anythingllm','arena.ai','cerebras','chutes.ai','cici','clawhub','codeium','coderabbit','clau.de','usefathom','chatbox')): return '07 其他 AI 服务'
+        if any(k in lv for k in ('statsig','datadoghq','auth0','arkoselabs','intercom','launchdarkly','featuregates','identrust','segment.io','cloudflareinsights','challenges.cloudflare','gateway.ai.cloudflare')): return '08 基础设施/认证/遥测(伴生)'
+        return '09 其他未归类'
+
+    groups = defaultdict(list)
+    for (t, v), srcs in rules.items():
+        groups[bucket(t, v)].append((t, v, srcs))
+
+    total = 0
+    out_lines = [
+        '# NAME: AI_Domains (AI 全量整合集 · Surge ruleset)',
+        '# 生成: 2026-09-28（三次迭代）· 本仓自托管静态整合快照',
+        '# 生成脚本: skill/scripts/ai_domains_build.py（源目录: skill/scripts/ai_sources/）',
+        '#',
+        '# ============ 上游来源详细信息 ============',
+        '#',
+        '# 1. Repcz/Tool (Surge) —— 主参考集，滚动维护',
+        '#    https://github.com/Repcz/Tool  (X 分支 · Surge/Rules/AI.list)',
+        '#    2026-09-28 仍在提交。贡献：Gemini 专属后端(-pa 系 8 条精确) + 主流 AI 域。',
+        '#    另以独立订阅在本仓四 profile 中并排引用(滚动承接新 AI 域)。',
+        '#',
+        '# 2. ddgksf2013 gist (墨鱼) —— 已停更',
+        '#    https://gist.github.com/ddgksf2013/cb4121e8b5c5d865cc949cb8120320c4  (Ai.yaml, Clash payload 形态)',
+        '#    最后实质提交 2025-11-26。贡献：ChatGPT 网页伴生的第三方基础设施域',
+        '#    (auth0/statsig/datadoghq/arkoselabs/intercom/launchdarkly 等认证/遥测/风控域)。',
+        '#',
+        '# 3. ACL4SSR/ACL4SSR —— AI.list 停更(51 行)，本仓已弃用其作 AI 源',
+        '#    https://github.com/ACL4SSR/ACL4SSR  (曾钉 commit 75f01010)',
+        '#    贡献：早期基线(main 与锁版同内容，无增量)。',
+        '#',
+        '# 4. blackmatrix7/ios_rule_script —— 每日更新，本集取 5 个分集',
+        '#    https://github.com/blackmatrix7/ios_rule_script  (master · rule/Surge/{OpenAI,Gemini,Claude,Copilot,BardAI})',
+        '#    贡献：各家专属域名细分(其 IP 条目已按零 IP 纪律丢弃)。分流版另有其 4 条专属集独立在役。',
+        '#',
+        '# 5. MetaCubeX/meta-rules-dat —— 每日构建，本集最大覆盖源',
+        '#    https://github.com/MetaCubeX/meta-rules-dat  (meta 分支 · geo/geosite/category-ai-!cn.list, 180 条)',
+        '#    v2fly domain-list-community 的 category-ai-!cn 展开版。贡献：Gemini 后端全清单',
+        '#    (antigravity/notebooklm/cloudcode/aicode 等) + 新兴 AI 服务全家(cohere/deepseek 等)。',
+        '#    youtubei 等 YouTube 域天然不在该分类(已实测验证)。',
+        '#',
+        '# 6. 用户自有补充 (RiverFlowsInUUU/Rule) —— 上游即本集 2 的快照 + notebooklm 2 条',
+        '#    https://github.com/RiverFlowsInUUU/Rule  (main · AI, Clash payload 形态)',
+        '#',
+        '# ============ 整合纪律 ============',
+        '# · 零 IP 条目：所有 IP-CIDR/IP-ASN 一律丢弃(纯域名集不触发解析，无 DNS 泄露面)',
+        '# · googleapis.com 宽后缀已收窄：它是全 Google API 域(含 youtubei=YouTube 信令)，',
+        '#   整域收编会误拉 YouTube/GMS 其他服务；改为 Gemini 专属后端精确枚举 + play 网关 1 条',
+        '# · 域名形态：DOMAIN / DOMAIN-SUFFIX / DOMAIN-KEYWORD / URL-REGEX（零 IP）',
+        '#',
+        '# ============ 分工与拍板记录 ============',
+        '# 分工: 本集管「Gemini 专属后端 + 伴生域 + 基础设施域」(静态)；新 AI 域由 Repcz AI.list(滚动)承接，两者同指 AI 组',
+        '# 拍板: googleapis.com 宽后缀改窄(YouTube 误伤实测)；play.googleapis.com 精确收编(GMS 主网关随 Gemini)；',
+        '#       googleusercontent.com 宽后缀保留(静态 CDN 无账号语义)；AI 组 select 钉死出口(风控一致性)',
+        '# 三修: 2026-09-28 实测漏网收编 —— oauth2 / oauthaccountmanager(账号 OAuth 基础设施·低频) 精确补入；',
+        '#       DOMAIN-KEYWORD,-pa.googleapis.com 一条封死 -pa 动态命名空间(signaler/growth/notifications 等未来新后端全兜)',
+        '#',
+    ]
+    for b in sorted(groups):
+        out_lines.append(f'# ==== {b} ====')
+        for t, v, srcs in sorted(groups[b], key=lambda x: (x[0], x[1])):
+            out_lines.append(f'{t},{v}')
+            total += 1
+        out_lines.append('')
+    open(out_path, 'w', encoding='utf-8', newline='\n').write('\n'.join(out_lines) + '\n')
+    print(f'\n输出 {out_path}: {total} 条规则')
+    if dropped:
+        print('\n=== 丢弃明细 ===')
+        for src, items in dropped.items():
+            for t, v, why in items:
+                print(f'  [{src}] {t},{v} <- {why}')
+
+if __name__ == '__main__':
+    main()
