@@ -1,8 +1,45 @@
 # NAME: AI_Domains (AI 全量整合集 · Surge ruleset)
-# 生成: 2026-09-28（二次修正：googleapis.com 宽后缀改窄，youtubei 等 YouTube 域不再误拉）· 本仓自托管静态整合快照
-# 来源: Repcz/Tool (Surge) | ddgksf2013 gist 快照 + 用户补遗 (Clash payload) | ACL4SSR (Clash classical) | blackmatrix7 OpenAI | blackmatrix7 Gemini | blackmatrix7 Claude | blackmatrix7 Copilot | blackmatrix7 BardAI | MetaCubeX geosite category-ai-!cn
+# 生成: 2026-09-28（三次迭代）· 本仓自托管静态整合快照
+#
+# ============ 上游来源详细信息 ============
+#
+# 1. Repcz/Tool (Surge) —— 主参考集，滚动维护
+#    https://github.com/Repcz/Tool  (X 分支 · Surge/Rules/AI.list)
+#    2026-09-28 仍在提交。贡献：Gemini 专属后端(-pa 系 8 条精确) + 主流 AI 域。
+#    另以独立订阅在本仓四 profile 中并排引用(滚动承接新 AI 域)。
+#
+# 2. ddgksf2013 gist (墨鱼) —— 已停更
+#    https://gist.github.com/ddgksf2013/cb4121e8b5c5d865cc949cb8120320c4  (Ai.yaml, Clash payload 形态)
+#    最后实质提交 2025-11-26。贡献：ChatGPT 网页伴生的第三方基础设施域
+#    (auth0/statsig/datadoghq/arkoselabs/intercom/launchdarkly 等认证/遥测/风控域)。
+#
+# 3. ACL4SSR/ACL4SSR —— AI.list 停更(51 行)，本仓已弃用其作 AI 源
+#    https://github.com/ACL4SSR/ACL4SSR  (曾钉 commit 75f01010)
+#    贡献：早期基线(main 与锁版同内容，无增量)。
+#
+# 4. blackmatrix7/ios_rule_script —— 每日更新，本集取 5 个分集
+#    https://github.com/blackmatrix7/ios_rule_script  (master · rule/Surge/{OpenAI,Gemini,Claude,Copilot,BardAI})
+#    贡献：各家专属域名细分(其 IP 条目已按零 IP 纪律丢弃)。分流版另有其 4 条专属集独立在役。
+#
+# 5. MetaCubeX/meta-rules-dat —— 每日构建，本集最大覆盖源
+#    https://github.com/MetaCubeX/meta-rules-dat  (meta 分支 · geo/geosite/category-ai-!cn.list, 180 条)
+#    v2fly domain-list-community 的 category-ai-!cn 展开版。贡献：Gemini 后端全清单
+#    (antigravity/notebooklm/cloudcode/aicode 等) + 新兴 AI 服务全家(cohere/deepseek/等等)。
+#    youtubei 等 YouTube 域天然不在该分类(已实测验证)。
+#
+# 6. 用户自有补充 (RiverFlowsInUUU/Rule) —— 上游即本集 2 的快照 + notebooklm 2 条
+#    https://github.com/RiverFlowsInUUU/Rule  (main · AI, Clash payload 形态)
+#
+# ============ 整合纪律 ============
+# · 零 IP 条目：所有 IP-CIDR/IP-ASN 一律丢弃(纯域名集不触发解析，无 DNS 泄露面)
+# · googleapis.com 宽后缀已收窄：它是全 Google API 域(含 youtubei=YouTube 信令)，
+#   整域收编会误拉 YouTube/GMS 其他服务；改为 Gemini 专属后端精确枚举 + play 网关 1 条
+# · 域名形态：DOMAIN 52 · DOMAIN-SUFFIX 208 · DOMAIN-KEYWORD 8 · URL-REGEX 1 (共 269 条)
+#
+# ============ 分工与拍板记录 ============
 # 分工: 本集管「Gemini 专属后端 + 伴生域 + 基础设施域」(静态)；新 AI 域由 Repcz AI.list(滚动)承接，两者同指 AI 组
-# 拍板: googleapis.com 宽后缀改窄(YouTube 误伤实测)；play.googleapis.com 精确收编(GMS 主网关随 Gemini)；零 IP 条目
+# 拍板: googleapis.com 宽后缀改窄(YouTube 误伤实测)；play.googleapis.com 精确收编(GMS 主网关随 Gemini)；
+#       googleusercontent.com 宽后缀保留(静态 CDN 无账号语义)；AI 组 select 钉死出口(风控一致性)
 # 三修: 2026-09-28 实测漏网收编 —— oauth2 / oauthaccountmanager(账号 OAuth 基础设施·低频) 精确补入；
 #       DOMAIN-KEYWORD,-pa.googleapis.com 一条封死 -pa 动态命名空间(signaler/growth/notifications 等未来新后端全兜)
 #
