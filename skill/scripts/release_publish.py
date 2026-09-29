@@ -285,9 +285,14 @@ def build_days(root):
                      'is_current': any(v['is_current'] for v in vs), 'fams': fams})
     return days
 
-def asset_name(path):
-    """固定名：归档原名（lazy_v1.8.conf）剥掉版本段（→ lazy.conf）。"""
-    return re.sub(r'_(v\d+(?:\.\d+)?)', '', os.path.basename(path))
+def asset_name(kern, path):
+    """固定名 = 内核前缀 + 产品线（如 surge-lazy.conf）：Assets 面板自解释，
+    不必依赖「.conf=Surge / .yaml=Egern」的圈内约定。"""
+    return kern + '-' + re.sub(r'_(v\d+(?:\.\d+)?)', '', os.path.basename(path))
+
+# 资产固定名全集 —— check_releases 的 R2 白名单从这派生，单一真源防两份手抄漂移。
+ASSET_NAMES = {f'{kern}-{fam}{ext}' for kern in KERN_LABEL for fam in FAM_CN
+               for ext in ('.conf', '.min.conf', '.yaml', '.min.yaml')}
 
 def _fam_section(day, fam):
     """一个产品线小节：版本区间头 + 逐版本要点（条目间空一行，松散列表加宽留白）。"""
@@ -325,7 +330,7 @@ def build_notes(day):
             info = day['fams'].get(fam, {}).get('assets', {}).get(kern)
             if not info:
                 continue
-            name = asset_name(info['full'])
+            name = asset_name(kern, info['full'])
             buttons.append(f'[![Download {KERN_LABEL[kern]} {fam}]({badge_url(kern, fam)})]({DL}/{day["tag"]}/{name})')
     if buttons:
         lines += [' '.join(buttons), '']
@@ -422,22 +427,26 @@ def apply(days, token):
             if patch:
                 api_req(f"{API}/releases/{rel['id']}", token, 'PATCH', patch)
                 updated.append(tag)
+            # 资产 reconcile 以期望清单为准：缺的补传、同名不同内容的删传、
+            # 清单外的（如改名前的旧名资产）删除 —— 防改名/换版后残留
             have = {a['name']: a for a in rel.get('assets', [])}
+            expected = {}
             for fam in FAMS:
                 for kern, info in day['fams'].get(fam, {}).get('assets', {}).items():
                     for key in ('full', 'min'):
-                        path = os.path.join(repo_root(), info[key])
-                        name = asset_name(info[key])
-                        old = have.get(name)
-                        if old is not None and _asset_stale(old, path):
-                            api_req(f"{API}/releases/assets/{old['id']}", token, 'DELETE')
-                            old = None
-                        if old is not None:
-                            continue
-                        with open(path, 'rb') as fh:
-                            raw = fh.read()
-                        api_req(f"{UPLOAD}/{rel['id']}/assets?name={name}", token, 'POST',
-                                raw=raw, ctype='application/octet-stream')
+                        expected[asset_name(kern, info[key])] = os.path.join(repo_root(), info[key])
+            deleted = set()
+            for a in rel.get('assets', []):
+                if a['name'] not in expected or _asset_stale(a, expected[a['name']]):
+                    api_req(f"{API}/releases/assets/{a['id']}", token, 'DELETE')
+                    deleted.add(a['name'])
+            for name, path in expected.items():
+                if name in have and name not in deleted:
+                    continue
+                with open(path, 'rb') as fh:
+                    raw = fh.read()
+                api_req(f"{UPLOAD}/{rel['id']}/assets?name={name}", token, 'POST',
+                        raw=raw, ctype='application/octet-stream')
             # Latest 只钉现行日；未指向时补钉一次
             if day['is_current'] and not latest_ok:
                 api_req(f"{API}/releases/{rel['id']}", token, 'PATCH', {'make_latest': 'true'})

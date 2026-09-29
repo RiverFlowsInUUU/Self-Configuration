@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Release 方案断言（时间线模型：一个更新日 = 一个 Release，tag = vYYYY-MM-DD）。
+r"""Release 方案断言（时间线模型：一个更新日 = 一个 Release，tag = vYYYY-MM-DD）。
 
 用法（仓库根目录）:
     python skill/tests/check_releases.py
@@ -20,8 +20,8 @@ REPO = os.environ.get('GITHUB_REPO', 'RiverFlowsInUUU/Self-Configuration')
 API = f'https://api.github.com/repos/{REPO}'
 TAG_RE = re.compile(r'^v(\d{4}-\d{2}-\d{2})$')
 VER_STYLE = re.compile(r'(?i)_?v\d+(\.\d+)?')          # 资产文件名里任何版本号样式都算违规
-ALLOWED_ASSETS = {f'{fam}{ext}' for fam in ('lazy', 'routing')
-                  for ext in ('.conf', '.min.conf', '.yaml', '.min.yaml')}
+# 资产固定名白名单从 release_publish.ASSET_NAMES 派生（单一真源，手抄两份必漂移），
+# 在 main() 里装载 rp 后赋值。
 FAM_CN = {'lazy': '懒人版', 'routing': '分流版'}
 
 def git(*a):
@@ -71,6 +71,7 @@ def main():
     spec.loader.exec_module(rp)
 
     days = rp.build_days(git('rev-parse', '--show-toplevel'))
+    allowed_assets = rp.ASSET_NAMES          # R2 白名单 = 发布器单一真源派生
     day_by_tag = {d['tag']: d for d in days}
     # 覆盖期望：(fam, ver) → 应出现的日期 tag（取该版本的诞生日期）
     want_pair_day = {}
@@ -96,9 +97,9 @@ def main():
         seen.add(tag)
         for a in r.get('assets', []):
             name = a['name']
-            judge(name in ALLOWED_ASSETS and not VER_STYLE.search(name), 'R2',
-                  f'{tag}/{name}: 资产命名' if name in ALLOWED_ASSETS and not VER_STYLE.search(name)
-                  else f'{tag}/{name}: 资产文件名带版本号或不在固定名集合（{sorted(ALLOWED_ASSETS)}）')
+            judge(name in allowed_assets and not VER_STYLE.search(name), 'R2',
+                  f'{tag}/{name}: 资产命名' if name in allowed_assets and not VER_STYLE.search(name)
+                  else f'{tag}/{name}: 资产文件名带版本号或不在固定名集合（{sorted(allowed_assets)}）')
         day = day_by_tag.get(tag)
         if day:
             want_title = rp.release_title(day)

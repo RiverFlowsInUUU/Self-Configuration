@@ -326,7 +326,7 @@ python skill/tests/check_portability.py
 
 **tag**：`vYYYY-MM-DD`（该日版本的诞生日期），指向 main。tag 是发布层身份，**允许带日期** —— §6.1"带版本号的订阅 URL 是错的"指的是指向 `raw/main` 漂移内容的地址；Release 资产 URL 是钉版快照，允许且鼓励用于钉版。
 
-**资产**：当日各产品线最终版本的两内核文件（完整版 + `.min`），固定名（`lazy.conf` / `lazy.min.conf` / `lazy.yaml` / `lazy.min.yaml`，routing 同理），单张最多 8 件 —— **一律不带版本号**，这是铁律；版本号仅存在于正文条目。单边内核日如实注明（如某日懒人版仅 Surge 内核有内容），不硬凑。
+**资产**：当日各产品线最终版本的两内核文件（完整版 + `.min`），固定名**带内核前缀**（`surge-lazy.conf` / `surge-lazy.min.conf` / `egern-lazy.yaml` / `egern-routing.min.yaml` 这样 —— Assets 面板自解释，不依赖「.conf=Surge / .yaml=Egern」的圈内约定），单张最多 8 件 —— **一律不带版本号**，这是铁律；版本号仅存在于正文条目。固定名全集单一真源 = `release_publish.ASSET_NAMES`，check_releases 的 R2 白名单从它派生。单边内核日如实注明（如某日懒人版仅 Surge 内核有内容），不硬凑。
 
 **标题与说明模板**（`release_publish.py` 自动生成，字段固定防漂移）：
 
