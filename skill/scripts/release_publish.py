@@ -20,7 +20,7 @@
     - 单边内核日如实注明（如 Egern 内核当日无内容），不硬凑；
     - 发新版本前必须先补 DAY_THEMES 一行 + PUBLIC_NOTES 对应条目 —— 动线⑦的一部分。
 """
-import argparse, json, os, re, subprocess, sys, urllib.request
+import argparse, hashlib, json, os, re, subprocess, sys, time, urllib.request
 
 REPO = os.environ.get('GITHUB_REPO', 'RiverFlowsInUUU/Self-Configuration')
 API = f'https://api.github.com/repos/{REPO}'
@@ -37,40 +37,9 @@ def badge_url(kern, fam):
     return (f"https://img.shields.io/badge/{KERN_LABEL[kern]}-{FAM_CN[fam]}_下载-"
             f"{KERN_COLOR[kern]}?style=for-the-badge")
 
-# Release 标题 = 分类 emoji + 分工 + 诞生日期 + 一句主题（版本号由 tag 芯片承载）。
-# 与 PUBLIC_NOTES 一一对应，26 个标题各不相同 —— 禁止「维护性更新」这类通用标题复用。
-# 分工与日期由 release_title 统一拼装，此处只写主题，不要重复出现「懒人版/分流版」字样。
-# 文风 = 面向用户的正式产品语言（参考 Apple 更新说明）：专业、克制、通俗，不用文言腔。
-HEADLINES = {
-    ('lazy', 'v1.0'): ('🚀', '首次公开发布'),
-    ('lazy', 'v1.1'): ('📝', '规则注释说明更新'),
-    ('lazy', 'v1.2'): ('🛫', '新增订阅槽位'),
-    ('lazy', 'v1.3'): ('📶', 'Wi-Fi 自动暂停'),
-    ('lazy', 'v1.4'): ('📚', '文档路径修正'),
-    ('lazy', 'v1.5'): ('📚', '文档结构迁移'),
-    ('lazy', 'v1.6'): ('🧹', '广告组与 Apple 规则优化'),
-    ('lazy', 'v1.7'): ('🏷️', '规则集更名为 CN-Domains'),
-    ('lazy', 'v1.8'): ('🔄', 'AI 规则集更换新源'),
-    ('lazy', 'v1.9'): ('🧩', '自托管 AI 域名整合'),
-    ('routing', 'v1'): ('🚀', '分流版首次发布'),
-    ('routing', 'v2'): ('🛡️', 'DNS 配置重构与防泄露强化'),
-    ('routing', 'v2.1'): ('🧹', '配置精简'),
-    ('routing', 'v2.2'): ('🛫', '订阅槽位精简与 MAX 智能筛选'),
-    ('routing', 'v2.3'): ('🛠️', '修复分组断流与筛选误判'),
-    ('routing', 'v2.4'): ('⏱️', '规则集支持每日自动更新'),
-    ('routing', 'v3'): ('🧭', '规则体系与 Surge 全面对齐'),
-    ('routing', 'v3.1'): ('⏱️', '规则集更新周期调整为每周'),
-    ('routing', 'v3.2'): ('🔬', '解析策略优化与新增系统快照集'),
-    ('routing', 'v3.3'): ('👥', '新增占位节点与默认出口'),
-    ('routing', 'v3.4'): ('📝', '订阅说明修正'),
-    ('routing', 'v3.5'): ('📶', 'Wi-Fi 自动暂停'),
-    ('routing', 'v3.6'): ('📚', '文档结构迁移'),
-    ('routing', 'v3.7'): ('🏷️', '规则集更名为 CN-Domains'),
-    ('routing', 'v3.8'): ('🔄', 'AI 规则集更换新源'),
-    ('routing', 'v3.9'): ('🧩', '自托管 AI 域名整合'),
-}
-
-# 每个更新日的主题（标题 = emoji + 日期 + 主题；tag = v<日期>）。
+# 每个更新日的主题（Release 标题 = 分类 emoji + 日期 + 主题；tag = v<日期>）。
+# 禁止「维护性更新」这类通用兜底标题复用；文风 = 面向用户的正式产品语言
+# （参考 Apple 更新说明）：专业、克制、通俗，不用文言腔。
 # 发新版本前必须先在此补一行 —— 动线⑦的一部分。
 DAY_THEMES = {
     '2026-09-24': ('🚀', '首次发布与分流版重构'),
@@ -180,7 +149,7 @@ PUBLIC_NOTES = {
         '新增 Wi-Fi 自动暂停（SSID Setting）：连接到可信网络时自动停用代理，离开后自动恢复。此功能仅 Surge 内核支持，Egern 内核无对应配置项。',
     ],
     ('routing', 'v3.6'): [
-        '配置内的文档引用路径已迁移至仓库的新目录结构。分流行为无变化。',
+        '配置内的文档引用路径已迁移至仓库的新目录结构。分流行为无变化。此改动仅涉及 Egern 内核，Surge 内核仅同步版本号。',
     ],
     ('routing', 'v3.7'): [
         '国内域名规则集更名为 CN-Domains，在客户端日志中更易识别。分流行为无变化。此改动仅涉及 Egern 内核，Surge 内核仅同步版本号。',
@@ -401,9 +370,13 @@ def existing_releases(token):
 def _asset_stale(asset, path):
     """Release 上已有同名资产、但内容与本地文件不一致（如归组调整后同一固定名换了版本内容）。
 
-    先比大小（最快），同尺寸再下载全量比对；下载失败视为不陈旧，宁可跳过不误删。"""
+    优先用 API 返回的 digest（sha256）在本地比对，零下载；digest 缺失才退回
+    大小 + 下载全量比对；下载失败视为不陈旧，宁可跳过不误删。"""
     with open(path, 'rb') as fh:
         local = fh.read()
+    digest = asset.get('digest') or ''
+    if digest.startswith('sha256:'):
+        return digest != 'sha256:' + hashlib.sha256(local).hexdigest()
     if asset.get('size') != len(local):
         return True
     try:
@@ -437,7 +410,6 @@ def apply(days, token):
                               'make_latest': 'true' if day['is_current'] else 'false'}) as r:
                     rel = json.load(r)
                 created.append(tag)
-                import time
                 time.sleep(2)                          # 拉开 created_at，保证列表排序稳定
             # 幂等 reconcile：已存在的 Release 标题/说明与当前模板不一致就回写
             new_body = build_notes(day)
