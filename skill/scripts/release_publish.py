@@ -8,7 +8,9 @@
 
 规矩（详见 skill/reference/shared/ops.md §6.9，断言在 skill/tests/check_releases.py）:
     - tag 允许带版本号（`lazy-v1.8` / `routing-v3`）；资产文件名一律不带版本号（固定名四件脸）；
-    - 说明中明确版本号（`lazy_v1.8`）；历史条目标注 📦 补发（retroactive），现行版标注现行；
+    - 说明中明确版本号（`lazy_v1.8`）；历史条目标注 📦 历史版本，现行版标注 🟢 当前版本；
+    - **说明是面向公众的产品更新日志**：变更摘要一律取自 PUBLIC_NOTES 表（公众向措辞），
+      禁止把内部 commit subject（用户拍板 / 实测 / 入档等过程语言）直接贴上去；
     - 资产 = 该分工该版本两内核现有所属文件（完整版 + .min），缺口侧如实注明，不硬凑；
     - 内容未变的分工不单独发 Release —— Release 挂的是分工版本，不是改动事件。
 """
@@ -17,8 +19,38 @@ import argparse, json, os, re, subprocess, sys, urllib.request
 REPO = os.environ.get('GITHUB_REPO', 'RiverFlowsInUUU/Self-Configuration')
 API = f'https://api.github.com/repos/{REPO}'
 UPLOAD = f'https://uploads.github.com/repos/{REPO}/releases'
-BULK_MARK = '流程补课'          # 大重构一次性归档的 commit，不逐版重建变更说明
 FAMS = ('lazy', 'routing')
+
+# 公众向更新摘要（Release 页是产品对外的更新日志，不搬运内部 commit subject）。
+# 键：(family, version)。发新版本前必须先在此补一行 —— 动线⑦的一部分。
+PUBLIC_NOTES = {
+    ('lazy', 'v1.0'): '首个公开版本：固定订阅槽位、广告拦截、AI 与常用服务分流，开箱即用。',
+    ('lazy', 'v1.1'): '维护性更新：文档与注释口径修正，配置行为不变。',
+    ('lazy', 'v1.2'): '新增隐藏订阅槽位与占位节点，客户端导入后直接填入订阅即可使用。',
+    ('lazy', 'v1.3'): '新增按 Wi-Fi 网络自动暂停（SSID Setting）：回到可信网络时自动停用代理。',
+    ('lazy', 'v1.4'): '维护性更新：历史版本归档机制恢复，配置行为不变。',
+    ('lazy', 'v1.5'): '维护性更新：配置内注释指向修正。',
+    ('lazy', 'v1.6'): '维护性更新：文件结构对齐与注释清理，分流行为不变。',
+    ('lazy', 'v1.7'): '国内域名规则集更名为 CN-Domains，日志中更易识别，分流行为不变。',
+    ('lazy', 'v1.8'): 'AI 服务规则集更换为持续维护的上游，覆盖 ChatGPT、Gemini、Grok、Sora 等更多 AI 服务。',
+    ('lazy', 'v1.9'): '新增自托管 AI 域名整合列表：Google、GitHub 伴生域名并入 AI 分流，ChatGPT 相关基础设施域名不再漏出；AI 组改为默认手动指定出口。',
+    ('routing', 'v1'): '分流版初始发布：完整的应用 / 地区分组与流媒体规则（本版本仅提供 Egern 侧文件）。',
+    ('routing', 'v2'): '分流版早期演进版本：分组与规则结构调整。',
+    ('routing', 'v2.1'): '分流版早期演进版本：分组与规则结构调整。',
+    ('routing', 'v2.2'): '分流版早期演进版本：分组与规则结构调整。',
+    ('routing', 'v2.3'): '分流版早期演进版本：分组与规则结构调整。',
+    ('routing', 'v2.4'): '分流版早期演进版本：分组与规则结构调整。',
+    ('routing', 'v3'): '分组与规则体系重构，两内核结构对齐。',
+    ('routing', 'v3.1'): '维护性更新。',
+    ('routing', 'v3.2'): '维护性更新：配置内注释修正。',
+    ('routing', 'v3.3'): '新增隐藏订阅槽位与占位节点，客户端导入后直接填入订阅即可使用。',
+    ('routing', 'v3.4'): '维护性更新：注释读数修正（本版本仅提供 Egern 侧文件）。',
+    ('routing', 'v3.5'): '维护性更新：历史版本归档机制恢复，配置行为不变。',
+    ('routing', 'v3.6'): '维护性更新：结构对齐与注释清理。',
+    ('routing', 'v3.7'): '国内域名规则集更名为 CN-Domains，日志中更易识别，分流行为不变。',
+    ('routing', 'v3.8'): 'AI 服务规则集更换为持续维护的上游，覆盖 ChatGPT、Gemini、Grok、Sora 等更多 AI 服务。',
+    ('routing', 'v3.9'): '新增自托管 AI 域名整合列表：伴生域名精确并入 AI 分流，ChatGPT 相关基础设施域名不再漏出。',
+}
 
 def git(*a):
     return subprocess.check_output(['git', *a], text=True).strip()
@@ -55,18 +87,21 @@ def archive_min(root, kern, fam, ver):
     ext = '.conf' if kern == 'surge' else '.yaml'
     return os.path.join(root, kern, 'profiles', 'config_old', f'{fam}_{ver}.min{ext}')
 
-def archive_meta(root, kern, fam, ver):
-    """归档快照的入档时间与提交主题（取最近一次入档）。"""
-    p = os.path.join(kern, 'profiles', 'config_old', f'{fam}_{ver}{".conf" if kern == "surge" else ".yaml"}')
+def version_date(root, kern, fam, ver):
+    """该版本内容的诞生日期：归档快照的 blob 在现役 profile 历史中首次出现的提交。
+
+    （旧实现取"归档文件被加入 repo 的提交"= 退役提交，永远晚一个版本 —— 已废弃。）
+    历史重写过的早期版本可能找不到，返回 None 由调用方决定省略。"""
+    ext = '.conf' if kern == 'surge' else '.yaml'
+    arch = os.path.join(kern, 'profiles', 'config_old', f'{fam}_{ver}{ext}')
     try:
-        log = git('log', '--diff-filter=A', '--format=%as%x00%s', '--', p)
+        sha = git('rev-parse', f'HEAD:{arch.replace(os.sep, "/")}')
+        log = git('log', '--reverse', '--format=%as', '--find-object=' + sha,
+                  '--', f'{kern}/profiles/{fam}{ext}'.replace(os.sep, '/'))
+        lines = [l for l in log.splitlines() if l.strip()]
+        return lines[0] if lines else None
     except subprocess.CalledProcessError:
-        return None, None
-    lines = [l for l in log.splitlines() if l.strip()]
-    if not lines:
-        return None, None
-    date, subj = lines[-1].split('\x00', 1)
-    return date, subj
+        return None
 
 def build_plan(root):
     act = active_versions(root)
@@ -92,9 +127,9 @@ def build_plan(root):
                     entry['kerns'][kern] = None
                     continue
                 mn = full[:full.rindex(ext)] + f'.min{ext}'
-                date, subj = (None, None) if entry['is_current'] else archive_meta(root, kern, fam, ver)
+                date = None if entry['is_current'] else version_date(root, kern, fam, ver)
                 entry['kerns'][kern] = {'full': os.path.relpath(full, root), 'min': os.path.relpath(mn, root),
-                                        'date': date, 'subj': subj}
+                                        'date': date}
             plan.append(entry)
     return plan
 
@@ -103,35 +138,30 @@ def asset_name(path):
     return re.sub(r'_(v\d+(?:\.\d+)?)', '', os.path.basename(path))
 
 def build_notes(e):
+    """Release 说明（面向公众的产品更新日志，不是内部 commit 记录）。"""
     fam, ver, tag = e['family'], e['version'], e['tag']
     kerns = [k for k in ('surge', 'egern') if e['kerns'][k]]
-    lines = [f"## `{fam}_{ver}` · {'🟢 现行版' if e['is_current'] else '📦 补发（retroactive）'}", '']
+    lines = [f"## `{fam}_{ver}` · {'🟢 当前版本' if e['is_current'] else '📦 历史版本'}", '']
     if e['is_current']:
-        lines += ['> 🟢 现行服役版的钉版快照：内容与 `raw/main` 固定名文件一致；此后以新 Release 为准，本条不再更新。', '']
+        lines += ['> 与仓库固定订阅地址（raw/main）内容一致。更新配置请以后续新版本为准。', '']
     else:
-        lines += ['> 📦 历史版本补发：内容取自 `config_old/` 归档快照，与其服役时逐字节相同（`check_min_pair.py` V6 断言守）。', '']
-    lines.append(f'- **版本号**：`{fam}_{ver}`' + ('（Surge 与 Egern 同号）' if len(kerns) == 2 else ''))
-    dates = {e['kerns'][k]['date'] for k in kerns if e['kerns'][k]['date']}
+        lines += ['> 历史版本的完整快照，仅供回滚与对照。日常使用请选择最新版本。', '']
+    summary = PUBLIC_NOTES.get((fam, ver))
+    lines.append(f'- **版本**：`{fam}_{ver}`')
+    dates = sorted({e['kerns'][k]['date'] for k in kerns if e['kerns'][k]['date']})
     if dates:
-        lines.append(f'- **归档时间**：{" / ".join(sorted(dates))}')
-    if e['is_current']:
-        lines.append('- **变更摘要**：现行版钉版发布，变更历史见 git log')
-    else:
-        subjs = {e['kerns'][k]['subj'] for k in kerns if e['kerns'][k]['subj']}
-        if subjs and all(BULK_MARK not in (s or '') for s in subjs):
-            lines.append(f'- **变更摘要**：{sorted(subjs)[0]}')
-        else:
-            lines.append('- **变更摘要**：补发条目不逐版重建变更说明；版本演进见 git 历史（备份 tag `pre-cleanup-20260927`）')
+        lines.append(f'- **发布日期**：{dates[0]}')
+    if summary:
+        lines.append(f'- **更新内容**：{summary}')
     assets = []
     if 'surge' in kerns:
-        assets.append(f"Surge `{asset_name(e['kerns']['surge']['full'])}` / `{asset_name(e['kerns']['surge']['min'])}`")
+        assets.append(f"Surge [`{asset_name(e['kerns']['surge']['full'])}`](../../releases/download/{tag}/{asset_name(e['kerns']['surge']['full'])}) / [`{asset_name(e['kerns']['surge']['min'])}`](../../releases/download/{tag}/{asset_name(e['kerns']['surge']['min'])})")
     if 'egern' in kerns:
-        assets.append(f"Egern `{asset_name(e['kerns']['egern']['full'])}` / `{asset_name(e['kerns']['egern']['min'])}`")
-    lines.append(f'- **资产**：{" · ".join(assets)} —— 文件名不含版本号，版本号仅存在于本说明与 tag')
+        assets.append(f"Egern [`{asset_name(e['kerns']['egern']['full'])}`](../../releases/download/{tag}/{asset_name(e['kerns']['egern']['full'])}) / [`{asset_name(e['kerns']['egern']['min'])}`](../../releases/download/{tag}/{asset_name(e['kerns']['egern']['min'])})")
+    lines.append(f'- **下载**：{" · ".join(assets)}')
     missing = [k for k in ('surge', 'egern') if k not in kerns]
     if missing:
-        lines.append(f'- **缺口**：{"、".join(missing)} 侧无本版归档（历史缺口，按仓库纪律保留不补）')
-    lines += ['', f'- 版本号与命名规则：[ops.md §6.9](../../blob/main/skill/reference/shared/ops.md)']
+        lines.append(f'- **说明**：本版本仅提供 {"、".join(missing)} 侧文件（历史缺口，如实保留）')
     return '\n'.join(lines)
 
 def api_req(url, token, method='GET', data=None, ctype='application/json', raw=None):
@@ -157,7 +187,16 @@ def existing_releases(token):
 
 def apply(plan, token, only_family=None):
     ex = {r['tag_name']: r for r in existing_releases(token)}
-    created, skipped, failed = [], [], []
+    created, updated, skipped, failed = [], [], [], []
+    current_tags = {e['tag'] for e in plan if e['is_current']}
+    # Latest 已指向任一现行版就不再碰 make_latest：逐个 PATCH 会让指针在
+    # 两个现行版之间抖动，与 CI 的 Releases 检查步构成竞态（0929 实测红过一次）
+    req = urllib.request.Request(f'{API}/releases/latest',
+                                 headers={'User-Agent': 'self-configuration-release'})
+    try:
+        latest_ok = json.load(urllib.request.urlopen(req)).get('tag_name') in current_tags
+    except Exception:                                  # 404 = 仓库还没有任何 Latest
+        latest_ok = False
     for e in plan:
         if only_family and e['family'] != only_family:
             continue
@@ -174,6 +213,12 @@ def apply(plan, token, only_family=None):
                               'make_latest': 'true' if e['is_current'] else 'false'}) as r:
                     rel = json.load(r)
                 created.append(tag)
+            # 幂等 reconcile：已存在的 Release 说明与当前模板不一致就回写
+            # （公众向模板改版 / 摘要修订都靠这一步落到既有 Release 上）
+            new_body = build_notes(e)
+            if (rel.get('body') or '') != new_body:
+                api_req(f"{API}/releases/{rel['id']}", token, 'PATCH', {'body': new_body})
+                updated.append(tag)
             have = {a['name'] for a in rel.get('assets', [])}
             for kern in ('surge', 'egern'):
                 info = e['kerns'][kern]
@@ -188,15 +233,15 @@ def apply(plan, token, only_family=None):
                         raw = fh.read()
                     api_req(f"{UPLOAD}/{rel['id']}/assets?name={name}", token, 'POST',
                             raw=raw, ctype='application/octet-stream')
-            # 幂等 reconcile：已存在的现行版 Release 也钉一次 Latest
-            # （补发批跑漏钉的根因：Latest 由创建时间决定，与版本无关）
-            if e['is_current']:
+            # 幂等 reconcile：仅在 Latest 未指向现行版时补钉（见函数头部说明）
+            if e['is_current'] and not latest_ok:
                 api_req(f"{API}/releases/{rel['id']}", token, 'PATCH', {'make_latest': 'true'})
             if tag not in created:
                 skipped.append(tag)
         except Exception as exc:                       # noqa: BLE001 —— 逐条报告，不中断后续
             failed.append((tag, str(exc)[:120]))
     print(f'\n创建 {len(created)}：{", ".join(created) or "—"}')
+    print(f'说明回写 {len(updated)}：{", ".join(updated) or "—"}')
     print(f'已存在跳过 {len(skipped)}：{", ".join(skipped) or "—"}')
     print(f'失败 {len(failed)}：{failed or "—"}')
     return 0 if not failed else 1
