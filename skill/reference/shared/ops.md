@@ -262,7 +262,7 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/pro
 ③ 核豁免行：       .min 由生成器重算正文、按锚点继承注释 —— 仍要肉眼确认 `# audit-waive:` 那几行在 min 版里读得到
 ④ 升版（要对外发布时）：直接改四份 profile 头注里的 `#! version=`（`.min` 由生成器重算继承）
 ⑤ 收尾：`python skill/tests/check_secrets.py && python skill/tests/check_portability.py && python skill/tests/check_min_pair.py && python skill/tests/check_links.py .`（push 后 CI 会再跑一遍同组检查）
-⑥ 发布 Release（push 之后）：`python skill/scripts/release_publish.py --family <lazy|routing> --apply`（规矩见 §6.9）
+⑥ 发布 Release（push 之后）：`python skill/scripts/release_publish.py --apply`（时间线模型与规矩见 §6.9；发版前先补 `DAY_THEMES` 当日主题 + `PUBLIC_NOTES` 对应条目）
 ```
 
 > **注意**　`.min` 不手工编辑。手工同步迟早漂 —— `check_min_pair.py` 会拿完整版对拍 `.min`，漂了就红。
@@ -318,59 +318,65 @@ python skill/tests/check_portability.py
 
 ### 6.9 Release 发布规矩
 
-版本信息现在有三层落点：**现役**（固定名四件，版本号只在头注）→ **归档**（`config_old/`，文件名带头注同号）→ **发布**（GitHub Release，tag 与说明带版本号）。发布层是归档层之上的对外窗口，不替代归档，也不改变 §6.1 的任何条文。
+版本信息现在有三层落点：**现役**（固定名四件，版本号只在头注）→ **归档**（`config_old/`，文件名带头注同号）→ **发布**（GitHub Release）。发布层是归档层之上的对外窗口，不替代归档，也不改变 §6.1 的任何条文。
 
-**粒度**：一个分工版本 = 一个 Release（lazy 与 routing 是两条独立序列，各发各的；一次改动通常只动一边）。内容未变的分工不单独发 Release。
+**粒度（时间线模型，2026-09-29 定稿）**：一个更新日 = 一个 Release，懒人版与分流版**同日更新合并进同一张**。为什么不用"一个分工版本 = 一个 Release"：Releases 列表按创建时间排序且 `created_at` 不可回写，分工版补发会让列表变成"先懒人版一块、再分流版一块"，时间线永远不正 —— 只有按日合并，列表顺序才与真实演进一致。同日多个版本在正文里逐版本列要点（内容不丢），资产只挂当日各产品线**最终版本**；回滚粒度 = 天，更细粒度走 git 历史与 `config_old/`。
 
-**tag**：`<family>-v<X.Y>`（如 `lazy-v1.9`、`routing-v3`），指向 main。tag 是发布层身份，**允许带版本号** —— §6.1"带版本号的订阅 URL 是错的"指的是指向 `raw/main` 漂移内容的地址；Release 资产 URL 是钉版快照，允许且鼓励用于钉版。
+**tag**：`vYYYY-MM-DD`（该日版本的诞生日期），指向 main。tag 是发布层身份，**允许带日期** —— §6.1"带版本号的订阅 URL 是错的"指的是指向 `raw/main` 漂移内容的地址；Release 资产 URL 是钉版快照，允许且鼓励用于钉版。
 
-**资产**：该分工该版本两内核现有所属文件（完整版 + `.min`），文件名用**固定名四件脸**（`lazy.conf` / `lazy.min.conf` / `lazy.yaml` / `lazy.min.yaml`，routing 同理）——**一律不带版本号**，这是铁律；版本号仅存在于 tag 与说明正文。单侧缺口（如 routing v1–v2.4 仅 Egern 有归档）如实注明，不硬凑。
+**资产**：当日各产品线最终版本的两内核文件（完整版 + `.min`），固定名（`lazy.conf` / `lazy.min.conf` / `lazy.yaml` / `lazy.min.yaml`，routing 同理），单张最多 8 件 —— **一律不带版本号**，这是铁律；版本号仅存在于正文条目。单边内核日如实注明（如某日懒人版仅 Surge 内核有内容），不硬凑。
 
 **标题与说明模板**（`release_publish.py` 自动生成，字段固定防漂移）：
 
-标题 = 分类 emoji + 分工 + 诞生日期 + 一句主题（主题取自 `HEADLINES` 表，26 个标题各不相同，
-禁止通用句复用）；版本号由 tag 芯片承载，标题与正文**都不再重复**。说明正文顺序 =
-**更新内容 → 下载按钮 → 元信息小字**，分工与日期只在标题出现（按钮上分工再显一次），
-元信息收进底部 sub 一行：
+标题 = 分类 emoji + 日期 + 当日主题（主题取自 `DAY_THEMES` 表）。正文按产品线分小节，
+每版本一行 **vX.Y** 头 + 公众向要点；要点之间空一行（GFM 松散列表）加宽留白：
 
 ```markdown
-🤖 分流版 · 2026-09-28 · AI 规则集换源   ← Release 标题（tag 芯片在旁显示 routing-v3.8）
+🔄 2026-09-28 · AI 规则集换源与自托管整合     ← Release 标题（tag 芯片在旁显示 v2026-09-28）
 
-- AI 服务规则集换源：改用持续滚动维护的上游（原 ACL4SSR 源已停更、缺 Gemini 新形态）。
+**懒人版** v1.7 → v1.9
 
-[Surge · 分流版下载] [Egern · 分流版下载]   ← shields.io 徽章，颜色编码内核、文字编码分工
+**v1.7**
+- 国内域名规则集更名为 CN-Domains，……
 
-<sub>历史版本，仅供回滚使用；日常使用请选择最新版本。
-.min 精简版与完整文件见页面底部的 Assets</sub>
+**v1.8**
+- AI 服务规则集更换为持续维护的上游，……
+
+**分流版** v3.7 → v3.9
+（同构）
+
+[Surge · 懒人版] [Egern · 懒人版] [Surge · 分流版] [Egern · 分流版]
+← shields.io 徽章，颜色编码内核、文字编码产品线；单边内核日该产品线只出一枚
+
+<sub>当前版本，与仓库订阅地址内容一致；资产为当日各产品线的最终版本；当日懒人版仅包含
+Surge 内核文件（Egern 内核当日无内容变化）；.min 精简版与完整文件见页面底部的 Assets。</sub>
 ```
 
-更新内容 = `PUBLIC_NOTES` 表的要点列表（1~4 条，**逐版本如实总结**，依据是 config_old
-相邻快照的逐行 diff —— 「维护性更新」「早期演进」这类万能句是模板句复用，禁止）。
-多条要点之间空一行（GFM 松散列表）让留白变宽 —— GitHub 剥掉正文 CSS，无法真设 line-height，
-这是行距的可行近似。
+更新内容 = `PUBLIC_NOTES` 表的要点列表（每版本 1~4 条，**逐版本如实总结**，依据是
+config_old 相邻快照的逐行 diff —— 「维护性更新」「早期演进」这类万能句是模板句复用，禁止）。
 **文风 = 面向用户的正式产品语言**（参考 Apple 更新说明）：完整句子、专业、克制、通俗；
 不用文言腔（口径修正 / 收编 / 压到最小 / 上线），不搬内部过程语言。
-现行版元信息为 `当前版本，与仓库订阅地址内容一致`，资产取自固定名四件本体；
-单侧缺口在 sub 末尾如实注明。下载按钮用 shields.io 在线徽章（`badge_url()`），不落仓库静态文件。
+**内核维度一律写全称「Surge 内核 / Egern 内核」** —— 与产品线词汇（懒人版/分流版）
+严格区分，任何一句里两个维度不得混写。下载按钮用 shields.io 在线徽章（`badge_url()`），不落仓库静态文件。
 
 **说明是面向公众的产品更新日志，不是内部 commit 记录**：变更摘要一律取自
 `release_publish.py` 的 `PUBLIC_NOTES` 表（公众向措辞），**禁止**把内部 commit subject
 直接贴上去（「用户拍板」「实测反馈」「入档」这类过程语言只属于本仓库内部，出现在
 Release 页就是内部讨论外泄）；「更新内容」写"这版给使用者带来了什么"，不写"我们怎么决定的"。
-**发新版本前必须先在 `PUBLIC_NOTES` 补一行摘要、`HEADLINES` 补一行标题** —— 这是动线⑦的一部分。
-（已修正的两处教训：①旧实现把"归档文件入 repo 的提交主题"当摘要，那永远是退役提交，
-写的实际是**下一个版本**的内容 —— 版号整体错位一格；②摘要直接搬运 commit subject。）
+**发新版本前必须先在 `PUBLIC_NOTES` 补对应条目、`DAY_THEMES` 补当日主题** —— 这是动线⑥的一部分。
+（已修正的教训：①旧实现把"归档文件入 repo 的提交主题"当摘要，那永远是退役提交，
+写的实际是**下一个版本**的内容 —— 版号整体错位一格；②摘要直接搬运 commit subject；
+③缺侧说明曾把"缺席的内核"写成"仅提供 XX 侧文件"，方向颠倒。）
 
 **命令**：
 
 ```bash
-python skill/scripts/release_publish.py                      # 计划模式：列清单 + 说明样例，不发
-python skill/scripts/release_publish.py --apply              # 补齐缺失 Release + 幂等回写既有说明（模板改版/摘要修订走这里）
-python skill/scripts/release_publish.py --family lazy --apply    # 日常动线 ⑦：只发本次升到的分工版本
-python skill/tests/check_releases.py                         # 断言：tag 形状 / 资产命名 / 标题与说明模板一致 / 归档全覆盖 / Latest
+python skill/scripts/release_publish.py                      # 计划模式：列日期分组清单 + 说明样例，不发
+python skill/scripts/release_publish.py --apply              # 补齐缺失 Release（按日期升序创建）+ 幂等回写
+python skill/tests/check_releases.py                         # 断言：tag 形状 / 资产命名 / 标题与正文模板一致 / 版本全覆盖 / Latest
 ```
 
-**判据**在 `skill/tests/check_releases.py`（CI 同跑）：R1 tag 形状且唯一；R2 资产文件名 ∈ 固定名集合且无版本号样式；R3 标题 = emoji + 主题句（与 `HEADLINES` 同源）且正文含分工名与当前/历史状态；R4 `config_old` 全部归档版本 + 现役两分工版本，每个都有对应 Release —— **删归档版本或删 Release 都会红**；R5 仓库级 **Latest** 必须落在现行两分工版本之一 —— Latest 由创建时间决定，与版本号无关（实测：26 个补发后 Latest 留在了 lazy-v1.8，现行却是 v1.9），`release_publish.py` 仅在 Latest 未指向现行版时补钉（逐个 PATCH 会让指针在两现行版间抖动，与 CI 竞态）；两分工并存时批量跑 last-wins（处理序 lazy → routing），日常动线⑦ `--family X` 把 Latest 钉到刚发的分工。
+**判据**在 `skill/tests/check_releases.py`（CI 同跑）：R1 tag = `vYYYY-MM-DD` 且唯一；R2 资产文件名 ∈ 固定名集合且无版本号样式；R3 标题与正文模板一致（与 `release_publish` 同源，取真 plan）；R4 覆盖 —— `config_old` 全部归档版本 + 现役版本，每个 (产品线, 版本) 都按诞生日期出现在对应日期 Release 的正文里（`**vX.Y**` 条目），**删归档版本或删 Release 都会红**；R5 仓库级 **Latest** = 含现行版本的那张（最新日期）。`release_publish.py` 仅在 Latest 未指向现行日时补钉（逐个 PATCH 会让指针抖动，与 CI 竞态）。
 
 ### 相关页面
 

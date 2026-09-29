@@ -1,19 +1,24 @@
 # -*- coding: utf-8 -*-
-"""Release 发布器：一个分工版本 = 一个 GitHub Release（tag = <family>-vX.Y）
+"""Release 发布器：一个更新日 = 一个 GitHub Release（tag = vYYYY-MM-DD）
+
+时间线模型（2026-09-29 定稿，取代旧的"一个分工版本 = 一个 Release"）：
+    Releases 列表按创建时间排序且 created_at 不可回写 —— 只有"一天一张"合并发版，
+    列表时间线才可能与真实演进一致。两张产品线同日更新合并进同一张 Release，
+    正文分「懒人版 / 分流版」小节逐版本列要点，资产 = 当日各产品线最终版本的
+    固定名文件（最多 8 件：两产品线 × 两内核 × 完整版/.min）。
 
 用法（仓库根目录）:
     python skill/scripts/release_publish.py                     # 计划模式：只列清单与说明样例，一个字不发
     python skill/scripts/release_publish.py --apply             # 按计划发布全部缺失的 Release（需 --token 或环境变量 GITHUB_TOKEN）
-    python skill/scripts/release_publish.py --family lazy --apply   # 日常动线⑦：只发指定分工缺失的 Release
 
 规矩（详见 skill/reference/shared/ops.md §6.9，断言在 skill/tests/check_releases.py）:
-    - tag 允许带版本号（`lazy-v1.8` / `routing-v3`）；资产文件名一律不带版本号（固定名四件脸）；
-    - Release 标题 = emoji + 一句主题（HEADLINES 表），版本号由 tag 芯片承载，正文不重复；
-    - 说明正文分工名贯穿（状态行 / 下载按钮 / Assets 提示各带「懒人版 / 分流版」）；
-    - **说明是面向公众的产品更新日志**：变更摘要一律取自 PUBLIC_NOTES 表（公众向措辞），
-      禁止把内部 commit subject（用户拍板 / 实测 / 入档等过程语言）直接贴上去；
-    - 资产 = 该分工该版本两内核现有所属文件（完整版 + .min），缺口侧如实注明，不硬凑；
-    - 内容未变的分工不单独发 Release —— Release 挂的是分工版本，不是改动事件。
+    - tag = vYYYY-MM-DD（版本诞生日期）；资产文件名一律不带版本号（固定名）；
+    - Release 标题 = emoji + 日期 + 当日主题（DAY_THEMES 表）；
+    - 正文按产品线分小节：每版本一行 **vX.Y** 头 + 公众向要点（PUBLIC_NOTES 表）；
+    - **说明是面向公众的产品更新日志**（参考 Apple 更新说明的正式产品语言），
+      禁止文言腔与内部过程语言；内核维度一律写全称「Surge 内核 / Egern 内核」；
+    - 单边内核日如实注明（如 Egern 内核当日无内容），不硬凑；
+    - 发新版本前必须先补 DAY_THEMES 一行 + PUBLIC_NOTES 对应条目 —— 动线⑦的一部分。
 """
 import argparse, json, os, re, subprocess, sys, urllib.request
 
@@ -65,6 +70,16 @@ HEADLINES = {
     ('routing', 'v3.9'): ('🧩', '自托管 AI 域名整合'),
 }
 
+# 每个更新日的主题（标题 = emoji + 日期 + 主题；tag = v<日期>）。
+# 发新版本前必须先在此补一行 —— 动线⑦的一部分。
+DAY_THEMES = {
+    '2026-09-24': ('🚀', '首次发布与分流版重构'),
+    '2026-09-25': ('🔬', '注释修正与解析策略优化'),
+    '2026-09-26': ('🛫', '订阅槽位与占位节点'),
+    '2026-09-27': ('📶', 'Wi-Fi 自动暂停与文档迁移'),
+    '2026-09-28': ('🔄', 'AI 规则集换源与自托管整合'),
+}
+
 # 公众向更新摘要（Release 页是产品对外的更新日志，不搬运内部 commit subject）。
 # 键：(family, version)，值 = 要点列表（1~4 条，逐版本如实总结，禁止模板句复用）。
 # 内容依据 = config_old 相邻版本快照的逐行 diff（行为改动 + 有意义的注释修正）。
@@ -86,7 +101,7 @@ PUBLIC_NOTES = {
         '仅填订阅或仅填节点均可正常使用。',
     ],
     ('lazy', 'v1.3'): [
-        '新增 Wi-Fi 自动暂停（SSID Setting）：连接到可信网络时自动停用代理，离开后自动恢复。此改动仅涉及 Surge。',
+        '新增 Wi-Fi 自动暂停（SSID Setting）：连接到可信网络时自动停用代理，离开后自动恢复。此功能仅 Surge 内核支持，Egern 内核无对应配置项。',
     ],
     ('lazy', 'v1.4'): [
         '修正了配置内的文档引用路径。分流行为无变化。',
@@ -99,7 +114,7 @@ PUBLIC_NOTES = {
         'Apple 系统服务规则集改为使用本仓库自托管的快照，两个内核使用同一来源。',
     ],
     ('lazy', 'v1.7'): [
-        '国内域名规则集更名为 CN-Domains，在客户端日志中更易识别。分流行为无变化。此改动仅涉及 Egern，Surge 仅同步版本号。',
+        '国内域名规则集更名为 CN-Domains，在客户端日志中更易识别。分流行为无变化。此改动仅涉及 Egern 内核，Surge 内核仅同步版本号。',
     ],
     ('lazy', 'v1.8'): [
         'AI 服务规则集更换为持续维护的上游，新增覆盖 Gemini、Sora、Grok 等服务。原上游已停止更新。',
@@ -153,13 +168,13 @@ PUBLIC_NOTES = {
         '修正了订阅占位符数量的说明。此为文档性修正，配置行为无变化。',
     ],
     ('routing', 'v3.5'): [
-        '新增 Wi-Fi 自动暂停（SSID Setting）：连接到可信网络时自动停用代理，离开后自动恢复。此改动仅涉及 Surge，Egern 仅同步版本号。',
+        '新增 Wi-Fi 自动暂停（SSID Setting）：连接到可信网络时自动停用代理，离开后自动恢复。此功能仅 Surge 内核支持；Egern 内核当日无内容变化，仅同步版本号。',
     ],
     ('routing', 'v3.6'): [
         '配置内的文档引用路径已迁移至仓库的新目录结构。分流行为无变化。',
     ],
     ('routing', 'v3.7'): [
-        '国内域名规则集更名为 CN-Domains，在客户端日志中更易识别。分流行为无变化。此改动仅涉及 Egern，Surge 仅同步版本号。',
+        '国内域名规则集更名为 CN-Domains，在客户端日志中更易识别。分流行为无变化。此改动仅涉及 Egern 内核，Surge 内核仅同步版本号。',
     ],
     ('routing', 'v3.8'): [
         'AI 服务规则集更换为持续维护的上游。原 ACL4SSR 源已停止更新，且缺少 Gemini 相关域名。',
@@ -234,9 +249,17 @@ def version_date(root, kern, fam, ver):
     arch = os.path.join(kern, 'profiles', 'config_old', f'{fam}_{ver}{ext}')
     return _blob_birth(root, kern, fam, arch)
 
-def build_plan(root):
+def build_days(root):
+    """按版本诞生日期分组：一天 = 一个候选 Release。
+
+    返回按日期升序的 day 列表：
+        {date, tag, emoji, theme, is_current,
+         fams: {fam: {'versions': [v1, v2...],   # 当日该产品线全部版本（升序）
+                      'entries':  [版本 dict...],
+                      'assets':   {kern: {full, min}},  # 当日最终版本的固定名资产
+                      }}}"""
     act = active_versions(root)
-    plan = []
+    versions = []
     for fam in FAMS:
         vers = set()
         for kern in ('surge', 'egern'):
@@ -246,69 +269,102 @@ def build_plan(root):
                     vers.add(parse_ver(f))
         vers.add(act[fam])
         for ver in sorted(vers, key=vkey):
-            entry = {'family': fam, 'version': ver, 'tag': f'{fam}-{ver}',
-                     'is_current': ver == act[fam], 'kerns': {}}
+            is_cur = ver == act[fam]
+            kerns = {}
             for kern in ('surge', 'egern'):
                 ext = '.conf' if kern == 'surge' else '.yaml'
-                if entry['is_current']:
-                    full = os.path.join(root, kern, 'profiles', f'{fam}{ext}')
-                else:
-                    full = archive_file(root, kern, fam, ver)
+                full = os.path.join(root, kern, 'profiles', f'{fam}{ext}') if is_cur \
+                    else archive_file(root, kern, fam, ver)
                 if not os.path.exists(full):
-                    entry['kerns'][kern] = None
+                    kerns[kern] = None
                     continue
                 mn = full[:full.rindex(ext)] + f'.min{ext}'
-                date = _blob_birth(root, kern, fam, os.path.relpath(full, root)) if entry['is_current'] \
+                date = _blob_birth(root, kern, fam, os.path.relpath(full, root)) if is_cur \
                     else version_date(root, kern, fam, ver)
-                entry['kerns'][kern] = {'full': os.path.relpath(full, root), 'min': os.path.relpath(mn, root),
-                                        'date': date}
-            dates = sorted({i['date'] for i in entry['kerns'].values() if i and i['date']})
-            entry['date'] = dates[0] if dates else None
-            plan.append(entry)
-    return plan
+                kerns[kern] = {'full': os.path.relpath(full, root),
+                               'min': os.path.relpath(mn, root), 'date': date}
+            dates = sorted({i['date'] for i in kerns.values() if i and i['date']})
+            versions.append({'family': fam, 'version': ver, 'is_current': is_cur,
+                             'kerns': kerns, 'date': dates[0] if dates else None})
+    grouped = {}
+    for v in versions:
+        grouped.setdefault(v['date'] or '未知日期', []).append(v)
+    days = []
+    for date in sorted(grouped):
+        vs = grouped[date]
+        fams = {}
+        for fam in FAMS:
+            fv = sorted((v for v in vs if v['family'] == fam), key=lambda v: vkey(v['version']))
+            if not fv:
+                continue
+            latest = fv[-1]
+            fams[fam] = {'versions': [v['version'] for v in fv], 'entries': fv,
+                         'assets': {k: latest['kerns'][k] for k in ('surge', 'egern')
+                                    if latest['kerns'].get(k)}}
+        emoji, theme = DAY_THEMES.get(date, ('📦', '配置更新'))
+        days.append({'date': date, 'tag': f'v{date}', 'emoji': emoji, 'theme': theme,
+                     'is_current': any(v['is_current'] for v in vs), 'fams': fams})
+    return days
 
 def asset_name(path):
-    """固定名四件脸：归档原名（lazy_v1.8.conf）剥掉版本段（→ lazy.conf）。"""
+    """固定名：归档原名（lazy_v1.8.conf）剥掉版本段（→ lazy.conf）。"""
     return re.sub(r'_(v\d+(?:\.\d+)?)', '', os.path.basename(path))
 
-def release_title(e):
-    """Release 标题：emoji + 分工 + 诞生日期 + 主题句（版本号由 tag 芯片承载）。"""
-    emoji, headline = HEADLINES.get((e['family'], e['version']),
-                                    ('📦', f"{FAM_CN[e['family']]} {e['version']}"))
-    date = e.get('date') or '早期版本'
-    return f'{emoji} {FAM_CN[e["family"]]} · {date} · {headline}'
-
-def build_notes(e):
-    """Release 说明（面向公众的产品更新日志）。
-
-    顺序：更新内容 → 下载按钮 → 元信息小字。分工与日期在标题里（release_title），
-    分工在按钮上也有；本函数只写内容与元信息，不再重复标题/按钮已有的信息。
-    版本号只由 tag 芯片承载。
-    行距：GitHub 会剥掉正文里的 CSS，无法真正设 line-height；用列表项之间空一行
-    （GFM 渲染为松散列表）让多条要点之间留白变宽，作为近似。"""
-    fam, ver, tag = e['family'], e['version'], e['tag']
-    kerns = [k for k in ('surge', 'egern') if e['kerns'][k]]
-    notes = PUBLIC_NOTES.get((fam, ver), [])
-    if isinstance(notes, str):
-        notes = [notes]
-    lines = []
-    for n in notes:
-        lines += [f'- {n}', '']
-    buttons = []
-    for kern in ('surge', 'egern'):
-        if kern not in kerns:
+def _fam_section(day, fam):
+    """一个产品线小节：版本区间头 + 逐版本要点（条目间空一行，松散列表加宽留白）。"""
+    info = day['fams'][fam]
+    vers = info['versions']
+    head = f"**{FAM_CN[fam]}** {vers[0]}" + (f" → {vers[-1]}" if len(vers) > 1 else '')
+    lines = [head, '']
+    for e in info['entries']:
+        notes = PUBLIC_NOTES.get((fam, e['version']), [])
+        if isinstance(notes, str):
+            notes = [notes]
+        if not notes:
             continue
-        name = asset_name(e['kerns'][kern]['full'])
-        buttons.append(f'[![Download {KERN_LABEL[kern]} {fam}]({badge_url(kern, fam)})]({DL}/{tag}/{name})')
+        lines += [f"**{e['version']}**", '']
+        for n in notes:
+            lines += [f'- {n}', '']
+    return lines
+
+def release_title(day):
+    """Release 标题：emoji + 日期 + 当日主题（tag 芯片在旁显示 vYYYY-MM-DD）。"""
+    return f"{day['emoji']} {day['date']} · {day['theme']}"
+
+def build_notes(day):
+    """Release 说明（面向公众的产品更新日志，正式产品语言）。
+
+    结构：各产品线小节（逐版本要点）→ 下载按钮（每产品线 × 每内核）→ 元信息小字。
+    行距：GitHub 剥掉正文 CSS，无法真设 line-height；用列表项间空一行（松散列表）近似。"""
+    lines = []
+    for fam in FAMS:
+        if fam in day['fams']:
+            lines += _fam_section(day, fam)
+    buttons = []
+    for fam in FAMS:
+        for kern in ('surge', 'egern'):
+            info = day['fams'].get(fam, {}).get('assets', {}).get(kern)
+            if not info:
+                continue
+            name = asset_name(info['full'])
+            buttons.append(f'[![Download {KERN_LABEL[kern]} {fam}]({badge_url(kern, fam)})]({DL}/{day["tag"]}/{name})')
     if buttons:
         lines += [' '.join(buttons), '']
-    meta = '当前版本，与仓库订阅地址内容一致' if e['is_current'] \
-        else '历史版本，仅供回滚使用；日常使用请选择最新版本'
-    meta += '。.min 精简版与完整文件见页面底部的 Assets'
-    missing = [k for k in ('surge', 'egern') if k not in kerns]
-    if missing:
-        meta += f'。此版本仅提供 {KERN_LABEL[missing[0]]} 侧文件（历史缺口，如实保留）'
-    lines.append(f'<sub>{meta}</sub>')
+    meta = []
+    if day['is_current']:
+        meta.append('当前版本，与仓库订阅地址内容一致')
+    meta.append('资产为当日各产品线的最终版本')
+    for fam in FAMS:
+        assets = day['fams'].get(fam, {}).get('assets', {})
+        missing = [k for k in ('surge', 'egern') if k not in assets]
+        if missing and len(missing) < 2:
+            have = [k for k in ('surge', 'egern') if k in assets]
+            meta.append(f'当日{FAM_CN[fam]}仅包含 {KERN_LABEL[have[0]]} 内核文件'
+                        f'（{KERN_LABEL[missing[0]]} 内核当日无内容变化）')
+        elif len(missing) == 2:
+            meta.append(f'当日{FAM_CN[fam]}无资产')
+    meta.append('.min 精简版与完整文件见页面底部的 Assets')
+    lines.append('<sub>' + '；'.join(meta) + '。</sub>')
     return '\n'.join(lines)
 
 def api_req(url, token, method='GET', data=None, ctype='application/json', raw=None):
@@ -332,38 +388,35 @@ def existing_releases(token):
             return out
         page += 1
 
-def apply(plan, token, only_family=None):
+def apply(days, token):
     ex = {r['tag_name']: r for r in existing_releases(token)}
     created, updated, skipped, failed = [], [], [], []
-    current_tags = {e['tag'] for e in plan if e['is_current']}
-    # Latest 已指向任一现行版就不再碰 make_latest：逐个 PATCH 会让指针在
-    # 两个现行版之间抖动，与 CI 的 Releases 检查步构成竞态（0929 实测红过一次）
+    current_tag = next((d['tag'] for d in days if d['is_current']), None)
+    # Latest 已指向现行日就不再 PATCH：逐个 PATCH 会让指针抖动，
+    # 与 CI 的 Releases 检查步构成竞态（0929 实测红过一次）
     req = urllib.request.Request(f'{API}/releases/latest',
                                  headers={'User-Agent': 'self-configuration-release'})
     try:
-        latest_ok = json.load(urllib.request.urlopen(req)).get('tag_name') in current_tags
+        latest_ok = json.load(urllib.request.urlopen(req)).get('tag_name') == current_tag
     except Exception:                                  # 404 = 仓库还没有任何 Latest
         latest_ok = False
-    for e in plan:
-        if only_family and e['family'] != only_family:
-            continue
-        tag = e['tag']
+    for day in days:                                   # 日期升序创建 → 列表时间线自然正确
+        tag = day['tag']
         try:
             if tag in ex:
                 rel = ex[tag]
             else:
-                # 现行版钉仓库 Latest：批量补发时按处理次序 last-wins；
-                # 日常动线⑦（--family X）会把 Latest 钉到刚发的那个分工
                 with api_req(API + '/releases', token, 'POST',
-                             {'tag_name': tag, 'target_commitish': 'main', 'name': release_title(e),
-                              'body': build_notes(e),
-                              'make_latest': 'true' if e['is_current'] else 'false'}) as r:
+                             {'tag_name': tag, 'target_commitish': 'main', 'name': release_title(day),
+                              'body': build_notes(day),
+                              'make_latest': 'true' if day['is_current'] else 'false'}) as r:
                     rel = json.load(r)
                 created.append(tag)
+                import time
+                time.sleep(2)                          # 拉开 created_at，保证列表排序稳定
             # 幂等 reconcile：已存在的 Release 标题/说明与当前模板不一致就回写
-            # （模板改版 / 摘要修订都靠这一步落到既有 Release 上）
-            new_body = build_notes(e)
-            new_name = release_title(e)
+            new_body = build_notes(day)
+            new_name = release_title(day)
             patch = {}
             if (rel.get('body') or '') != new_body:
                 patch['body'] = new_body
@@ -373,60 +426,59 @@ def apply(plan, token, only_family=None):
                 api_req(f"{API}/releases/{rel['id']}", token, 'PATCH', patch)
                 updated.append(tag)
             have = {a['name'] for a in rel.get('assets', [])}
-            for kern in ('surge', 'egern'):
-                info = e['kerns'][kern]
-                if not info:
-                    continue
-                for key in ('full', 'min'):
-                    path = os.path.join(repo_root(), info[key])
-                    name = asset_name(info[key])
-                    if name in have:
-                        continue
-                    with open(path, 'rb') as fh:
-                        raw = fh.read()
-                    api_req(f"{UPLOAD}/{rel['id']}/assets?name={name}", token, 'POST',
-                            raw=raw, ctype='application/octet-stream')
-            # 幂等 reconcile：仅在 Latest 未指向现行版时补钉（见函数头部说明）
-            if e['is_current'] and not latest_ok:
+            for fam in FAMS:
+                for kern, info in day['fams'].get(fam, {}).get('assets', {}).items():
+                    for key in ('full', 'min'):
+                        path = os.path.join(repo_root(), info[key])
+                        name = asset_name(info[key])
+                        if name in have:
+                            continue
+                        with open(path, 'rb') as fh:
+                            raw = fh.read()
+                        api_req(f"{UPLOAD}/{rel['id']}/assets?name={name}", token, 'POST',
+                                raw=raw, ctype='application/octet-stream')
+            # Latest 只钉现行日；未指向时补钉一次
+            if day['is_current'] and not latest_ok:
                 api_req(f"{API}/releases/{rel['id']}", token, 'PATCH', {'make_latest': 'true'})
             if tag not in created:
                 skipped.append(tag)
         except Exception as exc:                       # noqa: BLE001 —— 逐条报告，不中断后续
             failed.append((tag, str(exc)[:120]))
     print(f'\n创建 {len(created)}：{", ".join(created) or "—"}')
-    print(f'说明回写 {len(updated)}：{", ".join(updated) or "—"}')
+    print(f'回写 {len(updated)}：{", ".join(updated) or "—"}')
     print(f'已存在跳过 {len(skipped)}：{", ".join(skipped) or "—"}')
     print(f'失败 {len(failed)}：{failed or "—"}')
     return 0 if not failed else 1
 
-def show_plan(plan):
-    cur = 0
-    for e in plan:
-        mark = '现行' if e['is_current'] else '补发'
-        cur += e['is_current']
-        k = '/'.join(k for k in ('surge', 'egern') if e['kerns'][k])
-        miss = ','.join(k for k in ('surge', 'egern') if not e['kerns'][k]) or '-'
-        date = next((e['kerns'][x]['date'] for x in ('surge', 'egern') if e['kerns'][x] and e['kerns'][x]['date']), '-')
-        print(f"{e['tag']:16s} {mark}  内核={k:12s} 缺口={miss:6s} 归档={date}")
-    print(f'\n共 {len(plan)} 个 Release（现行 {cur} + 补发 {len(plan) - cur}）')
-    sample = next((e for e in plan if e['family'] == 'lazy' and not e['is_current']), plan[0])
-    print(f'\n──── 说明样例（{sample["family"]}_{sample["version"]}）────')
+def show_plan(days):
+    for d in days:
+        fam_bits = []
+        for fam in FAMS:
+            if fam not in d['fams']:
+                continue
+            info = d['fams'][fam]
+            kerns = '/'.join(k for k in ('surge', 'egern') if k in info['assets']) or '无资产'
+            fam_bits.append(f"{FAM_CN[fam]} {'→'.join(info['versions'])}[{kerns}]")
+        mark = '现行' if d['is_current'] else '历史'
+        print(f"{d['tag']:14s} {mark}  {'  '.join(fam_bits)}")
+    print(f'\n共 {len(days)} 张 Release（按版本诞生日期归并）')
+    sample = next((d for d in days if d['is_current']), days[-1])
+    print(f'\n──── 说明样例（{sample["tag"]}）────')
     print(build_notes(sample))
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--apply', action='store_true', help='真发（默认只出计划）')
-    ap.add_argument('--family', choices=FAMS, help='只处理一个分工（日常动线⑦）')
     ap.add_argument('--token', default=os.environ.get('GITHUB_TOKEN'), help='GitHub token（--apply 必需）')
     args = ap.parse_args()
-    plan = build_plan(repo_root())
+    days = build_days(repo_root())
     if not args.apply:
-        show_plan(plan)
+        show_plan(days)
         print('\n（计划模式：一个 Release 都不发。加 --apply 才发布，需 --token 或 GITHUB_TOKEN）')
         return 0
     if not args.token:
         print('❌ --apply 需要 --token 或环境变量 GITHUB_TOKEN'); return 2
-    return apply(plan, args.token, args.family)
+    return apply(days, args.token)
 
 if __name__ == '__main__':
     sys.exit(main())

@@ -97,9 +97,10 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
   （即 V6「升版前打的快照，与线上逐字节相同」的语义），缺口保留不补号；
   **内容未变的分工也要随四份同号升版并同样入档快照** —— 跨侧「两侧版本一致」断言要求四份头注永远同号。
 - 任何文档、脚本、README 里出现"带版本号的订阅 URL"都是错的。
-- **发布层（GitHub Release）**：一个分工版本 = 一个 Release（tag = `lazy-vX.Y` / `routing-vX.Y`），
-  是 config_old 归档层之上的对外发布层，不替代归档；tag 允许带版本号，
-  **Release 资产文件名一律不带版本号**（固定名四件脸）；说明中明确版本号。规矩与模板见
+- **发布层（GitHub Release）**：一个更新日 = 一个 Release（tag = `vYYYY-MM-DD`），
+  懒人版与分流版同日更新合并进同一张，正文按产品线分小节逐版本列要点，
+  资产 = 当日各产品线最终版本的固定名文件（最多 8 件，**一律不带版本号**）。
+  是 config_old 归档层之上的对外发布层，不替代归档。规矩与模板见
   [`reference/shared/ops.md`](reference/shared/ops.md) §6.9，断言在 `skill/tests/check_releases.py`。
 
 ### 改配置标准动线
@@ -120,9 +121,10 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
 ⑥ 本地 commit → **停在推送前**。`git push` 永远是独立确认项：用户说「换掉 / 改吧 /
    找个新的」只授权改动本身，讨论与调研阶段的产物一律停在本地 + 汇报表格；
    拿到用户单独的「推」指令（如「推吧 / 没问题就推」）才 push（CI 在 push / PR 自动重跑同一组检查）
-⑦ 发布 Release（push 之后）：`python skill/scripts/release_publish.py --family <lazy|routing> --apply`
-   —— 只发本次升到的那个分工版本（tag 允许带版本号，资产文件名不带，说明写明版本号；
-   缺 --family 则补齐全部缺失的 Release）。发完跑 `python skill/tests/check_releases.py` 验收。
+⑦ 发布 Release（push 之后）：先在 `release_publish.py` 补 `DAY_THEMES` 当日主题与
+   `PUBLIC_NOTES` 对应条目，再跑 `python skill/scripts/release_publish.py --apply`
+   —— 一个更新日一张 Release（tag = vYYYY-MM-DD），两产品线同日合并，资产为当日
+   最终版本；缺的日期自动补齐。发完跑 `python skill/tests/check_releases.py` 验收。
    规矩与说明模板见 `reference/shared/ops.md` §6.9。
 ```
 
