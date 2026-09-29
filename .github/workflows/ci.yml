@@ -50,6 +50,6 @@ jobs:
         run: python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/profiles/routing.yaml
 
       - name: .min drift check
-        run: |
-          python skill/tests/make_min.py
-          git diff --exit-code
+        # --check（0929 起）：直接比对磁盘 .min 与生成器输出，有差异即非 0。
+        # 旧写法「计划模式 + git diff」两半都恒空/恒 0，是永远绿的空操作（豆包审查实锤）。
+        run: python skill/tests/make_min.py --check

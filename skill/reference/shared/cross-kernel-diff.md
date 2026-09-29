@@ -40,7 +40,7 @@ Hong Kong · USA · Japan · Taiwan · Singapore · Korea · Other Regions · MA
 Egern 用 `policies` + `flatten` + `filter`。地区组倍率筛选的正则两侧共用同一份
 （`(?<![\d.])0\.\d*[1-9]` 收所有倍率 < 1 的节点）。
 
-## 3 · 规则：24 条位位对应，三处引擎差异
+## 3 · 规则：25 条位位对应，三处引擎差异
 
 顺序两侧一致（白名单 → 广告 → 内网 → 应用组 → 国内兜底 → 地理 → 默认）。三处**不是疏漏、而是内核能力差异**：
 

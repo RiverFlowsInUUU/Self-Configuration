@@ -16,8 +16,9 @@
     · 与 CI 同源是铁律 —— 本地绿但 CI 红属于竞态/环境差，不允许有"第三套判据"。
     · check_releases 需 GITHUB_TOKEN：缺省时自动回退 `gh auth token`，两者都没有
       则记 SKIP（不算失败）—— 离线/无凭据环境允许跳过它，但汇总表要明示。
-    · make_min 漂移检查 = 运行后对**四份 .min** 做 `git diff --exit-code`（CI 同源意图；
-      CI 里用全树 diff 是因为 checkout 后树干净，本地树常有未提交改动，必须收窄到 .min）。
+    · make_min 漂移检查 = `make_min.py --check`（0929 起）：--check 直接比对磁盘 .min 与
+      生成器输出，有差异即非 0。旧写法「计划模式 + git diff」两半恒空/恒 0，是永远绿的
+      空操作（2026-09-29 外部审查实锤后废除，原『git 无漂移』闸门随之合并）。
 """
 
 import os
@@ -63,10 +64,7 @@ def build_gates():
         ('Surge DNS routing', [PY, 'skill/scripts/surge/check_surge_dns.py', 'surge/profiles/routing.conf'], {}),
         ('Egern DNS 双份', [PY, 'skill/scripts/egern/check_egern_dns.py',
                             'egern/profiles/lazy.yaml', 'egern/profiles/routing.yaml'], {}),
-        ('.min 漂移', [PY, 'skill/tests/make_min.py'], {}),
-        ('git 无漂移', ['git', 'diff', '--exit-code', '--',
-                        'surge/profiles/lazy.min.conf', 'surge/profiles/routing.min.conf',
-                        'egern/profiles/lazy.min.yaml', 'egern/profiles/routing.min.yaml'], {}),
+        ('.min 漂移', [PY, 'skill/tests/make_min.py', '--check'], {}),
     ]
     return gates
 

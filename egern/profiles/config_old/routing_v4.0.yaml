@@ -1,4 +1,4 @@
-#! version=routing_v4.0.1
+#! version=routing_v4.0
 # ================================================================ routing（正式版 · 推荐）
 # 本版 = **routing_v2.4 + 规则段对齐 Surge**（内容与顺序均逐行对拍）：
 #   ① `dns.forward` 由单条 catch-all 扩为 4 层：

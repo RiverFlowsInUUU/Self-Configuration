@@ -327,7 +327,7 @@ APPLE_PROBES = [
 | 判据 | 细节 |
 |:-----|:-----|
 | 扫描面 | **全仓** walk 到的 `*.conf` / `*.yaml` / `*.yml`（不是只有 `surge/profiles/`）。`LIVE` 当前版 / `FIXTURE` `skill/tests/`，档位只决定报错怎么点名。跳过 `.` 开头目录 / `node_modules` / `__pycache__`；刻意不用 `git ls-files`（未提交的本地工作副本正是这道纪律要拦的东西） |
-| 禁止子串 | `couldflare-cdn.com` / `tange365.com` / `wangxinyu` —— **注释里也不许出现** |
+| 禁止子串 | `cloudflare-cdn.com` / `tange365.com` / `wangxinyu` —— **注释里也不许出现** |
 | IPv4 白名单 | 必须是 `192.0.2.` / `198.51.100.` / `203.0.113.` 开头，或在 `KNOWN_DNS` 集合里 |
 | 凭据 | `password` / `username` / `auth` 的值必须以 `REPLACE_WITH_` 开头 |
 | SNI | 必须 `REPLACE_WITH_*` / 文档段 IP / `example.com` 结尾 |

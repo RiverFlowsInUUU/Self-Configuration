@@ -263,7 +263,7 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/pro
 ③ 核豁免行：       .min 由生成器重算正文、按锚点继承注释 —— 仍要肉眼确认 `# audit-waive:` 那几行在 min 版里读得到
 ④ 升版（要对外发布时）：直接改四份 profile 头注里的 `#! version=`（`.min` 由生成器重算继承）
 ⑤ 收尾：`python skill/tests/check_secrets.py && python skill/tests/check_portability.py && python skill/tests/check_min_pair.py && python skill/tests/check_links.py .`（push 后 CI 会再跑一遍同组检查）
-   ↑ 也可一键：`python skill/tests/verify_all.py` —— 与 ci.yml 同源的 11 道闸门并行跑、出汇总表（含 DNS 审计与 releases 方案，比本行列的更全）
+   ↑ 也可一键：`python skill/tests/verify_all.py` —— 与 ci.yml 同源的 10 道闸门并行跑、出汇总表（含 DNS 审计与 releases 方案，比本行列的更全）
 ⑥ 发布 Release（push 之后）：`python skill/scripts/release_publish.py --apply`（时间线模型与规矩见 §6.9；发版前先补 `DAY_THEMES` 当日主题 + `PUBLIC_NOTES` 对应条目）
 ```
 

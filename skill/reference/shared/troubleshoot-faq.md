@@ -260,7 +260,7 @@ python skill/tests/make_min.py            # 计划模式：四份 .min 应全部
 
 ### 移植改动时
 
-两内核**分组已完全对齐（26/26 同名同序）**，分流版规则 24 条逐位对应，懒人版 2026-09-24 起也
+两内核**分组已完全对齐（26/26 同名同序）**，分流版规则 25 条逐位对应，懒人版 2026-09-24 起也
 逐位同构（各 10 条、同一顺序）；但**同构指位数与语义，不指字节** —— Surge 用内置 `SYSTEM`、
 Egern 用本仓快照 `apple_system.list`，且若干内核级约束不可套用（`pre-matching`、`proxy_nameservers`、
 内置 `LAN`/`SYSTEM`）。动手前读 [`cross-kernel-diff.md`](cross-kernel-diff.md)。

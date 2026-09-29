@@ -39,7 +39,7 @@ ALLOWED_DOMAINS = (
     "pool.ntp.org", "market.xiaomi.com", "home.arpa",
 )
 FORBIDDEN_SUBSTRINGS = [
-    "couldflare-cdn.com",
+    "cloudflare-cdn.com",
     "tange365.com",
     "wangxinyu",
 ]

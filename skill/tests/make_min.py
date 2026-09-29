@@ -3,6 +3,7 @@
 """`.min` 生成器：把完整版的内容改动搬进精简版，注释与空白按固定规则重排。
 
     python skill/tests/make_min.py                    # 只看差异，一个字都不写
+    python skill/tests/make_min.py --check           # 闸门：只查不写，有差异 exit 1
     python skill/tests/make_min.py --apply            # 写盘（写完立刻自查）
     python skill/tests/make_min.py --family lazy      # 只处理某一族的四份（默认 all）
     python skill/tests/make_min.py --selftest         # 自带回归，改这个脚本后要跑它
@@ -237,16 +238,33 @@ def main():
     ap.add_argument("--root", default=REPO_ROOT,
                     help="仓库根（默认取本文件位置往上两级 ⇒ 任何克隆、任何 cwd 都能跑）")
     ap.add_argument("--apply", action="store_true", help="写盘")
+    ap.add_argument("--check", action="store_true",
+                    help="闸门模式：只查不写，.min 与生成器输出有任何差异即 exit 1（CI / verify_all 用）")
     ap.add_argument("--selftest", action="store_true", help="跑自带回归（不写盘）")
     a = ap.parse_args()
 
     if a.selftest:
         return selftest(a.root)
+    if a.check and a.apply:
+        raise SystemExit("--check 与 --apply 互斥：check 只查不写")
     rows = run_once(a.root, a.family)
     rel = lambda p: os.path.relpath(p, a.root).replace(os.sep, "/")
+    kinds = {"same": "已同步", "blank": "仅空白差异", "body": "含正文差异"}
+    if a.check:
+        # 0929 修复：旧 CI 是「计划模式(恒 exit 0) + git diff(不写盘恒空)」——永远绿的空操作。
+        # --check 直接比对磁盘 .min 与生成器输出：blank 也算漂移（闸门意图就是字节级一致），
+        # 注释锚点丢失（lost）一并判负（连 --apply 都会拒写的情形）。
+        drifted = [(rel(mp), c, len(lost)) for f, fp, mp, c, mt, gen, lost, snap in rows
+                   if c != "same" or lost]
+        if drifted:
+            for mp, c, n in drifted:
+                print("❌ " + mp + "：" + ("注释锚点丢失 %d 条" % n if n else kinds[c]))
+            print("闸门判定：.min 与生成器输出不一致 —— 跑 make_min.py --apply 同步后一并提交")
+            return 1
+        print("✅ 四份 .min 与生成器输出逐字一致（--check）")
+        return 0
     if not a.apply:
         print("（计划模式：一个字都不写。加 --apply 才落盘）" + NL)
-    kinds = {"same": "已同步", "blank": "仅空白差异", "body": "含正文差异"}
     for f, fp, mp, c, mt, gen, lost, snap in rows:
         n_cur, n_gen = len(mt.split(NL)), len(gen.split(NL))
         print("%-34s %s（%d → %d 行）· %s" % (
