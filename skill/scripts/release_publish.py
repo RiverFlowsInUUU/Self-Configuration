@@ -404,9 +404,11 @@ def build_notes(day):
         core = '本次懒人版与分流版各有变更，分列如下。'
     else:
         core = f'本次更新仅涉及{FAM_CN[fams_items[0][0]]}。'
-    extras = []                                        # 单边内核日在引言括注
+    extras = []                                        # 单边内核日在引言括注（缺席产品线不提，核心句已说清）
     for fam in FAMS:
-        assets = day['fams'].get(fam, {}).get('assets', {})
+        if fam not in day['fams']:
+            continue
+        assets = day['fams'][fam].get('assets', {})
         missing = [k for k in ('surge', 'egern') if k not in assets]
         if len(missing) == 1:
             have = [k for k in ('surge', 'egern') if k in assets]

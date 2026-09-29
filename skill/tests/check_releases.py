@@ -114,11 +114,15 @@ def main():
             want_title = rp.release_title(day)
             name_ok = (r.get('name') or '') == want_title
             body = r.get('body') or ''
+            # H1 置顶（0929 二次定稿）：正文首行必须是「# … 更新日志」，
+            # 防止 build_notes 改坏后 H1 丢失而版本子串断言仍绿
+            first_line = body.splitlines()[0] if body else ''
+            h1_ok = first_line.startswith('# ') and first_line.endswith(' 更新日志')
             fams_ok = all(FAM_CN[fam] in body for fam in day['fams'])
-            judge(name_ok and fams_ok, 'R3',
-                  f'{tag}: 标题与正文模板一致（{want_title}）' if name_ok and fams_ok
+            judge(name_ok and h1_ok and fams_ok, 'R3',
+                  f'{tag}: 标题与正文模板一致（{want_title}）' if name_ok and h1_ok and fams_ok
                   else f'{tag}: 标题/正文与模板不一致 —— 标题应为「{want_title}」，'
-                       f'正文需含各产品线名；跑 release_publish.py --apply 幂等回写')
+                       f'正文首行须为「# … 更新日志」且含各产品线名；跑 release_publish.py --apply 幂等回写')
         else:
             judge(False, 'R1', f'{tag}: tag 不在本地日期分组 plan 里（{sorted(day_by_tag)}）')
 
