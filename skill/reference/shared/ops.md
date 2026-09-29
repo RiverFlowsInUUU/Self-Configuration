@@ -349,7 +349,7 @@ python skill/scripts/release_publish.py --family lazy --apply    # 日常动线 
 python skill/tests/check_releases.py                         # 断言：tag 形状 / 资产命名 / 说明含版本号 / 归档全覆盖
 ```
 
-**判据**在 `skill/tests/check_releases.py`（CI 同跑）：R1 tag 形状且唯一；R2 资产文件名 ∈ 固定名集合且无版本号样式；R3 说明正文含 tag 对应版本号；R4 `config_old` 全部归档版本 + 现役两分工版本，每个都有对应 Release —— **删归档版本或删 Release 都会红**。
+**判据**在 `skill/tests/check_releases.py`（CI 同跑）：R1 tag 形状且唯一；R2 资产文件名 ∈ 固定名集合且无版本号样式；R3 说明正文含 tag 对应版本号；R4 `config_old` 全部归档版本 + 现役两分工版本，每个都有对应 Release —— **删归档版本或删 Release 都会红**；R5 仓库级 **Latest** 必须落在现行两分工版本之一 —— Latest 由创建时间决定，与版本号无关（实测：26 个补发后 Latest 留在了 lazy-v1.8，现行却是 v1.9），`release_publish.py` 对现行版创建/幂等重钉 `make_latest`；两分工并存时批量跑 last-wins（处理序 lazy → routing），日常动线⑦ `--family X` 把 Latest 钉到刚发的分工。
 
 ### 相关页面
 

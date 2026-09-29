@@ -166,9 +166,12 @@ def apply(plan, token, only_family=None):
             if tag in ex:
                 rel = ex[tag]
             else:
+                # 现行版钉仓库 Latest：批量补发时按处理次序 last-wins；
+                # 日常动线⑦（--family X）会把 Latest 钉到刚发的那个分工
                 with api_req(API + '/releases', token, 'POST',
                              {'tag_name': tag, 'target_commitish': 'main', 'name': tag,
-                              'body': build_notes(e)}) as r:
+                              'body': build_notes(e),
+                              'make_latest': 'true' if e['is_current'] else 'false'}) as r:
                     rel = json.load(r)
                 created.append(tag)
             have = {a['name'] for a in rel.get('assets', [])}
@@ -185,6 +188,10 @@ def apply(plan, token, only_family=None):
                         raw = fh.read()
                     api_req(f"{UPLOAD}/{rel['id']}/assets?name={name}", token, 'POST',
                             raw=raw, ctype='application/octet-stream')
+            # 幂等 reconcile：已存在的现行版 Release 也钉一次 Latest
+            # （补发批跑漏钉的根因：Latest 由创建时间决定，与版本无关）
+            if e['is_current']:
+                api_req(f"{API}/releases/{rel['id']}", token, 'PATCH', {'make_latest': 'true'})
             if tag not in created:
                 skipped.append(tag)
         except Exception as exc:                       # noqa: BLE001 —— 逐条报告，不中断后续
@@ -204,8 +211,8 @@ def show_plan(plan):
         date = next((e['kerns'][x]['date'] for x in ('surge', 'egern') if e['kerns'][x] and e['kerns'][x]['date']), '-')
         print(f"{e['tag']:16s} {mark}  内核={k:12s} 缺口={miss:6s} 归档={date}")
     print(f'\n共 {len(plan)} 个 Release（现行 {cur} + 补发 {len(plan) - cur}）')
-    print('\n──── 说明样例（lazy_v1.8）────')
-    sample = next(e for e in plan if e['family'] == 'lazy' and e['version'] == 'v1.8')
+    sample = next((e for e in plan if e['family'] == 'lazy' and not e['is_current']), plan[0])
+    print(f'\n──── 说明样例（{sample["family"]}_{sample["version"]}）────')
     print(build_notes(sample))
 
 def main():

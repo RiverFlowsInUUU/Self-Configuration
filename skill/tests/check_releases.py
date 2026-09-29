@@ -9,9 +9,11 @@
     R1 每个 Release 的 tag 匹配 ^(lazy|routing)-v\d+(\.\d+)?$，且无重复；
     R2 资产文件名 ∈ 固定名四件脸（两内核 × 完整版/.min），且不含版本号样式；
     R3 说明正文含 tag 对应的版本号字符串（如 tag=lazy-v1.8 → 正文含 lazy_v1.8）；
-    R4 config_old 全部归档版本 + 现役两分工版本，每个都有对应 Release（全覆盖）。
+    R4 config_old 全部归档版本 + 现役两分工版本，每个都有对应 Release（全覆盖）；
+    R5 仓库级 Latest 必须落在现行两分工版本之一 —— 补发批跑只按创建时间决定 Latest
+       会把 Latest 留在旧版上（实测：26 个补发后 Latest=lazy-v1.8，现行却是 v1.9）。
 """
-import json, os, re, subprocess, sys, urllib.request
+import json, os, re, subprocess, sys, urllib.error, urllib.request
 
 REPO = os.environ.get('GITHUB_REPO', 'RiverFlowsInUUU/Self-Configuration')
 API = f'https://api.github.com/repos/{REPO}'
@@ -25,9 +27,9 @@ def git(*a):
     return subprocess.check_output(['git', *a], text=True).strip()
 
 def local_expected():
-    """config_old 全部归档版本 + 现役头注版本 → 应存在的 tag 集合。"""
+    """config_old 全部归档版本 + 现役头注版本 → 应存在的 tag 集合（含现行两 tag 单独返回）。"""
     root = git('rev-parse', '--show-toplevel')
-    tags = set()
+    tags, current = set(), set()
     for fam in ('lazy', 'routing'):
         for kern, ext in (('surge', '.conf'), ('egern', '.yaml')):
             d = os.path.join(root, kern, 'profiles', 'config_old')
@@ -41,15 +43,26 @@ def local_expected():
             with open(p, encoding='utf-8') as fh:
                 ver = re.search(r'^#!\s+version=(\S+)', fh.read(400), re.M).group(1)
             tags.add(f'{fam}-{ver.split("_", 1)[-1]}')
-    return tags
+            current.add(f'{fam}-{ver.split("_", 1)[-1]}')
+    return tags, current
+
+def fetch_releases(token):
+    """分页抓全量 Release（>100 条时单页抓取会让 R4 假红）。"""
+    out, page = [], 1
+    while True:
+        req = urllib.request.Request(f'{API}/releases?per_page=100&page={page}')
+        req.add_header('User-Agent', 'self-configuration-release')
+        if token:
+            req.add_header('Authorization', f'Bearer {token}')
+        batch = json.load(urllib.request.urlopen(req))
+        out += batch
+        if len(batch) < 100:
+            return out
+        page += 1
 
 def main():
-    req = urllib.request.Request(f'{API}/releases?per_page=100')
-    req.add_header('User-Agent', 'self-configuration-release')
     tok = os.environ.get('GITHUB_TOKEN')
-    if tok:
-        req.add_header('Authorization', f'Bearer {tok}')
-    releases = json.load(urllib.request.urlopen(req))
+    releases = fetch_releases(tok)
 
     ok, bad = [], []
     def judge(cond, rid, msg):
@@ -77,9 +90,23 @@ def main():
                   f'{tag}: 说明含版本号 {fam}_{ver}' if f'{fam}_{ver}' in body
                   else f'{tag}: 说明未写版本号 {fam}_{ver}')
 
-    expected = local_expected()
+    expected, current_tags = local_expected()
     missing = expected - seen
     judge(not missing, 'R4', 'R4 归档版本全覆盖' if not missing else f'R4 缺 Release 的版本: {sorted(missing)}')
+
+    # R5 仓库级 Latest 必须是现行两分工版本之一
+    latest_req = urllib.request.Request(f'{API}/releases/latest')
+    latest_req.add_header('User-Agent', 'self-configuration-release')
+    if tok:
+        latest_req.add_header('Authorization', f'Bearer {tok}')
+    try:
+        latest_tag = json.load(urllib.request.urlopen(latest_req))['tag_name']
+        judge(latest_tag in current_tags, 'R5',
+              f'R5 Latest={latest_tag}（现行之一）' if latest_tag in current_tags
+              else f'R5 Latest={latest_tag} 不在现行两分工版本 {sorted(current_tags)} 里 —— '
+                   f'跑 python skill/scripts/release_publish.py --apply reconcile（会幂等跳过，只重钉 Latest）')
+    except urllib.error.HTTPError as exc:
+        judge(False, 'R5', f'R5 /releases/latest 不可读（HTTP {exc.code}）')
 
     for rid, msg in ok:
         print(f'   ✅ {msg}')
