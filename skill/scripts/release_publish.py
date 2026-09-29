@@ -32,10 +32,11 @@ def badge_url(kern, fam):
     return (f"https://img.shields.io/badge/{KERN_LABEL[kern]}-{FAM_CN[fam]}_下载-"
             f"{KERN_COLOR[kern]}?style=for-the-badge")
 
-# Release 标题 = 分类 emoji + 一句主题（版本号由 tag 芯片承载，正文不再重复）。
+# Release 标题 = 分类 emoji + 分工 + 诞生日期 + 一句主题（版本号由 tag 芯片承载）。
 # 与 PUBLIC_NOTES 一一对应，26 个标题各不相同 —— 禁止「维护性更新」这类通用标题复用。
+# 分工与日期由 release_title 统一拼装，此处只写主题，不要重复出现「懒人版/分流版」字样。
 HEADLINES = {
-    ('lazy', 'v1.0'): ('🚀', '懒人版首个公开版本'),
+    ('lazy', 'v1.0'): ('🚀', '首个公开版本'),
     ('lazy', 'v1.1'): ('📝', '注释口径修正：规则条数不写死'),
     ('lazy', 'v1.2'): ('🛫', '订阅槽位上线，导入即用'),
     ('lazy', 'v1.3'): ('📶', 'Wi-Fi 自动暂停'),
@@ -45,7 +46,7 @@ HEADLINES = {
     ('lazy', 'v1.7'): ('🏷️', '规则集更名 CN-Domains'),
     ('lazy', 'v1.8'): ('🔄', 'AI 规则集换源，覆盖更多 AI 服务'),
     ('lazy', 'v1.9'): ('🧩', '自托管 AI 域名整合 + AI 组改手动'),
-    ('routing', 'v1'): ('🚀', '分流版初始发布'),
+    ('routing', 'v1'): ('🚀', '初始发布，应用 / 地区分组成形'),
     ('routing', 'v2'): ('🛡️', 'DNS 段重构，明文通路压到最小'),
     ('routing', 'v2.1'): ('🧹', '清理默认值配置键'),
     ('routing', 'v2.2'): ('🛫', '机场槽位精简，MAX 低倍率筛选'),
@@ -201,21 +202,34 @@ def archive_min(root, kern, fam, ver):
     ext = '.conf' if kern == 'surge' else '.yaml'
     return os.path.join(root, kern, 'profiles', 'config_old', f'{fam}_{ver}.min{ext}')
 
+def _blob_birth(root, kern, fam, path):
+    """path（仓库内相对路径）所指 blob 首次进入该 profile 历史的提交日期。
+
+    历史重写查不到诞生提交时，兜底取该文件被加入 repo 的日期；再查不到返回 None。"""
+    rel = path.replace(os.sep, '/')
+    prof = f'{kern}/profiles/{fam}{".conf" if kern == "surge" else ".yaml"}'
+    try:
+        sha = git('rev-parse', f'HEAD:{rel}')
+        log = git('log', '--reverse', '--format=%as', '--find-object=' + sha, '--', prof)
+        lines = [l for l in log.splitlines() if l.strip()]
+        if lines:
+            return lines[0]
+    except subprocess.CalledProcessError:
+        pass
+    try:
+        log = git('log', '--diff-filter=A', '--format=%as', '--', rel)
+        lines = [l for l in log.splitlines() if l.strip()]
+        return lines[-1] if lines else None
+    except subprocess.CalledProcessError:
+        return None
+
 def version_date(root, kern, fam, ver):
     """该版本内容的诞生日期：归档快照的 blob 在现役 profile 历史中首次出现的提交。
 
-    （旧实现取"归档文件被加入 repo 的提交"= 退役提交，永远晚一个版本 —— 已废弃。）
-    历史重写过的早期版本可能找不到，返回 None 由调用方决定省略。"""
+    （旧实现取"归档文件被加入 repo 的提交"= 退役提交，永远晚一个版本 —— 已废弃。）"""
     ext = '.conf' if kern == 'surge' else '.yaml'
     arch = os.path.join(kern, 'profiles', 'config_old', f'{fam}_{ver}{ext}')
-    try:
-        sha = git('rev-parse', f'HEAD:{arch.replace(os.sep, "/")}')
-        log = git('log', '--reverse', '--format=%as', '--find-object=' + sha,
-                  '--', f'{kern}/profiles/{fam}{ext}'.replace(os.sep, '/'))
-        lines = [l for l in log.splitlines() if l.strip()]
-        return lines[0] if lines else None
-    except subprocess.CalledProcessError:
-        return None
+    return _blob_birth(root, kern, fam, arch)
 
 def build_plan(root):
     act = active_versions(root)
@@ -241,9 +255,12 @@ def build_plan(root):
                     entry['kerns'][kern] = None
                     continue
                 mn = full[:full.rindex(ext)] + f'.min{ext}'
-                date = None if entry['is_current'] else version_date(root, kern, fam, ver)
+                date = _blob_birth(root, kern, fam, os.path.relpath(full, root)) if entry['is_current'] \
+                    else version_date(root, kern, fam, ver)
                 entry['kerns'][kern] = {'full': os.path.relpath(full, root), 'min': os.path.relpath(mn, root),
                                         'date': date}
+            dates = sorted({i['date'] for i in entry['kerns'].values() if i and i['date']})
+            entry['date'] = dates[0] if dates else None
             plan.append(entry)
     return plan
 
@@ -252,20 +269,20 @@ def asset_name(path):
     return re.sub(r'_(v\d+(?:\.\d+)?)', '', os.path.basename(path))
 
 def release_title(e):
-    """Release 标题：emoji + 主题句（版本号由 tag 芯片承载，标题不再重复）。"""
+    """Release 标题：emoji + 分工 + 诞生日期 + 主题句（版本号由 tag 芯片承载）。"""
     emoji, headline = HEADLINES.get((e['family'], e['version']),
                                     ('📦', f"{FAM_CN[e['family']]} {e['version']}"))
-    return f'{emoji} {headline}'
+    date = e.get('date') or '早期版本'
+    return f'{emoji} {FAM_CN[e["family"]]} · {date} · {headline}'
 
 def build_notes(e):
     """Release 说明（面向公众的产品更新日志）。
 
-    顺序：更新内容 → 下载按钮 → 元信息小字。分工名只在按钮与元信息出现，
-    日期 / 状态 / 缺口说明收进底部 sub 一行 —— 不重复、不占内容位。
-    标题只存在于 Release name（页面大字），版本号由 tag 芯片承载。"""
+    顺序：更新内容 → 下载按钮 → 元信息小字。分工与日期在标题里（release_title），
+    分工在按钮上也有；本函数只写内容与元信息，不再重复标题/按钮已有的信息。
+    版本号只由 tag 芯片承载。"""
     fam, ver, tag = e['family'], e['version'], e['tag']
     kerns = [k for k in ('surge', 'egern') if e['kerns'][k]]
-    dates = sorted({e['kerns'][k]['date'] for k in kerns if e['kerns'][k]['date']})
     notes = PUBLIC_NOTES.get((fam, ver), [])
     if isinstance(notes, str):
         notes = [notes]
@@ -282,11 +299,8 @@ def build_notes(e):
         buttons.append(f'[![Download {KERN_LABEL[kern]} {fam}]({badge_url(kern, fam)})]({DL}/{tag}/{name})')
     if buttons:
         lines += [' '.join(buttons), '']
-    date = f' · {dates[0]} 发布' if dates else ''
-    if e['is_current']:
-        meta = f'{FAM_CN[fam]} · 当前版本 · 内容与 raw/main 订阅地址一致'
-    else:
-        meta = f'{FAM_CN[fam]} · 历史版本{date} · 仅供回滚对照，日常使用请选最新版'
+    meta = '当前版本 · 内容与 raw/main 订阅地址一致' if e['is_current'] \
+        else '历史版本 · 仅供回滚对照，日常使用请选最新版'
     meta += ' · .min 与完整文件见本页底部 Assets'
     missing = [k for k in ('surge', 'egern') if k not in kerns]
     if missing:

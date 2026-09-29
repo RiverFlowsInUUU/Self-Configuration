@@ -8,8 +8,8 @@
 判据（规矩来源：skill/reference/shared/ops.md §6.9）:
     R1 每个 Release 的 tag 匹配 ^(lazy|routing)-v\d+(\.\d+)?$，且无重复；
     R2 资产文件名 ∈ 固定名四件脸（两内核 × 完整版/.min），且不含版本号样式；
-    R3 标题 = emoji + 主题句（与 release_publish.HEADLINES 同源），说明正文含分工名与
-       当前/历史状态 —— 版本号由 tag 芯片承载，正文与标题不再重复版本号；
+    R3 标题 = emoji + 分工 + 诞生日期 + 主题句（与 release_publish.release_title 同源，取真 plan），
+       说明正文含当前/历史状态 —— 版本号由 tag 芯片承载，正文与标题不再重复版本号；
     R4 config_old 全部归档版本 + 现役两分工版本，每个都有对应 Release（全覆盖）；
     R5 仓库级 Latest 必须落在现行两分工版本之一 —— 补发批跑只按创建时间决定 Latest
        会把 Latest 留在旧版上（实测：26 个补发后 Latest=lazy-v1.8，现行却是 v1.9）。
@@ -72,6 +72,7 @@ def main():
     spec.loader.exec_module(rp)
 
     expected_tags, current_tags = local_expected()
+    plan_by_tag = {e['tag']: e for e in rp.build_plan(git('rev-parse', '--show-toplevel'))}
 
     ok, bad = [], []
     def judge(cond, rid, msg):
@@ -95,16 +96,16 @@ def main():
         if ver:
             fam = m.group(1)
             cur = tag in current_tags
-            want_title = rp.release_title({'family': fam, 'version': ver})
+            want_title = rp.release_title(plan_by_tag.get(tag) or {'family': fam, 'version': ver})
             name_ok = (r.get('name') or '') == want_title
             body = r.get('body') or ''
             status = '当前版本' if cur else '历史版本'
-            status_ok = rp.FAM_CN[fam] in body and status in body
+            status_ok = status in body
             judge(name_ok and status_ok, 'R3',
-                  f'{tag}: 标题与说明模板一致（{want_title} · {rp.FAM_CN[fam]} {status}）'
+                  f'{tag}: 标题与说明模板一致（{want_title} · {status}）'
                   if name_ok and status_ok else
                   f'{tag}: 标题/说明与模板不一致 —— 标题应为「{want_title}」，正文需含'
-                  f'「{rp.FAM_CN[fam]}」「{status}」；跑 release_publish.py --apply 幂等回写')
+                  f'「{status}」；跑 release_publish.py --apply 幂等回写')
 
     missing = expected_tags - seen
     judge(not missing, 'R4', 'R4 归档版本全覆盖' if not missing else f'R4 缺 Release 的版本: {sorted(missing)}')
