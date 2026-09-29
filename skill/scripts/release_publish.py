@@ -103,8 +103,15 @@ PUBLIC_NOTES = {
         'AI 分组由自动测速改为手动选择：AI 服务对出口 IP 频繁变化较为敏感，固定节点使用更稳定。',
     ],
     ('lazy', 'v2.0'): [
-        '关闭局域网代理共享端口（Surge 内核 allow-wifi-access / allow-hotspot-access）：局域网设备的共享出口由专用网关承担，本机不再开放监听端口，暴露面进一步收窄。',
-        '关闭 IPv6 支持（Surge 内核 ipv6 = false、ipv6-vif = disable）：不再返回 AAAA 记录，双栈站点自动回落 IPv4；Egern 内核在顶层显式声明 ipv6: false（此前依赖默认值关闭）。两侧对齐后封堵面等效。',
+        ('关闭局域网代理共享端口', [
+            'Surge：`allow-wifi-access = false`、`allow-hotspot-access = false`',
+            '影响：局域网共享出口由专用网关承担；本机不再开放监听端口，暴露面收窄。',
+        ]),
+        ('关闭 IPv6', [
+            'Surge：`ipv6 = false`、`ipv6-vif = disable`',
+            'Egern：`ipv6: false`',
+            '影响：不再返回 AAAA 记录，双栈站点自动回落 IPv4；两版行为对齐。',
+        ]),
     ],
     ('routing', 'v1'): [
         '分流版首次发布：按应用分组（ChatGPT、Gemini、Claude、YouTube、Telegram 等），并支持地区智能选组。',
@@ -167,8 +174,15 @@ PUBLIC_NOTES = {
         '上游换源集继续滚动维护新增的 AI 域名，本集合负责结构稳定的伴生域与宽后缀，两者分工互补。',
     ],
     ('routing', 'v4.0'): [
-        '关闭局域网代理共享端口（Surge 内核 allow-wifi-access / allow-hotspot-access）：局域网设备的共享出口由专用网关承担，本机不再开放监听端口，暴露面进一步收窄。',
-        '关闭 IPv6 支持（Surge 内核 ipv6 = false、ipv6-vif = disable）：不再返回 AAAA 记录，双栈站点自动回落 IPv4；Egern 内核在顶层显式声明 ipv6: false（此前依赖默认值关闭）。两侧对齐后封堵面等效。',
+        ('关闭局域网代理共享端口', [
+            'Surge：`allow-wifi-access = false`、`allow-hotspot-access = false`',
+            '影响：局域网共享出口由专用网关承担；本机不再开放监听端口，暴露面收窄。',
+        ]),
+        ('关闭 IPv6', [
+            'Surge：`ipv6 = false`、`ipv6-vif = disable`',
+            'Egern：`ipv6: false`',
+            '影响：不再返回 AAAA 记录，双栈站点自动回落 IPv4；两版行为对齐。',
+        ]),
     ],
 }
 
@@ -323,65 +337,110 @@ def _vers_range(vers):
     return vers[0] + (f' → {vers[-1]}' if len(vers) > 1 else '')
 
 
+def _item_key(note):
+    """条目归一化键：结构化条目 (标题, 行列表) 与散文条目分别取键，用于两产品线去重。"""
+    if isinstance(note, tuple):
+        return ('s', note[0], tuple(note[1]))
+    return ('p', note)
+
+
 def build_notes(day):
     """Release 说明（面向公众的产品更新日志，正式产品语言）。
 
-    结构（2026-09-29 用户定稿）：引言（一行说清本日版本范围，两版变更一致时点明）→
-    共同变更（两产品线要点文字完全一致的条目只说一遍）→ 懒人版变更 / 分流版变更
-    （仅剩各自的条目，缺侧不写节）→ 下载按钮。条目默认不带版本号（引言已给），
-    仅当日内有多个版本需要消歧时才加粗前缀。**没有元信息小字行。**
+    层级（2026-09-29 二次定稿，与用户模板一致）：
+    # 懒人版 vX / 分流版 vY 更新日志     ← H1 永远置顶（多版本日用范围）
+    > 引言一句（两版变更一致时点明；单边内核日在括注里说明）
+    ## 共同变更 → ### N. 标题 + 结构行（PUBLIC_NOTES 结构化条目）；散文条目维持要点列表
+    ## 懒人版变更 / ## 分流版变更（各自条目，缺侧不写节）
+    ## 适用版本 → 各产品线版本
+    下载按钮区。**没有元信息小字行。**
     行距：GitHub 剥掉正文 CSS，无法真设 line-height；用列表项间空一行（松散列表）近似。"""
     fams_items = _day_items(day)
     fam_vers = {fam: list(dict.fromkeys(v for v, _ in items)) for fam, items in fams_items}
-    # 去重：要点文字完全一致、且当日两产品线都有的条目 → 共同变更
-    by_text = {}
+    # 去重：条目归一化键完全一致、且当日两产品线都有的条目 → 共同变更
+    by_key, first = {}, {}
     for fam, items in fams_items:
         for v, n in items:
-            by_text.setdefault(n, []).append((fam, v))
-    common = [(n, pairs) for n, pairs in by_text.items()
+            k = _item_key(n)
+            by_key.setdefault(k, []).append((fam, v))
+            first.setdefault(k, (v, n))
+    common = [k for k, pairs in by_key.items()
               if len(fams_items) > 1 and len({f for f, _ in pairs}) == len(fams_items)]
-    common_texts = {n for n, _ in common}
+    common_keys = set(common)
+
+    def multi_prefix(pairs):
+        return ' · '.join(f'{FAM_CN[f]} {v}' for f, v in
+                          sorted(set(pairs), key=lambda p: FAMS.index(p[0])))
+
+    def render_entry(idx, ver, note, multi, pairs=None):
+        """一条变更：结构化条目 → ### N. 标题 + 行列表；散文条目 → 要点（多版本日加前缀）。"""
+        if isinstance(note, tuple):
+            title = note[0]
+            if multi and pairs:
+                title = f'{title}（{multi_prefix(pairs)}）'
+            out = [f'### {idx}. {title}', '']
+            for ln in note[1]:
+                out += [f'- {ln}', '']
+            return out, idx + 1
+        if multi and pairs:
+            return [f'- **{multi_prefix(pairs)}**：{note}', ''], idx
+        if multi:
+            return [f'- **{ver}** {note}', ''], idx
+        return [f'- {note}', ''], idx
 
     lines = []
+    # H1：更新日志标题置顶，永远是正文最大的字
+    lines.append('# ' + ' / '.join(f'{FAM_CN[fam]} {_vers_range(fam_vers[fam])}'
+                                   for fam, _ in fams_items) + ' 更新日志')
+    lines.append('')
     # 引言
-    lead = ' · '.join(f'{FAM_CN[fam]} {_vers_range(fam_vers[fam])}' for fam, _ in fams_items)
-    if len(fams_items) == 2 and common and all(n in common_texts for _, items in fams_items for _, n in items):
-        lines.append(f'> 本次两版同步发布，变更一致：{lead}')
+    all_common = (len(fams_items) == 2 and bool(common) and
+                  all(_item_key(n) in common_keys for _, items in fams_items for _, n in items))
+    if all_common:
+        core = '本次两版同步，变更一致。'
+    elif len(fams_items) == 2 and common:
+        core = '本次两版同步更新，共同变更如下，各侧独立变更分列其后。'
     elif len(fams_items) == 2:
-        lines.append(f'> 本日更新：{lead}')
+        core = '本次懒人版与分流版各有变更，分列如下。'
     else:
-        lines.append(f'> 本日仅{FAM_CN[fams_items[0][0]]}有内容变化：{_vers_range(fam_vers[fams_items[0][0]])}')
-    for fam in FAMS:                                   # 单边内核日在引言括注
+        core = f'本次更新仅涉及{FAM_CN[fams_items[0][0]]}。'
+    extras = []                                        # 单边内核日在引言括注
+    for fam in FAMS:
         assets = day['fams'].get(fam, {}).get('assets', {})
         missing = [k for k in ('surge', 'egern') if k not in assets]
         if len(missing) == 1:
             have = [k for k in ('surge', 'egern') if k in assets]
-            lines[-1] += f'；{FAM_CN[fam]}当日仅 {KERN_LABEL[have[0]]} 内核有内容变化'
+            extras.append(f'{FAM_CN[fam]}当日仅 {KERN_LABEL[have[0]]} 内核有内容变化')
         elif len(missing) == 2:
-            lines[-1] += f'；{FAM_CN[fam]}当日无内容变化'
+            extras.append(f'{FAM_CN[fam]}当日无内容变化')
+    lines.append('> ' + core + (f'（{"；".join(extras)}）' if extras else ''))
     lines.append('')
 
+    multi = any(len(vs) > 1 for vs in fam_vers.values())
     # 共同变更
     if common:
         lines += ['## 共同变更', '']
-        multi = any(len(vs) > 1 for vs in fam_vers.values())
-        for n, pairs in common:
-            if multi:
-                pv = ' · '.join(f'{FAM_CN[f]} {v}' for f, v in
-                                sorted(set(pairs), key=lambda p: FAMS.index(p[0])))
-                lines += [f'- **{pv}**：{n}', '']
-            else:
-                lines += [f'- {n}', '']
+        idx = 1
+        for k in common:
+            ver, note = first[k]
+            chunk, idx = render_entry(idx, ver, note, multi, by_key[k])
+            lines += chunk
 
     # 各产品线变更（仅剩各自条目）
     for fam, items in fams_items:
-        own = [(v, n) for v, n in items if n not in common_texts]
+        own = [(v, n) for v, n in items if _item_key(n) not in common_keys]
         if not own:
             continue
-        multi = len(fam_vers[fam]) > 1
         lines += [f'## {FAM_CN[fam]}变更', '']
+        idx = 1
         for v, n in own:
-            lines += [(f'- **{v}** {n}' if multi else f'- {n}'), '']
+            chunk, idx = render_entry(idx, v, n, len(fam_vers[fam]) > 1)
+            lines += chunk
+
+    # 适用版本
+    lines += ['## 适用版本', '']
+    for fam, _ in fams_items:
+        lines += [f'- {FAM_CN[fam]} {_vers_range(fam_vers[fam])}', '']
 
     # 下载按钮
     buttons = []
@@ -395,6 +454,7 @@ def build_notes(day):
     if buttons:
         lines += [' '.join(buttons), '']
     return '\n'.join(lines)
+
 
 def release_title(day):
     """Release 标题：emoji + 日期 + 当日主题（tag 芯片在旁显示 vYYYY-MM-DD）。"""
