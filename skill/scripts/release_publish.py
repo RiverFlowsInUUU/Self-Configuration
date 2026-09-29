@@ -195,7 +195,8 @@ def build_notes(e):
         status = f"> 🟢 {FAM_CN[fam]} · 当前版本{date} · 内容与 raw/main 订阅地址一致"
     else:
         status = f"> 📦 {FAM_CN[fam]} · 历史版本{date} · 日常使用请选择最新版本"
-    lines = [release_title(e), '', status, '']
+    # 标题只存在于 Release name（页面大字），正文不再重复 —— 版本号同理由 tag 芯片承载
+    lines = [status, '']
     summary = PUBLIC_NOTES.get((fam, ver))
     if summary:
         lines += [summary, '']
