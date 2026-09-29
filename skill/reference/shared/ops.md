@@ -326,25 +326,31 @@ python skill/tests/check_portability.py
 
 **资产**：该分工该版本两内核现有所属文件（完整版 + `.min`），文件名用**固定名四件脸**（`lazy.conf` / `lazy.min.conf` / `lazy.yaml` / `lazy.min.yaml`，routing 同理）——**一律不带版本号**，这是铁律；版本号仅存在于 tag 与说明正文。单侧缺口（如 routing v1–v2.4 仅 Egern 有归档）如实注明，不硬凑。
 
-**说明模板**（`release_publish.py` 自动生成，字段固定防漂移）：
+**标题与说明模板**（`release_publish.py` 自动生成，字段固定防漂移）：
+
+标题 = 分类 emoji + 一句主题（取自 `HEADLINES` 表）；版本号由 tag 芯片承载，标题与正文**都不再重复**。
+说明正文的分工名（懒人版/分流版）贯穿每一层 —— 状态行、下载按钮、Assets 提示各自自带，单层截图不丢语境：
 
 ```markdown
-## `lazy_v1.8` · 📦 历史版本
-> 历史版本的完整快照，仅供回滚与对照。日常使用请选择最新版本。
-- **版本**：`lazy_v1.8`
-- **发布日期**：YYYY-MM-DD
-- **更新内容**：<公众向一句话，取自 PUBLIC_NOTES 表>
-- **下载**：Surge `lazy.conf` / `lazy.min.conf` · Egern `lazy.yaml` / `lazy.min.yaml`
-- **说明**：<单侧缺口时注明，无则省略>
+🤖 AI 规则集换源                      ← Release 标题（tag 芯片在旁显示 routing-v3.8）
+
+> 📦 分流版 · 历史版本 · 2026-09-28 发布 · 日常使用请选择最新版本
+
+<公众向一句话，取自 PUBLIC_NOTES 表>
+
+[Surge · 分流版下载] [Egern · 分流版下载]   ← shields.io 徽章，颜色编码内核、文字编码分工
+
+<sub>.min 精简版与各内核完整文件见本页底部 Assets。</sub>
 ```
 
-现行版（头注当前号）同样发 Release，标注 🟢 当前版本，资产取自固定名四件本体。
+现行版状态行为 `🟢 · 当前版本 · <日期> 发布 · 内容与 raw/main 订阅地址一致`，资产取自固定名四件本体；
+单侧缺口在 sub 行末尾如实注明。下载按钮用 shields.io 在线徽章（`badge_url()`），不落仓库静态文件。
 
 **说明是面向公众的产品更新日志，不是内部 commit 记录**：变更摘要一律取自
 `release_publish.py` 的 `PUBLIC_NOTES` 表（公众向措辞），**禁止**把内部 commit subject
 直接贴上去（「用户拍板」「实测反馈」「入档」这类过程语言只属于本仓库内部，出现在
 Release 页就是内部讨论外泄）；「更新内容」写"这版给使用者带来了什么"，不写"我们怎么决定的"。
-**发新版本前必须先在 `PUBLIC_NOTES` 补一行** —— 这是动线⑦的一部分。
+**发新版本前必须先在 `PUBLIC_NOTES` 补一行摘要、`HEADLINES` 补一行标题** —— 这是动线⑦的一部分。
 （已修正的两处教训：①旧实现把"归档文件入 repo 的提交主题"当摘要，那永远是退役提交，
 写的实际是**下一个版本**的内容 —— 版号整体错位一格；②摘要直接搬运 commit subject。）
 
@@ -354,10 +360,10 @@ Release 页就是内部讨论外泄）；「更新内容」写"这版给使用�
 python skill/scripts/release_publish.py                      # 计划模式：列清单 + 说明样例，不发
 python skill/scripts/release_publish.py --apply              # 补齐缺失 Release + 幂等回写既有说明（模板改版/摘要修订走这里）
 python skill/scripts/release_publish.py --family lazy --apply    # 日常动线 ⑦：只发本次升到的分工版本
-python skill/tests/check_releases.py                         # 断言：tag 形状 / 资产命名 / 说明含版本号 / 归档全覆盖 / Latest
+python skill/tests/check_releases.py                         # 断言：tag 形状 / 资产命名 / 标题与说明模板一致 / 归档全覆盖 / Latest
 ```
 
-**判据**在 `skill/tests/check_releases.py`（CI 同跑）：R1 tag 形状且唯一；R2 资产文件名 ∈ 固定名集合且无版本号样式；R3 说明正文含 tag 对应版本号；R4 `config_old` 全部归档版本 + 现役两分工版本，每个都有对应 Release —— **删归档版本或删 Release 都会红**；R5 仓库级 **Latest** 必须落在现行两分工版本之一 —— Latest 由创建时间决定，与版本号无关（实测：26 个补发后 Latest 留在了 lazy-v1.8，现行却是 v1.9），`release_publish.py` 对现行版创建/幂等重钉 `make_latest`；两分工并存时批量跑 last-wins（处理序 lazy → routing），日常动线⑦ `--family X` 把 Latest 钉到刚发的分工。
+**判据**在 `skill/tests/check_releases.py`（CI 同跑）：R1 tag 形状且唯一；R2 资产文件名 ∈ 固定名集合且无版本号样式；R3 标题 = emoji + 主题句（与 `HEADLINES` 同源）且正文含分工名与当前/历史状态；R4 `config_old` 全部归档版本 + 现役两分工版本，每个都有对应 Release —— **删归档版本或删 Release 都会红**；R5 仓库级 **Latest** 必须落在现行两分工版本之一 —— Latest 由创建时间决定，与版本号无关（实测：26 个补发后 Latest 留在了 lazy-v1.8，现行却是 v1.9），`release_publish.py` 仅在 Latest 未指向现行版时补钉（逐个 PATCH 会让指针在两现行版间抖动，与 CI 竞态）；两分工并存时批量跑 last-wins（处理序 lazy → routing），日常动线⑦ `--family X` 把 Latest 钉到刚发的分工。
 
 ### 相关页面
 

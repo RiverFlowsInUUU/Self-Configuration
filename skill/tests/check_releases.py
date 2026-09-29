@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Release 方案断言：tag 形状、资产文件名不带版本号、说明含版本号、归档版本全覆盖。
+"""Release 方案断言：tag 形状、资产文件名不带版本号、标题/说明与模板一致、归档版本全覆盖。
 
 用法（仓库根目录）:
     python skill/tests/check_releases.py
@@ -8,12 +8,13 @@
 判据（规矩来源：skill/reference/shared/ops.md §6.9）:
     R1 每个 Release 的 tag 匹配 ^(lazy|routing)-v\d+(\.\d+)?$，且无重复；
     R2 资产文件名 ∈ 固定名四件脸（两内核 × 完整版/.min），且不含版本号样式；
-    R3 说明正文含 tag 对应的版本号字符串（如 tag=lazy-v1.8 → 正文含 lazy_v1.8）；
+    R3 标题 = emoji + 主题句（与 release_publish.HEADLINES 同源），说明正文含分工名与
+       当前/历史状态 —— 版本号由 tag 芯片承载，正文与标题不再重复版本号；
     R4 config_old 全部归档版本 + 现役两分工版本，每个都有对应 Release（全覆盖）；
     R5 仓库级 Latest 必须落在现行两分工版本之一 —— 补发批跑只按创建时间决定 Latest
        会把 Latest 留在旧版上（实测：26 个补发后 Latest=lazy-v1.8，现行却是 v1.9）。
 """
-import json, os, re, subprocess, sys, urllib.error, urllib.request
+import json, os, re, subprocess, sys, urllib.error, urllib.request, importlib.util
 
 REPO = os.environ.get('GITHUB_REPO', 'RiverFlowsInUUU/Self-Configuration')
 API = f'https://api.github.com/repos/{REPO}'
@@ -64,6 +65,14 @@ def main():
     tok = os.environ.get('GITHUB_TOKEN')
     releases = fetch_releases(tok)
 
+    root = git('rev-parse', '--show-toplevel')
+    spec = importlib.util.spec_from_file_location(
+        'release_publish', os.path.join(root, 'skill', 'scripts', 'release_publish.py'))
+    rp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rp)
+
+    expected_tags, current_tags = local_expected()
+
     ok, bad = [], []
     def judge(cond, rid, msg):
         (ok if cond else bad).append((rid, msg))
@@ -83,15 +92,21 @@ def main():
             judge(name in ALLOWED_ASSETS and not VER_STYLE.search(name), 'R2',
                   f'{tag}/{name}: 资产命名' if name in ALLOWED_ASSETS and not VER_STYLE.search(name)
                   else f'{tag}/{name}: 资产文件名带版本号或不在固定名集合（{sorted(ALLOWED_ASSETS)}）')
-        body = r.get('body') or ''
         if ver:
             fam = m.group(1)
-            judge(f'{fam}_{ver}' in body, 'R3',
-                  f'{tag}: 说明含版本号 {fam}_{ver}' if f'{fam}_{ver}' in body
-                  else f'{tag}: 说明未写版本号 {fam}_{ver}')
+            cur = tag in current_tags
+            want_title = rp.release_title({'family': fam, 'version': ver})
+            name_ok = (r.get('name') or '') == want_title
+            body = r.get('body') or ''
+            status = '当前版本' if cur else '历史版本'
+            status_ok = rp.FAM_CN[fam] in body and status in body
+            judge(name_ok and status_ok, 'R3',
+                  f'{tag}: 标题与说明模板一致（{want_title} · {rp.FAM_CN[fam]} {status}）'
+                  if name_ok and status_ok else
+                  f'{tag}: 标题/说明与模板不一致 —— 标题应为「{want_title}」，正文需含'
+                  f'「{rp.FAM_CN[fam]}」「{status}」；跑 release_publish.py --apply 幂等回写')
 
-    expected, current_tags = local_expected()
-    missing = expected - seen
+    missing = expected_tags - seen
     judge(not missing, 'R4', 'R4 归档版本全覆盖' if not missing else f'R4 缺 Release 的版本: {sorted(missing)}')
 
     # R5 仓库级 Latest 必须是现行两分工版本之一

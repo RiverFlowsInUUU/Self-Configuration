@@ -8,7 +8,8 @@
 
 规矩（详见 skill/reference/shared/ops.md §6.9，断言在 skill/tests/check_releases.py）:
     - tag 允许带版本号（`lazy-v1.8` / `routing-v3`）；资产文件名一律不带版本号（固定名四件脸）；
-    - 说明中明确版本号（`lazy_v1.8`）；历史条目标注 📦 历史版本，现行版标注 🟢 当前版本；
+    - Release 标题 = emoji + 一句主题（HEADLINES 表），版本号由 tag 芯片承载，正文不重复；
+    - 说明正文分工名贯穿（状态行 / 下载按钮 / Assets 提示各带「懒人版 / 分流版」）；
     - **说明是面向公众的产品更新日志**：变更摘要一律取自 PUBLIC_NOTES 表（公众向措辞），
       禁止把内部 commit subject（用户拍板 / 实测 / 入档等过程语言）直接贴上去；
     - 资产 = 该分工该版本两内核现有所属文件（完整版 + .min），缺口侧如实注明，不硬凑；
@@ -22,12 +23,45 @@ UPLOAD = f'https://uploads.github.com/repos/{REPO}/releases'
 FAMS = ('lazy', 'routing')
 RAW = f'https://raw.githubusercontent.com/{REPO}/main'
 DL = f'https://github.com/{REPO}/releases/download'
-# 下载按钮 = shields.io 在线徽章（for-the-badge 风格，各内核一个主题色）
-BADGES = {
-    'surge': 'https://img.shields.io/badge/Surge-下载配置-0A84FF?style=for-the-badge',
-    'egern': 'https://img.shields.io/badge/Egern-下载配置-10B981?style=for-the-badge',
+# 下载按钮 = shields.io 在线徽章（for-the-badge 风格）：颜色编码内核，文字编码分工
+FAM_CN = {'lazy': '懒人版', 'routing': '分流版'}
+KERN_LABEL = {'surge': 'Surge', 'egern': 'Egern'}
+KERN_COLOR = {'surge': '0A84FF', 'egern': '10B981'}
+
+def badge_url(kern, fam):
+    return (f"https://img.shields.io/badge/{KERN_LABEL[kern]}-{FAM_CN[fam]}_下载-"
+            f"{KERN_COLOR[kern]}?style=for-the-badge")
+
+# Release 标题 = 分类 emoji + 一句主题（版本号由 tag 芯片承载，正文不再重复）。
+# 键：(family, version)。发新版本前必须先在此补一行 —— 动线⑦的一部分。
+HEADLINES = {
+    ('lazy', 'v1.0'): ('🚀', '首个公开版本'),
+    ('lazy', 'v1.1'): ('📝', '文档与注释口径修正'),
+    ('lazy', 'v1.2'): ('🔒', '隐藏订阅槽位上线'),
+    ('lazy', 'v1.3'): ('📶', 'Wi-Fi 自动暂停'),
+    ('lazy', 'v1.4'): ('🗂️', '历史版本归档恢复'),
+    ('lazy', 'v1.5'): ('📝', '配置注释指向修正'),
+    ('lazy', 'v1.6'): ('🧹', '结构对齐与注释清理'),
+    ('lazy', 'v1.7'): ('🏷️', '规则集更名 CN-Domains'),
+    ('lazy', 'v1.8'): ('🤖', 'AI 规则集换源'),
+    ('lazy', 'v1.9'): ('🧩', '自托管 AI 域名整合'),
+    ('routing', 'v1'): ('🚀', '分流版初始发布'),
+    ('routing', 'v2'): ('🌱', '分流版早期演进'),
+    ('routing', 'v2.1'): ('🌱', '分流版早期演进'),
+    ('routing', 'v2.2'): ('🌱', '分流版早期演进'),
+    ('routing', 'v2.3'): ('🌱', '分流版早期演进'),
+    ('routing', 'v2.4'): ('🌱', '分流版早期演进'),
+    ('routing', 'v3'): ('🧭', '分组与规则体系重构'),
+    ('routing', 'v3.1'): ('🔧', '维护性更新'),
+    ('routing', 'v3.2'): ('📝', '配置注释修正'),
+    ('routing', 'v3.3'): ('🔒', '隐藏订阅槽位上线'),
+    ('routing', 'v3.4'): ('📝', '注释读数修正'),
+    ('routing', 'v3.5'): ('🗂️', '历史版本归档恢复'),
+    ('routing', 'v3.6'): ('🧹', '结构对齐与注释清理'),
+    ('routing', 'v3.7'): ('🏷️', '规则集更名 CN-Domains'),
+    ('routing', 'v3.8'): ('🤖', 'AI 规则集换源'),
+    ('routing', 'v3.9'): ('🧩', '自托管 AI 域名整合'),
 }
-BADGE_ALT = {'surge': 'Download Surge', 'egern': 'Download Egern'}
 
 # 公众向更新摘要（Release 页是产品对外的更新日志，不搬运内部 commit subject）。
 # 键：(family, version)。发新版本前必须先在此补一行 —— 动线⑦的一部分。
@@ -145,35 +179,39 @@ def asset_name(path):
     """固定名四件脸：归档原名（lazy_v1.8.conf）剥掉版本段（→ lazy.conf）。"""
     return re.sub(r'_(v\d+(?:\.\d+)?)', '', os.path.basename(path))
 
+def release_title(e):
+    """Release 标题：emoji + 主题句（版本号由 tag 芯片承载，标题不再重复）。"""
+    emoji, headline = HEADLINES.get((e['family'], e['version']),
+                                    ('📦', f"{FAM_CN[e['family']]} {e['version']}"))
+    return f'{emoji} {headline}'
+
 def build_notes(e):
-    """Release 说明（面向公众的产品更新日志，不是内部 commit 记录）。"""
+    """Release 说明（面向公众的产品更新日志；分工名贯穿每一层，单层截取不丢语境）。"""
     fam, ver, tag = e['family'], e['version'], e['tag']
     kerns = [k for k in ('surge', 'egern') if e['kerns'][k]]
-    lines = [f"## `{fam}_{ver}` · {'🟢 当前版本' if e['is_current'] else '📦 历史版本'}", '']
-    if e['is_current']:
-        lines += ['> 与仓库固定订阅地址（raw/main）内容一致。更新配置请以后续新版本为准。', '']
-    else:
-        lines += ['> 历史版本的完整快照，仅供回滚与对照。日常使用请选择最新版本。', '']
-    summary = PUBLIC_NOTES.get((fam, ver))
-    lines.append(f'- **版本**：`{fam}_{ver}`')
     dates = sorted({e['kerns'][k]['date'] for k in kerns if e['kerns'][k]['date']})
-    if dates:
-        lines.append(f'- **发布日期**：{dates[0]}')
+    date = f' · {dates[0]} 发布' if dates else ''
+    if e['is_current']:
+        status = f"> 🟢 {FAM_CN[fam]} · 当前版本{date} · 内容与 raw/main 订阅地址一致"
+    else:
+        status = f"> 📦 {FAM_CN[fam]} · 历史版本{date} · 日常使用请选择最新版本"
+    lines = [release_title(e), '', status, '']
+    summary = PUBLIC_NOTES.get((fam, ver))
     if summary:
-        lines.append(f'- **更新内容**：{summary}')
+        lines += [summary, '']
     buttons = []
     for kern in ('surge', 'egern'):
         if kern not in kerns:
             continue
         name = asset_name(e['kerns'][kern]['full'])
-        buttons.append(f'[![{BADGE_ALT[kern]}]({BADGES[kern]})]({DL}/{tag}/{name})')
+        buttons.append(f'[![Download {KERN_LABEL[kern]} {fam}]({badge_url(kern, fam)})]({DL}/{tag}/{name})')
     if buttons:
-        lines.append(f'{" ".join(buttons)}')
-        lines.append('')
-        lines.append('<sub>.min 精简版与各内核完整文件见本页底部 Assets。</sub>')
+        lines += [' '.join(buttons), '']
+    sub = '.min 精简版与各内核完整文件见本页底部 Assets。'
     missing = [k for k in ('surge', 'egern') if k not in kerns]
     if missing:
-        lines.append(f'- **说明**：本版本仅提供 {"、".join(missing)} 侧文件（历史缺口，如实保留）')
+        sub += f'本版本仅提供 {KERN_LABEL[missing[0]]} 侧文件（历史缺口，如实保留）。'
+    lines.append(f'<sub>{sub}</sub>')
     return '\n'.join(lines)
 
 def api_req(url, token, method='GET', data=None, ctype='application/json', raw=None):
@@ -220,16 +258,22 @@ def apply(plan, token, only_family=None):
                 # 现行版钉仓库 Latest：批量补发时按处理次序 last-wins；
                 # 日常动线⑦（--family X）会把 Latest 钉到刚发的那个分工
                 with api_req(API + '/releases', token, 'POST',
-                             {'tag_name': tag, 'target_commitish': 'main', 'name': tag,
+                             {'tag_name': tag, 'target_commitish': 'main', 'name': release_title(e),
                               'body': build_notes(e),
                               'make_latest': 'true' if e['is_current'] else 'false'}) as r:
                     rel = json.load(r)
                 created.append(tag)
-            # 幂等 reconcile：已存在的 Release 说明与当前模板不一致就回写
-            # （公众向模板改版 / 摘要修订都靠这一步落到既有 Release 上）
+            # 幂等 reconcile：已存在的 Release 标题/说明与当前模板不一致就回写
+            # （模板改版 / 摘要修订都靠这一步落到既有 Release 上）
             new_body = build_notes(e)
+            new_name = release_title(e)
+            patch = {}
             if (rel.get('body') or '') != new_body:
-                api_req(f"{API}/releases/{rel['id']}", token, 'PATCH', {'body': new_body})
+                patch['body'] = new_body
+            if (rel.get('name') or '') != new_name:
+                patch['name'] = new_name
+            if patch:
+                api_req(f"{API}/releases/{rel['id']}", token, 'PATCH', patch)
                 updated.append(tag)
             have = {a['name'] for a in rel.get('assets', [])}
             for kern in ('surge', 'egern'):
