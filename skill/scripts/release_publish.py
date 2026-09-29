@@ -75,10 +75,19 @@ HEADLINES = {
 DAY_THEMES = {
     '2026-09-24': ('🚀', '首次发布与分流版重构'),
     '2026-09-25': ('🔬', '注释修正与解析策略优化'),
-    '2026-09-26': ('🛫', '订阅槽位与占位节点'),
-    '2026-09-27': ('📶', 'Wi-Fi 自动暂停与文档迁移'),
+    '2026-09-26': ('📶', 'Wi-Fi 自动暂停与占位节点'),
+    '2026-09-27': ('📚', '文档修正与规则快照整合'),
     '2026-09-28': ('🔄', 'AI 规则集换源与自托管整合'),
 }
+
+# 归组例外：个别版本的「版本号诞生日期」与「内容诞生日期」不同日，按内容事件归组。
+# 依据（0929 实证）：c593895（2026-09-26 19:29）一个提交同时给懒人版（v1.3）与分流版
+# （当时头注 v3.4）加入 [SSID Setting]；49392da（09-27）补归档升版只改 routing 头注
+# v3.4→v3.5，正文与 .min 零改动。Wi-Fi 自动暂停是两条产品线同日的同一功能，
+# 劈到两张 Release 会让 9-27 那张看起来「只有分流版有此功能」。
+# 不用「剥头注再比对内容」做通用规则：那会把仅同步版本号的版本（surge v1.7/v3.7）
+# 也回溯到旧日期 —— 只对确证的个案做显式例外。
+DATE_OVERRIDES = {('routing', 'v3.5'): '2026-09-26'}
 
 # 公众向更新摘要（Release 页是产品对外的更新日志，不搬运内部 commit subject）。
 # 键：(family, version)，值 = 要点列表（1~4 条，逐版本如实总结，禁止模板句复用）。
@@ -168,7 +177,7 @@ PUBLIC_NOTES = {
         '修正了订阅占位符数量的说明。此为文档性修正，配置行为无变化。',
     ],
     ('routing', 'v3.5'): [
-        '新增 Wi-Fi 自动暂停（SSID Setting）：连接到可信网络时自动停用代理，离开后自动恢复。此功能仅 Surge 内核支持；Egern 内核当日无内容变化，仅同步版本号。',
+        '新增 Wi-Fi 自动暂停（SSID Setting）：连接到可信网络时自动停用代理，离开后自动恢复。此功能仅 Surge 内核支持，Egern 内核无对应配置项。',
     ],
     ('routing', 'v3.6'): [
         '配置内的文档引用路径已迁移至仓库的新目录结构。分流行为无变化。',
@@ -285,7 +294,8 @@ def build_days(root):
                                'min': os.path.relpath(mn, root), 'date': date}
             dates = sorted({i['date'] for i in kerns.values() if i and i['date']})
             versions.append({'family': fam, 'version': ver, 'is_current': is_cur,
-                             'kerns': kerns, 'date': dates[0] if dates else None})
+                             'kerns': kerns,
+                             'date': DATE_OVERRIDES.get((fam, ver)) or (dates[0] if dates else None)})
     grouped = {}
     for v in versions:
         grouped.setdefault(v['date'] or '未知日期', []).append(v)
@@ -388,6 +398,21 @@ def existing_releases(token):
             return out
         page += 1
 
+def _asset_stale(asset, path):
+    """Release 上已有同名资产、但内容与本地文件不一致（如归组调整后同一固定名换了版本内容）。
+
+    先比大小（最快），同尺寸再下载全量比对；下载失败视为不陈旧，宁可跳过不误删。"""
+    with open(path, 'rb') as fh:
+        local = fh.read()
+    if asset.get('size') != len(local):
+        return True
+    try:
+        req = urllib.request.Request(asset['browser_download_url'],
+                                     headers={'User-Agent': 'self-configuration-release'})
+        return urllib.request.urlopen(req).read() != local
+    except Exception:                                  # noqa: BLE001
+        return False
+
 def apply(days, token):
     ex = {r['tag_name']: r for r in existing_releases(token)}
     created, updated, skipped, failed = [], [], [], []
@@ -425,13 +450,17 @@ def apply(days, token):
             if patch:
                 api_req(f"{API}/releases/{rel['id']}", token, 'PATCH', patch)
                 updated.append(tag)
-            have = {a['name'] for a in rel.get('assets', [])}
+            have = {a['name']: a for a in rel.get('assets', [])}
             for fam in FAMS:
                 for kern, info in day['fams'].get(fam, {}).get('assets', {}).items():
                     for key in ('full', 'min'):
                         path = os.path.join(repo_root(), info[key])
                         name = asset_name(info[key])
-                        if name in have:
+                        old = have.get(name)
+                        if old is not None and _asset_stale(old, path):
+                            api_req(f"{API}/releases/assets/{old['id']}", token, 'DELETE')
+                            old = None
+                        if old is not None:
                             continue
                         with open(path, 'rb') as fh:
                             raw = fh.read()
