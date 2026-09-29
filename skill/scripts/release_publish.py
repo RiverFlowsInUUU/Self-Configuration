@@ -22,8 +22,11 @@ UPLOAD = f'https://uploads.github.com/repos/{REPO}/releases'
 FAMS = ('lazy', 'routing')
 RAW = f'https://raw.githubusercontent.com/{REPO}/main'
 DL = f'https://github.com/{REPO}/releases/download'
-# 下载按钮 = 仓库自托管 SVG 徽章（icons/），不依赖 shields.io 等第三方服务
-BADGES = {'surge': f'{RAW}/icons/badge_surge.svg', 'egern': f'{RAW}/icons/badge_egern.svg'}
+# 下载按钮 = shields.io 在线徽章（for-the-badge 风格，各内核一个主题色）
+BADGES = {
+    'surge': 'https://img.shields.io/badge/Surge-下载配置-0A84FF?style=for-the-badge',
+    'egern': 'https://img.shields.io/badge/Egern-下载配置-10B981?style=for-the-badge',
+}
 BADGE_ALT = {'surge': 'Download Surge', 'egern': 'Download Egern'}
 
 # 公众向更新摘要（Release 页是产品对外的更新日志，不搬运内部 commit subject）。
