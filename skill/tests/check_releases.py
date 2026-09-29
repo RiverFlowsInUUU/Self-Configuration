@@ -115,12 +115,13 @@ def main():
             name_ok = (r.get('name') or '') == want_title
             body = r.get('body') or ''
             fams_ok = all(FAM_CN[fam] in body for fam in day['fams'])
-            vers_ok = all(f'**{e["version"]}**' in body
+            # 新模板（0929 定稿）：版本号在引言或条目前缀里出现即可，不再要求加粗形态
+            vers_ok = all(e['version'] in body
                           for fam in day['fams'] for e in day['fams'][fam]['entries'])
             judge(name_ok and fams_ok and vers_ok, 'R3',
                   f'{tag}: 标题与正文模板一致（{want_title}）' if name_ok and fams_ok and vers_ok
                   else f'{tag}: 标题/正文与模板不一致 —— 标题应为「{want_title}」，'
-                       f'正文需含各产品线名与 **vX.Y** 版本条目；跑 release_publish.py --apply 幂等回写')
+                       f'正文需含各产品线名与各版本条目；跑 release_publish.py --apply 幂等回写')
         else:
             judge(False, 'R1', f'{tag}: tag 不在本地日期分组 plan 里（{sorted(day_by_tag)}）')
 

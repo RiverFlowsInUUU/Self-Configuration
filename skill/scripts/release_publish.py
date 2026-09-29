@@ -303,36 +303,87 @@ def asset_name(kern, path):
 ASSET_NAMES = {f'{kern}-{fam}{ext}' for kern in KERN_LABEL for fam in FAM_CN
                for ext in ('.conf', '.min.conf', '.yaml', '.min.yaml')}
 
-def _fam_section(day, fam):
-    """一个产品线小节：版本区间头 + 逐版本要点（条目间空一行，松散列表加宽留白）。"""
-    info = day['fams'][fam]
-    vers = info['versions']
-    head = f"**{FAM_CN[fam]}** {vers[0]}" + (f" → {vers[-1]}" if len(vers) > 1 else '')
-    lines = [head, '']
-    for e in info['entries']:
-        notes = PUBLIC_NOTES.get((fam, e['version']), [])
-        if isinstance(notes, str):
-            notes = [notes]
-        if not notes:
+def _day_items(day):
+    """[(fam, [(version, note), ...]), ...]，按 FAMS 顺序，缺侧产品线不在结果里。"""
+    out = []
+    for fam in FAMS:
+        if fam not in day['fams']:
             continue
-        lines += [f"**{e['version']}**", '']
-        for n in notes:
-            lines += [f'- {n}', '']
-    return lines
+        items = []
+        for e in day['fams'][fam]['entries']:
+            notes = PUBLIC_NOTES.get((fam, e['version']), [])
+            if isinstance(notes, str):
+                notes = [notes]
+            items += [(e['version'], n) for n in notes]
+        out.append((fam, items))
+    return out
 
-def release_title(day):
-    """Release 标题：emoji + 日期 + 当日主题（tag 芯片在旁显示 vYYYY-MM-DD）。"""
-    return f"{day['emoji']} {day['date']} · {day['theme']}"
+
+def _vers_range(vers):
+    return vers[0] + (f' → {vers[-1]}' if len(vers) > 1 else '')
+
 
 def build_notes(day):
     """Release 说明（面向公众的产品更新日志，正式产品语言）。
 
-    结构：各产品线小节（逐版本要点）→ 下载按钮（每产品线 × 每内核）→ 元信息小字。
+    结构（2026-09-29 用户定稿）：引言（一行说清本日版本范围，两版变更一致时点明）→
+    共同变更（两产品线要点文字完全一致的条目只说一遍）→ 懒人版变更 / 分流版变更
+    （仅剩各自的条目，缺侧不写节）→ 下载按钮。条目默认不带版本号（引言已给），
+    仅当日内有多个版本需要消歧时才加粗前缀。**没有元信息小字行。**
     行距：GitHub 剥掉正文 CSS，无法真设 line-height；用列表项间空一行（松散列表）近似。"""
+    fams_items = _day_items(day)
+    fam_vers = {fam: list(dict.fromkeys(v for v, _ in items)) for fam, items in fams_items}
+    # 去重：要点文字完全一致、且当日两产品线都有的条目 → 共同变更
+    by_text = {}
+    for fam, items in fams_items:
+        for v, n in items:
+            by_text.setdefault(n, []).append((fam, v))
+    common = [(n, pairs) for n, pairs in by_text.items()
+              if len(fams_items) > 1 and len({f for f, _ in pairs}) == len(fams_items)]
+    common_texts = {n for n, _ in common}
+
     lines = []
-    for fam in FAMS:
-        if fam in day['fams']:
-            lines += _fam_section(day, fam)
+    # 引言
+    lead = ' · '.join(f'{FAM_CN[fam]} {_vers_range(fam_vers[fam])}' for fam, _ in fams_items)
+    if len(fams_items) == 2 and common and all(n in common_texts for _, items in fams_items for _, n in items):
+        lines.append(f'> 本次两版同步发布，变更一致：{lead}')
+    elif len(fams_items) == 2:
+        lines.append(f'> 本日更新：{lead}')
+    else:
+        lines.append(f'> 本日仅{FAM_CN[fams_items[0][0]]}有内容变化：{_vers_range(fam_vers[fams_items[0][0]])}')
+    for fam in FAMS:                                   # 单边内核日在引言括注
+        assets = day['fams'].get(fam, {}).get('assets', {})
+        missing = [k for k in ('surge', 'egern') if k not in assets]
+        if len(missing) == 1:
+            have = [k for k in ('surge', 'egern') if k in assets]
+            lines[-1] += f'；{FAM_CN[fam]}当日仅 {KERN_LABEL[have[0]]} 内核有内容变化'
+        elif len(missing) == 2:
+            lines[-1] += f'；{FAM_CN[fam]}当日无内容变化'
+    lines.append('')
+
+    # 共同变更
+    if common:
+        lines += ['## 共同变更', '']
+        multi = any(len(vs) > 1 for vs in fam_vers.values())
+        for n, pairs in common:
+            if multi:
+                pv = ' · '.join(f'{FAM_CN[f]} {v}' for f, v in
+                                sorted(set(pairs), key=lambda p: FAMS.index(p[0])))
+                lines += [f'- **{pv}**：{n}', '']
+            else:
+                lines += [f'- {n}', '']
+
+    # 各产品线变更（仅剩各自条目）
+    for fam, items in fams_items:
+        own = [(v, n) for v, n in items if n not in common_texts]
+        if not own:
+            continue
+        multi = len(fam_vers[fam]) > 1
+        lines += [f'## {FAM_CN[fam]}变更', '']
+        for v, n in own:
+            lines += [(f'- **{v}** {n}' if multi else f'- {n}'), '']
+
+    # 下载按钮
     buttons = []
     for fam in FAMS:
         for kern in ('surge', 'egern'):
@@ -343,22 +394,11 @@ def build_notes(day):
             buttons.append(f'[![Download {KERN_LABEL[kern]} {fam}]({badge_url(kern, fam)})]({DL}/{day["tag"]}/{name})')
     if buttons:
         lines += [' '.join(buttons), '']
-    meta = []
-    if day['is_current']:
-        meta.append('当前版本，与仓库订阅地址内容一致')
-    meta.append('资产为当日各产品线的最终版本')
-    for fam in FAMS:
-        assets = day['fams'].get(fam, {}).get('assets', {})
-        missing = [k for k in ('surge', 'egern') if k not in assets]
-        if missing and len(missing) < 2:
-            have = [k for k in ('surge', 'egern') if k in assets]
-            meta.append(f'当日{FAM_CN[fam]}仅包含 {KERN_LABEL[have[0]]} 内核文件'
-                        f'（{KERN_LABEL[missing[0]]} 内核当日无内容变化）')
-        elif len(missing) == 2:
-            meta.append(f'当日{FAM_CN[fam]}无资产')
-    meta.append('.min 精简版与完整文件见页面底部的 Assets')
-    lines.append('<sub>' + '；'.join(meta) + '。</sub>')
     return '\n'.join(lines)
+
+def release_title(day):
+    """Release 标题：emoji + 日期 + 当日主题（tag 芯片在旁显示 vYYYY-MM-DD）。"""
+    return f"{day['emoji']} {day['date']} · {day['theme']}"
 
 def api_req(url, token, method='GET', data=None, ctype='application/json', raw=None):
     body = raw if raw is not None else (json.dumps(data, ensure_ascii=False).encode() if data is not None else None)
