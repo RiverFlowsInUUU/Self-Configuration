@@ -39,7 +39,8 @@ ALLOWED_DOMAINS = (
     "pool.ntp.org", "market.xiaomi.com", "home.arpa",
 )
 FORBIDDEN_SUBSTRINGS = [
-    "cloudflare-cdn.com",
+    # 旧仓教训黑名单：只收来历可考的真实泄露串（2026-09-29 外部审查时清理过一次，
+    # 移除了无法确证来历的 cloudflare-cdn.com —— 禁串条目必须条条有据，否则是哑弹）
     "tange365.com",
     "wangxinyu",
 ]
