@@ -52,7 +52,8 @@ def _gh(*args):
 
 
 def collect():
-    state = {'active_versions': {}, 'archive_latest': {}, 'release': None, 'ci': None}
+    state = {'active_versions': {}, 'next_suggested': {}, 'archive_latest': {},
+             'release': None, 'ci': None}
 
     # ① 四份现役头注版本号
     for (kern, fam), rel in ACTIVE.items():
@@ -60,6 +61,8 @@ def collect():
         m = VER_RE.match(open(p, encoding='utf-8').readline()) if os.path.exists(p) else None
         # 头注值形如 lazy_v1.9 —— 剥掉产品线前缀，统一显示 v1.9
         state['active_versions'][f'{kern}-{fam}'] = m.group(1).split('_', 1)[-1] if m else None
+    # ①-b 建议下一位版本号（三段制默认小修 +Z；与现役同键名）
+    state['next_suggested'] = {k: _next_minor(v) for k, v in state['active_versions'].items() if v}
 
     # ② 归档进度：config_old 每个产品线的最新归档号
     for kern in ('surge', 'egern'):
@@ -93,11 +96,26 @@ def _vkey(v):
     return tuple(int(x) for x in v[1:].split('.'))
 
 
+def _next_minor(v):
+    """建议下一位版本号（三段制，默认小修 = Z 位 +1）：v2.0 → v2.0.1 · v2.0.1 → v2.0.2。
+    中改（Y+1）/大改（X+1）由人定档，本函数只给默认值防心算出错。"""
+    parts = [int(x) for x in v[1:].split('.')]
+    if len(parts) < 3:
+        parts.append(1)
+    else:
+        parts[-1] += 1
+    return 'v' + '.'.join(str(x) for x in parts)
+
+
 def render(state):
     a = state['active_versions']
     print('══ 现役版本（四份必须同号：lazy 两份一组、routing 两份一组）══')
     print(f"  surge  lazy    {a.get('surge-lazy')}    │ surge  routing  {a.get('surge-routing')}")
     print(f"  egern  lazy    {a.get('egern-lazy')}    │ egern  routing  {a.get('egern-routing')}")
+    ns = state.get('next_suggested', {})
+    print('══ 建议下一位（三段制默认小修 +Z；中改进 Y / 大改进 X 由人定档）══')
+    print(f"  surge  lazy    {ns.get('surge-lazy', '-')}    │ surge  routing  {ns.get('surge-routing', '-')}")
+    print(f"  egern  lazy    {ns.get('egern-lazy', '-')}    │ egern  routing  {ns.get('egern-routing', '-')}")
     ar = state['archive_latest']
     print('══ 归档进度（config_old 内各产品线最新号；现役 = 归档号的下一位，三段制 X.Y.Z）══')
     for k in ('surge-lazy', 'surge-routing', 'egern-lazy', 'egern-routing'):

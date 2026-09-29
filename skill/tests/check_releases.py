@@ -35,7 +35,7 @@ def local_versions():
         for kern, ext in (('surge', '.conf'), ('egern', '.yaml')):
             d = os.path.join(root, kern, 'profiles', 'config_old')
             for f in os.listdir(d):
-                m = re.match(rf'^{fam}_(v\d+(?:\.\d+)?)(\.min)?{ext}$', f)
+                m = re.match(rf'^{fam}_(v\d+(?:\.\d+){{0,2}})(\.min)?{ext}$', f)
                 if m:
                     pairs.add((fam, m.group(1)))
             p = os.path.join(root, kern, 'profiles', f'{fam}{ext}')
@@ -139,8 +139,9 @@ def main():
         for fam in day['fams']:
             for e in day['fams'][fam]['entries']:
                 # 新模板（0929 定稿）：版本号在引言或条目前缀出现即可，
-                # 单版本日无加粗前缀（引言已给版本），不再要求 **vX.Y** 形态
-                present = e['version'] in body
+                # 单版本日无加粗前缀（引言已给版本），不再要求 **vX.Y(.Z)** 形态。
+                # 三段制（0929 起）：版本子串加 (?!\.\d) 边界 —— v2.0 不得被正文里的 v2.0.1 误满足
+                present = re.search(re.escape(e['version']) + r'(?!\.\d)', body) is not None
                 judge(present, 'R4',
                       f'{tag} 提到 {FAM_CN[fam]} {e["version"]}' if present
                       else f'{tag}: 正文缺少 {FAM_CN[fam]} {e["version"]} 条目')
