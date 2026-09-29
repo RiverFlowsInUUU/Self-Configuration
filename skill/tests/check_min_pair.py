@@ -64,17 +64,17 @@ def first_diff(a, b):
     return None if len(a) == len(b) else min(len(a), len(b))
 
 
-VERSION_RE = re.compile(r"^#! version=(routing|lazy)_v([0-9]+)\.([0-9])$")
-# 归档名里的版本号按「主.一位小数」起；本仓 2026-09-24 固定化之前有一批只写主号
-# （`routing_v3.conf`），一并认 —— V4 要抓的是"新归档没按进位规则起名"，不是考古。
-ARCHIVE_RE = re.compile(r"^(routing|lazy)_v([0-9]+(?:\.[0-9])?)(\.min)?\.(conf|yaml)$")
+# 三段制（2026-09-29 起）：X.Y.Z 合法（第三段可选）；历史两段号不回改，两段三段混排都认。
+VERSION_RE = re.compile(r"^#! version=(routing|lazy)_v([0-9]+)\.([0-9]+)(?:\.([0-9]+))?$")
+# 归档名里的版本号最多三段（满 10 进 1 ⇒ 4.0.10 也合法）；本仓 2026-09-24 固定化之前
+# 有一批只写主号（`routing_v3.conf`），一并认 —— V4 要抓的是"新归档没按进位规则起名"，不是考古。
+ARCHIVE_RE = re.compile(r"^(routing|lazy)_v([0-9]+(?:\.[0-9]+){0,2})(\.min)?\.(conf|yaml)$")
 OLD_DIR = "config_old"          # 归档目录（2026-09-27 恢复；每版完整版 + .min 成对）
 
 
 def ver_tuple(v):
-    """'3.2' / '3' → (3, 2) / (3, 0)，用于比版本先后。"""
-    major, _, minor = v.partition(".")
-    return (int(major), int(minor or 0))
+    """'4.0.1' / '3.2' / '3' → (4,0,1) / (3,2) / (3,)，逐段数值比先后（元组前缀小于长尾）。"""
+    return tuple(int(x) for x in v.split("."))
 
 
 def head_version(path):
@@ -85,7 +85,9 @@ def head_version(path):
     except OSError:
         return None
     m = VERSION_RE.match(first.rstrip("\r\n"))
-    return (m.group(1), "%s.%s" % (m.group(2), m.group(3))) if m else None
+    ver = "%s.%s%s" % (m.group(2), m.group(3),
+                       ("." + m.group(4)) if m.group(4) else "")
+    return (m.group(1), ver) if m else None
 
 
 def version_checks(root):
@@ -105,7 +107,7 @@ def version_checks(root):
         heads[side] = (vr, vl)
         out.append(("%s V2 头注版本标记形状合法" % side,
                     vr is not None and vl is not None and vr[0] == "routing" and vl[0] == "lazy",
-                    "routing=%s · lazy=%s（读不出多半是第一行被挪走或写成了 x.y.z）" % (vr, vl)))
+                    "routing=%s · lazy=%s（读不出多半是第一行被挪走或段数超过三段）" % (vr, vl)))
         old_dir = os.path.join(dirpath, OLD_DIR)
         if not os.path.isdir(old_dir):
             continue          # 缺归档目录：V3–V6 无从判起，只保 V1/V2 与跨侧 4 条

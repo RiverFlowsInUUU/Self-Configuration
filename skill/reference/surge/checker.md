@@ -59,7 +59,7 @@ python ./skill/scripts/surge/check_surge_dns.py surge/profiles/routing.conf
 ⭐ **「当前版」是固定名，不是一堆版本号**（2026-09-24 起）：顶层恒为 `routing` / `lazy`
    四个文件名，阶段 2 的 `--strict` 名单、阶段 4 的联网审计、阶段 5 的正则对账、
    当前版本由 profile 头注 `#! version=` 标识。
-   「哪一版」只剩 profile 头注 `#! version=routing_vX.Y`，形状与两内核一致性由
+   「哪一版」只剩 profile 头注 `#! version=routing_vX.Y(.Z)`，形状与两内核一致性由
    `check_min_pair.py` 判（V1–V6 ×2 + 跨侧 2 条）。配套前置检查：固定名文件不存在 ⇒
    **退出码 2** —— 否则阶段 4 / 5 会对不存在的文件 `continue`，**静默少跑一整个阶段**还报绿。
    要复核历史版本：从 git 历史取出对应文件，带着路径直接调对应脚本。

@@ -33,7 +33,7 @@ ACTIVE = {
     ('egern', 'routing'): 'egern/profiles/routing.yaml',
 }
 VER_RE = re.compile(r'#!\s*version=(\S+)')
-ARCH_RE = re.compile(r'_(v\d+(?:\.\d+)?)\.(?:conf|yaml)$')
+ARCH_RE = re.compile(r'_(v\d+(?:\.\d+){0,2})\.(?:conf|yaml)$')
 
 
 def _git(*args):
@@ -99,7 +99,7 @@ def render(state):
     print(f"  surge  lazy    {a.get('surge-lazy')}    │ surge  routing  {a.get('surge-routing')}")
     print(f"  egern  lazy    {a.get('egern-lazy')}    │ egern  routing  {a.get('egern-routing')}")
     ar = state['archive_latest']
-    print('══ 归档进度（config_old 内各产品线最新号；现役 = 归档 + 0.1）══')
+    print('══ 归档进度（config_old 内各产品线最新号；现役 = 归档号的下一位，三段制 X.Y.Z）══')
     for k in ('surge-lazy', 'surge-routing', 'egern-lazy', 'egern-routing'):
         print(f'  {k:<15} {ar.get(k, "-")}')
     r = state['release']

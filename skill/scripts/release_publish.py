@@ -14,7 +14,7 @@
 规矩（详见 skill/reference/shared/ops.md §6.9，断言在 skill/tests/check_releases.py）:
     - tag = vYYYY-MM-DD（版本诞生日期）；资产文件名一律不带版本号（固定名）；
     - Release 标题 = emoji + 日期 + 当日主题（DAY_THEMES 表）；
-    - 正文按产品线分小节：每版本一行 **vX.Y** 头 + 公众向要点（PUBLIC_NOTES 表）；
+    - 正文按产品线分小节：每版本一行 **vX.Y(.Z)** 头 + 公众向要点（PUBLIC_NOTES 表）；
     - **说明是面向公众的产品更新日志**（参考 Apple 更新说明的正式产品语言），
       禁止文言腔与内部过程语言；内核维度一律写全称「Surge 内核 / Egern 内核」；
     - 单边内核日如实注明（如 Egern 内核当日无内容），不硬凑；
@@ -193,7 +193,7 @@ def repo_root():
     return git('rev-parse', '--show-toplevel')
 
 def parse_ver(name):
-    m = re.search(r'_(v\d+(?:\.\d+)?)\.', name)
+    m = re.search(r'_(v\d+(?:\.\d+){0,2})\.', name)
     return m.group(1) if m else None
 
 def vkey(ver):
@@ -311,7 +311,7 @@ def build_days(root):
 def asset_name(kern, path):
     """固定名 = 内核前缀 + 产品线（如 surge-lazy.conf）：Assets 面板自解释，
     不必依赖「.conf=Surge / .yaml=Egern」的圈内约定。"""
-    return kern + '-' + re.sub(r'_(v\d+(?:\.\d+)?)', '', os.path.basename(path))
+    return kern + '-' + re.sub(r'_(v\d+(?:\.\d+){0,2})', '', os.path.basename(path))
 
 # 资产固定名全集 —— check_releases 的 R2 白名单从这派生，单一真源防两份手抄漂移。
 ASSET_NAMES = {f'{kern}-{fam}{ext}' for kern in KERN_LABEL for fam in FAM_CN
