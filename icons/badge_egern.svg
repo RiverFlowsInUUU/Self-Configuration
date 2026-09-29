@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="44" viewBox="0 0 150 44" role="img" aria-label="Download Egern">
+  <title>下载 Egern 配置</title>
+  <linearGradient id="s" x2="0" y2="1">
+    <stop offset="0" stop-color="#3b4149" stop-opacity="1"/>
+    <stop offset="1" stop-color="#24292f" stop-opacity="1"/>
+  </linearGradient>
+  <clipPath id="r"><rect width="150" height="44" rx="9"/></clipPath>
+  <g clip-path="url(#r)">
+    <rect width="150" height="44" fill="url(#s)"/>
+    <rect width="150" height="44" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+  </g>
+  <g fill="#ffffff">
+    <path d="M14 13h5v9h3.5L17.5 27.5 12.5 22H16v-9z" transform="translate(0,-1)"/>
+    <text x="30" y="28" font-family="Segoe UI,Helvetica,Arial,sans-serif" font-size="15" font-weight="600">Egern</text>
+    <text x="88" y="28" font-family="Segoe UI,Helvetica,Arial,sans-serif" font-size="12" font-weight="400" opacity="0.75">下载配置</text>
+  </g>
+</svg>

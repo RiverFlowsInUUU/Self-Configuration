@@ -20,6 +20,11 @@ REPO = os.environ.get('GITHUB_REPO', 'RiverFlowsInUUU/Self-Configuration')
 API = f'https://api.github.com/repos/{REPO}'
 UPLOAD = f'https://uploads.github.com/repos/{REPO}/releases'
 FAMS = ('lazy', 'routing')
+RAW = f'https://raw.githubusercontent.com/{REPO}/main'
+DL = f'https://github.com/{REPO}/releases/download'
+# 下载按钮 = 仓库自托管 SVG 徽章（icons/），不依赖 shields.io 等第三方服务
+BADGES = {'surge': f'{RAW}/icons/badge_surge.svg', 'egern': f'{RAW}/icons/badge_egern.svg'}
+BADGE_ALT = {'surge': 'Download Surge', 'egern': 'Download Egern'}
 
 # 公众向更新摘要（Release 页是产品对外的更新日志，不搬运内部 commit subject）。
 # 键：(family, version)。发新版本前必须先在此补一行 —— 动线⑦的一部分。
@@ -153,12 +158,16 @@ def build_notes(e):
         lines.append(f'- **发布日期**：{dates[0]}')
     if summary:
         lines.append(f'- **更新内容**：{summary}')
-    assets = []
-    if 'surge' in kerns:
-        assets.append(f"Surge [`{asset_name(e['kerns']['surge']['full'])}`](../../releases/download/{tag}/{asset_name(e['kerns']['surge']['full'])}) / [`{asset_name(e['kerns']['surge']['min'])}`](../../releases/download/{tag}/{asset_name(e['kerns']['surge']['min'])})")
-    if 'egern' in kerns:
-        assets.append(f"Egern [`{asset_name(e['kerns']['egern']['full'])}`](../../releases/download/{tag}/{asset_name(e['kerns']['egern']['full'])}) / [`{asset_name(e['kerns']['egern']['min'])}`](../../releases/download/{tag}/{asset_name(e['kerns']['egern']['min'])})")
-    lines.append(f'- **下载**：{" · ".join(assets)}')
+    buttons = []
+    for kern in ('surge', 'egern'):
+        if kern not in kerns:
+            continue
+        name = asset_name(e['kerns'][kern]['full'])
+        buttons.append(f'[![{BADGE_ALT[kern]}]({BADGES[kern]})]({DL}/{tag}/{name})')
+    if buttons:
+        lines.append(f'{" ".join(buttons)}')
+        lines.append('')
+        lines.append('<sub>.min 精简版与各内核完整文件见本页底部 Assets。</sub>')
     missing = [k for k in ('surge', 'egern') if k not in kerns]
     if missing:
         lines.append(f'- **说明**：本版本仅提供 {"、".join(missing)} 侧文件（历史缺口，如实保留）')
