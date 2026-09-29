@@ -9,6 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # check_releases 的诞生日期断言依赖完整 git 历史（--find-object 找版本 blob 首现提交），
+          # shallow clone 会把所有日期退化成 push 当天 —— 必须全量拉取
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
