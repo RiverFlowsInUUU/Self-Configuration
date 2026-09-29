@@ -1,6 +1,6 @@
 ---
 name: profile-dns-hardening
-description: 审计并加固 Surge / Egern 配置（.conf 与 Profile.yaml）的 DNS 泄露面与分流覆盖。触发词：Surge 配置、Egern 配置、防 DNS 泄露、DNS 裸奔、leak test 显示 china telecom、upstream 显示 bootstrap、dns-server = system、encrypted-dns-server 是域名、proxy_nameservers、hijack-dns / hijack_dns、bootstrap 泄露、明文 :53 旁路、HomePod / Apple TV DNS 泄露、no-resolve / no_resolve、GEOIP CN 缺 no-resolve、IP 规则触发 DNS 解析、加了 no-resolve 之后分流坏了、国内域名全落 FINAL、国内网站不是直连、direct.txt、ChinaMax 只有 IP、规则集 IP 条目缺 no-resolve、Apple_All.list 强制解析、pre-matching、pre-matching 指向策略组、underlying-proxy 无法解析、smart 组评分、policy-regex-filter、flatten 的等价写法、always-real-ip、fake-ip、延迟测试域名泄露、cp.cloudflare.com 泄露、图标域名泄露、dns.forward 兜底、白名单排在 REJECT 之后、profile 模板、Egern dns 段、Egern dnsleak、Egern YAML 配置优化、DNS 泄露到运营商（电信/联通/移动）、日志里规则判定正常但 upstream 是 bootstrap、节点域名明文解析、系统 DNS 回退泄露、rule_set 触发 DNS 解析、blackmatrix7 No_Resolve 变体、ChinaMax.list 没有域名规则、ChinaMax_All_No_Resolve、国内域名走代理、分流覆盖审计、dns.google 泄露、引导解析泄露、extended-matching、Surge 拒绝加载配置、proxy-test-url 泄露、gstatic generate_204、归档配置、升版本号、config_old。命中本技能时优先加载本文件并按内核进入对应分支，不要凭记忆答语法。
+description: 审计并加固 Surge / Egern 配置（.conf 与 Profile.yaml）的 DNS 泄露面与分流覆盖。触发词：Surge 配置、Egern 配置、防 DNS 泄露、DNS 裸奔、leak test 显示 china telecom、upstream 显示 bootstrap、dns-server = system、encrypted-dns-server 是域名、proxy_nameservers、hijack-dns / hijack_dns、bootstrap 泄露、明文 :53 旁路、HomePod / Apple TV DNS 泄露、no-resolve / no_resolve、GEOIP CN 缺 no-resolve、IP 规则触发 DNS 解析、加了 no-resolve 之后分流坏了、国内域名全落 FINAL、国内网站不是直连、direct.txt、ChinaMax 只有 IP、规则集 IP 条目缺 no-resolve、Apple_All.list 强制解析、pre-matching、pre-matching 指向策略组、underlying-proxy 无法解析、smart 组评分、policy-regex-filter、flatten 的等价写法、always-real-ip、fake-ip、延迟测试域名泄露、cp.cloudflare.com 泄露、图标域名泄露、dns.forward 兜底、白名单排在 REJECT 之后、profile 模板、Egern dns 段、Egern dnsleak、Egern YAML 配置优化、DNS 泄露到运营商（电信/联通/移动）、日志里规则判定正常但 upstream 是 bootstrap、节点域名明文解析、系统 DNS 回退泄露、rule_set 触发 DNS 解析、blackmatrix7 No_Resolve 变体、ChinaMax.list 没有域名规则、ChinaMax_All_No_Resolve、国内域名走代理、分流覆盖审计、dns.google 泄露、引导解析泄露、extended-matching、Surge 拒绝加载配置、proxy-test-url 泄露、gstatic generate_204、归档配置、升版本号、config_old、Release 发布、release_publish、check_releases、Release 资产命名、补发历史版本。命中本技能时优先加载本文件并按内核进入对应分支，不要凭记忆答语法。
 agent_created: true
 ---
 
@@ -97,6 +97,10 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
   （即 V6「升版前打的快照，与线上逐字节相同」的语义），缺口保留不补号；
   **内容未变的分工也要随四份同号升版并同样入档快照** —— 跨侧「两侧版本一致」断言要求四份头注永远同号。
 - 任何文档、脚本、README 里出现"带版本号的订阅 URL"都是错的。
+- **发布层（GitHub Release）**：一个分工版本 = 一个 Release（tag = `lazy-vX.Y` / `routing-vX.Y`），
+  是 config_old 归档层之上的对外发布层，不替代归档；tag 允许带版本号，
+  **Release 资产文件名一律不带版本号**（固定名四件脸）；说明中明确版本号。规矩与模板见
+  [`reference/shared/ops.md`](reference/shared/ops.md) §6.9，断言在 `skill/tests/check_releases.py`。
 
 ### 改配置标准动线
 
@@ -116,9 +120,13 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
 ⑥ 本地 commit → **停在推送前**。`git push` 永远是独立确认项：用户说「换掉 / 改吧 /
    找个新的」只授权改动本身，讨论与调研阶段的产物一律停在本地 + 汇报表格；
    拿到用户单独的「推」指令（如「推吧 / 没问题就推」）才 push（CI 在 push / PR 自动重跑同一组检查）
+⑦ 发布 Release（push 之后）：`python skill/scripts/release_publish.py --family <lazy|routing> --apply`
+   —— 只发本次升到的那个分工版本（tag 允许带版本号，资产文件名不带，说明写明版本号；
+   缺 --family 则补齐全部缺失的 Release）。发完跑 `python skill/tests/check_releases.py` 验收。
+   规矩与说明模板见 `reference/shared/ops.md` §6.9。
 ```
 
-> **注意**　mutating 步骤（②③④⑥）必须等用户明确确认后再执行；①是只读的，随时可跑。
+> **注意**　mutating 步骤（②③④⑥⑦）必须等用户明确确认后再执行；①是只读的，随时可跑。
 > **注意**　改 DNS 段 = 一次改全套：`lazy` / `routing` × 完整版 / `.min` 四份（跨 lazy/routing 的
 > 16 键逐字一致由 `check_min_pair.py` 的 ②-c 断言守）。想只给某一版加防泄露键，先问它为什么不是四条都要。
 

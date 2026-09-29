@@ -32,6 +32,11 @@ jobs:
       - name: Markdown links and anchors
         run: python skill/tests/check_links.py .
 
+      - name: Releases scheme (tags / asset names / notes / coverage)
+        run: python skill/tests/check_releases.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Surge DNS audit
         run: |
           python skill/scripts/surge/check_surge_dns.py surge/profiles/lazy.conf

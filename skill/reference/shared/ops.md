@@ -262,6 +262,7 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/pro
 ③ 核豁免行：       .min 由生成器重算正文、按锚点继承注释 —— 仍要肉眼确认 `# audit-waive:` 那几行在 min 版里读得到
 ④ 升版（要对外发布时）：直接改四份 profile 头注里的 `#! version=`（`.min` 由生成器重算继承）
 ⑤ 收尾：`python skill/tests/check_secrets.py && python skill/tests/check_portability.py && python skill/tests/check_min_pair.py && python skill/tests/check_links.py .`（push 后 CI 会再跑一遍同组检查）
+⑥ 发布 Release（push 之后）：`python skill/scripts/release_publish.py --family <lazy|routing> --apply`（规矩见 §6.9）
 ```
 
 > **注意**　`.min` 不手工编辑。手工同步迟早漂 —— `check_min_pair.py` 会拿完整版对拍 `.min`，漂了就红。
@@ -314,6 +315,41 @@ python skill/tests/check_portability.py
 ### 6.8 判据脚本的纪律
 
 日常维护的正确姿势是：改配置与文档去适配判据，而不是改判据去适配配置。确实证明判据本身错了才动它，改动时写清"哪个反例会漏判、改后能抓住什么"。
+
+### 6.9 Release 发布规矩
+
+版本信息现在有三层落点：**现役**（固定名四件，版本号只在头注）→ **归档**（`config_old/`，文件名带头注同号）→ **发布**（GitHub Release，tag 与说明带版本号）。发布层是归档层之上的对外窗口，不替代归档，也不改变 §6.1 的任何条文。
+
+**粒度**：一个分工版本 = 一个 Release（lazy 与 routing 是两条独立序列，各发各的；一次改动通常只动一边）。内容未变的分工不单独发 Release。
+
+**tag**：`<family>-v<X.Y>`（如 `lazy-v1.9`、`routing-v3`），指向 main。tag 是发布层身份，**允许带版本号** —— §6.1"带版本号的订阅 URL 是错的"指的是指向 `raw/main` 漂移内容的地址；Release 资产 URL 是钉版快照，允许且鼓励用于钉版。
+
+**资产**：该分工该版本两内核现有所属文件（完整版 + `.min`），文件名用**固定名四件脸**（`lazy.conf` / `lazy.min.conf` / `lazy.yaml` / `lazy.min.yaml`，routing 同理）——**一律不带版本号**，这是铁律；版本号仅存在于 tag 与说明正文。单侧缺口（如 routing v1–v2.4 仅 Egern 有归档）如实注明，不硬凑。
+
+**说明模板**（`release_publish.py` 自动生成，字段固定防漂移）：
+
+```markdown
+## `lazy_v1.8` · 📦 补发（retroactive）
+> 📦 历史版本补发：内容取自 `config_old/` 归档快照，与其服役时逐字节相同（check_min_pair.py V6 断言守）。
+- **版本号**：`lazy_v1.8`（Surge 与 Egern 同号）
+- **归档时间**：YYYY-MM-DD
+- **变更摘要**：<入档 commit 主题 / 大重构归档则注明不逐版重建>
+- **资产**：Surge `lazy.conf` / `lazy.min.conf` · Egern `lazy.yaml` / `lazy.min.yaml` —— 文件名不含版本号
+- **缺口**：<无则省略>
+```
+
+现行版（头注当前号）同样发 Release，标注 🟢 现行版，资产取自固定名四件本体。
+
+**命令**：
+
+```bash
+python skill/scripts/release_publish.py                      # 计划模式：列清单 + 说明样例，不发
+python skill/scripts/release_publish.py --apply              # 补齐全部缺失 Release（一次性补发 / 兜底）
+python skill/scripts/release_publish.py --family lazy --apply    # 日常动线 ⑥：只发本次升到的分工版本
+python skill/tests/check_releases.py                         # 断言：tag 形状 / 资产命名 / 说明含版本号 / 归档全覆盖
+```
+
+**判据**在 `skill/tests/check_releases.py`（CI 同跑）：R1 tag 形状且唯一；R2 资产文件名 ∈ 固定名集合且无版本号样式；R3 说明正文含 tag 对应版本号；R4 `config_old` 全部归档版本 + 现役两分工版本，每个都有对应 Release —— **删归档版本或删 Release 都会红**。
 
 ### 相关页面
 
