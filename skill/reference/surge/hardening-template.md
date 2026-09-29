@@ -92,13 +92,14 @@ use-local-host-item-for-proxy = false
 ### 1.2 IPv6
 
 ```
-ipv6 = true
-ipv6-vif = auto
+ipv6 = false
+ipv6-vif = disable
 ```
 
-- `ipv6 = true`：真实 IPv6 站点可直连
-- `ipv6-vif = auto`：**只在本地网络确实有可用 IPv6 前缀时**才让 VIF 承载。
-  写死 `true` 会在纯 IPv4 的 Wi-Fi 上留一条死掉的 AAAA 路径 —— 表现为连接超时 + 额外耗电
+- `ipv6 = false`：不向客户端返回 AAAA 记录，双栈站点自动回落 IPv4。
+  封堵面与 Egern 内核等效（Egern 默认不启用 IPv6），AAAA 绕过面收窄；
+  2026-09-29 实测不影响 DNS 泄露面，官方对无 v6 需求的用户亦建议关闭
+- `ipv6-vif = disable`：IPv6 已关，VIF 不再承载任何 IPv6 路径
 
 ### 1.3 GeoIP
 
@@ -160,14 +161,15 @@ block-quic = per-policy
 ### 1.6 局域网与安全
 
 ```
-allow-wifi-access = true
-allow-hotspot-access = true
+allow-wifi-access = false
+allow-hotspot-access = false
 proxy-restricted-to-lan = true
 gateway-restricted-to-lan = true
 ```
 
-⭐ 后两个是**安全项**：即使上级网络 DMZ / 端口转发配得潦草，
-监听端口也不会暴露到当前子网之外。**保持 `true`。**
+⭐ 前两个保持 `false`：局域网设备的共享出口由专用网关承担，本机不开放
+监听端口，暴露面归零。**后两个是安全项**：监听端口万一重新启用时，
+即使上级网络 DMZ / 端口转发配得潦草也不会暴露到当前子网之外。**保持 `true`。**
 
 ### 1.7 Wi-Fi / 蜂窝
 

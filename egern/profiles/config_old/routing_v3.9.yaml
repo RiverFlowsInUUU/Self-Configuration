@@ -1,4 +1,4 @@
-#! version=routing_v4.0
+#! version=routing_v3.9
 # ================================================================ routing_v3.4（正式版 · 推荐）
 # 本版 = **routing_v2.4 + 规则段对齐 Surge**（内容与顺序均逐行对拍）：
 #   ① `dns.forward` 由单条 catch-all 扩为 4 层：
@@ -82,8 +82,6 @@
 # ⇒ 机场订阅入口 4 → 2（Airport-A / Airport-B），URL 占位符 8 → 4 条（口径 = 仅 `urls:` 下条目；含 `urls_disabled:` 为 11 → 5）。
 #    保留 A、B 的理由：A 被 8 个组引用、B 被 7 个，是地区组的共同上游；
 #    C 与 Free 只服务 Smart，删掉后 Smart 仍有 A/B 可用，能力不降。
-# IPv6 显式关闭：与 Surge 内核对齐（此前依赖默认值隐式关闭，行为不变）
-ipv6: false
 vif_only: true
 hijack_dns:
 - '*'

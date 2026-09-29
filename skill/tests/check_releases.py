@@ -73,6 +73,7 @@ def main():
     days = rp.build_days(git('rev-parse', '--show-toplevel'))
     allowed_assets = rp.ASSET_NAMES          # R2 白名单 = 发布器单一真源派生
     day_by_tag = {d['tag']: d for d in days}
+
     # 覆盖期望：(fam, ver) → 应出现的日期 tag（取该版本的诞生日期）
     want_pair_day = {}
     for d in days:
@@ -84,6 +85,14 @@ def main():
     ok, bad = [], []
     def judge(cond, rid, msg):
         (ok if cond else bad).append((rid, msg))
+
+    # R0：每个更新日必须在 DAY_THEMES 有当日主题 —— 缺了会静默落
+    # 「📦 配置更新」兜底标题（发布器 DAY_THEMES.get 兜底），发版前在这里拦住。
+    for d in days:
+        judge(d['date'] in rp.DAY_THEMES, 'R0',
+              f"{d['tag']}: DAY_THEMES 有当日主题" if d['date'] in rp.DAY_THEMES
+              else f"{d['tag']}: DAY_THEMES 缺 {d['date']} 条目 —— 标题会落「📦 配置更新」兜底，"
+                   f"先在 release_publish.py DAY_THEMES 补一行再发版")
 
     judge(bool(releases), 'R0', '仓库至少有一个 Release（尚无 → 先跑 release_publish.py --apply）')
     judge(bool(days), 'R0', '本地能构建出日期分组 plan')

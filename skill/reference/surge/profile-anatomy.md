@@ -211,8 +211,8 @@ RULE-SET,…,AI.list,…,no-resolve
 
 | 键 | 值 | 为什么 |
 |:---|:---|:-------|
-| `ipv6 = true` | 真实 IPv6 可直连 | 关掉会让纯 IPv6 站点不可达 |
-| `ipv6-vif = auto` | 仅在本地网络确实有可用 IPv6 前缀时才让 VIF 承载 | 若写死 `true`，在纯 IPv4 的 Wi-Fi 上会留一条死掉的 AAAA 路径 —— 表现为连接超时 + 额外耗电 |
+| `ipv6 = false` | 不向客户端返回 AAAA 记录，双栈站点自动回落 IPv4 | 封堵面与 Egern 内核等效（Egern 默认不启用 IPv6），AAAA 绕过面收窄；2026-09-29 实测不影响 DNS 泄露面，官方对无 v6 需求的用户亦建议关闭 |
+| `ipv6-vif = disable` | VIF 不再承载任何 IPv6 路径 | IPv6 已关，VIF 承载 v6 无意义；写 `auto`/`true` 会与 `ipv6 = false` 的语义打架 |
 
 ### 3.3 GeoIP
 
@@ -245,8 +245,8 @@ RULE-SET,…,AI.list,…,no-resolve
 
 | 键 | 值 | 为什么 |
 |:---|:---|:-------|
-| `allow-wifi-access` / `allow-hotspot-access` | `true` | 允许同网段设备用本机做代理 |
-| `proxy-restricted-to-lan` / `gateway-restricted-to-lan` | `true` | **安全项**：即使上级网络 DMZ / 端口转发配得潦草，监听端口也不会暴露到当前子网之外 |
+| `allow-wifi-access` / `allow-hotspot-access` | `false` | 局域网设备的共享出口由专用网关承担，本机不再开放监听端口，暴露面直接归零 |
+| `proxy-restricted-to-lan` / `gateway-restricted-to-lan` | `true` | **安全项**：监听端口万一重新启用时，即使上级网络 DMZ / 端口转发配得潦草也不会暴露到当前子网之外 |
 
 ### 3.7 Wi-Fi / 蜂窝
 

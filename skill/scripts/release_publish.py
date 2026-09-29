@@ -47,6 +47,7 @@ DAY_THEMES = {
     '2026-09-26': ('📶', 'Wi-Fi 自动暂停与占位节点'),
     '2026-09-27': ('📚', '文档修正与规则快照整合'),
     '2026-09-28': ('🔄', 'AI 规则集换源与自托管整合'),
+    '2026-09-29': ('🛡️', '监听端口收敛与 IPv6 对齐关闭'),
 }
 
 # 归组例外：个别版本的「版本号诞生日期」与「内容诞生日期」不同日，按内容事件归组。
@@ -100,6 +101,10 @@ PUBLIC_NOTES = {
     ('lazy', 'v1.9'): [
         '新增自托管 AI 域名整合集（合并 10 个来源）：googleapis.com 等伴生域名整体纳入 AI 分流，ChatGPT 认证与遥测相关域名不再遗漏。',
         'AI 分组由自动测速改为手动选择：AI 服务对出口 IP 频繁变化较为敏感，固定节点使用更稳定。',
+    ],
+    ('lazy', 'v2.0'): [
+        '关闭局域网代理共享端口（Surge 内核 allow-wifi-access / allow-hotspot-access）：局域网设备的共享出口由专用网关承担，本机不再开放监听端口，暴露面进一步收窄。',
+        '关闭 IPv6 支持（Surge 内核 ipv6 = false、ipv6-vif = disable）：不再返回 AAAA 记录，双栈站点自动回落 IPv4；Egern 内核在顶层显式声明 ipv6: false（此前依赖默认值关闭）。两侧对齐后封堵面等效。',
     ],
     ('routing', 'v1'): [
         '分流版首次发布：按应用分组（ChatGPT、Gemini、Claude、YouTube、Telegram 等），并支持地区智能选组。',
@@ -160,6 +165,10 @@ PUBLIC_NOTES = {
     ('routing', 'v3.9'): [
         '新增自托管 AI 域名整合集（266 条，合并 10 个来源）：googleapis.com、googleusercontent.com 等伴生域名整体纳入，GMS 网关与 ChatGPT 认证、遥测相关域名不再遗漏。',
         '上游换源集继续滚动维护新增的 AI 域名，本集合负责结构稳定的伴生域与宽后缀，两者分工互补。',
+    ],
+    ('routing', 'v4.0'): [
+        '关闭局域网代理共享端口（Surge 内核 allow-wifi-access / allow-hotspot-access）：局域网设备的共享出口由专用网关承担，本机不再开放监听端口，暴露面进一步收窄。',
+        '关闭 IPv6 支持（Surge 内核 ipv6 = false、ipv6-vif = disable）：不再返回 AAAA 记录，双栈站点自动回落 IPv4；Egern 内核在顶层显式声明 ipv6: false（此前依赖默认值关闭）。两侧对齐后封堵面等效。',
     ],
 }
 
