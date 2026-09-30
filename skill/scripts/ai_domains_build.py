@@ -16,7 +16,7 @@ from collections import defaultdict
 # (文件名, 来源标签)
 SOURCES = [
     ('repcz-ai.list',   'Repcz/Tool (Surge)'),
-    ('my-ai.list',      'ddgksf2013 gist 快照 + 用户补遗 (Clash payload)'),
+    ('my-ai.list',      'ddgksf2013.top 订阅快照 (墨鱼 · Clash payload)'),
     ('acl4ssr-ai.list', 'ACL4SSR (Clash classical)'),
     ('bm7-OpenAI.list',     'blackmatrix7 OpenAI'),
     ('bm7-Gemini.list',     'blackmatrix7 Gemini'),
@@ -144,7 +144,7 @@ def main():
     total = 0
     out_lines = [
         '# NAME: AI_Domains (AI 全量整合集 · Surge ruleset)',
-        '# 生成: 2026-09-28（三次迭代）· 本仓自托管静态整合快照',
+        '# 生成: 2026-09-30（源快照刷新）· 本仓自托管静态整合快照',
         '# 生成脚本: skill/scripts/ai_domains_build.py（源目录: skill/scripts/ai_sources/）',
         '#',
         '# ============ 上游来源详细信息 ============',
@@ -154,9 +154,10 @@ def main():
         '#    2026-09-28 仍在提交。贡献：Gemini 专属后端(-pa 系 8 条精确) + 主流 AI 域。',
         '#    另以独立订阅在本仓四 profile 中并排引用(滚动承接新 AI 域)。',
         '#',
-        '# 2. ddgksf2013 gist (墨鱼) —— 已停更',
-        '#    https://gist.github.com/ddgksf2013/cb4121e8b5c5d865cc949cb8120320c4  (Ai.yaml, Clash payload 形态)',
-        '#    最后实质提交 2025-11-26。贡献：ChatGPT 网页伴生的第三方基础设施域',
+        '# 2. ddgksf2013.top (墨鱼) —— 滚动更新，本集伴生域基线',
+        '#    https://ddgksf2013.top/filter/Ai.yaml  (Ai.yaml, Clash payload 形态)',
+        '#    旧 gist 地址已停更并于 2026-09-30 迁至该域名（旧地址最后实质提交 2025-11-26）。',
+        '#    贡献：ChatGPT / Meta AI 网页伴生的第三方基础设施域',
         '#    (auth0/statsig/datadoghq/arkoselabs/intercom/launchdarkly 等认证/遥测/风控域)。',
         '#',
         '# 3. ACL4SSR/ACL4SSR —— AI.list 停更(51 行)，本仓已弃用其作 AI 源',
@@ -173,7 +174,7 @@ def main():
         '#    (antigravity/notebooklm/cloudcode/aicode 等) + 新兴 AI 服务全家(cohere/deepseek 等)。',
         '#    youtubei 等 YouTube 域天然不在该分类(已实测验证)。',
         '#',
-        '# 6. 用户自有补充 (RiverFlowsInUUU/Rule) —— 上游即本集 2 的快照 + notebooklm 2 条',
+        '# 6. 用户自有镜像 (RiverFlowsInUUU/Rule) —— 与第 2 条同源的快照 + notebooklm 2 条',
         '#    https://github.com/RiverFlowsInUUU/Rule  (main · AI, Clash payload 形态)',
         '#',
         '# ============ 整合纪律 ============',
@@ -188,6 +189,8 @@ def main():
         '#       googleusercontent.com 宽后缀保留(静态 CDN 无账号语义)；AI 组 select 钉死出口(风控一致性)',
         '# 三修: 2026-09-28 实测漏网收编 —— oauth2 / oauthaccountmanager(账号 OAuth 基础设施·低频) 精确补入；',
         '#       DOMAIN-KEYWORD,-pa.googleapis.com 一条封死 -pa 动态命名空间(signaler/growth/notifications 等未来新后端全兜)',
+        '# 四修: 2026-09-30 墨鱼源换址(gist → ddgksf2013.top)刷新快照，净增 11 条(Cursor/Meta AI/HuggingFace 系)；',
+        '#       facebook.com / fbcdn.net / connect.facebook.net 三条宽域按用户拍板原样收录(Meta AI 账号与 CDN 依赖)',
         '#',
     ]
     for b in sorted(groups):
