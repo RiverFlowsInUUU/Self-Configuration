@@ -37,7 +37,7 @@ jobs:
         run: python skill/tests/check_links.py .
 
       - name: Releases scheme (tags / asset names / notes / coverage)
-        # 退出码：0=过 / 1=断言失败 / 2=SKIP（API 不可达）。CI 带 token，SKIP 视为失败（保守）
+        # 退出码：0=过 / 1=判负 / 2=环境不达标 / 3=SKIP（API 不可达）。CI 带 token，2 和 3 均视为失败（保守）
         run: python skill/tests/check_releases.py
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

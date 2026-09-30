@@ -14,10 +14,14 @@
 
 设计约定：
     · 与 CI 同源是铁律 —— 本地绿但 CI 红属于竞态/环境差，不允许有"第三套判据"。
-    · check_releases 需 GITHUB_TOKEN：缺省时自动回退 `gh auth token`。两者都没有、
-      或 API 离线/限流时，check_releases 返回**专用退出码 2**（SKIP），verify_all
-      以 ⚠️ 明示「未验证」且**不计入失败**（exit 0）—— 0929 外部审查：原实现用输出
-      文本嗅探判定、且被跳过仍 exit 1，提示与实际矛盾，现改为按退出码判定。
+    · 退出码语义（全仓统一，见 reference/shared/troubleshoot-faq.md §8.2）：
+      0 = 判据全过 ｜ 1 = 有判负 ｜ 2 = 前置环境不达标（**计入失败，先修环境再看判据**）
+      ｜ 3 = SKIP（check_releases 远端不可达 → 未验证，不计入失败但必须明示）。
+      SKIP 独立占用 3：2 已被全仓铁律占用为「环境不达标」，复用会让环境故障被吞成
+      SKIP → 假绿（0930 二轮外部审查）。
+    · check_releases 需 GITHUB_TOKEN：缺省时自动回退 `gh auth token`。都没有、或 API
+      离线/限流时返回 3，本脚本以 ⚠️ 明示「未验证」并不计入失败（0929 一轮审查：
+      原实现按输出文本嗅探、且被跳过仍 exit 1，提示与实际矛盾，现改为按退出码判定）。
     · make_min 漂移检查 = `make_min.py --check`（0929 起）：--check 直接比对磁盘 .min 与
       生成器输出，有差异即非 0。旧写法「计划模式 + git diff」两半恒空/恒 0，是永远绿的
       空操作（2026-09-29 外部审查实锤后废除，原『git 无漂移』闸门随之合并）。
@@ -99,13 +103,15 @@ def main():
     print(f"{'闸门':<{width}}  结果  耗时")
     print('-' * (width + 16))
     for r in results:
-        mark = '✅' if r['code'] == 0 else ('⚠️' if r['code'] == 2 else '❌')
+        mark = {0: '✅', 3: '⚠️', 2: '🔧'}.get(r['code'], '❌')
         print(f"{r['name']:<{width}}  {mark}   {r['dt']:.1f}s")
     print()
 
-    # 退出码语义（0929 外部审查后统一）：0 = 过；1 = 断言失败；2 = SKIP（未能验证）
-    failed = [r for r in results if r['code'] not in (0, 2)]
-    skipped = [r for r in results if r['code'] == 2]
+    # 退出码语义（全仓统一，troubleshoot-faq.md §8.2）：
+    #   0 = 判据全过；1 = 有判负；2 = 前置环境不达标（计入失败）；3 = SKIP（未验证）
+    failed = [r for r in results if r['code'] not in (0, 3)]
+    env_fail = [r for r in results if r['code'] == 2]
+    skipped = [r for r in results if r['code'] == 3]
     if not failed and not verbose:
         print('全部通过 —— 详细输出用 -v 查看。' if not skipped
               else '闸门全过（有 SKIP 项，见下）。')
@@ -116,6 +122,9 @@ def main():
                 print(f"──── {r['name']} (exit {r['code']}) {'─' * 30}")
                 print(tail)
                 print()
+    if env_fail:
+        print('🔧 以下闸门前置环境不达标（退出码 2）—— 先修环境，别读判据：'
+              + '、'.join(r['name'] for r in env_fail))
     if skipped:
         print('⚠️ 以下闸门被跳过（未验证 ≠ 绿）：'
               + '、'.join(r['name'] for r in skipped))

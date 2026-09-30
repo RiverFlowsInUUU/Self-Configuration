@@ -5,10 +5,12 @@ r"""Release 方案断言（时间线模型：一个更新日 = 一个 Release，
     python skill/tests/check_releases.py
     可选环境变量 GITHUB_TOKEN：抬高 API 限额（公共仓无 token 也能读，60 次/小时）。
 
-退出码：0 = 全部断言通过；1 = 有断言失败；
-        2 = SKIP（GitHub API 不可达 / 限流 → 无法验证远端状态）。SKIP 不是绿，
+退出码：0 = 全部断言通过；1 = 有断言失败；2 = 前置环境不达标（全仓统一，勿复用）；
+        3 = SKIP（GitHub API 不可达 / 限流 → 无法验证远端状态）。SKIP 不是绿，
         verify_all 记为「未验证」并不计入失败（0929 外部审查：原实现提示 SKIP、
-        退出码却是 1，承诺与实现矛盾；且用输出文本嗅探判定，脆）。
+        退出码却是 1，承诺与实现矛盾；且用输出文本嗅探判定，脆。0930 二轮审查：
+        初版改用的 2 已被全仓铁律占用为「环境不达标」，同码双义且会让环境故障被
+        吞成 SKIP → 假绿，故 SKIP 独立用 3）。
 
 判据（规矩来源：skill/reference/shared/ops.md §6.9）:
     R1 每个 Release 的 tag 匹配 ^v\d{4}-\d{2}-\d{2}$（版本诞生日期），且无重复；
@@ -83,7 +85,7 @@ def main():
     except Skip as e:
         print(f'SKIP: {e} —— 未能验证远端 Release 状态（离线 / 限流 / 无凭据）。'
               f'不是绿，是未验证。')
-        return 2
+        return 3
 
     root = git('rev-parse', '--show-toplevel')
     spec = importlib.util.spec_from_file_location(
