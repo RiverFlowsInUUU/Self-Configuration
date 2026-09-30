@@ -58,7 +58,12 @@ class Skip(Exception):
 
 
 def fetch_releases(token):
-    """分页抓全量 Release。网络/限流异常统一抛 Skip（→ 退出码 2）。"""
+    """分页抓全量 Release。**任何「没读到远端真值」的情形统一抛 Skip（→ 退出码 3）**：
+    网络不可达、限流、上游 5xx、非 JSON 错误页等。
+
+    分界：exit 1 只留给「读到了远端、断言不过」；exit 3 = 没读到。上游故障若漏出去
+    变成 1，AI 会去逐条读判据白排查（铁律：环境类码先修环境，别读判据）。
+    """
     out, page = [], 1
     while True:
         req = urllib.request.Request(f'{API}/releases?per_page=100&page={page}')
@@ -68,11 +73,15 @@ def fetch_releases(token):
         try:
             batch = json.load(urllib.request.urlopen(req))
         except urllib.error.HTTPError as e:
-            if e.code in (403, 429):
-                raise Skip(f'GitHub API 限流（HTTP {e.code}）')
-            raise
+            # HTTPError = 没拿到真值（限流 / 上游故障 / 凭据或仓名不对），一律 SKIP；
+            # 断言失败只可能发生在读到 JSON 之后的判据里。
+            why = '限流' if e.code in (403, 429) else ('上游故障' if e.code >= 500 else '请求被拒')
+            raise Skip(f'GitHub API HTTP {e.code}（{why}）')
         except urllib.error.URLError as e:
             raise Skip(f'网络不可达（{e.reason}）')
+        except json.JSONDecodeError as e:
+            # 上游 5xx 常返回 HTML 错误页（Content-Type 非 JSON），json.load 在此炸
+            raise Skip(f'响应不是 JSON（多为上游错误页）：{e}')
         out += batch
         if len(batch) < 100:
             return out
@@ -83,8 +92,8 @@ def main():
     try:
         releases = fetch_releases(tok)
     except Skip as e:
-        print(f'SKIP: {e} —— 未能验证远端 Release 状态（离线 / 限流 / 无凭据）。'
-              f'不是绿，是未验证。')
+        print(f'SKIP: {e} —— 未能验证远端 Release 状态'
+              f'（离线 / 限流 / 上游故障 / 无凭据）。不是绿，是未验证。')
         return 3
 
     root = git('rev-parse', '--show-toplevel')
