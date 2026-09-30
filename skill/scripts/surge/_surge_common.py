@@ -263,9 +263,9 @@ def policy_index(parts):
         return None
     t = parts[0].strip().upper()
     if t in _RULE_TYPES_NO_VALUE:
-        return 1
+        return 1                                          # ← 业务值：策略字段下标，非退出码
     if t in _RULE_TYPES_WITH_VALUE or t == "RULE-SET":
-        return 2 if len(parts) > 2 else None
+        return 2 if len(parts) > 2 else None              # ← 业务值：策略字段下标，非退出码
     return None
 
 

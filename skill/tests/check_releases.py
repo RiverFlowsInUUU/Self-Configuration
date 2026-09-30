@@ -86,7 +86,13 @@ def _api_json(path, token, allow_404=False):
     except urllib.error.HTTPError as e:
         if e.code == 404 and allow_404:
             return None            # 读到了：端点的确定回答是「没有」
-        why = '限流' if e.code in (403, 429) else ('上游故障' if e.code >= 500 else '请求被拒')
+        # 消息要「可执行」：远端码各自含确定的排查方向，别只回一个模糊的「请求被拒」。
+        # ⚠️ 这里只做**文案分档**，Skip(3) 的判定条件一字未动 —— 分界线仍只有「读到真值没有」一条。
+        why = ('仓路径不可读：不存在 / 私有且无权限 / 已移除 —— 先核 GITHUB_REPO' if e.code == 404 else
+               '凭据无效 —— 先核 GITHUB_TOKEN / gh auth' if e.code == 401 else
+               '限流' if e.code in (403, 429) else
+               '上游故障' if e.code >= 500 else
+               '请求被拒')
         raise Skip(f'GitHub API {path} HTTP {e.code}（{why}）')
     except urllib.error.URLError as e:
         raise Skip(f'网络不可达（{e.reason}）')
