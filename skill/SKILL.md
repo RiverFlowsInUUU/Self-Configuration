@@ -211,6 +211,7 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
 | [`reference/shared/dns-basics.md`](reference/shared/dns-basics.md) | 需要向用户解释泄露机制时——五个真实泄露案例（现象 → 机制 → 修法） |
 | [`reference/shared/ops.md`](reference/shared/ops.md) | 按内核的逐段操作要点 + 日常维护动线 |
 | [`reference/shared/troubleshoot-faq.md`](reference/shared/troubleshoot-faq.md) | 出了问题——排查序列、两内核症状速查、全量闸门用法、FAQ 与术语表 |
+| [`reference/shared/boundaries.md`](reference/shared/boundaries.md) | 想改某处却被判「不做 / 不适用」、或要确认某处算不算「例外」时——**例外清单 + 已论定清单**（每行带重议条件，防已定裁定被当新缺陷重报） |
 
 ### reference/surge/（单侧主题）
 

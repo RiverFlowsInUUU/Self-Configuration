@@ -11,6 +11,7 @@
 用法：
     python skill/tests/verify_all.py            # 全量并行，全绿退出码 0
     python skill/tests/verify_all.py -v         # 无论红绿都打印每个闸门的输出尾部
+    python skill/tests/verify_all.py --index    # 只读列出闸门清单（不跑、不判负），供引用时现抓
 
 设计约定：
     · 与 CI 同源是铁律 —— 本地绿但 CI 红属于竞态/环境差，不允许有"第三套判据"。
@@ -101,7 +102,27 @@ def run_one(name, argv, extra_env):
                 'dt': time.perf_counter() - t0, 'out': f'{type(e).__name__}: {e}'}
 
 
+def print_index():
+    """--index：只读列出闸门清单（现抓 build_gates()），**不判负、不跑闸门、退出码 0**。
+
+    存在理由：闸门清单在 `ci.yml` 与 `docs` 里各有一份**手写副本**（已挂账），手抄必然漂移。
+    要引用清单时**用本命令现抓**，别把它复制成第三份死表 —— 尤其**不要回填进 CI**（那等于把
+    漂移面原样请回来）。输出仅供**人读 + 文档引用**。
+    """
+    gates = build_gates()
+    print(f'闸门清单：{len(gates)} 道（现抓自 build_gates()，勿手抄成死表）\n')
+    for i, (name, argv, env) in enumerate(gates, 1):
+        need = '  [需 GITHUB_TOKEN]' if 'GITHUB_TOKEN' in env else ''
+        print(f'{i:>2}. {name}{need}')
+        print(f'      {" ".join(argv[1:])}')
+    print(f'\nCI 侧为 9 个 step（Surge 双 profile 合并在同一 run 内）—— 与上表按 step 聚合后'
+          f'形状不同，属已知挂账，见本文件头注。')
+    sys.exit(0)
+
+
 def main():
+    if '--index' in sys.argv:
+        print_index()
     verbose = '-v' in sys.argv
     gates = build_gates()
     print(f'并行跑 {len(gates)} 道闸门（与 ci.yml 同源）…\n')
