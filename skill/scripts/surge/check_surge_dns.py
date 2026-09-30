@@ -23,6 +23,14 @@ import argparse
 import os
 import sys
 
+# 输出含 emoji（🟡🟠🔴）：非 UTF-8 控制台（Windows 默认代码页）会 UnicodeEncodeError，
+# 与其余收尾脚本统一强制 UTF-8（0929 外部审查指出本脚本缺此保护）。
+try:
+    for _s in (sys.stdout, sys.stderr):
+        _s.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _surge_common import (  # noqa: E402
     FOREIGN_RESOLVER_IPS,

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""一键收尾闸门 —— 动线⑤ 的 13 条命令合并成 1 条，并行跑、出汇总表。
+"""一键收尾闸门 —— 动线⑤ 的闸门命令合并成 1 条，并行跑、出汇总表。
 
 为什么存在：
-    SKILL.md 动线⑤原来列 13 条独立命令，AI 逐条调用 = 13 次工具调用、13 段输出
+    SKILL.md 动线⑤原来列一堆独立命令，AI 逐条调用 = 多次工具调用、多段输出
     折进上下文，且任何一次漏跑/跑错参数都算事故。本脚本与 `.github/workflows/ci.yml`
     的步骤**同源**（改 CI 步骤时必须同步这里，反之亦然），并行执行后只输出一张
     「闸门 | 结果 | 耗时」汇总表，红的才展开输出尾部 —— 正常情况一段话看完全部结论。
@@ -14,8 +14,10 @@
 
 设计约定：
     · 与 CI 同源是铁律 —— 本地绿但 CI 红属于竞态/环境差，不允许有"第三套判据"。
-    · check_releases 需 GITHUB_TOKEN：缺省时自动回退 `gh auth token`，两者都没有
-      则记 SKIP（不算失败）—— 离线/无凭据环境允许跳过它，但汇总表要明示。
+    · check_releases 需 GITHUB_TOKEN：缺省时自动回退 `gh auth token`。两者都没有、
+      或 API 离线/限流时，check_releases 返回**专用退出码 2**（SKIP），verify_all
+      以 ⚠️ 明示「未验证」且**不计入失败**（exit 0）—— 0929 外部审查：原实现用输出
+      文本嗅探判定、且被跳过仍 exit 1，提示与实际矛盾，现改为按退出码判定。
     · make_min 漂移检查 = `make_min.py --check`（0929 起）：--check 直接比对磁盘 .min 与
       生成器输出，有差异即非 0。旧写法「计划模式 + git diff」两半恒空/恒 0，是永远绿的
       空操作（2026-09-29 外部审查实锤后废除，原『git 无漂移』闸门随之合并）。
@@ -97,16 +99,17 @@ def main():
     print(f"{'闸门':<{width}}  结果  耗时")
     print('-' * (width + 16))
     for r in results:
-        mark = '✅' if r['code'] == 0 else '❌'
+        mark = '✅' if r['code'] == 0 else ('⚠️' if r['code'] == 2 else '❌')
         print(f"{r['name']:<{width}}  {mark}   {r['dt']:.1f}s")
     print()
 
-    failed = [r for r in results if r['code'] != 0]
-    skipped = [r for r in results if r['name'] == 'releases 方案'
-               and r['code'] != 0 and 'gh' not in r['out'] and not os.environ.get('GITHUB_TOKEN')]
+    # 退出码语义（0929 外部审查后统一）：0 = 过；1 = 断言失败；2 = SKIP（未能验证）
+    failed = [r for r in results if r['code'] not in (0, 2)]
+    skipped = [r for r in results if r['code'] == 2]
     if not failed and not verbose:
-        print('全部通过 —— 详细输出用 -v 查看。')
-    if failed or verbose:
+        print('全部通过 —— 详细输出用 -v 查看。' if not skipped
+              else '闸门全过（有 SKIP 项，见下）。')
+    if failed or skipped or verbose:
         for r in results:
             if verbose or r['code'] != 0:
                 tail = '\n'.join(r['out'].splitlines()[-30:]) or '(无输出)'
@@ -114,7 +117,8 @@ def main():
                 print(tail)
                 print()
     if skipped:
-        print('⚠️ releases 方案闸门因无 GITHUB_TOKEN / gh 被跳过 —— 不是绿，是未验证。')
+        print('⚠️ 以下闸门被跳过（未验证 ≠ 绿）：'
+              + '、'.join(r['name'] for r in skipped))
 
     sys.exit(1 if failed else 0)
 

@@ -5,6 +5,11 @@ r"""Release 方案断言（时间线模型：一个更新日 = 一个 Release，
     python skill/tests/check_releases.py
     可选环境变量 GITHUB_TOKEN：抬高 API 限额（公共仓无 token 也能读，60 次/小时）。
 
+退出码：0 = 全部断言通过；1 = 有断言失败；
+        2 = SKIP（GitHub API 不可达 / 限流 → 无法验证远端状态）。SKIP 不是绿，
+        verify_all 记为「未验证」并不计入失败（0929 外部审查：原实现提示 SKIP、
+        退出码却是 1，承诺与实现矛盾；且用输出文本嗅探判定，脆）。
+
 判据（规矩来源：skill/reference/shared/ops.md §6.9）:
     R1 每个 Release 的 tag 匹配 ^v\d{4}-\d{2}-\d{2}$（版本诞生日期），且无重复；
     R2 资产文件名 ∈ 固定名集合（两产品线 × 两内核 × 完整版/.min，共 8 种），且不含版本号样式；
@@ -46,15 +51,26 @@ def local_versions():
             current.add(cur)
     return pairs, current
 
+class Skip(Exception):
+    """GitHub API 不可达 / 限流 —— 不是断言失败，是「未能验证」。"""
+
+
 def fetch_releases(token):
-    """分页抓全量 Release。"""
+    """分页抓全量 Release。网络/限流异常统一抛 Skip（→ 退出码 2）。"""
     out, page = [], 1
     while True:
         req = urllib.request.Request(f'{API}/releases?per_page=100&page={page}')
         req.add_header('User-Agent', 'self-configuration-release')
         if token:
             req.add_header('Authorization', f'Bearer {token}')
-        batch = json.load(urllib.request.urlopen(req))
+        try:
+            batch = json.load(urllib.request.urlopen(req))
+        except urllib.error.HTTPError as e:
+            if e.code in (403, 429):
+                raise Skip(f'GitHub API 限流（HTTP {e.code}）')
+            raise
+        except urllib.error.URLError as e:
+            raise Skip(f'网络不可达（{e.reason}）')
         out += batch
         if len(batch) < 100:
             return out
@@ -62,7 +78,12 @@ def fetch_releases(token):
 
 def main():
     tok = os.environ.get('GITHUB_TOKEN')
-    releases = fetch_releases(tok)
+    try:
+        releases = fetch_releases(tok)
+    except Skip as e:
+        print(f'SKIP: {e} —— 未能验证远端 Release 状态（离线 / 限流 / 无凭据）。'
+              f'不是绿，是未验证。')
+        return 2
 
     root = git('rev-parse', '--show-toplevel')
     spec = importlib.util.spec_from_file_location(

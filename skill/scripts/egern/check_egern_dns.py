@@ -29,6 +29,14 @@ import sys
 
 import yaml
 
+# 输出含 emoji（🟡🟠🔴）：非 UTF-8 控制台（Windows 默认代码页）会 UnicodeEncodeError，
+# 与其余收尾脚本统一强制 UTF-8（0929 外部审查指出本脚本缺此保护）。
+try:
+    for _s in (sys.stdout, sys.stderr):
+        _s.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 # ⭐ 共享工具：DOMESTIC_RESOLVER_IPS / hostpart 等收编在 _egern_common.py，
 #    与 audit_dns_forward.py 共用同一份实现 —— 不再有「两份拷贝靠注释同步」的隐患。
 #    （二次核查报告 P1：判据本体同步了、helper 没同步，两脚本会对同一配置给出相反结论。）
