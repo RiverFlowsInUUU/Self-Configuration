@@ -515,6 +515,9 @@ def apply(days, token):
     current_tag = next((d['tag'] for d in days if d['is_current']), None)
     # Latest 已指向现行日就不再 PATCH：逐个 PATCH 会让指针抖动，
     # 与 CI 的 Releases 检查步构成竞态（0929 实测红过一次）
+    # 注：这里**刻意不套四态退出码协议**（check_releases 的 Skip/3 体系）—— 本函数是
+    # mutating 发布器，读不到 Latest 只影响「要不要多 PATCH 一次」，走保守分支即
+    # latest_ok=False（reconcile 幂等，多跑一次无害），不能把「读不到」升级成中断发版。
     req = urllib.request.Request(f'{API}/releases/latest',
                                  headers={'User-Agent': 'self-configuration-release'})
     try:

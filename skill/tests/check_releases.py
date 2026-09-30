@@ -12,6 +12,12 @@ r"""Release 方案断言（时间线模型：一个更新日 = 一个 Release，
         初版改用的 2 已被全仓铁律占用为「环境不达标」，同码双义且会让环境故障被
         吞成 SKIP → 假绿，故 SKIP 独立用 3）。
 
+        分界线只有一条：**没读到远端真值 = 3（未验证）；读到了但断言不过 = 1**。
+        两个请求点（分页 /releases 与 /releases/latest）共用 _api_json 统一分类
+        （0930 四轮审查：R5 曾是唯一漏网的裸请求点）。确定判负优先于未验证 ——
+        已有读到的失败即返回 1，只剩没读到的才降级 3。R5 的 404 是例外：
+        GitHub 语义下 404 = 明确回答「无 Latest Release」，属读到后的判负。
+
 判据（规矩来源：skill/reference/shared/ops.md §6.9）:
     R1 每个 Release 的 tag 匹配 ^v\d{4}-\d{2}-\d{2}$（版本诞生日期），且无重复；
     R2 资产文件名 ∈ 固定名集合（两产品线 × 两内核 × 完整版/.min，共 8 种），且不含版本号样式；
@@ -57,31 +63,43 @@ class Skip(Exception):
     """GitHub API 不可达 / 限流 —— 不是断言失败，是「未能验证」。"""
 
 
-def fetch_releases(token):
-    """分页抓全量 Release。**任何「没读到远端真值」的情形统一抛 Skip（→ 退出码 3）**：
-    网络不可达、限流、上游 5xx、非 JSON 错误页等。
+def _api_json(path, token, allow_404=False):
+    """单次 GitHub API GET → 解析后的 JSON（**本文件所有请求点的唯一入口**）。
 
-    分界：exit 1 只留给「读到了远端、断言不过」；exit 3 = 没读到。上游故障若漏出去
-    变成 1，AI 会去逐条读判据白排查（铁律：环境类码先修环境，别读判据）。
+    异常分类只有一条分界线：**「没读到远端真值」一律抛 Skip（→ 退出码 3）** ——
+    网络不可达、限流（403/429）、上游 5xx、非 JSON 错误页、凭据或仓名不对。
+    exit 1 只留给「读到了远端、断言不过」。上游故障若漏出去变成 1，AI 会去逐条读
+    判据白排查（铁律：环境类码先修环境，别读判据）。
+
+    allow_404=True：404 视为**读到的确定答案**（该端点语义下 404 = 「不存在」），
+    返回 None 交调用者判定 —— /releases/latest 在仓库无 Release 时 GitHub 即返 404。
+
+    ⚠️ 抽成唯一入口是硬要求：0930 四轮审查时，R5 的 /releases/latest 是本文件唯一
+    漏网的裸请求点 —— 同一套异常分类手抄第二遍，就必然漏改其中一处。
     """
+    req = urllib.request.Request(f'{API}{path}')
+    req.add_header('User-Agent', 'self-configuration-release')
+    if token:
+        req.add_header('Authorization', f'Bearer {token}')
+    try:
+        return json.load(urllib.request.urlopen(req))
+    except urllib.error.HTTPError as e:
+        if e.code == 404 and allow_404:
+            return None            # 读到了：端点的确定回答是「没有」
+        why = '限流' if e.code in (403, 429) else ('上游故障' if e.code >= 500 else '请求被拒')
+        raise Skip(f'GitHub API {path} HTTP {e.code}（{why}）')
+    except urllib.error.URLError as e:
+        raise Skip(f'网络不可达（{e.reason}）')
+    except json.JSONDecodeError as e:
+        # 上游 5xx 常返回 HTML 错误页（Content-Type 非 JSON），json.load 在此炸
+        raise Skip(f'响应不是 JSON（多为上游错误页）：{e}')
+
+
+def fetch_releases(token):
+    """分页抓全量 Release。异常分类统一走 _api_json（见其 docstring，勿再手抄一份）。"""
     out, page = [], 1
     while True:
-        req = urllib.request.Request(f'{API}/releases?per_page=100&page={page}')
-        req.add_header('User-Agent', 'self-configuration-release')
-        if token:
-            req.add_header('Authorization', f'Bearer {token}')
-        try:
-            batch = json.load(urllib.request.urlopen(req))
-        except urllib.error.HTTPError as e:
-            # HTTPError = 没拿到真值（限流 / 上游故障 / 凭据或仓名不对），一律 SKIP；
-            # 断言失败只可能发生在读到 JSON 之后的判据里。
-            why = '限流' if e.code in (403, 429) else ('上游故障' if e.code >= 500 else '请求被拒')
-            raise Skip(f'GitHub API HTTP {e.code}（{why}）')
-        except urllib.error.URLError as e:
-            raise Skip(f'网络不可达（{e.reason}）')
-        except json.JSONDecodeError as e:
-            # 上游 5xx 常返回 HTML 错误页（Content-Type 非 JSON），json.load 在此炸
-            raise Skip(f'响应不是 JSON（多为上游错误页）：{e}')
+        batch = _api_json(f'/releases?per_page=100&page={page}', token)
         out += batch
         if len(batch) < 100:
             return out
@@ -114,7 +132,7 @@ def main():
                 want_pair_day[(fam, e['version'])] = d['tag']
     expected_pairs, current_pairs = local_versions()
 
-    ok, bad = [], []
+    ok, bad, skipped = [], [], []
     def judge(cond, rid, msg):
         (ok if cond else bad).append((rid, msg))
 
@@ -179,26 +197,40 @@ def main():
                       else f'{tag}: 正文缺少 {FAM_CN[fam]} {e["version"]} 条目')
 
     # R5 Latest = 含现行版本的那张（最新日期）
-    latest_req = urllib.request.Request(f'{API}/releases/latest')
-    latest_req.add_header('User-Agent', 'self-configuration-release')
-    if tok:
-        latest_req.add_header('Authorization', f'Bearer {tok}')
     want_latest = next((d['tag'] for d in days if d['is_current']), None)
+    latest_read = True
     try:
-        latest_tag = json.load(urllib.request.urlopen(latest_req))['tag_name']
-        judge(latest_tag == want_latest, 'R5',
-              f'R5 Latest={latest_tag}（现行日）' if latest_tag == want_latest
-              else f'R5 Latest={latest_tag} ≠ 现行日 {want_latest} —— '
-                   f'跑 python skill/scripts/release_publish.py --apply reconcile')
-    except urllib.error.HTTPError as exc:
-        judge(False, 'R5', f'R5 /releases/latest 不可读（HTTP {exc.code}）')
+        latest = _api_json('/releases/latest', tok, allow_404=True)
+    except Skip as e:
+        # 与其他请求点同一条分界线：没读到远端真值 → 未验证（3），绝不冒充判负（1）。
+        # （0930 四轮审查：R5 曾是本文件唯一漏网的裸请求点，会把限流/故障报成断言失败）
+        latest_read = False
+        skipped.append(f'R5 /releases/latest：{e} —— 未能核对 Latest 指针')
+    if latest_read:
+        if latest is None:
+            # 404 已在 _api_json 里被认定为「读到的确定答案」：仓库当前无 Latest Release。
+            # 属「读了且不合规」→ 判负，与「没读到」（skipped）严格区分。
+            judge(False, 'R5', f'R5 /releases/latest 返回 404 = 仓库无 Latest Release'
+                  f'（现行日应为 {want_latest}）—— '
+                  f'跑 python skill/scripts/release_publish.py --apply reconcile')
+        else:
+            latest_tag = latest.get('tag_name')
+            judge(latest_tag == want_latest, 'R5',
+                  f'R5 Latest={latest_tag}（现行日）' if latest_tag == want_latest
+                  else f'R5 Latest={latest_tag} ≠ 现行日 {want_latest} —— '
+                       f'跑 python skill/scripts/release_publish.py --apply reconcile')
 
     for rid, msg in ok:
         print(f'   ✅ {msg}')
     for rid, msg in bad:
         print(f'   ❌ {msg}')
-    print(f'\nTOTAL: {len(ok)} passed, {len(bad)} failed')
-    return 1 if bad else 0
+    for msg in skipped:
+        print(f'   ⚠️ 未验证 {msg}')
+    print(f'\nTOTAL: {len(ok)} passed, {len(bad)} failed, {len(skipped)} unverified')
+    # 确定判负优先于未验证：已有读到的失败就直接报 1；只剩没读到的才降级为 SKIP(3)。
+    if bad:
+        return 1
+    return 3 if skipped else 0
 
 if __name__ == '__main__':
     sys.exit(main())
