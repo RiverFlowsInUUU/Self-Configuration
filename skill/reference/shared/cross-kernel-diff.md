@@ -28,7 +28,7 @@
 
 ## 2 · 分组：已完全对齐
 
-`routing_v3.4` 两侧各 **26 个分组，名称与顺序逐位相同**（实测逐行 diff 无差异）：
+现役两侧各 **26 个分组，名称与顺序逐位相同**（`routing_v3.4` 起实测逐行 diff 无差异，2026-09-29 随 v4.0 复核）：
 
 ```
 Proxy · Smart · ChatGPT · Gemini · Claude · AI · Spotify · YouTubeMusic · YouTube

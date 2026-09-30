@@ -74,9 +74,9 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
   见下方「组清单与要点」起的逐段讲解）。
 - **图标**：模板用到的 26 个分流组图标（整合自 RiverFlowsInUUU/Rule、jnlaoshu/MySelf、Koolson/Qure 三个公开仓库）已统一下载进本仓库 `icons/`，全部以 `https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/<file>` 形式引用，**不再跨项目引用任何图标地址**。
 
-#### 组清单与要点（`routing_v3.4`）
+#### 组清单与要点（现役）
 
-**节点来源**（1 个订阅槽位）：`Airport`（`external` · `type: smart` · `urls` 两条 + 一条 `urls_disabled` 示例 · `hidden: true`）。
+**节点来源**（1 个订阅槽位）：`Airport`（`external` · `type: smart` · `urls` 一条 + 一条 `urls_disabled` 示例 · `hidden: true`）。
 `routing_v2.1` 及更早为 4 个槽位（多出 `Airport-C` / `Airport-Free`）—— `routing_v2.2` 精简掉，选路能力不变。
 
 **`flatten: true`** —— 把子策略组**展开成全部具体节点**，而不是当成一个「组」单位。
@@ -261,7 +261,7 @@ forward:
 
 | 脚本 | 发布模板读数 | 说明 |
 |---|---|---|
-| `check_egern_dns.py` | ✅ **0 high / 2 low / 24 ok（退出码 0）** | 见下方「f3.1 判据修正」；24 这个数对应 `routing_v2` 起的全部版本（`routing_v1` 是 30 ok。两版 `rules` 都是 24 条、都不含 DNS 端点路由规则 ⇒ 6 项差在**逐端点**：`routing_v1` 多 `223.6.6.6` / `1.12.12.12` 两个国内端点，各计一条 `upstreams` 与一条 `proxy_nameservers` 的「IP 字面量」OK（+4）、再各计一条判据 B 的「直连可达」（+2）。原见 `docs/07-文件版本沿革.md`，该文件已随仓库精简移除） |
+| `check_egern_dns.py` | ✅ **0 high / 2 low / 24 ok（退出码 0）** | 见下方「f3.1 判据修正」；24 这个数对应 `routing_v2` 起的全部版本（`routing_v1` 是 30 ok。`routing_v2` 时代两版 `rules` 均为 24 条、都不含 DNS 端点路由规则 ⇒ 6 项差在**逐端点**：`routing_v1` 多 `223.6.6.6` / `1.12.12.12` 两个国内端点，各计一条 `upstreams` 与一条 `proxy_nameservers` 的「IP 字面量」OK（+4）、再各计一条判据 B 的「直连可达」（+2）。⚠️ 现役 `rules` 已 25 条（2026-09-21 起加 AWAvenue 等），新增条目为规则集引用、不落 DNS 判据，ok 计数仍恒 24。原见 `docs/07-文件版本沿革.md`，该文件已随仓库精简移除） |
 | `audit_routing_coverage.py` | ✅ 15/15 国内探针 `DIRECT` | 分流正确性不受脱敏影响 |
 | `audit_dns_forward.py --drill` | ✅ 通过（退出码 0） | `forward` value 单值、订阅耦合 0 |
 | `audit_region_filters.py` | ✅ 6 个地区组关键词全部同步（退出码 0） | 负向断言与地区组 filter 逐字一致 |
