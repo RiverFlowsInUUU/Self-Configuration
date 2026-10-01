@@ -224,7 +224,7 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
 | [`reference/surge/leak-localization.md`](reference/surge/leak-localization.md) | 用户报「leak test 显示某运营商」时——网络侧实测流程 |
 | [`reference/surge/checker.md`](reference/surge/checker.md) | 跑审计脚本前（命令与环境要求）、或要改判据时（判据演进史） |
 | [`reference/surge/ruleset-weight.md`](reference/surge/ruleset-weight.md) | 用户问「规则集是不是太重」时——按类型数条目、识破名字骗人 |
-| [`reference/surge/public-repo.md`](reference/surge/public-repo.md) | 要更新模板 / 了解仓库结构与门面纪律时 |
+| [`reference/surge/public-repo.md`](reference/surge/public-repo.md) | 要更新模板 / 了解仓库结构与门面纪律时；**改 README 或任何 GitHub 渲染的 markdown 版式前**先看其 §5.1（`POST /markdown` 推送前验渲染，避免被 sanitizer 剥掉） |
 
 ### reference/egern/（单侧主题）
 
