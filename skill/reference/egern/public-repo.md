@@ -61,6 +61,9 @@ README 是**产品介绍** —— 读者要知道「这东西是什么、怎么�
 
 判据与原理 → `skill/reference/`（对应主题文件）。改动历史看 git log。
 
+> 改 README 的 **markdown 版式**前先问 GitHub 本人（`POST /markdown` 接口，推送前就能看出某写法
+> 会不会被 sanitizer 剥掉）：见 [`../surge/public-repo.md`](../surge/public-repo.md) §5.1。
+
 **自查**：README 里出现「为什么…」「不算」「误标」「判据」「原写」「上面是…顺序」，
 八成就是改动记录漏出来了。
 

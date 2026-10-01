@@ -129,6 +129,31 @@ grep -rn -iE '<你的私有域名|你的密码片段|你的用户名>' . \
 CI（根 `.github/workflows/ci.yml`）在 push / PR 自动跑：占位符扫描 → 可移植性 → `.min` 对拍 →
 链接锚点 → 两侧 DNS 审计 → `.min` 漂移检查。本地同组命令见 [`SKILL.md`](../../SKILL.md) §3 动线第 ⑤ 步。
 
+### 5.1 改 markdown 版式前：先问 GitHub 本人
+
+README（及任何 GitHub 渲染的 markdown）的**最终长相由 GitHub 的渲染管线决定，不由本地预览决定**：
+本地预览有完整 CSS 自由，GitHub 却会**剥掉 `style` 属性**、丢弃废弃属性 —— 两者"能做/不能做"的
+边界不同，凭本地预览判断版式，会把真机上办不到的效果当成可行（2026-10-01 实测踩过）。
+
+推送前用 GitHub 自己的渲染接口拿真机答案：
+
+```bash
+MSYS_NO_PATHCONV=1 gh api --method POST /markdown \
+  -f mode=gfm \
+  -f context=RiverFlowsInUUU/Self-Configuration \
+  -f text='| | <div align="center">Surge</div> | <div align="center">Egern</div> |
+|:--|:------|:------|'
+```
+
+输出即 **GitHub 渲染后的 HTML**，一眼看出某写法保不保留。实证：
+
+- `<th align="left"><div align="center" dir="auto">Surge</div></th>` ⇒ `div` 与 `align` **被保留**
+  （对比 `style` 会被剥）；同表体仍是 `<td align="left">` ⇒ 「只居中表头、不动表体」可行。
+- ⚠️ Git Bash 下漏了 `MSYS_NO_PATHCONV=1`，`/markdown` 会被当文件路径改写、报 `invalid API endpoint`。
+
+> ⚠️ 表头居中只能给单元格包 `<div align="center">`；**不能**改用列对齐 `:--:` —— 它按列生效，
+> 会把表体的长句一并居中（取向见 §2「清单类内容用列表不用表格」）。
+
 ## 6 · 这个仓库最容易被改坏的地方
 
 按风险排序：
