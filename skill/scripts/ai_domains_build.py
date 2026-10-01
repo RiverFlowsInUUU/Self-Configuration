@@ -4,7 +4,7 @@
 用法（仓库根目录）:
     python skill/scripts/ai_domains_build.py
 可选参数:
-    --src-dir  源规则集目录（默认: skill/scripts/ai_sources/，内含 9 份上游抓取快照）
+    --src-dir  源规则集目录（默认: skill/scripts/ai_sources/，内含 10 份上游抓取快照）
     --out      输出路径（默认: rules/AI.list）
 
 上游来源与维护状态见生成文件的头部档案。纪律: 零 IP 条目（防 DNS 泄露面）；
@@ -24,6 +24,7 @@ SOURCES = [
     ('bm7-Copilot.list',    'blackmatrix7 Copilot'),
     ('bm7-BardAI.list',     'blackmatrix7 BardAI'),
     ('meta-ai.list',    'MetaCubeX geosite category-ai-!cn'),
+    ('dler-ai.list',    'dler-io/Rules AI Suite (Surge)'),
 ]
 # 用户拍板：googleusercontent.com 宽后缀保留（静态 CDN，无账号判定语义）；
 # googleapis.com 宽后缀 2026-09-28 二次修正改窄 —— 它是全 Google API 域（youtubei.googleapis.com
@@ -41,6 +42,18 @@ EXTRA_KEYWORD = [('-pa.googleapis.com')]
 BLACKLIST = {'amazonaws.com', 'cloudflare.com', 'wp.com', 'imgix.net', 'sentry.io', 'stripe.com',
              'envato.com', 'envato-static.com', 'envatousercontent.com', 'themeforest.net',
              'googleapis.com'}
+# 点名剔除的**特定主机**（与上面的"宽后缀名"不同：这里父域本身没问题，仅该主机不该进 AI 组）。
+# 判据是**逐个主机**而非整域 —— 故上面的 BLACKLIST 不要改成"后缀匹配"：那样会误杀
+# challenges.cloudflare.com（AI 服务人机验证，上游已收且该收）/ openaicom.imgix.net（OpenAI 专属）等
+# 父域在黑名单、子域却该收的条目。
+# ① 通用基础设施的个别主机：支付(stripe) / 遥测(sentry) / 对象存储(s3) / 图片 CDN(imgix) / 邮件投递(sendgrid)
+# ② 撞本仓 GitHub、微软分流组的共享域 —— AI 组排在其前，收了会静默改写这些域的出口
+BLACKLIST_EXACT = {
+    'js.stripe.com', 'o207216.ingest.sentry.io', 'workos.imgix.net', 'ct.sendgrid.net',
+    'anysphere-binaries.s3.us-east-1.amazonaws.com',
+    'login.live.com', 'login.microsoftonline.com',
+    'copilot-reports.github.com', 'origin-tracker.githubusercontent.com',
+}
 
 OK_TYPES = {'DOMAIN', 'DOMAIN-SUFFIX', 'DOMAIN-KEYWORD', 'URL-REGEX'}
 
@@ -65,6 +78,8 @@ def main():
             dropped[src].append((t, v, '国内域剔除')); return
         if v in BLACKLIST:                          # 过宽云/CDN/支付后缀人工剔除
             dropped[src].append((t, v, '过宽后缀人工剔除')); return
+        if v in BLACKLIST_EXACT:                    # 点名剔除的特定主机（见其定义处）
+            dropped[src].append((t, v, '特定主机点名剔除')); return
         rules.setdefault((t, v), set()).add(src)
 
     for fname, src in SOURCES:
@@ -144,7 +159,7 @@ def main():
     total = sum(len(v) for v in groups.values())
     out_lines = [
         '# NAME: AI_Domains (AI 全量整合集 · Surge ruleset)',
-        '# 生成: 2026-09-30（源快照刷新）· 本仓自托管静态整合快照',
+        '# 生成: 2026-10-01（新增 dler-io 源）· 本仓自托管静态整合快照',
         '# 生成脚本: skill/scripts/ai_domains_build.py（源目录: skill/scripts/ai_sources/）',
         f'# 合计: {total} 条规则 —— 本行为条数唯一真源（自动统计，勿手抄到别处）',
         '#',
@@ -178,6 +193,14 @@ def main():
         '# 6. 用户自有镜像 (RiverFlowsInUUU/Rule) —— 与第 2 条同源的快照 + notebooklm 补遗',
         '#    https://github.com/RiverFlowsInUUU/Rule  (main · AI, Clash payload 形态)',
         '#',
+        '# 7. dler-io/Rules —— 滚动维护，高质量补漏源',
+        '#    https://github.com/dler-io/Rules  (main · Surge 3/Provider/AI Suite.list)',
+        '#    贡献：Google 新 AI 产品(Opal/Jules/antigravity/notebooklm.cloud) + AI 编程工具',
+        '#    (zed/augment/chorus/udify) + JetBrains/Apple Intelligence + Grok 登录域。',
+        '#    ⚠️ 该集设计前提是「置于微软/Apple/通用代理规则之前」，故意收录共享登录/token 域',
+        '#    (js.stripe.com / login.live.com 等)以保证账号风控一致 —— 与本仓取舍不同，故用',
+        '#    BLACKLIST_EXACT 点名剔除其中会撞本仓 GitHub/微软分流、或属通用基础设施的 9 个主机。',
+        '#',
         '# ============ 整合纪律 ============',
         '# · 零 IP 条目：所有 IP-CIDR/IP-ASN 一律丢弃(纯域名集不触发解析，无 DNS 泄露面)',
         '# · googleapis.com 宽后缀已收窄：它是全 Google API 域(含 youtubei=YouTube 信令)，',
@@ -192,6 +215,8 @@ def main():
         '#       DOMAIN-KEYWORD,-pa.googleapis.com 一条封死 -pa 动态命名空间(signaler/growth/notifications 等未来新后端全兜)',
         '# 四修: 2026-09-30 墨鱼源换址(gist → ddgksf2013.top)刷新快照，净增 11 条(Cursor/Meta AI/HuggingFace 系)；',
         '#       facebook.com / fbcdn.net / connect.facebook.net 三条宽域按用户拍板原样收录(Meta AI 账号与 CDN 依赖)',
+        '# 五修: 2026-10-01 新增第 10 源 dler-io/Rules(AI Suite)；其独有 33 条中 9 条由 BLACKLIST_EXACT 点名剔除，',
+        '#       净增 24 条(Google 新 AI / AI 编程工具 / JetBrains / Apple Intelligence / Grok 登录)',
         '#',
     ]
     for b in sorted(groups):
