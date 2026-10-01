@@ -18,33 +18,10 @@
 
 ## 📥 两全其美 · 皆合心意
 
-🪶 **懒人版** · 至简 · 省心
-
-**Surge**
-
-```
-https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/profiles/lazy.min.conf
-```
-
-**Egern**
-
-```
-https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/profiles/lazy.min.yaml
-```
-
-🧭 **分流版** · 可控 · 随心
-
-**Surge**
-
-```
-https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/profiles/routing.min.conf
-```
-
-**Egern**
-
-```
-https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/profiles/routing.min.yaml
-```
+| 内核 | 🪶 懒人版 · 至简 · 省心 | 🧭 分流版 · 可控 · 随心 |
+|:--|:--|:--|
+| **Surge** | [`surge-lazy.min.conf`](https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/profiles/lazy.min.conf) | [`surge-routing.min.conf`](https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/profiles/routing.min.conf) |
+| **Egern** | [`egern-lazy.min.yaml`](https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/profiles/lazy.min.yaml) | [`egern-routing.min.yaml`](https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/profiles/routing.min.yaml) |
 
 ---
 
