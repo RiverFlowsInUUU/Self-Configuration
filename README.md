@@ -22,8 +22,8 @@
 
 | 内核 | 🪶 懒人版 · 至简 · 省心 | 🧭 分流版 · 可控 · 随心 |
 |:--|:--|:--|
-| <img src="https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Surge-Icon.png" height="20" alt=""> **Surge** | [`surge-lazy.min.conf`](https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/profiles/lazy.min.conf) | [`surge-routing.min.conf`](https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/profiles/routing.min.conf) |
-| <img src="https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Egern-Icon.png" height="20" alt=""> **Egern** | [`egern-lazy.min.yaml`](https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/profiles/lazy.min.yaml) | [`egern-routing.min.yaml`](https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/profiles/routing.min.yaml) |
+| <img src="https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Surge-Icon.png" height="20" align="middle" alt=""> **Surge** | [`surge-lazy.min.conf`](https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/profiles/lazy.min.conf) | [`surge-routing.min.conf`](https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/profiles/routing.min.conf) |
+| <img src="https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Egern-Icon.png" height="20" align="middle" alt=""> **Egern** | [`egern-lazy.min.yaml`](https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/profiles/lazy.min.yaml) | [`egern-routing.min.yaml`](https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/profiles/routing.min.yaml) |
 
 ---
 
@@ -48,7 +48,7 @@
 
 ## 🌐 隐私至上 · 无 DNS 泄露
 
-| | <div align="center"><img src="https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Surge-Icon.png" height="22" alt=""> Surge</div> | <div align="center"><img src="https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Egern-Icon.png" height="22" alt=""> Egern</div> |
+| | <div align="center"><img src="https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Surge-Icon.png" height="22" align="middle" alt=""> Surge</div> | <div align="center"><img src="https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Egern-Icon.png" height="22" align="middle" alt=""> Egern</div> |
 |:--|:------|:------|
 | 🚫 盲⁠区⁠设⁠备 | `hijack-dns` 接管明文 `:53`（六个知名解析器） | `hijack_dns` 接管明文 `:53`（全量） |
 | 🔐 加⁠密⁠通⁠道 | 主解析走 DoH，主机名端点经裸 IP 受控引导 | 主解析走 DoH/DoT，四条端点全是 IP 字面量 |
