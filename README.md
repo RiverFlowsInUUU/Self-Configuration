@@ -20,7 +20,7 @@
 
 ## 📥 两全其美 · 皆合心意
 
-| 内核 | 🪶 懒人版 · 至简 · 省心 | 🧭 分流版 · 可控 · 随心 |
+| <div align="center">内核</div> | 🪶 懒人版 · 至简 · 省心 | 🧭 分流版 · 可控 · 随心 |
 |:--|:--|:--|
 | <img src="https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Surge-Icon.png" height="20" alt=""> **Surge** | [`surge-lazy.min.conf`](https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/profiles/lazy.min.conf) | [`surge-routing.min.conf`](https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/surge/profiles/routing.min.conf) |
 | <img src="https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Egern-Icon.png" height="20" alt=""> **Egern** | [`egern-lazy.min.yaml`](https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/profiles/lazy.min.yaml) | [`egern-routing.min.yaml`](https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/egern/profiles/routing.min.yaml) |
