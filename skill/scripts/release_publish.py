@@ -16,7 +16,9 @@
     - Release 标题 = emoji + 日期 + 当日主题（DAY_THEMES 表）；
     - 正文按产品线分小节：每版本一行 **vX.Y(.Z)** 头 + 公众向要点（PUBLIC_NOTES 表）；
     - **说明是面向公众的产品更新日志**（参考 Apple 更新说明的正式产品语言），
-      禁止文言腔与内部过程语言；内核维度一律写全称「Surge 内核 / Egern 内核」；
+      禁止文言腔与内部过程语言；内核维度写全称「Surge」/「Egern」（允许并列作
+      「Surge / Egern 内核」，共享「内核」后缀），但同一句内不得把「内核」写两遍、
+      不得加「两者的」这类同义回指；
     - 单边内核日如实注明（如 Egern 内核当日无内容），不硬凑；
     - 发新版本前必须先补 DAY_THEMES 一行 + PUBLIC_NOTES 对应条目 —— 动线⑦的一部分。
 """
@@ -193,9 +195,8 @@ PUBLIC_NOTES = {
         '移除了订阅槽位中重复的占位地址。分流行为无变化。',
     ],
     ('routing', 'v4.0.2'): [
-        '低倍率节点的优先方式调整：仍优先使用低倍率节点，但当它不可用或明显更慢时会自动切换到其他节点，无需手动干预。',
-        '低倍率精选分组已并入全节点池，两个内核的分组数量均由 26 个减少至 25 个。',
-        'Surge 内核与 Egern 内核同步支持该优先策略，两者的取值与匹配规则一致。',
+        '原 MAX 分组并入 Smart 分组：低倍率节点由「只走低倍率」改为「优先低倍率」，其不可用或明显更慢时自动切换到其他节点；分组数量由 26 个减少至 25 个。',
+        'Surge / Egern 内核同步支持该优先策略，取值、匹配规则一致。',
     ],
 }
 
@@ -602,7 +603,10 @@ def show_plan(days):
         mark = '现行' if d['is_current'] else '历史'
         print(f"{d['tag']:14s} {mark}  {'  '.join(fam_bits)}")
     print(f'\n共 {len(days)} 张 Release（按版本诞生日期归并）')
-    sample = next((d for d in days if d['is_current']), days[-1])
+    # 样例取**最新**现行日 —— 计划模式要显示的是"现行版长什么样"。
+    # ⚠️ 用 next(升序) 会命中最早那个现行日：单产品线更新日有两个现行日
+    # （未动的产品线其现役版本仍停在旧日期分组），打出来的是旧日正文（2026-10-01 实测踩过）。
+    sample = max((d for d in days if d['is_current']), key=lambda d: d['tag'], default=days[-1])
     print(f'\n──── 说明样例（{sample["tag"]}）────')
     print(build_notes(sample))
 
