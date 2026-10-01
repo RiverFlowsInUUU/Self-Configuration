@@ -1,7 +1,7 @@
 # NAME: AI_Domains (AI 全量整合集 · Surge ruleset)
-# 生成: 2026-10-01（新增 dler-io 源）· 本仓自托管静态整合快照
+# 生成: 2026-10-01（dler-io 源 + 同名归并器补全）· 本仓自托管静态整合快照
 # 生成脚本: skill/scripts/ai_domains_build.py（源目录: skill/scripts/ai_sources/）
-# 合计: 318 条规则 —— 本行为条数唯一真源（自动统计，勿手抄到别处）
+# 合计: 286 条规则 —— 本行为条数唯一真源（自动统计，勿手抄到别处）
 #
 # ============ 上游来源详细信息 ============
 #
@@ -46,6 +46,8 @@
 # · googleapis.com 宽后缀已收窄：它是全 Google API 域(含 youtubei=YouTube 信令)，
 #   整域收编会误拉 YouTube/GMS 其他服务；改为 Gemini 专属后端精确枚举 + play 网关 1 条
 # · 域名形态：DOMAIN / DOMAIN-SUFFIX / DOMAIN-KEYWORD / URL-REGEX（零 IP）
+# · 同名归并：KEYWORD / DOMAIN 若与同值 DOMAIN-SUFFIX 并存则删前者（后缀的匹配集严格包含前者，
+#   删之不改任何落点，纯去冗余）；本项由生成器自动执行，新源带来的同类冗余一并消解
 #
 # ============ 分工与拍板记录 ============
 # 分工: 本集管「Gemini 专属后端 + 伴生域 + 基础设施域」(静态)；新 AI 域由 Repcz AI.list(滚动)承接，两者同指 AI 组
@@ -57,34 +59,19 @@
 #       facebook.com / fbcdn.net / connect.facebook.net 三条宽域按用户拍板原样收录(Meta AI 账号与 CDN 依赖)
 # 五修: 2026-10-01 新增第 10 源 dler-io/Rules(AI Suite)；其独有 33 条中 9 条由 BLACKLIST_EXACT 点名剔除，
 #       净增 24 条(Google 新 AI / AI 编程工具 / JetBrains / Apple Intelligence / Grok 登录)
+# 六修: 2026-10-01 归并器补 DOMAIN 同类项 —— 此前仅做 KEYWORD→SUFFIX 归并，故 DOMAIN,x 与同值
+#       DOMAIN-SUFFIX,x 并存(共 32 处，其中 26 处旧集即有、6 处由 dler 源带入)。补归并后列表
+#       318 → 286 条；匹配行为零变化(SUFFIX 覆盖 DOMAIN)，属生成器级修复，往后同类冗余自动消解
 #
 # ==== 00 宽后缀(伴生域收编) ====
 DOMAIN-SUFFIX,googleusercontent.com
 
 # ==== 01 Google/Gemini 系 ====
-DOMAIN,ai.google.dev
-DOMAIN,aida.googleapis.com
-DOMAIN,aisandbox-pa.googleapis.com
-DOMAIN,aistudio.google.com
-DOMAIN,alkalicore-pa.clients6.google.com
-DOMAIN,alkalimakersuite-pa.clients6.google.com
-DOMAIN,antigravity-unleash.goog
-DOMAIN,antigravity.google
-DOMAIN,apis.google.com
 DOMAIN,appcatalyst.pa.googleapis.com
-DOMAIN,bard.google.com
-DOMAIN,cloudcode-pa.googleapis.com
-DOMAIN,daily-cloudcode-pa.googleapis.com
-DOMAIN,gemini.google.com
-DOMAIN,generativelanguage.googleapis.com
-DOMAIN,jules.google.com
 DOMAIN,jules.googleapis.com
-DOMAIN,makersuite.google.com
-DOMAIN,notebooklm.google.com
 DOMAIN,oauth2.googleapis.com
 DOMAIN,oauthaccountmanager.googleapis.com
 DOMAIN,play.googleapis.com
-DOMAIN,robinfrontend-pa.googleapis.com
 DOMAIN,waa-pa.clients6.google.com
 DOMAIN-KEYWORD,-pa.googleapis.com
 DOMAIN-SUFFIX,ai.google.dev
@@ -146,10 +133,6 @@ DOMAIN,cdn.openaimerge.com
 DOMAIN,chat.openai.com.cdn.cloudflare.net
 DOMAIN,file.oaiusercontent.com
 DOMAIN,openai-api.arkoselabs.com
-DOMAIN,openaiapi-site.azureedge.net
-DOMAIN,openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net
-DOMAIN,openaicomproductionae4b.blob.core.windows.net
-DOMAIN,production-openaicom-storage.azureedge.net
 DOMAIN-KEYWORD,openai
 DOMAIN-KEYWORD,openaicom-api
 DOMAIN-SUFFIX,ai.com
@@ -199,9 +182,6 @@ DOMAIN,api.jetbrains.ai
 DOMAIN,api.jetbrains.cloud
 DOMAIN,api.msn.com
 DOMAIN,assets.msn.com
-DOMAIN,copilot-proxy.githubusercontent.com
-DOMAIN,copilot-telemetry.githubusercontent.com
-DOMAIN,copilot.microsoft.com
 DOMAIN,gateway.bingviz.microsoft.net
 DOMAIN,gateway.bingviz.microsoftapp.net
 DOMAIN,in.appcenter.ms
@@ -237,8 +217,6 @@ DOMAIN,api.groq.com
 DOMAIN,api.together.xyz
 DOMAIN,cdn.usefathom.com
 DOMAIN,console.groq.com
-DOMAIN,openrouter.ai
-DOMAIN,pplx-res.cloudinary.com
 DOMAIN-SUFFIX,anythingllm.com
 DOMAIN-SUFFIX,arena.ai
 DOMAIN-SUFFIX,cerebras.ai
@@ -271,10 +249,6 @@ DOMAIN-SUFFIX,poe.com
 DOMAIN-SUFFIX,pplx-res.cloudinary.com
 
 # ==== 08 基础设施/认证/遥测(伴生) ====
-DOMAIN,api.statsig.com
-DOMAIN,browser-intake-datadoghq.com
-DOMAIN,challenges.cloudflare.com
-DOMAIN,gateway.ai.cloudflare.com
 DOMAIN,rum.browser-intake-datadoghq.com
 DOMAIN,static.cloudflareinsights.com
 DOMAIN-SUFFIX,api.statsig.com
@@ -308,7 +282,6 @@ DOMAIN,humb.apple.com
 DOMAIN,images.workoscdn.com
 DOMAIN,meta-ohttp-config-prod.fastly-edge.com
 DOMAIN,meta-ohttp-relay-prod.fastly-edge.com
-DOMAIN,o33249.ingest.sentry.io
 DOMAIN,production.museai.com
 DOMAIN,setup.workos.com
 DOMAIN-KEYWORD,colab
