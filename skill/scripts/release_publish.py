@@ -518,7 +518,10 @@ def _asset_stale(asset, path):
 def apply(days, token):
     ex = {r['tag_name']: r for r in existing_releases(token)}
     created, updated, skipped, failed = [], [], [], []
-    current_tag = next((d['tag'] for d in days if d['is_current']), None)
+    # 现行日取**最新**那天，与 check_releases 的 R5 同一口径。
+    # ⚠️ 单产品线更新日会有两个现行日（未动的那条产品线，其现役版本仍停在旧日期分组）；
+    #    用 next 会取到最早那天 ⇒ latest_ok 恒为 False，白白多打一次 PATCH。
+    current_tag = max((d['tag'] for d in days if d['is_current']), default=None)
     # Latest 已指向现行日就不再 PATCH：逐个 PATCH 会让指针抖动，
     # 与 CI 的 Releases 检查步构成竞态（0929 实测红过一次）
     # 注：这里**刻意不套四态退出码协议**（check_releases 的 Skip/3 体系）—— 本函数是
@@ -574,8 +577,8 @@ def apply(days, token):
                     raw = fh.read()
                 api_req(f"{UPLOAD}/{rel['id']}/assets?name={name}", token, 'POST',
                         raw=raw, ctype='application/octet-stream')
-            # Latest 只钉现行日；未指向时补钉一次
-            if day['is_current'] and not latest_ok:
+            # Latest 只钉现行日（= 最新那个现行日）；未指向时补钉一次
+            if tag == current_tag and not latest_ok:
                 api_req(f"{API}/releases/{rel['id']}", token, 'PATCH', {'make_latest': 'true'})
             if tag not in created:
                 skipped.append(tag)

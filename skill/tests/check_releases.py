@@ -203,7 +203,11 @@ def main():
                       else f'{tag}: 正文缺少 {FAM_CN[fam]} {e["version"]} 条目')
 
     # R5 Latest = 含现行版本的那张（最新日期）
-    want_latest = next((d['tag'] for d in days if d['is_current']), None)
+    # ⚠️ 必须取 max 而不是 next：**单产品线更新日**会出现两个现行日 —— 未动的那条
+    #    产品线，其现役版本仍留在它的旧日期分组里（例：仅分流版动的日子，懒人版现役
+    #    版本还在前一天）。`next` 按升序取到的是**最早**那天，与「最新日期」的自述
+    #    判据矛盾（2026-10-01 首次暴露）。tag 形态 vYYYY-MM-DD，字典序即时间序。
+    want_latest = max((d['tag'] for d in days if d['is_current']), default=None)
     latest_read = True
     try:
         latest = _api_json('/releases/latest', tok, allow_404=True)
