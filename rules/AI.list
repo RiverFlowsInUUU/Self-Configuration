@@ -1,7 +1,7 @@
 # NAME: AI_Domains (AI 全量整合集 · Surge ruleset)
-# 生成: 2026-10-01（dler-io 源 + 同名归并器补全）· 本仓自托管静态整合快照
+# 生成: 2026-10-01（dler-io 源 + 归并器补全：同值 + 父域）· 本仓自托管静态整合快照
 # 生成脚本: skill/scripts/ai_domains_build.py（源目录: skill/scripts/ai_sources/）
-# 合计: 286 条规则 —— 本行为条数唯一真源（自动统计，勿手抄到别处）
+# 合计: 272 条规则 —— 本行为条数唯一真源（自动统计，勿手抄到别处）
 #
 # ============ 上游来源详细信息 ============
 #
@@ -46,8 +46,9 @@
 # · googleapis.com 宽后缀已收窄：它是全 Google API 域(含 youtubei=YouTube 信令)，
 #   整域收编会误拉 YouTube/GMS 其他服务；改为 Gemini 专属后端精确枚举 + play 网关 1 条
 # · 域名形态：DOMAIN / DOMAIN-SUFFIX / DOMAIN-KEYWORD / URL-REGEX（零 IP）
-# · 同名归并：KEYWORD / DOMAIN 若与同值 DOMAIN-SUFFIX 并存则删前者（后缀的匹配集严格包含前者，
-#   删之不改任何落点，纯去冗余）；本项由生成器自动执行，新源带来的同类冗余一并消解
+# · 冗余归并：DOMAIN 被「同值或父域」DOMAIN-SUFFIX 覆盖者删之（后缀的匹配集严格包含 DOMAIN，
+#   删之不改任何落点，纯去冗余）；KEYWORD 与 SUFFIX 同值时删 KEYWORD。三项均由生成器自动执行，
+#   新源带来的同类冗余一并消解
 #
 # ============ 分工与拍板记录 ============
 # 分工: 本集管「Gemini 专属后端 + 伴生域 + 基础设施域」(静态)；新 AI 域由 Repcz AI.list(滚动)承接，两者同指 AI 组
@@ -62,6 +63,10 @@
 # 六修: 2026-10-01 归并器补 DOMAIN 同类项 —— 此前仅做 KEYWORD→SUFFIX 归并，故 DOMAIN,x 与同值
 #       DOMAIN-SUFFIX,x 并存(共 32 处，其中 26 处旧集即有、6 处由 dler 源带入)。补归并后列表
 #       318 → 286 条；匹配行为零变化(SUFFIX 覆盖 DOMAIN)，属生成器级修复，往后同类冗余自动消解
+# 七修: 2026-10-01 归并扩到「父域覆盖」—— 原只认同值，故 y.x 型 DOMAIN 与父域 DOMAIN-SUFFIX,x
+#       并存(14 处，如 waa-pa.clients6.google.com <- clients6.google.com)。补后列表 286 → 272 条；
+#       匹配行为仍零变化(SUFFIX,x 本就含全部 *.x)。KEYWORD 的子串式巧合覆盖(1 处 cdn.openaimerge.com
+#       被 KEYWORD,openai 兜住)语义不同，本次不动
 #
 # ==== 00 宽后缀(伴生域收编) ====
 DOMAIN-SUFFIX,googleusercontent.com
@@ -72,7 +77,6 @@ DOMAIN,jules.googleapis.com
 DOMAIN,oauth2.googleapis.com
 DOMAIN,oauthaccountmanager.googleapis.com
 DOMAIN,play.googleapis.com
-DOMAIN,waa-pa.clients6.google.com
 DOMAIN-KEYWORD,-pa.googleapis.com
 DOMAIN-SUFFIX,ai.google.dev
 DOMAIN-SUFFIX,aicode.googleapis.com
@@ -130,9 +134,6 @@ URL-REGEX,https://www\.google\.com/.*continue=https://gemini\.google\.com.+
 
 # ==== 02 OpenAI/ChatGPT 系 ====
 DOMAIN,cdn.openaimerge.com
-DOMAIN,chat.openai.com.cdn.cloudflare.net
-DOMAIN,file.oaiusercontent.com
-DOMAIN,openai-api.arkoselabs.com
 DOMAIN-KEYWORD,openai
 DOMAIN-KEYWORD,openaicom-api
 DOMAIN-SUFFIX,ai.com
@@ -166,8 +167,6 @@ DOMAIN-SUFFIX,claudeusercontent.com
 DOMAIN-SUFFIX,servd-anthropic-website.b-cdn.net
 
 # ==== 04 Grok/xAI 系 ====
-DOMAIN,auth.grok.com
-DOMAIN,auth.grokipedia.com
 DOMAIN,auth.grokusercontent.com
 DOMAIN-SUFFIX,grok.com
 DOMAIN-SUFFIX,grok.x.com
@@ -177,8 +176,6 @@ DOMAIN-SUFFIX,x.ai
 # ==== 05 Copilot/微软系 ====
 DOMAIN,account.jetbrains.com
 DOMAIN,api.github.com
-DOMAIN,api.githubcopilot.com
-DOMAIN,api.jetbrains.ai
 DOMAIN,api.jetbrains.cloud
 DOMAIN,api.msn.com
 DOMAIN,assets.msn.com
@@ -213,10 +210,8 @@ DOMAIN-SUFFIX,jetbrains.ai
 DOMAIN-SUFFIX,meta.ai
 
 # ==== 07 其他 AI 服务 ====
-DOMAIN,api.groq.com
 DOMAIN,api.together.xyz
 DOMAIN,cdn.usefathom.com
-DOMAIN,console.groq.com
 DOMAIN-SUFFIX,anythingllm.com
 DOMAIN-SUFFIX,arena.ai
 DOMAIN-SUFFIX,cerebras.ai
@@ -249,7 +244,6 @@ DOMAIN-SUFFIX,poe.com
 DOMAIN-SUFFIX,pplx-res.cloudinary.com
 
 # ==== 08 基础设施/认证/遥测(伴生) ====
-DOMAIN,rum.browser-intake-datadoghq.com
 DOMAIN,static.cloudflareinsights.com
 DOMAIN-SUFFIX,api.statsig.com
 DOMAIN-SUFFIX,arkoselabs.com
@@ -269,11 +263,8 @@ DOMAIN-SUFFIX,statsigapi.net
 
 # ==== 09 其他未归类 ====
 DOMAIN,accounts.spacex.ai
-DOMAIN,accounts.x.ai
-DOMAIN,api.app.prod.grazie.aws.intellij.net
 DOMAIN,apple-relay.apple.com
 DOMAIN,apple-relay.mask.apple-dns.net
-DOMAIN,auth.x.ai
 DOMAIN,cdn.workos.com
 DOMAIN,connect.facebook.net
 DOMAIN,default.exp-tas.com

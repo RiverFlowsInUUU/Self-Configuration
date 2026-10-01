@@ -9,7 +9,8 @@
 
 上游来源与维护状态见生成文件的头部档案。纪律: 零 IP 条目（防 DNS 泄露面）；
 googleapis.com 宽后缀已收窄（YouTube 误伤实测）；-pa 动态命名空间用 DOMAIN-KEYWORD 一条封死；
-同名归并: KEYWORD / DOMAIN 被同值 DOMAIN-SUFFIX 覆盖者一律删（后者匹配集严格更宽，删之不改落点）。
+冗余归并: DOMAIN 被「同值或父域」DOMAIN-SUFFIX 覆盖者一律删（后缀匹配集严格更宽，删之不改落点）；
+KEYWORD 与 SUFFIX 同值时删 KEYWORD。
 """
 import re, os, sys, argparse
 from collections import defaultdict
@@ -139,10 +140,14 @@ def main():
             del rules[('DOMAIN-KEYWORD', v)]
             print('[归并] KEYWORD→SUFFIX 覆盖:', v)
 
-    # 归并：DOMAIN 与 SUFFIX 同值 → 删 DOMAIN（SUFFIX 的匹配集严格包含 DOMAIN：
-    # 精确主机本身 + 其全部子域 ⇒ 删后者不改变任何请求落点，纯去冗余，非行为变更）
+    # 归并：DOMAIN 被「同值或父域」DOMAIN-SUFFIX 覆盖 → 删 DOMAIN
+    # SUFFIX,x 的匹配集 = {x} ∪ {*.x}，严格包含 DOMAIN,x 的 {x}，也包含 DOMAIN,y.x 的 {y.x}
+    # ⇒ 上述两种情形删之均不改变任何请求落点，纯去冗余，非行为变更。
+    # 注：只收「同值 / 域名层级父子」两类覆盖。KEYWORD 的子串式巧合覆盖（如 cdn.openaimerge.com
+    # 被 KEYWORD,openai 兜住）语义不同且随该 KEYWORD 存废而失效，属另一类，不在此处归并。
+    suffixes = {v for (t, v) in rules if t == 'DOMAIN-SUFFIX'}
     for (t, v) in list(rules):
-        if t == 'DOMAIN' and ('DOMAIN-SUFFIX', v) in rules:
+        if t == 'DOMAIN' and (v in suffixes or any(v.endswith('.' + s) for s in suffixes)):
             del rules[('DOMAIN', v)]
             print('[归并] DOMAIN→SUFFIX 覆盖:', v)
 
@@ -167,7 +172,7 @@ def main():
     total = sum(len(v) for v in groups.values())
     out_lines = [
         '# NAME: AI_Domains (AI 全量整合集 · Surge ruleset)',
-        '# 生成: 2026-10-01（dler-io 源 + 同名归并器补全）· 本仓自托管静态整合快照',
+        '# 生成: 2026-10-01（dler-io 源 + 归并器补全：同值 + 父域）· 本仓自托管静态整合快照',
         '# 生成脚本: skill/scripts/ai_domains_build.py（源目录: skill/scripts/ai_sources/）',
         f'# 合计: {total} 条规则 —— 本行为条数唯一真源（自动统计，勿手抄到别处）',
         '#',
@@ -214,8 +219,9 @@ def main():
         '# · googleapis.com 宽后缀已收窄：它是全 Google API 域(含 youtubei=YouTube 信令)，',
         '#   整域收编会误拉 YouTube/GMS 其他服务；改为 Gemini 专属后端精确枚举 + play 网关 1 条',
         '# · 域名形态：DOMAIN / DOMAIN-SUFFIX / DOMAIN-KEYWORD / URL-REGEX（零 IP）',
-        '# · 同名归并：KEYWORD / DOMAIN 若与同值 DOMAIN-SUFFIX 并存则删前者（后缀的匹配集严格包含前者，',
-        '#   删之不改任何落点，纯去冗余）；本项由生成器自动执行，新源带来的同类冗余一并消解',
+        '# · 冗余归并：DOMAIN 被「同值或父域」DOMAIN-SUFFIX 覆盖者删之（后缀的匹配集严格包含 DOMAIN，',
+        '#   删之不改任何落点，纯去冗余）；KEYWORD 与 SUFFIX 同值时删 KEYWORD。三项均由生成器自动执行，',
+        '#   新源带来的同类冗余一并消解',
         '#',
         '# ============ 分工与拍板记录 ============',
         '# 分工: 本集管「Gemini 专属后端 + 伴生域 + 基础设施域」(静态)；新 AI 域由 Repcz AI.list(滚动)承接，两者同指 AI 组',
@@ -230,6 +236,10 @@ def main():
         '# 六修: 2026-10-01 归并器补 DOMAIN 同类项 —— 此前仅做 KEYWORD→SUFFIX 归并，故 DOMAIN,x 与同值',
         '#       DOMAIN-SUFFIX,x 并存(共 32 处，其中 26 处旧集即有、6 处由 dler 源带入)。补归并后列表',
         '#       318 → 286 条；匹配行为零变化(SUFFIX 覆盖 DOMAIN)，属生成器级修复，往后同类冗余自动消解',
+        '# 七修: 2026-10-01 归并扩到「父域覆盖」—— 原只认同值，故 y.x 型 DOMAIN 与父域 DOMAIN-SUFFIX,x',
+        '#       并存(14 处，如 waa-pa.clients6.google.com <- clients6.google.com)。补后列表 286 → 272 条；',
+        '#       匹配行为仍零变化(SUFFIX,x 本就含全部 *.x)。KEYWORD 的子串式巧合覆盖(1 处 cdn.openaimerge.com',
+        '#       被 KEYWORD,openai 兜住)语义不同，本次不动',
         '#',
     ]
     for b in sorted(groups):
