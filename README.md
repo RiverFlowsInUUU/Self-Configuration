@@ -46,7 +46,7 @@
 
 ## 🌐 隐私至上 · 无 DNS 泄露
 
-| | Surge | Egern |
+| | <div align="center">Surge</div> | <div align="center">Egern</div> |
 |:--|:------|:------|
 | 🚫 盲⁠区⁠设⁠备 | `hijack-dns` 接管明文 `:53`（六个知名解析器） | `hijack_dns` 接管明文 `:53`（全量） |
 | 🔐 加⁠密⁠通⁠道 | 主解析走 DoH，主机名端点经裸 IP 受控引导 | 主解析走 DoH/DoT，四条端点全是 IP 字面量 |
