@@ -285,12 +285,12 @@ Node-B = hysteria2, 203.0.113.11, 52341, password=REPLACE_WITH_YOUR_PASSWORD, sn
 
 | 节点 | 类型 | 在懒人版 | 在分流版 |
 |:-----|:-----|:---------|:---------|
-| `Node-A` | `hysteria2` | `Proxy` 唯一的本机成员（`smart` 与订阅节点一起打分） | `Proxy` 成员**末位**（首项仍是 `MAX`，默认没被顶掉） |
+| `Node-A` | `hysteria2` | `Proxy` 唯一的本机成员（`smart` 与订阅节点一起打分） | `Proxy` 成员**末位**（首项仍是 `Smart`，默认没被顶掉） |
 | `Node-B` | `hysteria2` | `AI` 唯一的本机成员 | `AI` 的**默认首项**，其后才是 `Proxy` 节点池 |
 
 两类的**订阅节点引用面不同**（这是两版真正的设计差）：懒人版里订阅节点直接进
 `Proxy` / `AI`（`include-other-group="Airport"`）；分流版里订阅节点只进
-`Smart` / 7 个地区组 / `MAX`，其余应用组的成员表不变。
+`Smart` / 7 个地区组，其余应用组的成员表不变。
 
 > ⚠️ **命名不是装饰，是功能**（只影响分流版的地区组）—— 地区组用 `policy-regex-filter`
 > 按**节点名**筛节点。叫 `HK-01` 会进 `Hong Kong` 组，叫 `香港一号` 也会，叫 `node1`
@@ -661,12 +661,11 @@ AD      = select, REJECT, icon-url=…/AdBlock.png
 
 | 层 | 组 | 类型 | 作用 |
 |:---|:---|:----:|:-----|
-| ① 总入口 | `Proxy` / `Smart` | `select` / `smart` | `Proxy` 是**手动**总出口（首项 `MAX`）；`Smart` 是自动全节点池 |
+| ① 总入口 | `Proxy` / `Smart` | `select` / `smart` | `Proxy` 是**手动**总出口（首项 `Smart`，带低倍率优先权重）；`Smart` 是自动全节点池 |
 | ② 应用（13 组） | `ChatGPT` / `Gemini` / `Claude` / `AI` / `Spotify` / `YouTubeMusic` / `YouTube` / `GitHub` / `Google` / `Microsoft` / `Telegram` / `Twitter` / `WeChat` | `select` | 除 `WeChat`（只有 `DIRECT`）外都带 `include-other-group="Proxy"` —— 复制 `Proxy` 的**已解析成员**；首项各不相同：`Claude` `Taiwan` · `Google` `Gemini` · `Microsoft` / `WeChat` `DIRECT` · `AI` 占位节点 `Node-B` · `Spotify` / `YouTubeMusic` `USA`（见下方 📌） |
 | ③ 订阅 | `Airport` | `select` | `policy-path` 订阅槽位，`hidden=true` |
 | ③ 开关 | `AD` | `select` | 独立手动开关，**不被规则引用**（见 §13.3） |
-| ④ 地区 | `Hong Kong` / `USA` / `Japan` / `Taiwan` / `Singapore` / `Korea` / `Other Regions` | `smart` | `policy-regex-filter` 按节点名筛 |
-| ④ 精选 | `MAX` | `smart` | 只筛低倍率（`0.x`）节点 |
+| ④ 地区 | `Hong Kong` / `USA` / `Japan` / `Taiwan` / `Singapore` / `Korea` / `Other Regions` | `smart` | `policy-regex-filter` 按节点名筛；另带 `policy-priority` 低倍率优先（0.15） |
 | ⑤ 兜底 | `Final` | `select` | `include-other-group="Proxy"` |
 
 > 📌 **`WeChat` 的位置说明（别被分节编号误导）**：它在 `[Proxy Group]` 里排在 `Airport` 之后、

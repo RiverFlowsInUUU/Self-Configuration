@@ -33,7 +33,7 @@
 ```
 Proxy · Smart · ChatGPT · Gemini · Claude · AI · Spotify · YouTubeMusic · YouTube
 GitHub · Google · Microsoft · Telegram · Twitter · Airport · WeChat · AD
-Hong Kong · USA · Japan · Taiwan · Singapore · Korea · Other Regions · MAX · Final
+Hong Kong · USA · Japan · Taiwan · Singapore · Korea · Other Regions · Final
 ```
 
 移植分组改动时唯一要换的是写法：Surge 用 `include-other-group` + `policy-regex-filter`，

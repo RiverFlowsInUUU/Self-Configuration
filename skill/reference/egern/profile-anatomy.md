@@ -83,15 +83,17 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 以 `Smart` 为例（`policies: [Airport]`）：不加时候选是「`Airport` 组」这一个单位（两级选优），
 加上后才是订阅里的**全部具体节点**（一级选优）。官方「通用字段」明确它在
 `select` / `auto_test` / `smart` / `fallback` / `load_balance` 五种基础类型上通用。
-本模板的 `Smart` / `MAX` / `ChatGPT` / `Gemini` 与全部地区组都用了它。
+本模板的 `Smart` / `ChatGPT` / `Gemini` 与全部地区组都用了它。
 
 **`ChatGPT` / `Gemini` 为什么必须配 `flatten`** —— 它们现为 `select`（`routing_v3` 前是 `fallback`，语义**按顺序取第一个可用**）。
 不加 `flatten` 时候选只有「`Proxy`」这一个组单位（`select` 下面板不能逐节点手选；旧版 `fallback` 下等于没有故障转移），且 `Proxy` 一挂整组就断；
 加上后 `Proxy` 展开成全部具体节点，面板可直接逐节点选（旧版 `fallback` 则是在节点级依次尝试）
 ⇒ 效果是应用组拿到**节点级候选**，与 Surge `select, include-other-group="Proxy"` 的节点平铺同形。
 
-**`MAX`** —— 「带节点筛选的 `Smart`」：上游同 `Smart`，额外用
-`filter: (?<![\d.])0\.\d*[1-9]` 只留**倍率 < 1** 的节点。
+**低倍率优先（原 `MAX` 组，v4.0.2 并入）** —— 不再单设 `MAX` 组，改为在**所有 smart 组**
+（`Smart` + 7 个地区组）上写 `priorities: {"(?<![\d.])0\.\d*[1-9]": 0.15}`：
+低倍率节点比当前最优节点**慢 6.7 倍以内**（= 1 ÷ 0.15）仍然胜出，超出或不可用则自动让位给池内其它节点。
+与 Surge 的 `policy-priority` 同值同正则 —— 调这个口径要两侧 8 个组一起改。
 
 **地区组** —— 「按正则把节点归类」是 **`filter`** 干的，不是 `smart` 本身；
 `smart` 只负责在筛出来的节点里选最优。`Other Regions` 的负向断言把其余 6 个地区组的

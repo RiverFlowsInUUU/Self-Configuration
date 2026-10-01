@@ -281,7 +281,7 @@ AD      = select, REJECT, icon-url=…/AdBlock.png
 ```
 
 > 📌 懒人版的订阅节点直接进 `Proxy` / `AI`（`smart` 只能靠 `include-other-group` 复制
-> 具体节点）；分流版相反，那里的订阅节点只进 `Smart` / 地区组 / `MAX`。`AI` 不引用 `Proxy`。
+> 具体节点）；分流版相反，那里的订阅节点只进 `Smart` / 地区组。`AI` 不引用 `Proxy`。
 
 ### 3.1 `smart` 组
 
