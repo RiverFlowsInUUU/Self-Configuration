@@ -91,6 +91,12 @@ def run_one(name, argv, extra_env):
     env.update({k: v for k, v in extra_env.items() if v})
     if 'GITHUB_TOKEN' in extra_env and not extra_env['GITHUB_TOKEN']:
         env.pop('GITHUB_TOKEN', None)
+    # 运行时总线兜底：强制子进程以 UTF-8 输出，兜住 E4 静态判不到的情形（函数返回值 /
+    # 运行时数据 / 多层 wrapper 等盲区）。已自带 reconfigure 或 import 编码垫片的脚本会覆盖
+    # 本变量，行为不变。
+    # ⚠️ 与 E4 **互补而非替代**：E4 是静态门禁、只读源码，不受这里影响 —— 因此注入不会
+    #    掩盖 E4 能抓的问题。（早前「注入会掩盖」的判断已由 2026-10-02 实测推翻。）
+    env['PYTHONIOENCODING'] = 'utf-8'
     try:
         r = subprocess.run(argv, cwd=ROOT, capture_output=True, text=True,
                            encoding='utf-8', errors='replace', env=env, timeout=600)
