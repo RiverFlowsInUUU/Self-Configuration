@@ -35,6 +35,15 @@
     · make_min 漂移检查 = `make_min.py --check`（0929 起）：--check 直接比对磁盘 .min 与
       生成器输出，有差异即非 0。旧写法「计划模式 + git diff」两半恒空/恒 0，是永远绿的
       空操作（2026-09-29 外部审查实锤后废除，原『git 无漂移』闸门随之合并）。
+    · CI 另有一道**运行时编码闸门**（`.github/workflows/ci.yml` 的 `Encoding gate (cp936)`）：
+      以 `PYTHONIOENCODING=cp936` 跑一遍本脚本，在 Linux 上等价复现 Windows(ACP=936) 的
+      管道路径 —— 脚本 print 非 GBK 字符却无编码保护时当场崩、当场红。
+      它与 `check_portability.py` 的 E4 **互补、不可互相替代**：
+        - 本闸门测**运行时真相**、零假阳性，但只覆盖 `build_gates()` 跑到的脚本，
+          且只覆盖**执行到的**分支（只在失败分支打印 emoji 的脚本仍测不到）；
+        - E4 是静态近似，全覆盖（含 CI 不跑的审计脚本），但会漏报也会假阳性。
+      两者叠加才封住「脚本忘加保护 → 崩成退出码 1 → 被读成判负」这条假语义路径。
+      前提是 `run_one` 对 PYTHONIOENCODING 用 `setdefault`（显式继承，见该处注释）。
 """
 
 import os
@@ -91,12 +100,18 @@ def run_one(name, argv, extra_env):
     env.update({k: v for k, v in extra_env.items() if v})
     if 'GITHUB_TOKEN' in extra_env and not extra_env['GITHUB_TOKEN']:
         env.pop('GITHUB_TOKEN', None)
-    # 运行时总线兜底：强制子进程以 UTF-8 输出，兜住 E4 静态判不到的情形（函数返回值 /
+    # 运行时编码兜底：子进程默认以 UTF-8 输出，兜住 E4 静态判不到的情形（函数返回值 /
     # 运行时数据 / 多层 wrapper 等盲区）。已自带 reconfigure 或 import 编码垫片的脚本会覆盖
     # 本变量，行为不变。
     # ⚠️ 与 E4 **互补而非替代**：E4 是静态门禁、只读源码，不受这里影响 —— 因此注入不会
     #    掩盖 E4 能抓的问题。（早前「注入会掩盖」的判断已由 2026-10-02 实测推翻。）
-    env['PYTHONIOENCODING'] = 'utf-8'
+    # ⚠️ 必须 setdefault，**不可**写成硬赋值 `env[...] = 'utf-8'`：CI 的「Encoding gate (cp936)」
+    #    正是靠 `PYTHONIOENCODING=cp936` 从父进程传下来、再经这里**原样继承**给子进程，
+    #    才能复现 Windows(ACP=936) 的管道路径。硬赋值会把继承来的 cp936 抹成 utf-8 ⇒
+    #    那道闸门永远绿（空操作）。2026-10-02 实测：父进程设 cp936 时子进程仍报
+    #    `CHILD-ENC: utf-8`、emoji 照常输出 —— 闸门形同虚设。
+    #    「显式指定优先、缺省才兜底」也是这条兜底本该有的语义。
+    env.setdefault('PYTHONIOENCODING', 'utf-8')
     try:
         r = subprocess.run(argv, cwd=ROOT, capture_output=True, text=True,
                            encoding='utf-8', errors='replace', env=env, timeout=600)
@@ -121,8 +136,9 @@ def print_index():
         need = '  [需 GITHUB_TOKEN]' if 'GITHUB_TOKEN' in env else ''
         print(f'{i:>2}. {name}{need}')
         print(f'      {" ".join(argv[1:])}')
-    print(f'\nCI 侧为 9 个 step（Surge 双 profile 合并在同一 run 内）—— 与上表按 step 聚合后'
-          f'形状不同，属已知挂账，见本文件头注。')
+    print(f'\nCI 侧为 10 个 step（Surge 双 profile 合并在同一 run 内）—— 末位那个'
+          f'「Encoding gate (cp936)」以本脚本为入口复跑一遍，故**不进 build_gates()**'
+          f'（进去即递归）；与上表按 step 聚合后形状不同，属已知挂账，见本文件头注。')
     sys.exit(0)
 
 
