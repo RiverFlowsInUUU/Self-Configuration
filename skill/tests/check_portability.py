@@ -120,32 +120,102 @@ def _is_sys_stdout(node):
             and isinstance(node.value, ast.Name) and node.value.id == "sys")
 
 
+def _scoped_reconfigure_calls(tree):
+    """收集所有 `.reconfigure()` 调用点 → [(调用节点, 所在函数名 或 None)]，None = 模块级。"""
+    hits = []
+    stack = []
+
+    class V(ast.NodeVisitor):
+        def _fn(self, node):
+            stack.append(node.name)
+            self.generic_visit(node)
+            stack.pop()
+        visit_FunctionDef = _fn
+        visit_AsyncFunctionDef = _fn
+
+        def visit_Call(self, node):
+            f = node.func
+            if isinstance(f, ast.Attribute) and f.attr == "reconfigure":
+                hits.append((node, stack[-1] if stack else None))
+            self.generic_visit(node)
+
+    V().visit(tree)
+    return hits
+
+
+def _loop_stdout_vars(tree):
+    """`for X in (… sys.stdout …)` 绑定的循环变量 → {(所在函数名 或 None, 变量名)}。"""
+    found = set()
+    stack = []
+
+    class V(ast.NodeVisitor):
+        def _fn(self, node):
+            stack.append(node.name)
+            self.generic_visit(node)
+            stack.pop()
+        visit_FunctionDef = _fn
+        visit_AsyncFunctionDef = _fn
+
+        def visit_For(self, node):
+            if isinstance(node.target, ast.Name) and any(
+                    _is_sys_stdout(sub) for sub in ast.walk(node.iter)):
+                found.add((stack[-1] if stack else None, node.target.id))
+            self.generic_visit(node)
+
+    V().visit(tree)
+    return found
+
+
+def _module_level_called(tree):
+    """模块级（不在任何函数体内）被调用的函数名集合。"""
+    called = set()
+    stack = []
+
+    class V(ast.NodeVisitor):
+        def _fn(self, node):
+            stack.append(node.name)
+            self.generic_visit(node)
+            stack.pop()
+        visit_FunctionDef = _fn
+        visit_AsyncFunctionDef = _fn
+
+        def visit_Call(self, node):
+            if not stack and isinstance(node.func, ast.Name):
+                called.add(node.func.id)
+            self.generic_visit(node)
+
+    V().visit(tree)
+    return called
+
+
 def protects_stdout(tree):
-    """AST 判定脚本是否**真的把 sys.stdout 钉住了**。只认两种形态：
+    """AST 判定脚本是否**真的把 sys.stdout 钉住了**。两条要求须同时满足：
 
-        ① sys.stdout.reconfigure(...)
-        ② for X in (sys.stdout, sys.stderr):  X.reconfigure(...)      # 循环变量覆盖双流
+        A. 有 `.reconfigure()` 调用，受体是 `sys.stdout`，或「**同作用域**内由
+           `for X in (sys.stdout, …)` 绑定的循环变量」
+           —— 刻意**不认**只护 stderr：stdout 没被保护，print 照样崩；
+        B. 该调用点**在模块级**，或它在函数体内、但**那个函数在模块级被调用过**。
 
-    刻意**不认** `sys.stderr.reconfigure(...)` —— stdout 没被保护，print 照样崩。
+    ⚠️ B 是 2026-10-02 第三轮对抗补上的：先前只看「调用点存不存在」，于是
+    `def setup(): sys.stdout.reconfigure(...)` 这种**定义了却从未调用**的写法会被误判成
+    「已有保护」—— 性质与 E4 自己批判的「子串判断」相同，都是**乐观地认保护**。
+    （本仓既有惯例恰是「def + 模块级调用」，照抄 `_egern_common.py` 而忘写调用即中招。）
 
-    ⚠️ 不要退回 `"reconfigure" not in src` 这类**子串判断**：2026-10-02 对抗性测试实测，
-    光在**注释**里写一句 `# 需要 reconfigure 保护` 就会被误判成「已有保护」——
-    假保护比漏报更坏（真崩了还以为有护栏）。同判据里的 imports_common() 用的是 AST，
-    两者必须**同口径**。
+    ⚠️ 不要退回 `"reconfigure" not in src` 这类**子串判断**：第二轮对抗实测，光在**注释**里
+    写一句 `# 需要 reconfigure 保护` 就会被误判成「已有保护」。假保护比漏报更坏。
     """
-    loop_vars = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.For) and isinstance(node.target, ast.Name):
-            if any(_is_sys_stdout(sub) for sub in ast.walk(node.iter)):
-                loop_vars.add(node.target.id)
-    for node in ast.walk(tree):
-        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
-                and node.func.attr == "reconfigure"):
-            target = node.func.value
-            if _is_sys_stdout(target):
-                return True
-            if isinstance(target, ast.Name) and target.id in loop_vars:
-                return True
+    module_calls = _module_level_called(tree)
+    loop_vars = _loop_stdout_vars(tree)
+    for node, fn in _scoped_reconfigure_calls(tree):
+        target = node.func.value
+        if _is_sys_stdout(target):
+            covers = True
+        elif isinstance(target, ast.Name):
+            covers = (fn, target.id) in loop_vars
+        else:
+            covers = False
+        if covers and (fn is None or fn in module_calls):
+            return True
     return False
 
 
@@ -169,29 +239,40 @@ def imports_common(tree):
 def print_emojis(tree):
     """print 会输出的非 GBK 字符集合。
 
-    除直接写在 `print(...)` 里的字面量，还跟一层**简单变量中转**：
+    除直接写在 `print(...)` 里的字面量，还跟**变量中转链**（迭代到不动点）：
 
-        M = "✅" ; print(M)          # 只扫 print 子树会漏掉这种写法
+        M = "✅" ; print(M)                     # 一层
+        A = "✅" ; B = A + " x" ; print(B)       # 多层 + 拼接（第三轮对抗补上）
 
-    **覆盖范围**：`X = <含非 GBK 字面量>` 的简单赋值，**含字面量容器** —— 元组 / 列表 / 字典
-    都会被 ast.walk 遍历到，`D = {"ok": "✅"}; print(D["ok"])` 照样命中（2026-10-02 实测）。
+    **覆盖范围**：`X = …` 的赋值，其**值里出现**非 GBK 字面量、或**已污染的名字**即算污染；
+    **含字面量容器** —— 元组 / 列表 / 字典都会被 ast.walk 遍历到，
+    `D = {"ok": "✅"}; print(D["ok"])` 照样命中（实测）。
 
     **静态盲区（已知、不打算覆盖）**：**函数返回值**（`def f(): return "✅"; print(f())`，实测漏）、
     运行时才拿到的数据（读文件 / 网络）、以及运行时**动态构建**的容器 —— 要抓这些得真跑脚本，
     代价（参数各异 + 可能有副作用）远大于收益。E4 守的是「**新写的脚本忘加保护**」这一类，
     不是「穷尽一切可能输出 emoji 的路径」。
     """
-    tainted = {}                       # 变量名 → 该变量持有的非 GBK 字符
+    assigns = []                       # [(变量名, 赋值右侧)]
     for node in ast.walk(tree):
         if isinstance(node, ast.Assign):
-            chars = set()
-            for sub in ast.walk(node.value):
-                if isinstance(sub, ast.Constant) and isinstance(sub.value, str):
-                    chars |= {c for c in sub.value if not gbk_encodable(c)}
-            if chars:
-                for tgt in node.targets:
-                    if isinstance(tgt, ast.Name):
-                        tainted[tgt.id] = chars
+            for tgt in node.targets:
+                if isinstance(tgt, ast.Name):
+                    assigns.append((tgt.id, node.value))
+    tainted = {}                       # 变量名 → 该变量持有的非 GBK 字符
+    for _ in range(len(assigns) + 1):  # 迭代到收敛（最长传播链不会超过赋值条数）
+        changed = False
+        for name, value in assigns:
+            chars = {c for sub in ast.walk(value)
+                     if isinstance(sub, ast.Constant) and isinstance(sub.value, str)
+                     for c in sub.value if not gbk_encodable(c)}
+            chars |= {c for sub in ast.walk(value)
+                      if isinstance(sub, ast.Name) for c in tainted.get(sub.id, ())}
+            if chars - tainted.get(name, set()):
+                tainted.setdefault(name, set()).update(chars)
+                changed = True
+        if not changed:
+            break
     out = set()
     for node in ast.walk(tree):
         if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
@@ -211,16 +292,22 @@ def _e4_verdict(src):
 
 
 # ⚠️ 自检（与上面 WIN_RESERVED 那条自检同款思路）：E4 的判定逻辑本身必须先能抓漏。
-#    2026-10-02 对抗性测试暴露过两处漏报 —— emoji 藏在变量里、reconfigure 只护 stderr
-#    或只写在注释里 —— 修完立此回归，防将来把判定改回去。
+#    2026-10-02 两轮对抗测试各暴露一批漏报 —— 第二轮：emoji 藏在变量里、reconfigure 只护
+#    stderr / 只写在注释里；第三轮：多层变量中转、保护写在**从未调用**的函数里 ——
+#    每修一轮就往这里加样例，防将来把判定改回去。
 #    （`bad` 样例是「必须判负」，`ok` 样例是「必须放行」。）
 for _src, _expect_bad in (
-    ('M = "\u2705"\nprint(M)\n', True),                                    # 变量中转的 emoji
-    ('import sys\nsys.stderr.reconfigure(encoding="utf-8")\nprint("\u2705")\n', True),   # 只护 stderr
-    ('# 需要 reconfigure 保护\nprint("\u2705")\n', True),                    # 只写注释
+    ('M = "\u2705"\nprint(M)\n', True),                                    # 变量中转的 emoji（二轮）
+    ('a = "\u2705"\nb = a\nprint(b)\n', True),                              # 多层中转（三轮）
+    ('import sys\nsys.stderr.reconfigure(encoding="utf-8")\nprint("\u2705")\n', True),   # 只护 stderr（二轮）
+    ('# 需要 reconfigure 保护\nprint("\u2705")\n', True),                    # 只写注释（二轮）
+    ('import sys\n\n\ndef setup():\n    sys.stdout.reconfigure(encoding="utf-8")\n'
+     '\n\nprint("\u2705")\n', True),                                         # 保护在从未调用的函数里（三轮）
     ('import sys\nsys.stdout.reconfigure(encoding="utf-8")\nprint("\u2705")\n', False),  # 直点 stdout
     ('import sys\nfor _s in (sys.stdout, sys.stderr):\n'
      '    _s.reconfigure(encoding="utf-8", errors="replace")\nprint("\u2705")\n', False),  # 双流循环
+    ('import sys\n\n\ndef setup():\n    sys.stdout.reconfigure(encoding="utf-8")\n'
+     '\n\nsetup()\nprint("\u2705")\n', False),                                # 函数内保护 + 模块级调用
     ('import sys\nfrom _egern_common import force_utf8_stdout\nprint("\u2705")\n', False),  # 公共垫片
 ):
     if _e4_verdict(_src) != _expect_bad:
