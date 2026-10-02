@@ -6,7 +6,7 @@
 双端一致」。会悄悄破坏这件事的只有两类东西——**同一份 commit 在不同机器上落盘成不同字节**，
 以及**换个机器就打不开/打错名字的路径**。两类都能在纯静态下判死，所以固化成检查。
 
-规则清单（每条 = 1 个断言，**共 18 条、不随文件数增长**）：
+规则清单（每条 = 1 个断言，**共 20 条、不随文件数增长**）：
     E1 .gitattributes 在场，且把 `*` 钉成 `text=auto eol=lf`   —— 系统级 autocrlf=true 会被它覆盖
     E2 工作树文本文件零 CRLF                                   —— 磁盘字节 == 提交字节 == raw 字节的前提
     E2b 工作树文本文件零孤立 CR（老 Mac 行尾，同样破坏按 `\n` 写的正则）
@@ -27,10 +27,13 @@
     H3b 无 submodule                                           —— 换机器后 clone 下来是空目录，检查跟着失效
     H4 .gitignore 对上述单机残留与 OS 垃圾文件有兜底
     S1 每个 .sh 的首行是 `#!/` shebang                            —— 换机器后行首多了空格/BOM 就跑不起来了
+    M1 以 `---` 开头的 .md 其 frontmatter 用第二条 `---` 闭合      —— 未闭合会让整份头部解析崩
+    E4 脚本 print 非 GBK 字符者必有输出编码保护                    —— Windows cp936 管道路径下会崩成退出码 1（假绿）
 
 退出码：0 全绿 · 1 有判负 · 2 前置环境不达标（不在 git 仓库里 / 拿不到 tracked 清单）
 """
 
+import ast
 import os
 import re
 import subprocess
@@ -100,6 +103,32 @@ def is_text(path):
 def read(path):
     with open(os.path.join(ROOT, path), "rb") as fh:
         return fh.read()
+
+
+def gbk_encodable(ch):
+    """这个字符能不能编进 GBK(cp936) —— 不能的（emoji / ⇒ / ↔ …）在 cp936 管道下会炸。"""
+    try:
+        ch.encode("gbk")
+        return True
+    except Exception:                                          # noqa: BLE001
+        return False
+
+
+def imports_common(tree):
+    """AST 判定**真 import** 了公共编码垫片模块。
+
+    ⚠️ 不要退回 `"_egern_common" in src` 这类子串判断：2026-10-02 实测
+    `egern/audit_region_filters.py` 的 docstring 里提了一句 `_egern_common.py`，
+    子串判断会把它误当「已 import」—— 而它真 import 只有 argparse/io/re/sys，没有任何保护。
+    """
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            if any(a.name in ("_egern_common", "_surge_common") for a in node.names):
+                return True
+        elif isinstance(node, ast.ImportFrom):
+            if node.module in ("_egern_common", "_surge_common"):
+                return True
+    return False
 
 
 def main():
@@ -220,6 +249,36 @@ def main():
         if not any(l.strip() == b"---" for l in head[1:]):
             fm_bad.append(p)
     checks.append(("M1", "markdown frontmatter 以闭合的 --- 收尾", fm_bad))
+
+    # ── E4 脚本输出编码保护 ──────────────────────────────────────────
+    #    2026-10-02 外部审查暴露：Windows 原生 shell（ACP=936）下，子进程 stdout 走管道时
+    #    Python 用 cp936 编码 —— 脚本 print 一个非 GBK 字符（✅/❌/⚠️/⇒…）就
+    #    UnicodeEncodeError、进程以退出码 1 结束。而 1 恰是本仓「判负」的码
+    #    ⇒ 崩溃被读成「判负通过」，整轮看着绿、其实一条判据都没跑（假绿）。
+    #    保护二选一：① 本文件 reconfigure(stdout/stderr, utf-8)；
+    #                ② import _egern_common / _surge_common —— 二者在**模块级**调用
+    #                   force_utf8_stdout()，import 即生效，调用方无需再写一行。
+    #    判据刻意用 AST 而非 grep（见 imports_common 的注释）。
+    enc_bad = []
+    for p in files:
+        if not p.endswith(".py"):
+            continue
+        src = read(p).decode("utf-8", "replace")
+        try:
+            tree = ast.parse(src)
+        except SyntaxError as e:                               # 语法坏 → 显式报出，不静默跳过
+            enc_bad.append("%s（AST 解析失败：%s）" % (p, e))
+            continue
+        out = set()
+        for node in ast.walk(tree):
+            if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                    and node.func.id == "print"):
+                for sub in ast.walk(node):
+                    if isinstance(sub, ast.Constant) and isinstance(sub.value, str):
+                        out |= {c for c in sub.value if not gbk_encodable(c)}
+        if out and "reconfigure" not in src and not imports_common(tree):
+            enc_bad.append("%s（print 输出 %s，且无编码保护）" % (p, " ".join(sorted(out))))
+    checks.append(("E4", "脚本 print 非 GBK 字符时必有编码保护", enc_bad))
 
     bad = 0
     for cid, desc, viol in checks:
