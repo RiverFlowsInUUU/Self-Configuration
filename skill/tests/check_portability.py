@@ -203,6 +203,12 @@ def protects_stdout(tree):
 
     ⚠️ 不要退回 `"reconfigure" not in src` 这类**子串判断**：第二轮对抗实测，光在**注释**里
     写一句 `# 需要 reconfigure 保护` 就会被误判成「已有保护」。假保护比漏报更坏。
+
+    ⚠️ **已知边界（与上面方向相反：宁严勿宽）**：B 只追**一层**调用关系。保护若被**包了两层
+    以上**（`boot()` → `force_utf8_stdout()` → `reconfigure`），内层函数名不在「模块级被调用」
+    集合里 ⇒ 会被**误判为无保护**。2026-10-02 实测该写法：真实运行 `rc=0` 不崩，E4 却判负。
+    这是刻意的保守 —— 宁可误报也不放过。修法：把保护直接写在模块级，或让**中间层**在模块级
+    被调用（本仓 `_egern_common.force_utf8_stdout()` 属后者，故不受影响）。
     """
     module_calls = _module_level_called(tree)
     loop_vars = _loop_stdout_vars(tree)
