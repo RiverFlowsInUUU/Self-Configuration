@@ -27,6 +27,14 @@
 """
 import argparse, hashlib, json, os, re, subprocess, sys, time, urllib.request
 
+# Windows 中文环境的控制台与管道默认 GBK(cp936)：emoji 一 print 就 UnicodeEncodeError、
+# 进程以退出码 1 结束 —— 与"期望判负"的用例撞码会假绿。统一钉成 UTF-8。
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 REPO = os.environ.get('GITHUB_REPO', 'RiverFlowsInUUU/Self-Configuration')
 API = f'https://api.github.com/repos/{REPO}'
 UPLOAD = f'https://uploads.github.com/repos/{REPO}/releases'

@@ -21,7 +21,11 @@ import gc
 import io
 import os
 import random
+import sys
 import time
+# 输出编码垫片：见 _egern_common.force_utf8_stdout —— GBK 控制台下 emoji 会崩成退出码 1
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _egern_common import force_utf8_stdout  # noqa: E402
 
 DOMAIN_TYPES = ("DOMAIN-SUFFIX", "DOMAIN", "DOMAIN-KEYWORD")
 IP_TYPES = ("IP-CIDR", "IP-CIDR6", "IP-ASN")

@@ -46,8 +46,12 @@ Egern 也不支持 `filter` 引用别的 filter，所以**无法靠 YAML 变量�
 """
 import argparse
 import io
+import os
 import re
 import sys
+# 输出编码垫片：见 _egern_common.force_utf8_stdout —— GBK 控制台下 emoji 会崩成退出码 1
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _egern_common import force_utf8_stdout  # noqa: E402
 
 try:
     import yaml
