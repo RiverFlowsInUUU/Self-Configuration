@@ -15,6 +15,16 @@ KEYWORD 与 SUFFIX 同值时删 KEYWORD。
 import re, os, sys, argparse
 from collections import defaultdict
 
+# Windows 中文环境的控制台与管道默认 GBK(cp936)：本脚本输出大量中文状态，与 UTF-8 终端
+# （现代终端 / Git Bash，即本仓主流环境）不匹配时会显示成乱码。统一钉成 UTF-8，
+# 与仓内其余输出型脚本（tests/ 的 4 行模板、scripts 下的 _egern_common/_surge_common）同口径。
+# ⚠️ 取舍：传统 cp936 cmd 下中文会反过来显示成乱码 —— 与全仓「统一 UTF-8」的选择一致。
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 # (文件名, 来源标签)
 SOURCES = [
     ('repcz-ai.list',   'Repcz/Tool (Surge)'),
