@@ -114,6 +114,41 @@ def gbk_encodable(ch):
         return False
 
 
+def _is_sys_stdout(node):
+    """AST 节点是不是 `sys.stdout` 这条属性链。"""
+    return (isinstance(node, ast.Attribute) and node.attr == "stdout"
+            and isinstance(node.value, ast.Name) and node.value.id == "sys")
+
+
+def protects_stdout(tree):
+    """AST 判定脚本是否**真的把 sys.stdout 钉住了**。只认两种形态：
+
+        ① sys.stdout.reconfigure(...)
+        ② for X in (sys.stdout, sys.stderr):  X.reconfigure(...)      # 循环变量覆盖双流
+
+    刻意**不认** `sys.stderr.reconfigure(...)` —— stdout 没被保护，print 照样崩。
+
+    ⚠️ 不要退回 `"reconfigure" not in src` 这类**子串判断**：2026-10-02 对抗性测试实测，
+    光在**注释**里写一句 `# 需要 reconfigure 保护` 就会被误判成「已有保护」——
+    假保护比漏报更坏（真崩了还以为有护栏）。同判据里的 imports_common() 用的是 AST，
+    两者必须**同口径**。
+    """
+    loop_vars = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.For) and isinstance(node.target, ast.Name):
+            if any(_is_sys_stdout(sub) for sub in ast.walk(node.iter)):
+                loop_vars.add(node.target.id)
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "reconfigure"):
+            target = node.func.value
+            if _is_sys_stdout(target):
+                return True
+            if isinstance(target, ast.Name) and target.id in loop_vars:
+                return True
+    return False
+
+
 def imports_common(tree):
     """AST 判定**真 import** 了公共编码垫片模块。
 
@@ -129,6 +164,66 @@ def imports_common(tree):
             if node.module in ("_egern_common", "_surge_common"):
                 return True
     return False
+
+
+def print_emojis(tree):
+    """print 会输出的非 GBK 字符集合。
+
+    除直接写在 `print(...)` 里的字面量，还跟一层**简单变量中转**：
+
+        M = "✅" ; print(M)          # 只扫 print 子树会漏掉这种写法
+
+    **静态盲区（已知、不打算覆盖）**：字典值（`D = {"ok": "✅"}; print(D["ok"])`）、
+    函数返回值、以及运行时才拿到的数据里的 emoji —— 要抓这些得真跑脚本，
+    代价（参数各异 + 可能有副作用）远大于收益。E4 守的是「**新写的脚本忘加保护**」这一类，
+    不是「穷尽一切可能输出 emoji 的路径」。
+    """
+    tainted = {}                       # 变量名 → 该变量持有的非 GBK 字符
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            chars = set()
+            for sub in ast.walk(node.value):
+                if isinstance(sub, ast.Constant) and isinstance(sub.value, str):
+                    chars |= {c for c in sub.value if not gbk_encodable(c)}
+            if chars:
+                for tgt in node.targets:
+                    if isinstance(tgt, ast.Name):
+                        tainted[tgt.id] = chars
+    out = set()
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                and node.func.id == "print"):
+            for sub in ast.walk(node):
+                if isinstance(sub, ast.Constant) and isinstance(sub.value, str):
+                    out |= {c for c in sub.value if not gbk_encodable(c)}
+                elif isinstance(sub, ast.Name) and sub.id in tainted:
+                    out |= tainted[sub.id]
+    return out
+
+
+def _e4_verdict(src):
+    """E4 对单份源码的判定：True = 判负（有非 GBK 输出、却没有覆盖 stdout 的保护）。"""
+    tree = ast.parse(src)
+    return bool(print_emojis(tree)) and not (protects_stdout(tree) or imports_common(tree))
+
+
+# ⚠️ 自检（与上面 WIN_RESERVED 那条自检同款思路）：E4 的判定逻辑本身必须先能抓漏。
+#    2026-10-02 对抗性测试暴露过两处漏报 —— emoji 藏在变量里、reconfigure 只护 stderr
+#    或只写在注释里 —— 修完立此回归，防将来把判定改回去。
+#    （`bad` 样例是「必须判负」，`ok` 样例是「必须放行」。）
+for _src, _expect_bad in (
+    ('M = "\u2705"\nprint(M)\n', True),                                    # 变量中转的 emoji
+    ('import sys\nsys.stderr.reconfigure(encoding="utf-8")\nprint("\u2705")\n', True),   # 只护 stderr
+    ('# 需要 reconfigure 保护\nprint("\u2705")\n', True),                    # 只写注释
+    ('import sys\nsys.stdout.reconfigure(encoding="utf-8")\nprint("\u2705")\n', False),  # 直点 stdout
+    ('import sys\nfor _s in (sys.stdout, sys.stderr):\n'
+     '    _s.reconfigure(encoding="utf-8", errors="replace")\nprint("\u2705")\n', False),  # 双流循环
+    ('import sys\nfrom _egern_common import force_utf8_stdout\nprint("\u2705")\n', False),  # 公共垫片
+):
+    if _e4_verdict(_src) != _expect_bad:
+        raise SystemExit(
+            "❌ 前置：E4 判定逻辑自检失败（期望判负=%s，实得 %s）\n   样例：%r"
+            % (_expect_bad, _e4_verdict(_src), _src))
 
 
 def main():
@@ -255,10 +350,11 @@ def main():
     #    Python 用 cp936 编码 —— 脚本 print 一个非 GBK 字符（✅/❌/⚠️/⇒…）就
     #    UnicodeEncodeError、进程以退出码 1 结束。而 1 恰是本仓「判负」的码
     #    ⇒ 崩溃被读成「判负通过」，整轮看着绿、其实一条判据都没跑（假绿）。
-    #    保护二选一：① 本文件 reconfigure(stdout/stderr, utf-8)；
+    #    保护二选一：① 本文件把 **sys.stdout** 钉成 UTF-8（stdout 必须覆盖，只护 stderr 不算）；
     #                ② import _egern_common / _surge_common —— 二者在**模块级**调用
     #                   force_utf8_stdout()，import 即生效，调用方无需再写一行。
-    #    判据刻意用 AST 而非 grep（见 imports_common 的注释）。
+    #    判据一律走 AST（protects_stdout / imports_common / print_emojis），**绝不用子串判断** ——
+    #    见各函数自身的注释，以及文件顶部那段 E4 自检回归。
     enc_bad = []
     for p in files:
         if not p.endswith(".py"):
@@ -269,14 +365,8 @@ def main():
         except SyntaxError as e:                               # 语法坏 → 显式报出，不静默跳过
             enc_bad.append("%s（AST 解析失败：%s）" % (p, e))
             continue
-        out = set()
-        for node in ast.walk(tree):
-            if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
-                    and node.func.id == "print"):
-                for sub in ast.walk(node):
-                    if isinstance(sub, ast.Constant) and isinstance(sub.value, str):
-                        out |= {c for c in sub.value if not gbk_encodable(c)}
-        if out and "reconfigure" not in src and not imports_common(tree):
+        out = print_emojis(tree)
+        if out and not (protects_stdout(tree) or imports_common(tree)):
             enc_bad.append("%s（print 输出 %s，且无编码保护）" % (p, " ".join(sorted(out))))
     checks.append(("E4", "脚本 print 非 GBK 字符时必有编码保护", enc_bad))
 
