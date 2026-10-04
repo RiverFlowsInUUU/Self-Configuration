@@ -198,7 +198,7 @@ Surge 的 `GEOIP` / `IP-CIDR` 类规则需要一个**已解析的地址**才能�
 `ChinaMax.list` 只有 **64 条域名 / 12472 条 IP** —— 名字叫 ChinaMax，但 99.5% 是 IP，
 单独引用它等于国内域名全靠 IP 判定，而 IP 判定已经被 `no-resolve` 关掉了。
 
-本模板用 `Loyalsoldier/surge-rules` 的 `direct.txt`（**111169 条纯域名**）作主承重墙。
+本模板用 `Loyalsoldier/surge-rules` 的 `direct.txt`（**纯域名**；条数一律现抓，上游每周更新）作主承重墙。
 
 > **这是本项目最重要的一条教训：审计全绿 ≠ 配置可用。**
 > 两份审计脚本双双通过、分流却整片是坏的情况真实发生过。

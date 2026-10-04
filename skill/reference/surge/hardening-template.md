@@ -416,7 +416,7 @@ RULE-SET,<url>,<策略>,"update-interval=604800"[,no-resolve]
 （aistudio / notebooklm / antigravity / sora / grok 等）全部缺失，AI 分流名存实亡。
 
 ⇒ 2026-09-28 起换 [Repcz/Tool](https://github.com/Repcz/Tool) 的 AI.list 并**改跟分支头**：
-   该仓滚动维护、新 AI 域名进集快，「可复现」让位给「及时跟进」。集内 52 条纯域名系
+   该仓滚动维护、新 AI 域名进集快，「可复现」让位给「及时跟进」。集内均为纯域名系
    （DOMAIN / DOMAIN-SUFFIX / DOMAIN-KEYWORD / URL-REGEX，零 IP 条目），两内核语法均原生支持。
    分流版的 OpenAI / Gemini / Claude 四条 **bm7 专属集不受影响**（本就引用分支头）。
 

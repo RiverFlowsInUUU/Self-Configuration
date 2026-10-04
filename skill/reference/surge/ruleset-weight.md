@@ -4,7 +4,7 @@
 
 ## 1 · 问题成因
 
-Surge 把被引用的规则集**在内存里展开成匹配表**。一份 11 万条的规则集
+Surge 把被引用的规则集**在内存里展开成匹配表**。一份十几万条的规则集
 和一份 4 千条的规则集，对启动时间与常驻内存的影响不是一个量级。
 
 但**更大的坑不是总量，是构成** —— 见 §2。
@@ -23,7 +23,7 @@ Surge 把被引用的规则集**在内存里展开成匹配表**。一份 11 万
 
 | 规则集 | 名字看起来 | 实测域名条目 | 实测 IP 条目 |
 |:-------|:-----------|:------------:|:------------:|
-| `direct.txt`（Loyalsoldier） | 国内直连 | **111169** | 0 |
+| `direct.txt`（Loyalsoldier） | 国内直连 | **十几万** | 0 |
 | `ChinaMax.list` | 国内最大集 | **64** | 12472 |
 
 `ChinaMax.list` 名字像国内域名集，实际 **99.5% 是 IP**。
@@ -39,12 +39,17 @@ Surge 把被引用的规则集**在内存里展开成匹配表**。一份 11 万
 
 | 规则集 | 条数 | 域名 | IP | 缺 `no-resolve` 的 IP |
 |:-------|:----:|:----:|:--:|:---------------------:|
-| `surge-direct.list` | 44 | 44 | 0 | 0 |
-| `surge-ads.list` | 3889 | 3889 | 0 | 0 |
-| `AWAvenue-Ads-Rule-Surge-RULE-SET.list` | 965 | 965 | 0 | 0 |
-| `AI.list` | 49 | 49 | 0 | 0 |
-| `private.txt` | 130 | 130 | 0 | 0 |
-| `direct.txt` | 111169 | 111169 | 0 | 0 |
+| `surge-direct.list` | — | — | 0 | 0 |
+| `surge-ads.list` | — | — | 0 | 0 |
+| `AWAvenue-Ads-Rule-Surge-RULE-SET.list` | — | — | 0 | 0 |
+| `AI.list` | — | — | 0 | 0 |
+| `private.txt` | — | — | 0 | 0 |
+| `direct.txt` | **十几万** | **十几万** | 0 | 0 |
+
+> ⚠️ **条数一律不写死精确数字**：`—` = 现抓；`direct.txt` 那格写「十几万」只用于表达量级。
+> 这些规则集都没锁 commit，上游每周更新，固定数字很快过期（本仓 lazy v1.1 起就是这个口径）。
+> 要精确值现抓：`python skill/scripts/surge/audit_ruleset_content.py <profile>`。
+> 这张表真正有意义的列是 **IP 列** —— IP 数才决定 `no-resolve` 风险，它与条数无关。
 
 **六份加起来 IP 条目为 0** —— 所以本项目的 `no-resolve` 风险主要来自
 「将来换规则集」，而不是当下。
@@ -63,25 +68,29 @@ python skill/scripts/surge/audit_ruleset_content.py surge/profiles/lazy.conf
 
 ```
 ── 第 193 行 · surge-ads.list （新下载） → REJECT
-   共 3889 条：域名类 3889 / IP 类 0 / 其他 0
-   域名类型：{'DOMAIN-SUFFIX': 3740, 'DOMAIN-WILDCARD': 149}
+   共 <n> 条：域名类 <n> / IP 类 0 / 其他 0
+   域名类型：{'DOMAIN-SUFFIX': <n>, 'DOMAIN-WILDCARD': <n>}
 
 ── 第 210 行 · AWAvenue-Ads-Rule-Surge-RULE-SET.list （新下载） → REJECT
-   共 965 条：域名类 965 / IP 类 0 / 其他 0
-   域名类型：{'DOMAIN': 949, 'DOMAIN-SUFFIX': 12, 'DOMAIN-KEYWORD': 4}
+   共 <n> 条：域名类 <n> / IP 类 0 / 其他 0
+   域名类型：{'DOMAIN': <n>, 'DOMAIN-SUFFIX': <n>, 'DOMAIN-KEYWORD': <n>}
 ```
 
 末尾还有直连集合的汇总：
 
 ```
 直连（DIRECT）规则集的域名条目统计：
-   surge-direct.list                            域名     44 / IP      0
-   apple.txt                                    域名    165 / IP      0
-   private.txt                                  域名    130 / IP      0
-   direct.txt                                   域名 111169 / IP      0
+   surge-direct.list                            域名    <n> / IP      0
+   apple.txt                                    域名    <n> / IP      0
+   private.txt                                  域名    <n> / IP      0
+   direct.txt                                   域名 <十几万> / IP      0
 
-✅ 直连集合共 111508 条域名条目 —— 足以接住国内域名
+✅ 直连集合共 <合计> 条域名条目 —— 足以接住国内域名
 ```
+
+> ⚠️ **上面两个块是「输出长什么样」的样例，不是信得过的现行读数** ——
+> 块里每一个数字都是写作时点的快照，上游每周更新后就变了，所以用占位符/量级表示。
+> 要真数就跑一次命令。
 
 加 `--show-domestic` 打印明细，加 `--force` 忽略缓存重下。
 
@@ -128,11 +137,11 @@ _OTHER_TYPES = {"URL-REGEX", "USER-AGENT", "PROCESS-NAME", "PROTOCOL",
 
 ### 5.2 本项目的取舍
 
-`direct.txt` 11 万条是**刻意保留**的。理由：
+`direct.txt` 这十几万条是**刻意保留**的。理由：
 
 - 它是"`no-resolve` 之后国内域名还能直连"的**唯一承重墙**；
 - 砍到 1 万条以内 → 大量国内域名落到 `FINAL → Proxy`，用户一定报障；
-- 它的 11 万条**全是域名**，所以不会制造出口 ③。
+- 它这十几万条**全是域名**，所以不会制造出口 ③。
 
 **结论：这份"重"是必须付的代价。** 想优化就从别处省，不要动它。
 

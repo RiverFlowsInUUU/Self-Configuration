@@ -22,7 +22,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 | `surge-ads.list` | 广告拦截主清单 | `REJECT`（`pre-matching`） | `AD` 组 | [Jinx](https://github.com/RiverFlowsInUUU/Jinx) |
 | `AWAvenue-Ads-Rule-Surge-RULE-SET.list` | 广告拦截第 2 条 | `REJECT`（`pre-matching`） | `AD` 组 | [TG-Twilight/AWAvenue-Ads-Rule](https://github.com/TG-Twilight/AWAvenue-Ads-Rule) |
 | `private.txt` | 特殊 TLD 与路由器域（`.lan` `.local` `miwifi.com`） | `DIRECT`（实测零 IP ⇒ 不写规则级开关） | `DIRECT`（分流版 v3 起补） | [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules) |
-| `direct.txt` | 国内域名（约 11.1 万条纯域名，零 IP；**条数一律现抓**）**主承重墙** | `DIRECT`（同上，不写开关） | `DIRECT` | [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules) |
+| `direct.txt` | 国内域名（纯域名、零 IP；**条数一律现抓**）**主承重墙** | `DIRECT`（同上，不写开关） | `DIRECT` | [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules) |
 | `OpenAI.list` | → `ChatGPT` | ✅ | ✅ | [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) |
 | `Gemini.list` | → `Gemini` | ✅ | ✅ | 同上 |
 | `Anthropic.list` · `Claude.list` | → `Claude` | ✅ | ✅ | 同上 |
@@ -31,7 +31,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 | `Spotify.list` · `YouTubeMusic.list` · `YouTube.list` | 各自应用组 | ✅ | ✅ | [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) |
 | `GitHub.list` · `Google.list` · `Microsoft.list` | 各自应用组 | ✅ | ✅ | 同上 |
 | `Telegram.list` · `Twitter.list` | 各自应用组 | ✅ | ✅ | 同上 |
-| `apple.txt` | Apple 在中国大陆可直连的域名 → `DIRECT` | ✅ 仅分流版 | ✅ 仅分流版 | [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules)，与 `direct.txt` **同仓库同 release 同格式**。165 条**纯域名、零 IP** ⇒ 不写规则级开关（第 4 节 4b）。懒人版 2026-09-24 起不引用只留内置 `SYSTEM`；分流版 2026-10-04 起由 `Apple_All_No_Resolve.list`（1,616 条）换入 |
+| `apple.txt` | Apple 在中国大陆可直连的域名 → `DIRECT` | ✅ 仅分流版 | ✅ 仅分流版 | [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules)，与 `direct.txt` **同仓库同 release 同格式**。**纯域名、零 IP**（条数随上游更新，一律现抓）⇒ 不写规则级开关（第 4 节 4b）。懒人版 2026-09-24 起不引用只留内置 `SYSTEM`；分流版 2026-10-04 起由 `Apple_All_No_Resolve.list`（1,616 条）换入 |
 | `Proxy.list` | 常用代理名单 | 注释态，不参与匹配 | 注释态，不参与匹配（2026-09-24 起与 Surge 同写法；原先是 `disabled: true`，那条仍占 `rules` 的一位） | 同上 |
 | `GEOIP,CN` / `geoip: CN` | 国内 IP 段 | `DIRECT` `no-resolve` | `DIRECT` `no_resolve` | Surge：`GeoLite2-Country.mmdb` · [adysec/IP_database](https://github.com/adysec/IP_database)；Egern：`Country.mmdb` + `GeoLite2-ASN.mmdb` · [Loyalsoldier/geoip](https://github.com/Loyalsoldier/geoip) |
 

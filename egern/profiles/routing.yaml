@@ -154,8 +154,9 @@ dns:
   # "Rules are evaluated in declaration order; the first matching rule routes
   #  the query to its upstream"）：
   #   ① 白名单首位：命中 → Domestic-DNS 正常加密解析。对应 Surge 的
-  #      RULE-SET direct,DIRECT —— 44 条会被广告清单误杀的功能域
-  #      （AWAvenue 命中其中 10 条：jpush.cn / appcfg.v.qq.com / apd-pcdnwx* /
+  #      RULE-SET direct,DIRECT —— 白名单（会被广告清单误杀的功能域，
+  #      条数随上游更新，不写死）
+  #      （AWAvenue 命中其中若干条：jpush.cn / appcfg.v.qq.com / apd-pcdnwx* /
   #      tnc3-* 等）必须抢在 reject 之前拿到解析，否则流量层的白名单救不了
   #      一个解析都失败的域名。
   #   ② 广告拦截：对应 Surge 的 pre-matching REJECT —— 官方 value 字段：
@@ -608,7 +609,7 @@ rules:
     match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/apple_system.list
     policy: DIRECT
     update_interval: 604800
-# ★ 2026-10-04：`Apple_All_No_Resolve.list` -> Loyalsoldier `apple.txt`（165 条纯域名）
+# ★ 2026-10-04：`Apple_All_No_Resolve.list` -> Loyalsoldier `apple.txt`（纯域名集）
 #   弃用 Apple 全量集的理由：① 1,616 条里那 13 条 IP-CIDR 在 no_resolve 语义下对**域名请求**
 #   不参与匹配（只对 IP 字面量生效），23 条 USER-AGENT（无 MITM 时 HTTPS 无效）+ 13 条
 #   PROCESS-NAME（仅 Surge Mac 生效）在 iOS 上同样是死条目 ⇒ 36 条死重量；② 它把解析到境外的
@@ -630,8 +631,7 @@ rules:
 #   一份「域名条目足够多」的国内规则集承接。f8 起用 ChinaMax_All_No_Resolve.list
 #   （111,332 域名 + 同份 12,472 条带 no-resolve 的 IP）补齐——注意 ChinaMax.list 本身
 #   只是 IP 规则集（12,614 条里 12,472 条是 IP、域名仅 64 条），兜不住域名。
-#   现改为 Loyalsoldier `direct.txt`：约 11.1 万条**纯域名**、零 IP 条目
-#   （约 11.09 万条 `DOMAIN-SUFFIX` + 约 550 条 `DOMAIN`）。
+#   现改为 Loyalsoldier `direct.txt`：纯域名集、零 IP 条目。
 #   ⚠️ 条数**不写死** —— 该清单每周随上游更新，写进注释的精确数必然过期；要现值就现抓：
 #   `python skill/scripts/egern/profile_ruleset.py <下面这条 rule_set 的 match 地址>`。
 #   —— 纯域名规则集只做域名串匹配、**不触发任何解析**，因此与 no_resolve 无关；

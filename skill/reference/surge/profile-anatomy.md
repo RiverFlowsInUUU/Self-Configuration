@@ -516,15 +516,18 @@ NAT 类型检测（STUN）、时间同步（NTP）、游戏机配对，都需要
 
 | 规则集 | 条数 | 类型 | 上游 |
 |:-------|:----:|:-----|:-----|
-| `surge-direct.list` | 44 | 纯域名 | Jinx |
-| `surge-ads.list` | 3889 | 纯域名 | Jinx |
-| `AWAvenue-Ads-Rule-Surge-RULE-SET.list` | 965 | 纯域名 | TG-Twilight（⚠️ **必须用 RULE-SET 版**） |
-| `AI.list` | 52 | 域名系（零 IP；含 KEYWORD×2 + URL-REGEX×1） | Repcz/Tool（分支头，活跃维护） |
-| `private.txt` | 130 | 域名 + 可能含 IP | Loyalsoldier |
-| `direct.txt` | 111169 | 纯域名 | Loyalsoldier |
+| `surge-direct.list` | — | 纯域名 | Jinx |
+| `surge-ads.list` | — | 纯域名 | Jinx |
+| `AWAvenue-Ads-Rule-Surge-RULE-SET.list` | — | 纯域名 | TG-Twilight（⚠️ **必须用 RULE-SET 版**） |
+| `AI.list` | — | 域名系（零 IP；含 KEYWORD×2 + URL-REGEX×1） | Repcz/Tool（分支头，活跃维护） |
+| `private.txt` | — | 域名 + 可能含 IP | Loyalsoldier |
+| `direct.txt` | 十几万 | 纯域名 | Loyalsoldier |
 | `SYSTEM` / `LAN` | — | 内置 | Surge |
 
-> 表内条数是**写作时点快照** —— 本仓所有远程 URL 都没锁 commit、会随上游漂；现抓由 `audit_ruleset_content.py` 重测。
+> ⚠️ **条数一律不写死精确数字**：`—` = 现抓；`direct.txt` 那格写「十几万」只用于表达量级。
+> 本仓所有远程 URL 都没锁 commit、上游每次更新都会变，固定数字很快过期。
+> 要精确值现抓：`python skill/scripts/surge/audit_ruleset_content.py <profile>`。
+> 这张表真正有意义的是**类型**（纯域名 / 含 IP）与**上游**，不是条数。
 
 ### 11.2 `update-interval=604800`（一周）
 
@@ -565,12 +568,14 @@ Surge 这边指向**字面量 `REJECT`** 而不是 `AD` 组，理由见 §13.3�
 
 | 文件 | 条数 | 内容形式 | 对应 Surge 类型 |
 |:-----|:----:|:---------|:----------------|
-| `AWAvenue-Ads-Rule-Surge.list` | 961 | **裸域名**（`.8le8le.com`，前导点） | `DOMAIN-SET` |
-| `AWAvenue-Ads-Rule-Surge-RULE-SET.list` | **965** | `DOMAIN,xxx` 规则行 | **`RULE-SET`** ✅ |
+| `AWAvenue-Ads-Rule-Surge.list` | — | **裸域名**（`.8le8le.com`，前导点） | `DOMAIN-SET` |
+| `AWAvenue-Ads-Rule-Surge-RULE-SET.list` | — | `DOMAIN,xxx` 规则行 | **`RULE-SET`** ✅ |
 
-本模板用的是 `RULE-SET` ⇒ 必须取后者。RULE-SET 版还**多 4 条**（那 4 条是无法写成
-裸域名的 `DOMAIN-KEYWORD` / `DOMAIN-SUFFIX`）。换成裸域名版，Surge 会拿 961 行
-「前导点域名」当规则行解析 —— 格式不匹配。（Egern 于 2026-09-22 修过同一问题。）
+（两版条数不写死，上游每周更新；要现值就跑 `audit_ruleset_content.py`。）
+
+本模板用的是 `RULE-SET` ⇒ 必须取后者。RULE-SET 版还**多几条**（那几条是无法写成
+裸域名的 `DOMAIN-KEYWORD` / `DOMAIN-SUFFIX`）。换成裸域名版，Surge 会把
+「前导点域名」那几行当规则行解析 —— 格式不匹配。（Egern 于 2026-09-22 修过同一问题。）
 
 **④ 顺序是这条的命门。** AWAvenue 会命中白名单里的 **10 条**功能域
 （`jpush.cn` / `appcfg.v.qq.com` / `p.l.qq.com` / 微信登录 `apd-pcdnwx*` / 字节 `tnc3-*`）——
@@ -619,7 +624,7 @@ GEOIP,CN,DIRECT,no-resolve    # 对未解析的主机名直接跳过
 
 只交 A 会漏分流，只交 B 会漏 DNS。**必须一起。**
 
-本模板的 B 是 `direct.txt`（11 万条**域名**条目）。
+本模板的 B 是 `direct.txt`（十几万条**域名**条目）。
 `skill/tests/check_secrets.py` 把这两条写成了断言。
 
 ### 12.5 一个配套的假通过陷阱
@@ -753,10 +758,10 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 | 2 | `RULE-SET,…,surge-ads.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 1 条（Jinx）。必须在 `direct.txt` / `GEOIP,CN` **之前** —— 否则国内广告域名被 `direct.txt` 接走 |
 | 3 | `RULE-SET,…,AWAvenue-Ads-Rule-Surge-RULE-SET.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 2 条（AWAvenue）。顺序与 Egern 对齐，见 §11.4 |
 | 4 | `RULE-SET,LAN` | `DIRECT` | `no-resolve` | 含 18 条 IP-CIDR，**必须** `no-resolve`。内网段排在应用之前，与 Egern 同位 |
-| 5 | `RULE-SET,…,private.txt` | `DIRECT` | `update-interval=604800` | 内网域名。实测 130 条零 IP ⇒ 按原则**不写** `no-resolve` |
+| 5 | `RULE-SET,…,private.txt` | `DIRECT` | `update-interval=604800` | 内网域名。实测零 IP ⇒ 按原则**不写** `no-resolve` |
 | 6 | `RULE-SET,SYSTEM` | `DIRECT` | — | Apple 激活 / 推送 / 配对，内置权威集合，**保底**。懒人版只此一条 Apple 相关（全量集 2026-09-24 起移出，见 §14.1） |
-| 7 | `RULE-SET,…,AI.list` | `AI` | `update-interval=604800` | 实测 49 条零 IP ⇒ 不写 `no-resolve` |
-| 8 | `RULE-SET,…,direct.txt` | `DIRECT` | `update-interval=604800` | **主承重墙**，约 11.1 万条纯域名、零 IP（条数一律现抓）。见 §12 |
+| 7 | `RULE-SET,…,AI.list` | `AI` | `update-interval=604800` | 实测零 IP（纯域名系）⇒ 不写 `no-resolve` |
+| 8 | `RULE-SET,…,direct.txt` | `DIRECT` | `update-interval=604800` | **主承重墙**，纯域名、零 IP（条数一律现抓）。见 §12 |
 | 9 | `GEOIP,CN,DIRECT` | `DIRECT` | `no-resolve` | IP 类规则，放最后 |
 | 10 | `FINAL,Proxy,dns-failed` | `Proxy` | `dns-failed` | 兜底 |
 
@@ -788,7 +793,7 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 > 📌 2026-09-24 起这条只适用于**分流版**：懒人版已经删掉远程 Apple 规则集，
 >     系统服务那部分交给内置 `SYSTEM`。
 > 📌 2026-10-04 起**本节整节成为历史**：分流版那条也由 `Apple_All_No_Resolve.list`（1,616 条）
->     换成零 IP 的 `apple.txt`（165 条纯域名）—— 没有 IP 条目，就不存在"该用哪个变体"的问题。
+>     换成零 IP 的 `apple.txt`（纯域名）—— 没有 IP 条目，就不存在"该用哪个变体"的问题。
 >     顺带：`developer.apple.com` / `gateway.icloud.com` 这类只被全量集覆盖的域**按设计改走代理**
 >     （探针期望已同步移出，见 `checker.md`）。下面的坑留在文档里当判据示例。
 

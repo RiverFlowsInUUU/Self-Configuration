@@ -11,7 +11,7 @@
 | Python | 3.8+，**仅标准库** |
 | 网络 | 只有 `audit_ruleset_content.py` / `audit_routing_coverage.py` 需要；其余脚本与两个 `.sh` 全离线 |
 | 操作系统 | Windows（Git Bash）/ macOS / Linux 均可 |
-| 磁盘 | 规则集缓存约 6 MB（`direct.txt` 一份 11 万条） |
+| 磁盘 | 规则集缓存约 6 MB（`direct.txt` 一份十几万条） |
 | 输出编码 | 无需设置 —— `_surge_common` 在 import 时把 stdout 钉成 UTF-8（中文 Windows 默认 GBK，emoji 会崩成**退出码 1**）|
 
 ⚠️ **Windows / Git Bash 的路径坑**：`pwd` 返回 `/c/Users/...`，

@@ -184,7 +184,7 @@ policy_groups:
 # ============================================================================
 rules:
 # ① 白名单 —— **必须放最前面**：这些域名要抢在广告规则之前放行，
-#    否则会被下面的广告规则误杀。（44 条：41 条 DOMAIN 精确匹配 + 3 条 DOMAIN-SUFFIX）
+#    否则会被下面的广告规则误杀。（白名单内容随上游更新，条数不写死）
 - rule_set:
     name: Jinx-CN
     match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-direct.list
@@ -246,7 +246,7 @@ rules:
 #    ⚠️ routing_v1 ~ routing_v2.4 在这里还有一条 Apple_All_No_Resolve.list（Apple 全域名直连），
 #    本配置已移除 —— Apple 流量变成「部分直连、部分走代理」，详见文件末尾第 3 条。
 #    （2026-09-24 ④ 位补了 System 快照，系统级主机那部分恢复直连；全量 Apple 集仍未引用。）
-#    Loyalsoldier direct.txt：11 万条纯域名，是国内直连的主承重墙。
+#    Loyalsoldier direct.txt：国内域名主承重墙（纯域名集、零 IP 条目；条数随上游更新，不写死）。
 - rule_set:
     name: CN-Domains
     match: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/direct.txt
@@ -294,8 +294,8 @@ default_proxy_group: Proxy
 #   2. 移除 WeChat 组后，微信流量改由 geoip CN / direct.txt 兜住，仍然直连；
 #      但如果你有特殊需求（例如需要走代理的微信场景），要自己加回来。
 #   3. 移除 Apple_All_No_Resolve 后，Apple 流量变成「一部分直连、一部分走代理」。
-#      实测依据（direct.txt 约 11.1 万条纯域名、零 IP 条目；精确条数一律现抓 ——
-#      清单每周随上游变，别照抄本行）：
+#      实测依据（direct.txt 为纯域名集、零 IP 条目；精确条数一律现抓 ——
+#      清单每周随上游变，别照抄具体数字）：
 #      · **走代理**：icloud.com 及全部 iCloud 子域（gateway / setup / p01-* 等）、
 #        apple.com 裸域、appstore.com。
 #        （push.apple.com 原本也在这里 —— 2026-09-24 起由 ④ 的 System 快照接回直连。）

@@ -68,7 +68,7 @@ DNS 审计立刻全绿 —— 本地解析确实不再被触发了。**但国内
 | 规则集 | 名字暗示 | 实际内容 | 能不能独自承重 |
 |---|---|:---:|:---:|
 | `ChinaMax.list` | "中国大陆全量" | 64 条域名 / **12472 条 IP** | ❌ 99.5% 是 IP，而 IP 判定已被 `no-resolve` 关掉 |
-| `direct.txt`（Loyalsoldier） | "直连清单" | **111169 条纯域名** | ✅ |
+| `direct.txt`（Loyalsoldier） | "直连清单" | **纯域名**（条数一律现抓） | ✅ |
 
 `ChinaMax.list` 的仓库说明里写得很清楚：它与 `ChinaMax_Domain.list` **"需共同使用"**。
 只看名字会以为一条搞定，实际上必须成对引用。
@@ -123,7 +123,7 @@ www.iqiyi.com     www.douyin.com    www.meituan.com   …（共 17 个）
 > 一份配置可以做到 DNS 审计全绿，同时国内网站全部走代理。
 
 > **模板现状更新**：本文记录的是 f8 时期用 `ChinaMax_All_No_Resolve.list` 完成这次修复的实测与推导。
-> 当前模板已把该规则集的 URL 换成 Loyalsoldier **`direct.txt`**（约 11.1 万条**纯域名**，零 IP 条目；数字随上游更新变动）；
+> 当前模板已把该规则集的 URL 换成 Loyalsoldier **`direct.txt`**（**纯域名**，零 IP 条目；数字随上游更新变动）；
 > 原理完全一致 —— 「IP 规则带 `no_resolve`」必须与「一份域名条目足够多的国内直连规则集」成对交付。
 > 换用纯域名规则集后，它自身不触发解析，`no-resolve` 那一半由 `geoip: CN` 承担。
 
