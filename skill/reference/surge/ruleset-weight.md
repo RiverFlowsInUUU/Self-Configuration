@@ -76,11 +76,11 @@ python skill/scripts/surge/audit_ruleset_content.py surge/profiles/lazy.conf
 ```
 直连（DIRECT）规则集的域名条目统计：
    surge-white-guard.list                       域名     43 / IP      0
-   Apple_All_No_Resolve.list                    域名   1567 / IP     13
+   apple.txt                                    域名    165 / IP      0
    private.txt                                  域名    130 / IP      0
    direct.txt                                   域名 111169 / IP      0
 
-✅ 直连集合共 112909 条域名条目 —— 足以接住国内域名
+✅ 直连集合共 111507 条域名条目 —— 足以接住国内域名
 ```
 
 加 `--show-domestic` 打印明细，加 `--force` 忽略缓存重下。

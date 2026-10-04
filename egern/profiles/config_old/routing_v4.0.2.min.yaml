@@ -164,6 +164,11 @@ policy_groups:
     hidden: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png
 - select:
+    name: WeChat
+    policies:
+    - DIRECT
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/WeChat.png
+- select:
     name: AD
     policies:
     - REJECT
@@ -351,8 +356,13 @@ rules:
     update_interval: 604800
 - rule_set:
     name: Apple
-    match: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/apple.txt
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Apple/Apple_All_No_Resolve.list
     policy: DIRECT
+    update_interval: 604800
+- rule_set:
+    name: WeChat
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/WeChat/WeChat.list
+    policy: WeChat
     update_interval: 604800
 - rule_set:
     name: CN-Domains

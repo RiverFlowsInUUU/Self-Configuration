@@ -292,12 +292,19 @@ FOREIGN_PROBES = {
 ```python
 APPLE_PROBES = [
     "www.apple.com", "swcdn.apple.com", "gs-loc.apple.com",
-    "courier.push.apple.com", "developer.apple.com", "gateway.icloud.com",
+    "courier.push.apple.com", "apps.apple.com", "itunes.apple.com",
 ]
 ```
 
-这 6 个必须命中 `DIRECT`。它们**不在** Surge 内置的 `SYSTEM` 集合里
-（`SYSTEM` 只管激活 / 推送 / 配对的核心主机），靠的是 `Apple_All_No_Resolve.list`。
+这 6 个必须命中 `DIRECT`，但接住它们的是三处不同来源：`gs-loc.apple.com` 与
+`courier.push.apple.com` 由内置 `SYSTEM` 接住（`push.apple.com` 是后缀条目、`gs-loc` 是精确条目），
+`www.apple.com` / `swcdn.apple.com` 由 `direct.txt` 的精确条目接住，`apps.apple.com` /
+`itunes.apple.com` 靠分流版的 `apple.txt`。
+
+⚠️ **2026-10-04 换源**：这条原本引 `Apple_All_No_Resolve.list`，探针里的 `developer.apple.com` /
+`gateway.icloud.com` 靠它才直连；换成只含「在中国大陆可直连」的 `apple.txt` 后，这两个
+（连同国际版 iCloud 端点、`apple-cloudkit.com`）**按设计改走代理**，故已从期望里移出。
+要让它们回直连，得再补 `icloud.txt` 之类。
 
 ⚠️ 判据意义：Apple 流量走代理**不会报错**，只会「变慢 + 推送偶发延迟」——
 属于用户不会主动报障、但体验确实变差的一类，所以必须靠审计钉住。

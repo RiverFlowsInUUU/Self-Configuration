@@ -8,8 +8,8 @@
 
 [![Surge](https://img.shields.io/badge/Surge-iOS%20%7C%20macOS-1f6feb?style=flat-square)](#-两全其美--皆合心意)
 [![Egern](https://img.shields.io/badge/Egern-iOS%20%7C%20macOS-0969da?style=flat-square)](#-两全其美--皆合心意)
-[![Groups](https://img.shields.io/badge/Groups-25%20%7C%2025-8250df?style=flat-square)](#-井然有序)
-[![Rules](https://img.shields.io/badge/Rules-25%20%7C%2025%20%E5%B7%B2%E5%AF%B9%E9%BD%90-dc3545?style=flat-square)](skill/reference/shared/cross-kernel-diff.md)
+[![Groups](https://img.shields.io/badge/Groups-24%20%7C%2024-8250df?style=flat-square)](#-井然有序)
+[![Rules](https://img.shields.io/badge/Rules-24%20%7C%2024%20%E5%B7%B2%E5%AF%B9%E9%BD%90-dc3545?style=flat-square)](skill/reference/shared/cross-kernel-diff.md)
 [![DNS](https://img.shields.io/badge/DNS-Zero%20Leak-2ea043?style=flat-square)](#-隐私至上--无-dns-泄露)
 [![License](https://img.shields.io/badge/License-MIT-dfb317?style=flat-square)](LICENSE)
 [![CI](https://github.com/RiverFlowsInUUU/Self-Configuration/actions/workflows/ci.yml/badge.svg)](https://github.com/RiverFlowsInUUU/Self-Configuration/actions/workflows/ci.yml)
@@ -38,7 +38,7 @@
 | 🤖 `ChatGPT` · `Gemini` · `Claude` · `AI` | 仅 `AI` | ✅ |
 | 🎵 `Spotify` · 🎶 `YouTubeMusic` · ▶️ `YouTube` | - | ✅ |
 | 🐙 `GitHub` · 🔎 `Google` · 🪟 `Microsoft` | - | ✅ |
-| ✈️ `Telegram` · 🐦 `Twitter` · 💚 `WeChat` | - | ✅ |
+| ✈️ `Telegram` · 🐦 `Twitter` | - | ✅ |
 | 🛰️ `Airport`（订阅槽位）| ✅ | ✅ |
 | 🛑 `AD` | ✅ | ✅ |
 | 🇭🇰 `Hong Kong` · 🇺🇸 `USA` · 🇯🇵 `Japan` · 🇨🇳 `Taiwan`<br>🇸🇬 `Singapore` · 🇰🇷 `Korea` · 🇦🇶 `Other Regions` | - | ✅ |

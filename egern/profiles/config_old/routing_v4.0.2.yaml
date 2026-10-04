@@ -1,4 +1,4 @@
-#! version=routing_v4.0.3
+#! version=routing_v4.0.2
 # ================================================================ routing（正式版 · 推荐）
 # 本版 = **routing_v2.4 + 规则段对齐 Surge**（内容与顺序均逐行对拍）：
 #   ① `dns.forward` 由单条 catch-all 扩为 4 层：
@@ -254,6 +254,8 @@ policy_groups:
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Auto.png
 # ================================================================ 应用组（本段 12 个）
 # ⚠️ 本段 12 个全部是 `select` + `flatten: true` —— 与 Surge 的 `select, include-other-group="Proxy"` 逐个等价。
+#   （`WeChat` 同为应用组，但已是纯 `select, policies:[DIRECT]` —— 不带 `flatten`、不引用任何其它组，
+#     见下方「订阅槽位 + 开关」段。）
 #
 #   Egern 的 `flatten: true`：把「Proxy」这个**组名**在求值期展开成组内**全部具体节点**
 #     （官方原文：「展开嵌套策略组中的所有代理节点……而不是只显示策略组名称」）。
@@ -370,6 +372,13 @@ policy_groups:
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png
 # 【routing_v2.2 删除】Airport-C 与 Airport-Free 两个订阅槽位原本在这里；【routing_v2.4】Airport-A / Airport-B 也已合并为单一 Airport。
 #   Airport-C / Free 只服务 Smart，删掉后 Smart 仍有 Airport 可用；A/B 合并为 Airport 后，所有地区组与 Smart / MAX 统一引用它。
+- select:
+    name: WeChat
+    # 成员**只有 `DIRECT`**：微信直连。本组的真正作用是把微信**从兜底里摘出来**，避免被 Final 送进代理。
+    #   刻意不给其它出口 —— 不带 `flatten`、不引用任何其它分流组（与 Surge 的 `select, DIRECT` 一致）。
+    policies:
+    - DIRECT
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/WeChat.png
 - select:
     name: AD
     policies:
@@ -587,7 +596,7 @@ rules:
 # Egern 虽然有 `disabled: true`，但那条仍然算数组里的一个元素 ⇒ 会比 Surge 多占一位、
 # 把位 ⑲ 错开。Surge 的 `RULE-SET` 根本没有 disabled 字段（只认 no-resolve /
 # extended-matching / update-interval / pre-matching），想不生效只能注释。
-# 两边统一用注释写法，`skill/reference/shared/rulesets.md` §3 的「24 条逐位对齐」才成立。
+# 两边统一用注释写法，`skill/reference/shared/rulesets.md` §3 的「25 条逐位对齐」才成立。
 #   # - rule_set:
 #   #     name: Proxy
 #   #     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Proxy/Proxy.list
@@ -597,31 +606,33 @@ rules:
 # 位 ⑲ —— 对齐 Surge 内置的 `SYSTEM`：Egern 没有内置系统集，这里引用本仓自托管的时点快照
 #   （内容 = Surge 官方内置 `SYSTEM` 在 2026-09-24 的清单，删掉 Egern 不支持的两条
 #   `PROCESS-NAME`）。⚠️ 本仓自己维护 ⇒ 没有第三方刷新审计，Surge 大版本更新时人工比对一次。
-#   与下面那条 `apple.txt` 只重叠 9 条，重复无害（两条同为 DIRECT）；它独有 9 条 ——
-#   captive.apple.com / api.smoot.apple.com / api.smoot.apple.cn / .ls.apple.com /
-#   .push.apple.com / .push-apple.com.akadns.net / .ess.apple.com /
-#   .lcdn-locator.apple.com / .lcdn-registration.apple.com —— 是 Apple 的激活 / 推送 /
-#   定位基础主机，**只有 SYSTEM 接得住**（`direct.txt` 仅兜住其中的 api.smoot.apple.cn）。
+#   与下面那条 Apple 全量集重叠 12 条，重复无害（两条同为 DIRECT）；它独有、
+#   Apple 集与 direct.txt 都不含的是 6 条：.ls.apple.com / .push.apple.com /
+#   .push-apple.com.akadns.net / .ess.apple.com / .lcdn-locator / .lcdn-registration。
 - rule_set:
     name: System
     match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/apple_system.list
     policy: DIRECT
     update_interval: 604800
-# ★ 2026-10-04：`Apple_All_No_Resolve.list` -> Loyalsoldier `apple.txt`（165 条纯域名）
-#   弃用 Apple 全量集的理由：① 1,616 条里那 13 条 IP-CIDR 在 no_resolve 语义下对**域名请求**
-#   不参与匹配（只对 IP 字面量生效），23 条 USER-AGENT（无 MITM 时 HTTPS 无效）+ 13 条
-#   PROCESS-NAME（仅 Surge Mac 生效）在 iOS 上同样是死条目 ⇒ 36 条死重量；② 它把解析到境外的
-#   Apple 域也一并强制直连（developer.apple.com、国际版 iCloud 端点、apple-cloudkit.com），
-#   国内反而更慢。`apple.txt` 只含「在中国大陆可直连」的域，且与 `direct.txt`**同仓库、
-#   同 release、同格式**，刷新口径一致；零 IP ⇒ 按原则 4b **不写 `no_resolve`**。
-#   历史（f7）：本条**原版** `Apple_All.list` 有 13 条 IP-CIDR 没带 no-resolve，而它排在
-#   default 之前且 policy=DIRECT ⇒ 每个没被前面规则命中的域名经过这里都会被强制解析一次，
-#   这就是 dnsleaktest 里「判定 default → Final → Proxy、upstream 却显示 bootstrap」的来源
-#   （坑 16）。当时换 No_Resolve 变体治住了它 —— 现已整条换源，该缺陷随之消失。
+# ★ f7 核心改动：Apple_All.list -> Apple_All_No_Resolve.list
+#   官方 rules 文档原文：「no_resolve (bool)……设为 true 时仅匹配已解析的 IP 地址，
+#   **不会触发 DNS 解析**」—— 反过来说，不带 no_resolve 的 IP 类条目**会触发解析**。
+#   Apple_All.list 里有 13 条 IP-CIDR 没带 no-resolve（139.178.128.0/18 等 Apple CDN 段），
+#   而这条规则排在 default 之前且 policy=DIRECT（未禁用）⇒ **每个没被前面规则命中的域名，
+#   经过这里都会被强制解析一次**。这就是 dnsleaktest 里「判定是 default → Final → Proxy，
+#   但 upstream 显示 bootstrap」的来源：为了判定这条 IP 规则而触发的解析走了明文。
+#   No_Resolve 版与原版逐条等价（只是那 13 条补上 ,no-resolve），覆盖面无损失；
+#   对 IP 形式的连接判定也完全不受影响（IP 本就无需解析）。
+#   全部 20 个远程规则集已逐个下载核对：**只有 Apple_All.list 存在这个缺陷**。
 - rule_set:
     name: Apple
-    match: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/apple.txt
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Apple/Apple_All_No_Resolve.list
     policy: DIRECT
+    update_interval: 604800
+- rule_set:
+    name: WeChat
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/WeChat/WeChat.list
+    policy: WeChat
     update_interval: 604800
 # ★ 国内域名直连的**主力**规则集。
 #   历史（f8）：f7 给 geoip:CN 加 no_resolve 治住泄露后，国内域名整片落到 default → Final → Proxy。

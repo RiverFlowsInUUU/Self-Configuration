@@ -28,11 +28,11 @@
 
 ## 2 · 分组：已完全对齐
 
-现役两侧各 **26 个分组，名称与顺序逐位相同**（`routing_v3.4` 起实测逐行 diff 无差异，2026-09-29 随 v4.0 复核）：
+现役两侧各 **24 个分组，名称与顺序逐位相同**（`routing_v3.4` 起实测逐行 diff 无差异，2026-09-29 随 v4.0 复核；2026-10-04 两侧同步删去 `WeChat` 组）：
 
 ```
 Proxy · Smart · ChatGPT · Gemini · Claude · AI · Spotify · YouTubeMusic · YouTube
-GitHub · Google · Microsoft · Telegram · Twitter · Airport · WeChat · AD
+GitHub · Google · Microsoft · Telegram · Twitter · Airport · AD
 Hong Kong · USA · Japan · Taiwan · Singapore · Korea · Other Regions · Final
 ```
 
@@ -40,7 +40,7 @@ Hong Kong · USA · Japan · Taiwan · Singapore · Korea · Other Regions · Fi
 Egern 用 `policies` + `flatten` + `filter`。地区组倍率筛选的正则两侧共用同一份
 （`(?<![\d.])0\.\d*[1-9]` 收所有倍率 < 1 的节点）。
 
-## 3 · 规则：25 条位位对应，三处引擎差异
+## 3 · 规则：24 条位位对应，三处引擎差异
 
 顺序两侧一致（白名单 → 广告 → 内网 → 应用组 → 国内兜底 → 地理 → 默认）。三处**不是疏漏、而是内核能力差异**：
 
@@ -72,7 +72,7 @@ Egern 用 `policies` + `flatten` + `filter`。地区组倍率筛选的正则两�
 | 规则条数 | 10 | 10 |
 | 广告拦在哪一层 | `pre-matching` + `extended-matching` → **DNS 与 TCP-SYN 阶段** | `dns.forward` 两条 `value: reject` → 同样在**解析阶段**拒答（2026-09-23 补齐） |
 | 系统域名集 | ✅ 内置 `SYSTEM` | ✅ 本仓快照 `apple_system.list`（缺两条 `PROCESS-NAME`） |
-| Apple 全量规则集 | ❌ 无（2026-09-24 删，只留内置 `SYSTEM`） | ❌ 无（Apple 流量部分由 `direct.txt` 兜住，`iCloud` 系走节点） |
+| 远程 Apple 规则集 | ❌ 无（2026-09-24 删，只留内置 `SYSTEM`） | ❌ 无（Apple 流量部分由 `direct.txt` 兜住，`iCloud` 系走节点） |
 | 内网两条 | ✅ `LAN`（内置）+ `private.txt` | ✅ `Lan.list` + `Private`（2026-09-23 补，与分流版同源同策略） |
 | `.cn` 后缀兜底 | ❌ 无 | ❌ 无（2026-09-24 删：`direct.txt` 本身含 `DOMAIN-SUFFIX,cn`） |
 | 内网规则位置 | 排在 `AI` 之前（2026-09-24 与 Egern 拉平） | `Lan` / `Private` 排在 `AI` 之前 |

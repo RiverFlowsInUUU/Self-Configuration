@@ -118,7 +118,7 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 
 **直连三件套**（决定国内流量不走代理）：
 1. `Lan.list` —— 局域网。
-2. `Apple_All_No_Resolve.list` —— Apple 域名 + 带 `no-resolve` 的 IP，既做直连判定又不重新触发解析。
+2. `apple.txt` —— Apple **在中国大陆可直连**的域名（165 条纯域名、零 IP，Loyalsoldier `surge-rules`，与 `direct.txt` 同仓库同 release）。零 IP ⇒ 无需 `no_resolve`。2026-10-04 起由 `Apple_All_No_Resolve.list` 换入。
 3. **国内域名规则集（Loyalsoldier `direct.txt`）** —— 约 **11.1 万条纯域名**（`DOMAIN-SUFFIX` 约 11.09 万 + `DOMAIN` 约 550，**零 IP 条目**；上游每次更新都会变动，故这里用约数、精确值一律现抓），是「国内域名直连」的主力。纯域名规则只做字符串匹配、不触发解析，因此无需 `no_resolve`；「已经是 IP 的连接」由下方 `geoip: CN` 兜住。
 > （历史上这里还有一条 `domain_suffix: cn` —— 把整个 `.cn` TLD 再钉一次，**不依赖规则集是否加载成功**；
 > 2026-09-24 起分流版与懒人版都不再需要：`direct.txt` 本身含 `DOMAIN-SUFFIX,cn`。）
@@ -263,7 +263,7 @@ forward:
 
 | 脚本 | 发布模板读数 | 说明 |
 |---|---|---|
-| `check_egern_dns.py` | ✅ **0 high / 2 low / 24 ok（退出码 0）** | 见下方「f3.1 判据修正」；24 这个数对应 `routing_v2` 起的全部版本（`routing_v1` 是 30 ok。`routing_v2` 时代两版 `rules` 均为 24 条、都不含 DNS 端点路由规则 ⇒ 6 项差在**逐端点**：`routing_v1` 多 `223.6.6.6` / `1.12.12.12` 两个国内端点，各计一条 `upstreams` 与一条 `proxy_nameservers` 的「IP 字面量」OK（+4）、再各计一条判据 B 的「直连可达」（+2）。⚠️ 现役 `rules` 已 25 条（2026-09-21 起加 AWAvenue 等），新增条目为规则集引用、不落 DNS 判据，ok 计数仍恒 24。原见 `docs/07-文件版本沿革.md`，该文件已随仓库精简移除） |
+| `check_egern_dns.py` | ✅ **0 high / 2 low / 24 ok（退出码 0）** | 见下方「f3.1 判据修正」；24 这个数对应 `routing_v2` 起的全部版本（`routing_v1` 是 30 ok。`routing_v2` 时代两版 `rules` 均为 24 条、都不含 DNS 端点路由规则 ⇒ 6 项差在**逐端点**：`routing_v1` 多 `223.6.6.6` / `1.12.12.12` 两个国内端点，各计一条 `upstreams` 与一条 `proxy_nameservers` 的「IP 字面量」OK（+4）、再各计一条判据 B 的「直连可达」（+2）。⚠️ 现役 `rules` 为 24 条（2026-10-04 删去 `WeChat` 前为 25 条），规则集引用不落 DNS 判据，ok 计数仍恒 24。原见 `docs/07-文件版本沿革.md`，该文件已随仓库精简移除） |
 | `audit_routing_coverage.py` | ✅ 15/15 国内探针 `DIRECT` | 分流正确性不受脱敏影响 |
 | `audit_dns_forward.py --drill` | ✅ 通过（退出码 0） | `forward` value 单值、订阅耦合 0 |
 | `audit_region_filters.py` | ✅ 6 个地区组关键词全部同步（退出码 0） | 负向断言与地区组 filter 逐字一致 |
@@ -387,7 +387,7 @@ forward:
 ## 6. 已知代价与取舍
 
 - **`Foreign-DNS` 已删除**：迭代 f10 起它就无任何引用（forward 兜底改国内组后不再需要境外组）；`routing_v1` 曾**整组注释**保留为 A/B 备用，**`routing_v2` 起整段删除**。要恢复境外解析答案，需自行在 `upstreams` 里加回该组。风险提醒：若用它作兜底且代理未就绪，会掉进明文 `:53`。
-- **两条线 × 双形态**：可选只有 `egern/profiles/lazy.yaml`（**懒人版**，4 组 / 10 条规则）与 `egern/profiles/routing.yaml`（**分流版 · 推荐**，26 组 / 25 条），固定名四件，升版不改名。⚠️ 头注 `#! version=` 里的 `v` 是**文件版本**（三段制 X.Y.Z：Z=小修、Y=中改、X=大改，满 10 进 1，4.0.10 合法）；配置变动时变动前的旧配置归档进 `profiles/config_old/`（归档号 = 目录内此分工最新号的下一位，完整版与 `.min` 成对，现役头注同步升为下一位）；更早历史看 git（备份 tag：`pre-cleanup-20260927`）。
+- **两条线 × 双形态**：可选只有 `egern/profiles/lazy.yaml`（**懒人版**，4 组 / 10 条规则）与 `egern/profiles/routing.yaml`（**分流版 · 推荐**，24 组 / 24 条），固定名四件，升版不改名。⚠️ 头注 `#! version=` 里的 `v` 是**文件版本**（三段制 X.Y.Z：Z=小修、Y=中改、X=大改，满 10 进 1，4.0.10 合法）；配置变动时变动前的旧配置归档进 `profiles/config_old/`（归档号 = 目录内此分工最新号的下一位，完整版与 `.min` 成对，现役头注同步升为下一位）；更早历史看 git（备份 tag：`pre-cleanup-20260927`）。
 - **图标整合进本仓库**：26 个图标源自已整合进 `icons/`，模板不再跨项目引用图标地址。来源归属见上表；本仓按 MIT 许可分发（根 `LICENSE`）。
 - **占位节点都被真实引用**：模板 `proxies` 带 2 条占位节点（`Node-A` → `Proxy` 末位、`Node-B` → `AI` 首项），不存在悬空引用（组间引用保留；`routing_v2.3` 起**已无空组**）。不用它们就整条删掉，并把对应组 `policies` 里的名字一并摘掉。
 - **与订阅解耦**：forward 不写任何节点 / 订阅域名，换订阅无需改动 DNS 段（清单 18 验证订阅耦合 4 → 0）。
@@ -502,7 +502,7 @@ S="skill/scripts"
 
 一句话：**`no-resolve` 是「IP 规则的开关」，与域名规则无关。** 判据是「这条规则能不能匹配 IP」，而不是「别人的配置里写了没写」。代价见 Q3：给 IP 规则关掉解析判定后，必须用域名规则补回来。
 
-> **实证（本模板）**：`no_resolve` 在 profile 里**作为配置键只出现 1 次**（`geoip: CN`；带注释版另有 7 处提及全在注释里）。模板引用的 **22 个**远程规则集中，**13 个是纯域名**（`direct.txt` / `private.txt` / Gemini / Claude / Anthropic / AI / GitHub / Microsoft / YouTubeMusic / AWAvenue-Ads / **Jinx white-guard** / **Jinx ads** / 本仓自托管的 `apple_system.list`，无需 `no-resolve`）、**9 个含 IP 条目**（Lan / ChatGPT / Spotify / YouTube / Google / Telegram / Twitter / WeChat / Apple；`Proxy.list` 已改纯注释、不再被引用），而这 9 个的 IP 条目**已在上游 `.list` 内全部自带 `,no-resolve`**（写作时点逐条核对：`Lan` 18/18、`ChatGPT` 2/2、`Spotify` 2/2、`YouTube` 3/3、`Google` 5/5、`Telegram` 10/10、`Twitter` 6/6、`WeChat` 67/67、`Apple` 13/13）。所以「看起来到处是 `no-resolve`」是**上游规则集自带的**，不是 profile 在堆 —— profile 只需管好自己那一条 `geoip: CN`。
+> **实证（本模板）**：`no_resolve` 在 profile 里**作为配置键只出现 1 次**（`geoip: CN`；带注释版另有 7 处提及全在注释里）。模板引用的 **21 个**远程规则集中，**14 个是纯域名**（`direct.txt` / `private.txt` / Gemini / Claude / Anthropic / AI / GitHub / Microsoft / YouTubeMusic / AWAvenue-Ads / **Jinx white-guard** / **Jinx ads** / 本仓自托管的 `apple_system.list` / **`apple.txt`**，无需 `no-resolve`）、**7 个含 IP 条目**（Lan / ChatGPT / Spotify / YouTube / Google / Telegram / Twitter；`Proxy.list` 已改纯注释、不再被引用），而这 7 个的 IP 条目**已在上游 `.list` 内全部自带 `,no-resolve`**（写作时点逐条核对：`Lan` 18/18、`ChatGPT` 2/2、`Spotify` 2/2、`YouTube` 3/3、`Google` 5/5、`Telegram` 10/10、`Twitter` 6/6）。所以「看起来到处是 `no-resolve`」是**上游规则集自带的**，不是 profile 在堆 —— profile 只需管好自己那一条 `geoip: CN`。（2026-10-04 前 Apple 那条是 `Apple_All_No_Resolve.list`，13/13 自带 `,no-resolve`，计入含 IP 的 8 个；换成零 IP 的 `apple.txt` 后为 7 个。）
 
 **Q5：`Foreign-DNS` 组去哪了？我还能用吗？**
 `routing_v2` 起已整段删除（迭代 f10 起它就无引用，`routing_v1` 曾注释保留为 A/B 备用）。想用境外解析答案，需自行在 `upstreams` 里加回该组（6 个境外 DoH/DoT 端点），并把 forward 兜底 `value` 改过去。但注意：若它作兜底且代理未就绪，会掉进明文 `:53` —— 迭代 f10 默认用国内组兜底正是为了避免这条路径。

@@ -19,7 +19,9 @@
        且**绝不能被广告规则误杀**（提前发现误杀比等用户报障好）。
     C. **误杀探针**：广告清单不能把功能域（GitHub / iCloud / Apple 那 8 个）拦掉。
     D. **Apple 探针**：Apple 系统服务域必须直连 —— 懒人版与分流版两套期望
-       （懒人版 2026-09-24 起不引用 Apple 全量集，`developer` / `icloud` 那两条归分流版）。
+       （懒人版 2026-09-24 起不引用 Apple 规则集，`apps` / `itunes` 那两条归分流版；
+        分流版 2026-10-04 起该条由 `Apple_All_No_Resolve.list` 换成 `apple.txt`，
+        `developer.apple.com` / `gateway.icloud.com` 随之按设计改走代理，已从期望移出）。
        内置 `SYSTEM` 的内容按本仓快照近似（见 `BUILTIN_SET_SNAPSHOTS`）：早先它是
        "内容不可得 ⇒ 视作不命中"，等于那条规则在审计里根本不存在 —— 现在补上了。
 
@@ -69,8 +71,8 @@ DOMESTIC_PROBES = [
 #
 #    两套期望的差别只在于组名：lazy.conf 只有一个 AI 组，
 #    routing.conf（分流版，当前版本号见头注）把它拆成了 ChatGPT / Gemini / Claude / AI 四个组，
-#    并把 Spotify / YouTube / GitHub / Google / Microsoft / Telegram / Twitter /
-#    WeChat 这些也各自单列。
+#    并把 Spotify / YouTube / GitHub / Google / Microsoft / Telegram / Twitter
+#    这些也各自单列。
 #    ⚠️ 这不是"顺手放宽"—— 它是**分流版新增能力**的验收条件：
 #       chat.openai.com 必须落进 ChatGPT，而不只是"随便落进某个代理组"。
 #       如果只看"不是 DIRECT"，把四个组全指向 Proxy 也能假过。
@@ -138,15 +140,19 @@ FALSE_POSITIVE_PROBES = [
 #    ⚠️ 判据意义：Apple 流量走代理**不会报错**，只会「变慢 + 偶尔推送延迟」——
 #       属于用户不会主动报障、但体验确实变差的一类。所以要靠审计钉住。
 #       当年 Egern 把这条规则集写成不带 no-resolve 的版本，泄露就是从这类"看不见的解析"来的。
-#    两套期望的差别只在**懒人版 2026-09-24 起不引用 Apple 全量集**：
+#    两套期望的差别只在**懒人版 2026-09-24 起不引用 Apple 规则集**：
 #      · `courier.push.apple.com` 与 `gs-loc.apple.com` 由内置 `SYSTEM` 接住
 #        （`push.apple.com` 是后缀条目、`gs-loc` 是精确条目 —— 见 BUILTIN_SET_SNAPSHOTS）；
 #      · `www.apple.com` / `swcdn.apple.com` 由 `direct.txt` 的 Apple 精确条目接住；
-#      · `developer.apple.com` / `gateway.icloud.com` **只有** Apple 全量集里有 ⇒ 归分流版。
-#        懒人版按设计让这两类走代理（写进 lazy.conf §4 的取舍里），所以不进懒人版期望。
+#      · `apps.apple.com` / `itunes.apple.com` **只有**分流版那条 Apple 规则集里有 ⇒ 归分流版。
+#        懒人版按设计让这类走代理（写进 lazy.conf §4 的取舍里），所以不进懒人版期望。
+#    ⚠️ 2026-10-04 换源（`Apple_All_No_Resolve.list` -> `apple.txt`，1,616 条 -> 165 条纯域名）：
+#       `apple.txt` 只含「在中国大陆可直连」的域，原先靠全量集才直连的 `developer.apple.com` /
+#       `gateway.icloud.com`（连同国际版 iCloud 端点、`apple-cloudkit.com`、裸 `apple.com`）
+#       **按设计改走代理** ⇒ 已从 ROUTING 期望里移出。要改回直连就得另补 `icloud.txt` 之类。
 APPLE_PROBES_ROUTING = [
     "www.apple.com", "swcdn.apple.com", "gs-loc.apple.com",
-    "courier.push.apple.com", "developer.apple.com", "gateway.icloud.com",
+    "courier.push.apple.com", "apps.apple.com", "itunes.apple.com",
 ]
 APPLE_PROBES_LAZY = [
     "www.apple.com", "swcdn.apple.com", "gs-loc.apple.com", "courier.push.apple.com",
@@ -167,7 +173,11 @@ def apple_probes_for(path):
 # ⚠️ 快照是**时点**内容，Surge 内置集会随版本变；对不上时以 Surge 客户端里的实际列表为准。
 #    找不到快照时退回旧行为（视作不命中）并打印一行提示，不静默。
 BUILTIN_SET_SNAPSHOTS = {
-    "SYSTEM": os.path.join(REPO_ROOT, "egern", "apple_system.list"),
+    "SYSTEM": os.path.join(REPO_ROOT, "rules", "apple_system.list"),
+    # ⚠️ 2026-10-04 修：原先写的是 `egern/apple_system.list` —— 那份 2026-09-27 已提升到顶层
+    #    `rules/`（见 rulesets.md「只有一侧有的」）。旧路径 `os.path.isfile` 恒为假 ⇒ 这段
+    #    「借快照补上 SYSTEM 盲区」的机制自搬家起就一直静默退回旧行为（SYSTEM 视作不命中），
+    #    连注释里「现在补上了」都不成立。由换 Apple 规则集时 D 组探针报错暴露。
 }
 
 
@@ -202,8 +212,13 @@ class Matcher:
         if "/" not in ident and "." not in ident:
             snap = BUILTIN_SET_SNAPSHOTS.get(ident.upper())
             if not (snap and os.path.isfile(snap)):
-                # 内置集合：无快照可用 ⇒ 退回旧行为（视作不命中）。不打印：`LAN` 一直是
-                # 这个口径，探针集里也没有需要 LAN 才成立的期望，加一行 ⚠️ 只会变噪音。
+                if snap:
+                    # 登记了快照却找不到文件 = 配置漂移（文件被搬走/改名）⇒ 会静默失明。
+                    # 必须喊出来：2026-09-27 快照搬到 rules/ 后，这里一直按"不命中"跑了七天。
+                    print(f"   ⚠️  内置集合 {ident} 的快照不存在："
+                          f"{os.path.relpath(snap, REPO_ROOT)} ⇒ 本集合按不命中处理",
+                          file=sys.stderr)
+                # 未登记快照的内置集合（`LAN`）一直是"视作不命中"的口径，不打印以免变噪音。
                 self._sets[ident] = store
                 return store
             with open(snap, encoding="utf-8", errors="replace") as f:

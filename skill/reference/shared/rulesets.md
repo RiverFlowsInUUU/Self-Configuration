@@ -30,8 +30,8 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 | `AI_Domains`（本仓自托管） | → `AI`（伴生域/宽后缀/基础设施域，**必须紧跟 `AI.list`**） | ✅ | ✅ | 本仓 `rules/AI.list`（静态整合 · 生成器 `skill/scripts/ai_domains_build.py`；条数与来源见该文件头部档案） |
 | `Spotify.list` · `YouTubeMusic.list` · `YouTube.list` | 各自应用组 | ✅ | ✅ | [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) |
 | `GitHub.list` · `Google.list` · `Microsoft.list` | 各自应用组 | ✅ | ✅ | 同上 |
-| `Telegram.list` · `Twitter.list` · `WeChat.list` | 各自应用组 | ✅ | ✅ | 同上 |
-| `Apple_All_No_Resolve.list` | Apple 服务 → `DIRECT` | ✅ 仅分流版 | ✅ 仅分流版 | 同上（**必须用 `No_Resolve` 变体**，见第 4 节）。懒人版 2026-09-24 起不引用，只留内置 `SYSTEM` |
+| `Telegram.list` · `Twitter.list` | 各自应用组 | ✅ | ✅ | 同上 |
+| `apple.txt` | Apple 在中国大陆可直连的域名 → `DIRECT` | ✅ 仅分流版 | ✅ 仅分流版 | [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules)，与 `direct.txt` **同仓库同 release 同格式**。165 条**纯域名、零 IP** ⇒ 不写规则级开关（第 4 节 4b）。懒人版 2026-09-24 起不引用只留内置 `SYSTEM`；分流版 2026-10-04 起由 `Apple_All_No_Resolve.list`（1,616 条）换入 |
 | `Proxy.list` | 常用代理名单 | 注释态，不参与匹配 | 注释态，不参与匹配（2026-09-24 起与 Surge 同写法；原先是 `disabled: true`，那条仍占 `rules` 的一位） | 同上 |
 | `GEOIP,CN` / `geoip: CN` | 国内 IP 段 | `DIRECT` `no-resolve` | `DIRECT` `no_resolve` | Surge：`GeoLite2-Country.mmdb` · [adysec/IP_database](https://github.com/adysec/IP_database)；Egern：`Country.mmdb` + `GeoLite2-ASN.mmdb` · [Loyalsoldier/geoip](https://github.com/Loyalsoldier/geoip) |
 
@@ -51,17 +51,17 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 
 ## 3 · 匹配顺序
 
-自上而下，第一条命中即决定去向。分流版两侧 25 条**逐位对齐**（仅第 3 节的三处引擎差异例外）。
+自上而下，第一条命中即决定去向。分流版两侧 24 条**逐位对齐**（仅第 3 节的三处引擎差异例外）。
 
-**分流版（两侧共用基准序，位 ①–㉔）**
+**分流版（两侧共用基准序，位 ①–㉓）**
 
 | 位 | 内容 | 位 | 内容 |
 |:-:|:-----|:-:|:-----|
 | ① | 白名单 `surge-white-guard.list` → `DIRECT` | ⑬–⑱ | `YouTube` · `GitHub` · `Google` · `Microsoft` · `Telegram` · `Twitter` 各应用组 |
 | ②③ | 两条广告清单 → `REJECT`(S) / `AD`(E) | ⑲ | 系统域名集 → `DIRECT`：Surge 内置 `SYSTEM` ／ Egern `apple_system.list`（本仓快照） |
-| ④⑤ | 内网：Surge `LAN` · `private` ／ Egern `Lan.list` · `Private` | ⑳ | `Apple_All_No_Resolve.list` → `DIRECT` |
-| ⑥–⑩ | 厂商专属在前：`OpenAI` · `Gemini` · `Anthropic` · `Claude`，再 `AI.list` | ㉑ | `WeChat.list` → `WeChat` |
-| ⑪⑫ | `Spotify` · `YouTubeMusic` | ㉒–㉔ | `direct.txt` → 国内 IP 判定 → **默认出口** |
+| ④⑤ | 内网：Surge `LAN` · `private` ／ Egern `Lan.list` · `Private` | ⑳ | `apple.txt` → `DIRECT`（Apple 在中国大陆可直连的域名） |
+| ⑥–⑩ | 厂商专属在前：`OpenAI` · `Gemini` · `Anthropic` · `Claude`，再 `AI.list` | ㉑ | `direct.txt` → `DIRECT` |
+| ⑪⑫ | `Spotify` · `YouTubeMusic` | ㉒㉓ | 国内 IP 判定 → **默认出口** |
 
 **懒人版**：两侧各 **10 条**、逐位同构（2026-09-24 起）。段序同上表把「应用段」收缩成一条 `AI` 的形态。
 
@@ -80,6 +80,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 5. ⭐ **用 `*_No_Resolve` 变体，并下载下来数条目**。`Apple_All.list` 实测含 13 条不带 `no-resolve` 的裸 IP（Apple CDN 网段），
    一条这样的条目就让**每个走到该规则的域名**都被强制解析一次。判据是"下载 + 数条目"，**不是看规则集名字**
    （`ChinaMax.list` 名字像域名集，2026-09-24 快照里 **IP 类条目 12,472 条、域名类只有 64 条**）。
+   （本仓 Apple 那条 2026-10-04 起已换成零 IP 的 `apple.txt`，此处保留 `Apple_All.list` 作判据示例。）
 6. **两条广告清单的策略与参数必须逐字相同**，否则同一广告域名因命中不同清单而进出不一致。
 
 > 🛡️ 本仓自托管的 `rules/apple_system.list` 没有第三方刷新审计 ⇒ 漂移只能靠人：Surge 大版本更新时把内置 `SYSTEM` 与这份快照比对一次
