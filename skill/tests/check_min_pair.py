@@ -19,9 +19,11 @@
 版本与归档序列（2026-09-24 起，订阅地址固定化之后一并由本脚本判）：
     订阅地址钉成 `routing.*` / `lazy.*`（固定名、升版不改名）⇒ "当前是哪一版"只剩
     profile **头注**这一处显式承诺（从前是三份 runner 里各一行 `CURRENT=`，改一处漏两处）。
-    判据是固定 14 条：两侧各 6 条（顶层只有固定名四件 · 头注版本标记形状合法 · 归档目录在 ·
-    归档文件名形状合法 · 每版成对齐全 · 归档不高于当前版且同版本仍是逐字快照）+ 跨侧 2 条（两侧 routing 版本一致 ·
-    两侧 lazy 版本一致）。**条数不随归档文件数增长** —— 与 `CURRENT` 是承诺值同一条纪律。
+    判据是固定 16 条：两侧各 6 条（顶层只有固定名四件 · 头注版本标记形状合法 · 归档目录在 ·
+    归档文件名形状合法 · 每版成对齐全 · 归档不高于当前版且同版本仍是逐字快照）
+    + **版本节奏 2 条**（V7「一天一版」，路由线 / 懒人线各一）
+    + 跨侧 2 条（两侧 routing 版本一致 · 两侧 lazy 版本一致）。
+    **条数不随归档文件数增长** —— 与 `CURRENT` 是承诺值同一条纪律。
 
 退出码：0 = 全部成对相同 · 1 = 有不一致 · 2 = 目录/参数问题（profiles 目录不存在）。
 用法：python skill/tests/check_min_pair.py [仓库根]     # 默认取本文件所在的仓库根
@@ -70,6 +72,11 @@ VERSION_RE = re.compile(r"^#! version=(routing|lazy)_v([0-9]+)\.([0-9]+)(?:\.([0
 # 有一批只写主号（`routing_v3.conf`），一并认 —— V4 要抓的是"新归档没按进位规则起名"，不是考古。
 ARCHIVE_RE = re.compile(r"^(routing|lazy)_v([0-9]+(?:\.[0-9]+){0,2})(\.min)?\.(conf|yaml)$")
 OLD_DIR = "config_old"          # 归档目录（2026-09-27 恢复；每版完整版 + .min 成对）
+# 「一天一版」生效日（2026-10-04，写入当日即生效）：此前的多版本日
+# （09-24 分流版 8 个、09-26/27/28 各 3 个、09-29 各 2 个）是历史，不回改也不追溯 ——
+# 与三段制「历史两段号不回改」同一条纪律。
+CADENCE_FROM = "2026-10-04"
+ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 def ver_tuple(v):
@@ -90,8 +97,41 @@ def head_version(path):
     return (m.group(1), ver) if m else None
 
 
+def day_versions(root):
+    """(产品线, 'YYYY-MM-DD') → [该日出生的版本…]，外加"日期不可得"的分组数。
+
+    直接复用发布器的 `build_days`（版本诞生日期 = 归档快照的 blob 在现役 profile 历史中
+    首次出现的提交日）—— **不另写一套日期口径**，否则两处早晚漂。
+    任何异常（缺 git / 缺 release_publish.py）⇒ 返回 None，由调用方判「未验证，不是通过」。
+    """
+    try:
+        import importlib.util
+        rp_path = os.path.join(root, "skill", "scripts", "release_publish.py")
+        spec = importlib.util.spec_from_file_location("release_publish", rp_path)
+        rp = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(rp)
+        cwd = os.getcwd()
+        try:
+            os.chdir(root)              # build_days 内部的 git 调用按 cwd 定位仓库
+            days = rp.build_days(root)
+        finally:
+            os.chdir(cwd)
+    except Exception:                   # noqa: BLE001 —— 环境不具备时如实判「未验证」
+        return None
+    groups, unknown = {}, 0
+    for d in days:
+        date = d.get("date") or ""
+        if not ISO_DATE.match(date):
+            unknown += 1                # 「未知日期」分组：浅克隆 / 历史缺失的退化产物
+            continue
+        for fam, info in (d.get("fams") or {}).items():
+            groups.setdefault((fam, date), []).extend(info.get("versions") or [])
+    return groups, unknown
+
+
 def version_checks(root):
-    """固定名与头注版本 ⇒ [(判据名, 通过?, 说明)]；两侧各 2 条 + 跨侧 2 条。归档判据（V3–V6）在 config_old/ 目录存在时照常生效。"""
+    """固定名与头注版本 ⇒ [(判据名, 通过?, 说明)]：两侧各 V1–V6 · 跨侧 X 两条 · V7 版本节奏两条。
+    归档判据（V3–V6）在 config_old/ 目录存在时照常生效；V7 需完整 git 历史（否则判「未验证」）。"""
     out, heads = [], {}
     for d in PROFILE_DIRS:
         side = d.split("/")[0]
@@ -158,6 +198,30 @@ def version_checks(root):
         a = heads.get("surge", (None, None))[0 if kind == "routing" else 1]
         b = heads.get("egern", (None, None))[0 if kind == "routing" else 1]
         out.append(("X 两侧 %s 版本一致" % kind, bool(a) and a == b, "%s vs %s" % (a, b)))
+
+    # V7：一天一版（CADENCE_FROM 起）—— 同一产品线在同一个「版本诞生日期」内最多一个版本。
+    #   一天里改几次都只升一次号：当天后续改动（含修前一次带出来的连带问题）沿用同一版本号，
+    #   不再归档、不再升号。规矩见 SKILL.md「归档机制」与 reference/shared/ops.md §6.1。
+    #   ⚠️ 前置条件是**完整 git 历史**（浅克隆下日期会退化成「未知日期」）—— 那些分组按
+    #   「未验证」跳过并在说明里点名，不冒充通过。前置条件纪律见 ops.md §6.8。
+    dv = day_versions(root)
+    for fam in ("routing", "lazy"):
+        if dv is None:
+            out.append(("V7 %s 一天一版" % fam, False,
+                        "日期分组构建失败（缺 git 或 skill/scripts/release_publish.py）"
+                        "⇒ 未验证，不是通过"))
+            continue
+        groups, unknown = dv
+        judged = sorted(d for (f, d) in groups if f == fam and d >= CADENCE_FROM)
+        over = [(d, groups[(fam, d)]) for d in judged if len(groups[(fam, d)]) > 1]
+        if over:
+            note = "；".join("%s 有 %d 个版本（%s）" % (d, len(v), "→".join(v)) for d, v in over) \
+                   + " —— 一天之内只应升一次号：当天后续改动沿用同一版本号，不再归档、不再升号"
+        else:
+            note = "已判 %d 个更新日（≥ %s）" % (len(judged), CADENCE_FROM)
+            if unknown:
+                note += "；另有 %d 个分组的日期不可得 ⇒ 未验证（浅克隆？见 ops.md §6.8）" % unknown
+        out.append(("V7 %s 一天一版" % fam, not over, note))
     return out
 
 
@@ -198,7 +262,12 @@ def main():
     v_bad = 0
     print("\n固定名与归档序列（判据条数不随归档文件数增长）：")
     for name, ok_, note in v_out:
-        print("   %s %s%s" % ("✅" if ok_ else "❌", name, "" if ok_ else "   " + note))
+        # V7 的说明在**通过时也要显示**：它承载的是「判了几个更新日 / 有多少分组因历史不全
+        # 而没验证」这类信息 —— 只挂在失败上，浅克隆下就会显示成一条干净的绿。其余判据维持
+        # 原样（失败才打印说明），免得把输出变吵。
+        show_note = (not ok_) or name.startswith("V7 ")
+        print("   %s %s%s" % ("✅" if ok_ else "❌", name,
+                              ("   " + note) if (show_note and note) else ""))
         if not ok_:
             v_bad += 1
     v_pass = len(v_out) - v_bad

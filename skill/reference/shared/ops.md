@@ -251,7 +251,8 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/pro
 
 - 顶层永远只有四个固定名 × 两内核（`.conf` / `.yaml` 各一对）：`routing` / `lazy` 的完整版与 `.min` 版。它们是永久订阅地址的落点，不随版本改名；
 - "当前是哪一版"只写在文件头注 `#! version=…` 里；
-- 配置变动时，变动前的旧配置归档进 `profiles/config_old/`：归档版本号 = 该目录内此分工最新号的下一位（2026-09-29 起三段制 X.Y.Z：Z=小修、Y=中改、X=大改，每位满 10 进 1，4.0.10 合法；历史两段号不回改），完整版与 `.min` 成对，现役头注同步升为下一位；更早历史看 git（备份 tag：`pre-cleanup-20260927`）；
+- ⭐ **一天一版（2026-10-04 起）**：同一个自然日内，**每条产品线只在当天第一次配置变动时归档 + 升号**；当天后续的改动 —— 包括修前一次改动带出来的连带问题 —— **沿用同一版本号**，不动归档、不升号 ⇒ 一天之内版本号最多走一格。中间态看 git 历史；归档层只承诺"当天开始前的那一版"。断言见 `check_min_pair.py` 的 V7（前置条件：完整 git 历史，见 §6.8）。
+- **当天第一次配置变动时**，变动前的旧配置归档进 `profiles/config_old/`：归档版本号 = 该目录内此分工最新号的下一位（2026-09-29 起三段制 X.Y.Z：Z=小修、Y=中改、X=大改，每位满 10 进 1，4.0.10 合法；历史两段号不回改），完整版与 `.min` 成对，现役头注同步升为下一位；更早历史看 git（备份 tag：`pre-cleanup-20260927`）；
 - 因此：任何文档、脚本、README 里出现的"带版本号的订阅 URL"都是错的。
 
 ### 6.2 改配置的标准动线
@@ -262,6 +263,7 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/pro
                    python skill/tests/make_min.py --family all --apply              # 确认后写盘
 ③ 核豁免行：       .min 由生成器重算正文、按锚点继承注释 —— 仍要肉眼确认 `# audit-waive:` 那几行在 min 版里读得到
 ④ 升版（要对外发布时）：直接改四份 profile 头注里的 `#! version=`（`.min` 由生成器重算继承）
+   —— ⚠️ **一天一版**：当天该产品线已升过号就跳过本步、沿用同号（见 §6.1）
 ⑤ 收尾：`python skill/tests/check_secrets.py && python skill/tests/check_portability.py && python skill/tests/check_min_pair.py && python skill/tests/check_links.py .`（push 后 CI 会再跑一遍同组检查）
    ↑ 也可一键：`python skill/tests/verify_all.py` —— 与 ci.yml 同源的 10 道闸门并行跑、出汇总表（含 DNS 审计与 releases 方案，比本行列的更全）
 ⑥ 发布 Release（push 之后）：`python skill/scripts/release_publish.py --apply`（时间线模型与规矩见 §6.9；发版前先补 `DAY_THEMES` 当日主题 + `PUBLIC_NOTES` 对应条目）
@@ -324,6 +326,7 @@ python skill/tests/check_portability.py
 |:-----|:---------|:-----------|
 | `check_releases` R3/R4 | **完整 git 历史**（`git log --find-object` 反查每个归档快照的诞生提交） | 浅克隆下历史被截断 → 早期快照查不到诞生提交 → 落不进任何日期分组，报出「tag 不在本地日期分组 plan 里」+「正文缺少 vX.Y 条目」的**成片假红** |
 | `check_releases` 全脚本 | 网络 + `GITHUB_TOKEN`（缺省回退 `gh auth token`） | 远端不可达 → 走 SKIP（退出码 3），非判负；`verify_all` 会以 ⚠️ 明示「未验证 ≠ 绿」 |
+| `check_min_pair` V7（一天一版） | **完整 git 历史**（版本诞生日期 = 归档快照的 blob 在现役 profile 历史中首次出现的提交日，由 `release_publish.build_days` 现算） | 浅克隆 / 历史缺失 → 日期分组退化成「未知日期」，那些分组按**未验证**跳过并在该条说明里点名（不冒充通过）。该说明在**通过时也会打印**，正是为了不把它藏起来 |
 
 ⚠️ **浅克隆的实证（2026-10-04，一次外部审查踩的坑）**：审查者用 `gh repo clone -- --depth 50` 取了本仓（实际 **248** 个提交），跑 `check_releases` 得 `81 passed, 28 failed`；改用完整克隆（`git clone` 不加 `--depth`）后同一份代码得 **`113 passed, 0 failed`（exit 0）**。四条「tag 不在 plan 里」与 23 条「正文缺条目」全部消失 —— 它们只反映历史缺失，不反映任何真实缺陷。
 
@@ -334,6 +337,8 @@ python skill/tests/check_portability.py
 ### 6.9 Release 发布规矩
 
 版本信息现在有三层落点：**现役**（固定名四件，版本号只在头注）→ **归档**（`config_old/`，文件名带头注同号）→ **发布**（GitHub Release）。发布层是归档层之上的对外窗口，不替代归档，也不改变 §6.1 的任何条文。
+
+⭐ **三层节拍一致：一天一个。** 现役头注、`config_old` 归档、Release tag 都以自然日为节拍 —— 同一天里的多次改动共用一个版本号、落进同一张 Release。当天已发布之后又改，同一张 Release 会被 reconcile 更新成当天最终内容（版本号不变）；这是「一天一版」（§6.1）刻意换来的代价，断言在 `check_min_pair.py` 的 V7。
 
 **粒度（时间线模型，2026-09-29 定稿）**：一个更新日 = 一个 Release，懒人版与分流版**同日更新合并进同一张**。为什么不用"一个分工版本 = 一个 Release"：Releases 列表按创建时间排序且 `created_at` 不可回写，分工版补发会让列表变成"先懒人版一块、再分流版一块"，时间线永远不正 —— 只有按日合并，列表顺序才与真实演进一致。同日多个版本在正文里逐版本列要点（内容不丢），资产只挂当日各产品线**最终版本**；回滚粒度 = 天，更细粒度走 git 历史与 `config_old/`。
 

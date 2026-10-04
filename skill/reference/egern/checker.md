@@ -36,7 +36,7 @@ python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/pro
 ⭐ **「当前版」是固定名，不是一堆版本号**（2026-09-24 起）：顶层恒为 `routing` / `lazy`
    四个文件名（固定名四件）。
    「哪一版」只剩 profile 头注 `#! version=routing_vX.Y(.Z)`，形状与两内核一致性由
-   `check_min_pair.py` 判（V1–V6 ×2 + 跨侧 2 条）。前置检查会在 `$PROFILES/$CURRENT.yaml`
+   `check_min_pair.py` 判（V1–V6 ×2 + V7 一天一版 ×2 + 跨侧 2 条）。前置检查会在 `$PROFILES/$CURRENT.yaml`
    不存在时给**退出码 2** —— 否则那份名单一条都套不上，
    当前推荐版会被当成"历史存档版"只查非正值，**看着绿、其实没审**。
    要复核历史版本：从 git 历史取出对应文件，带着路径直接调对应脚本。

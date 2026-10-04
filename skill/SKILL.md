@@ -92,7 +92,15 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
 
 - `profiles/` 顶层永远只有固定名四件——它们是永久订阅地址的落点，**升版不改名**；
 - 「当前是哪一版」只写在文件头注 `#! version=` 里；
-- **配置发生变动时**：变动前的现役内容归档进 `profiles/config_old/`（**所有小版本都归档**），
+- ⭐ **一天一版（2026-10-04 起）**：同一个自然日内，**每条产品线只在当天第一次配置变动时升号**
+  （路由线 / 懒人线各自独立计）。当天后续的改动 —— 包括修前一次改动带出来的连带问题 ——
+  **一律沿用当天那个版本号**：不再归档、不再升号。判据是 `check_min_pair.py` 的 V7。
+  理由：一天之内版本号迭代好几次，既读不出"这一版到底做了什么"，又往归档层塞一堆中间态；
+  中间态看 git 历史即可（归档层只承诺"当天开始前的那一版"）。
+  ⚠️ 代价：当天那张 Release 已发布之后又改，同一版本号的内容会被 reconcile 更新 ——
+  当天早先下载过的人手上是旧内容。这是刻意换来的（换取"一天一版"）。
+- **当天第一次配置变动时**：变动前的现役内容归档进 `profiles/config_old/`
+  （归档的是"当天开始前"那一版，**当天中间态不单独归档**），
   **归档版本号 = 该目录内此分工最新号的下一位**（v3.3 → v3.4；v3.9 → 进位 v4.0），
   **完整版与 `.min` 成对归档**（`.min` 不带头注行），**现役头注同步升为归档号的下一位**；
   **版本号三段制（2026-09-29 起）**：X.Y.Z —— Z 位=小修（个别键/注释/文案），Y 位=中改（新增功能/结构性调整），
@@ -114,6 +122,7 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
 ① 只读诊断：先跑 python skill/scripts/repo_state.py 拿现状（四份版本号 / 归档进度 /
    最新 Release / CI 结论，一屏 JSON），再跑相关审计脚本，列出可优化项，等用户确认再动手
 ② 归档：变动前的现役四份（若该分工要动）按上行规则复制进 config_old/，现役头注升号
+   —— ⚠️ **一天一版**：当天该产品线已升过号就**跳过本步**，只改内容（不再归档、不再升号）
 ③ 改带注释完整版（lazy.conf / routing.conf / *.yaml）—— .min 不手工碰
 ④ 生成 .min：python skill/tests/make_min.py --family lazy|routing|all   # 默认只出计划
              python skill/tests/make_min.py --family all --apply        # 确认后写盘
@@ -133,7 +142,9 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
 ⑦ 发布 Release（push 之后）：先在 `release_publish.py` 补 `DAY_THEMES` 当日主题与
    `PUBLIC_NOTES` 对应条目，再跑 `python skill/scripts/release_publish.py --apply`
    —— 一个更新日一张 Release（tag = vYYYY-MM-DD），两产品线同日合并，资产为当日
-   最终版本；缺的日期自动补齐。发完跑 `python skill/tests/check_releases.py` 验收。
+   最终版本；缺的日期自动补齐。**同一天再改再推 ⇒ 同一张 Release 被 reconcile 成当天
+   最终内容，版本号不变**（三层节拍一致：现役头注 / config_old 归档 / Release 都是"一天一个"）。
+   发完跑 `python skill/tests/check_releases.py` 验收。
    规矩与说明模板见 `reference/shared/ops.md` §6.9。
 ```
 

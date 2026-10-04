@@ -28,6 +28,7 @@
 | **浅克隆下 `check_releases` 的成片红是噪声，不是缺陷**（缺完整历史 → R3/R4 假红：`81/28` → 完整克隆 `113/0`） | [`ops.md`](ops.md) §6.8「跑判据前先确认前置条件」 | `check_releases` 不再依赖 `--find-object` 反查诞生日期时 |
 | Egern 审计**跨 profile 输出折叠**（约省 3 KB）不做 | `skill/reference/egern/checker.md`（记 22 离线 / 24 联网） | 该处不再引用这组条数时 |
 | 历史 release notes（`release_publish.PUBLIC_NOTES`）保留**发布当时**的条数，不回改 | 该值记录发布时点的事实（v3.9 条目即此例）；自 v2.0.1／v4.0.1 起新条目已改为「当前版本信息统一只保留在文件头注」 | 需修订历史记录本身（发布勘误） |
+| **「一天一版」只从 2026-10-04 起算** —— 此前的多版本日是历史，不回改、不追溯（09-24 分流版一天 8 个版本、09-26/27/28 各 3 个、09-29 各 2 个） | [`check_min_pair.py`](../../tests/check_min_pair.py) 的 `CADENCE_FROM` 就近注释 | 需要回溯修订历史版本号时（须连同 `config_old/` 与 Release 资产一起动） |
 
 ## 3 · 不是缺陷的边界
 
