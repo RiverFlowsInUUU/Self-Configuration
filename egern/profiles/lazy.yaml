@@ -86,7 +86,7 @@ dns:
   # ②③ 是终止动作不是转发；proxy_nameservers 配置在，代理 DNS 完全绕过 Forward。
   forward:
   - proxy_rule_set:
-      match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-white-guard.list
+      match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-direct.list
       value: Domestic-DNS
   - proxy_rule_set:
       match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-ads.list
@@ -184,10 +184,10 @@ policy_groups:
 # ============================================================================
 rules:
 # ① 白名单 —— **必须放最前面**：这些域名要抢在广告规则之前放行，
-#    否则会被下面的广告规则误杀。（43 条：41 条 DOMAIN 精确匹配 + 2 条 DOMAIN-SUFFIX）
+#    否则会被下面的广告规则误杀。（44 条：41 条 DOMAIN 精确匹配 + 3 条 DOMAIN-SUFFIX）
 - rule_set:
     name: Jinx-CN
-    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-white-guard.list
+    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-direct.list
     policy: DIRECT
     update_interval: 604800
 # ② 广告拦截 —— 两条并列（先 Jinx，后 AWAvenue），都指向 AD。

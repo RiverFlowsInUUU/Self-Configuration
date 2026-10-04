@@ -128,8 +128,8 @@ def foreign_expectations(path):
     return FOREIGN_PROBES
 
 # ⭐ 误杀探针：这些域名**一定不能**被广告规则拦。
-#    它们几乎必然出现在广告黑名单的误杀面里（Egern 项目的 jinx-surge-white-guard
-#    那 42 条就是为它们准备的）。
+#    它们几乎必然出现在广告黑名单的误杀面里（Egern 项目的 jinx-surge-direct
+#    —— 2026-10-04 前名 jinx-surge-white-guard —— 就是为它们准备的）。
 FALSE_POSITIVE_PROBES = [
     "github.com", "objects.githubusercontent.com", "cdn.jsdelivr.net",
     "www.icloud.com", "gateway.icloud.com", "swcdn.apple.com",

@@ -22,7 +22,7 @@ dns:
     - tls://1.12.12.12
   forward:
   - proxy_rule_set:
-      match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-white-guard.list
+      match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-direct.list
       value: Domestic-DNS
   - proxy_rule_set:
       match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-ads.list
@@ -84,7 +84,7 @@ policy_groups:
 rules:
 - rule_set:
     name: Jinx-CN
-    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-white-guard.list
+    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-direct.list
     policy: DIRECT
     update_interval: 604800
 - rule_set:

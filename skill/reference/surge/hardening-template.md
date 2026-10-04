@@ -327,7 +327,7 @@ DIRECT**（组被切走 / 成员动态变化），Surge 无法保证"一定拦�
 
 ```
 # 1. 白名单（必须在 REJECT 之前）
-RULE-SET,<surge-white-guard.list>,DIRECT
+RULE-SET,<surge-direct.list>,DIRECT
 
 # 2. 广告拦截
 RULE-SET,<surge-ads.list>,REJECT,pre-matching,extended-matching

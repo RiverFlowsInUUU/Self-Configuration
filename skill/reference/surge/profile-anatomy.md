@@ -516,7 +516,7 @@ NAT 类型检测（STUN）、时间同步（NTP）、游戏机配对，都需要
 
 | 规则集 | 条数 | 类型 | 上游 |
 |:-------|:----:|:-----|:-----|
-| `surge-white-guard.list` | 43 | 纯域名 | Jinx |
+| `surge-direct.list` | 44 | 纯域名 | Jinx |
 | `surge-ads.list` | 3889 | 纯域名 | Jinx |
 | `AWAvenue-Ads-Rule-Surge-RULE-SET.list` | 965 | 纯域名 | TG-Twilight（⚠️ **必须用 RULE-SET 版**） |
 | `AI.list` | 52 | 域名系（零 IP；含 KEYWORD×2 + URL-REGEX×1） | Repcz/Tool（分支头，活跃维护） |
@@ -749,7 +749,7 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 
 | # | 规则 | 策略 | 选项 | 为什么排这里 |
 |:-:|:-----|:----:|:-----|:-------------|
-| 1 | `RULE-SET,…,surge-white-guard.list` | `DIRECT` | — | **必须**在 REJECT 之前，否则形同虚设。它同时兜住两条黑名单的误杀 |
+| 1 | `RULE-SET,…,surge-direct.list` | `DIRECT` | — | **必须**在 REJECT 之前，否则形同虚设。它同时兜住两条黑名单的误杀 |
 | 2 | `RULE-SET,…,surge-ads.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 1 条（Jinx）。必须在 `direct.txt` / `GEOIP,CN` **之前** —— 否则国内广告域名被 `direct.txt` 接走 |
 | 3 | `RULE-SET,…,AWAvenue-Ads-Rule-Surge-RULE-SET.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 2 条（AWAvenue）。顺序与 Egern 对齐，见 §11.4 |
 | 4 | `RULE-SET,LAN` | `DIRECT` | `no-resolve` | 含 18 条 IP-CIDR，**必须** `no-resolve`。内网段排在应用之前，与 Egern 同位 |

@@ -2,7 +2,7 @@
 # ================================================================ routing（正式版 · 推荐）
 # 本版 = **routing_v2.4 + 规则段对齐 Surge**（内容与顺序均逐行对拍）：
 #   ① `dns.forward` 由单条 catch-all 扩为 4 层：
-#      白名单（white-guard → Domestic-DNS，抢在拦截前拿到解析）
+#      白名单（direct → Domestic-DNS，抢在拦截前拿到解析）
 #      → Jinx-Ads / AWAvenue 两条广告清单（value: reject —— 官方语义
 #      "refuse the query and return an empty response"，解析阶段直接拒答，
 #      等价 Surge 的 pre-matching REJECT）→ catch-all 兜底。
@@ -154,7 +154,7 @@ dns:
   # "Rules are evaluated in declaration order; the first matching rule routes
   #  the query to its upstream"）：
   #   ① 白名单首位：命中 → Domestic-DNS 正常加密解析。对应 Surge 的
-  #      RULE-SET white-guard,DIRECT —— 43 条会被广告清单误杀的功能域
+  #      RULE-SET direct,DIRECT —— 44 条会被广告清单误杀的功能域
   #      （AWAvenue 命中其中 10 条：jpush.cn / appcfg.v.qq.com / apd-pcdnwx* /
   #      tnc3-* 等）必须抢在 reject 之前拿到解析，否则流量层的白名单救不了
   #      一个解析都失败的域名。
@@ -169,7 +169,7 @@ dns:
   # 「任何一次查询去哪里解析」。
   forward:
   - proxy_rule_set:
-      match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-white-guard.list
+      match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-direct.list
       value: Domestic-DNS
   - proxy_rule_set:
       match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-ads.list
@@ -482,10 +482,11 @@ rules:
 # 注：原「DNS 端点固定路由」规则（alidns / doh.pub / dns.google / cloudflare-dns 及若干 DNS 服务器 IP）
 # 已全部移除 —— 本模板 dns.upstreams / proxy_nameservers / bootstrap 均为 IP 字面量，解析器直接以 IP 访问，
 # 无需在 rules 中钉域名/IP；移除不影响防 DNS 泄露（详见 skill/reference/egern/profile-anatomy.md 的「配置框架逐段详解」）。
-# ---- 原有规则（2026-09-21 在其之前新增了 white-guard / ads 两条；原有规则之间顺序不变）----
+# ---- 原有规则（2026-09-21 在其之前新增了白名单 / ads 两条；白名单规则集 2026-10-04 由
+#      Jinx `surge-white-guard.list` 更名为 `surge-direct.list`；原有规则之间顺序不变）----
 - rule_set:
     name: Jinx-CN
-    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-white-guard.list
+    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-direct.list
     policy: DIRECT
     update_interval: 604800
 - rule_set:

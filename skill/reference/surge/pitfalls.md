@@ -137,7 +137,8 @@ RULE-SET,<ads.list>,REJECT,pre-matching,extended-matching    # ✅ 字面量
 ## 5 · 审计器 `RULE-SET` 也取错位置 → 12 个假 HIGH
 
 **症状**：审计器报「规则引用了未定义的策略
-`https://…/surge-white-guard.list`」。
+`https://…/surge-white-guard.list`」。（规则集 2026-10-04 由 Jinx 更名为
+`surge-direct.list`，此处保留当时的原文；根因与具体文件名无关。）
 
 **根因**：`RULE-SET,<标识>,<策略>` 的 index 1 是**规则集标识**（URL / 内置集合名），
 不是策略。第一版把 index 1 当策略读了。

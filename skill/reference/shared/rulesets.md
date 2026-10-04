@@ -18,7 +18,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 
 | 规则集 | 作用 | Surge 去向 | Egern 去向 | 来源 |
 |:-------|:-----|:-----------|:-----------|:-----|
-| `surge-white-guard.list` | 白名单（精确域名） | `DIRECT` | `DIRECT` | [Jinx](https://github.com/RiverFlowsInUUU/Jinx) |
+| `surge-direct.list` | 白名单（精确域名） | `DIRECT` | `DIRECT` | [Jinx](https://github.com/RiverFlowsInUUU/Jinx) |
 | `surge-ads.list` | 广告拦截主清单 | `REJECT`（`pre-matching`） | `AD` 组 | [Jinx](https://github.com/RiverFlowsInUUU/Jinx) |
 | `AWAvenue-Ads-Rule-Surge-RULE-SET.list` | 广告拦截第 2 条 | `REJECT`（`pre-matching`） | `AD` 组 | [TG-Twilight/AWAvenue-Ads-Rule](https://github.com/TG-Twilight/AWAvenue-Ads-Rule) |
 | `private.txt` | 特殊 TLD 与路由器域（`.lan` `.local` `miwifi.com`） | `DIRECT`（实测零 IP ⇒ 不写规则级开关） | `DIRECT`（分流版 v3 起补） | [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules) |
@@ -57,7 +57,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 
 | 位 | 内容 | 位 | 内容 |
 |:-:|:-----|:-:|:-----|
-| ① | 白名单 `surge-white-guard.list` → `DIRECT` | ⑬–⑱ | `YouTube` · `GitHub` · `Google` · `Microsoft` · `Telegram` · `Twitter` 各应用组 |
+| ① | 白名单 `surge-direct.list` → `DIRECT` | ⑬–⑱ | `YouTube` · `GitHub` · `Google` · `Microsoft` · `Telegram` · `Twitter` 各应用组 |
 | ②③ | 两条广告清单 → `REJECT`(S) / `AD`(E) | ⑲ | 系统域名集 → `DIRECT`：Surge 内置 `SYSTEM` ／ Egern `apple_system.list`（本仓快照） |
 | ④⑤ | 内网：Surge `LAN` · `private` ／ Egern `Lan.list` · `Private` | ⑳ | `apple.txt` → `DIRECT`（Apple 在中国大陆可直连的域名） |
 | ⑥–⑩ | 厂商专属在前：`OpenAI` · `Gemini` · `Anthropic` · `Claude`，再 `AI.list` | ㉑ | `direct.txt` → `DIRECT` |

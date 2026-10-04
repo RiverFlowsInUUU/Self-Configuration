@@ -193,7 +193,7 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 **③ `forward`：白名单 → 广告 `reject` → catch-all（`routing_v2.4` 及更早只有一条 catch-all）**
 ```yaml
 forward:
-  - proxy_rule_set: <surge-white-guard.list>  value: Domestic-DNS   # 白名单先拿到解析
+  - proxy_rule_set: <surge-direct.list>       value: Domestic-DNS   # 白名单先拿到解析
   - proxy_rule_set: <surge-ads.list>          value: reject         # 广告：解析阶段拒答
   - proxy_rule_set: <AWAvenue…-RULE-SET.list> value: reject
   - domain_wildcard: '*'                      value: Domestic-DNS   # 兜底
@@ -502,7 +502,7 @@ S="skill/scripts"
 
 一句话：**`no-resolve` 是「IP 规则的开关」，与域名规则无关。** 判据是「这条规则能不能匹配 IP」，而不是「别人的配置里写了没写」。代价见 Q3：给 IP 规则关掉解析判定后，必须用域名规则补回来。
 
-> **实证（本模板）**：`no_resolve` 在 profile 里**作为配置键只出现 1 次**（`geoip: CN`；带注释版另有 7 处提及全在注释里）。模板引用的 **21 个**远程规则集中，**14 个是纯域名**（`direct.txt` / `private.txt` / Gemini / Claude / Anthropic / AI / GitHub / Microsoft / YouTubeMusic / AWAvenue-Ads / **Jinx white-guard** / **Jinx ads** / 本仓自托管的 `apple_system.list` / **`apple.txt`**，无需 `no-resolve`）、**7 个含 IP 条目**（Lan / ChatGPT / Spotify / YouTube / Google / Telegram / Twitter；`Proxy.list` 已改纯注释、不再被引用），而这 7 个的 IP 条目**已在上游 `.list` 内全部自带 `,no-resolve`**（写作时点逐条核对：`Lan` 18/18、`ChatGPT` 2/2、`Spotify` 2/2、`YouTube` 3/3、`Google` 5/5、`Telegram` 10/10、`Twitter` 6/6）。所以「看起来到处是 `no-resolve`」是**上游规则集自带的**，不是 profile 在堆 —— profile 只需管好自己那一条 `geoip: CN`。（2026-10-04 前 Apple 那条是 `Apple_All_No_Resolve.list`，13/13 自带 `,no-resolve`，计入含 IP 的 8 个；换成零 IP 的 `apple.txt` 后为 7 个。）
+> **实证（本模板）**：`no_resolve` 在 profile 里**作为配置键只出现 1 次**（`geoip: CN`；带注释版另有 7 处提及全在注释里）。模板引用的 **21 个**远程规则集中，**14 个是纯域名**（`direct.txt` / `private.txt` / Gemini / Claude / Anthropic / AI / GitHub / Microsoft / YouTubeMusic / AWAvenue-Ads / **Jinx direct**（2026-10-04 前名 `white-guard`） / **Jinx ads** / 本仓自托管的 `apple_system.list` / **`apple.txt`**，无需 `no-resolve`）、**7 个含 IP 条目**（Lan / ChatGPT / Spotify / YouTube / Google / Telegram / Twitter；`Proxy.list` 已改纯注释、不再被引用），而这 7 个的 IP 条目**已在上游 `.list` 内全部自带 `,no-resolve`**（写作时点逐条核对：`Lan` 18/18、`ChatGPT` 2/2、`Spotify` 2/2、`YouTube` 3/3、`Google` 5/5、`Telegram` 10/10、`Twitter` 6/6）。所以「看起来到处是 `no-resolve`」是**上游规则集自带的**，不是 profile 在堆 —— profile 只需管好自己那一条 `geoip: CN`。（2026-10-04 前 Apple 那条是 `Apple_All_No_Resolve.list`，13/13 自带 `,no-resolve`，计入含 IP 的 8 个；换成零 IP 的 `apple.txt` 后为 7 个。）
 
 **Q5：`Foreign-DNS` 组去哪了？我还能用吗？**
 `routing_v2` 起已整段删除（迭代 f10 起它就无引用，`routing_v1` 曾注释保留为 A/B 备用）。想用境外解析答案，需自行在 `upstreams` 里加回该组（6 个境外 DoH/DoT 端点），并把 forward 兜底 `value` 改过去。但注意：若它作兜底且代理未就绪，会掉进明文 `:53` —— 迭代 f10 默认用国内组兜底正是为了避免这条路径。

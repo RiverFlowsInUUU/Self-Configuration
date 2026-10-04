@@ -39,7 +39,7 @@ Surge 把被引用的规则集**在内存里展开成匹配表**。一份 11 万
 
 | 规则集 | 条数 | 域名 | IP | 缺 `no-resolve` 的 IP |
 |:-------|:----:|:----:|:--:|:---------------------:|
-| `surge-white-guard.list` | 43 | 43 | 0 | 0 |
+| `surge-direct.list` | 44 | 44 | 0 | 0 |
 | `surge-ads.list` | 3889 | 3889 | 0 | 0 |
 | `AWAvenue-Ads-Rule-Surge-RULE-SET.list` | 965 | 965 | 0 | 0 |
 | `AI.list` | 49 | 49 | 0 | 0 |
@@ -75,12 +75,12 @@ python skill/scripts/surge/audit_ruleset_content.py surge/profiles/lazy.conf
 
 ```
 直连（DIRECT）规则集的域名条目统计：
-   surge-white-guard.list                       域名     43 / IP      0
+   surge-direct.list                            域名     44 / IP      0
    apple.txt                                    域名    165 / IP      0
    private.txt                                  域名    130 / IP      0
    direct.txt                                   域名 111169 / IP      0
 
-✅ 直连集合共 111507 条域名条目 —— 足以接住国内域名
+✅ 直连集合共 111508 条域名条目 —— 足以接住国内域名
 ```
 
 加 `--show-domestic` 打印明细，加 `--force` 忽略缓存重下。
