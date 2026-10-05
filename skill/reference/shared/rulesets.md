@@ -56,8 +56,12 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 
 **分流版（两侧共用基准序，位 ①–㉕，共 25 条）**
 
-⭐ **应用段（⑦–⑳）的顺序必须与 `[Proxy Group]` 同名组的先后逐位一致**（2026-10-05 立，
-由两内核 `audit_routing_coverage.py` 的 **Z0** 检查守）—— 看组顺序就知道规则顺序。
+⭐ **应用段顺序与 `[Proxy Group]` 同名组的先后保持一致**（2026-10-05 立，由两内核
+`audit_routing_coverage.py` 的 **Z0** 检查守）。
+⚠️ **但规则可被「前移」，且这是必要的**：当某规则集**包含**另一集的条目时，被包含者必须前置，
+否则永远轮不到它。实例：`YouTube.list`（190 条）**内含** `YouTubeMusic.list` 的 UA 规则
+（`USER-AGENT,*YouTubeMusic*` 等）⇒ **`YouTubeMusic.list` 必须排在 `YouTube.list` 之前**，
+而它的组在面板上排在 `YouTube` 之后。Z0 因此判「允许前移、不许乱序」。
 
 | 位 | 内容 | 位 | 内容 |
 |:-:|:-----|:-:|:-----|

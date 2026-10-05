@@ -193,15 +193,28 @@ def main():
     print()
     print("【Z0】应用段「组顺序 ↔ 规则顺序」对齐")
     print("-" * 100)
-    z0_bad = gseq != seq
-    if z0_bad:
-        print("  ❌ 两个列表顺序不一致：")
-        for i in range(max(len(gseq), len(seq))):
-            a_ = gseq[i] if i < len(gseq) else "—"
-            b_ = seq[i] if i < len(seq) else "—"
-            print(f"     {i+1:>2}. 组 {a_:<16} | 规则 {b_:<16} {'✅' if a_==b_ else '❌'}")
+    # ⚠️ 判据（2026-10-05 修正，同 Surge 侧）：**规则可前移，但不得乱序**。
+    #    某些规则集**包含**另一集的条目（如 `YouTube.list` 内含 `YouTubeMusic.list` 的
+    #    UA 规则）⇒ 被包含者必须前置，否则永远轮不到；而它的组在面板上排在后面。
+    #    ⇒ 剔除「被前移的组」后，两个列表必须完全相同。
+    promoted = {g for g in gseq if seq.index(g) < gseq.index(g)}
+    g_rest = [g for g in gseq if g not in promoted]
+    s_rest = [g for g in seq if g not in promoted]
+    if g_rest == s_rest:
+        if promoted:
+            print(f"  ✅ 其余 {len(g_rest)} 个应用组顺序一致（{len(gseq)} 组）")
+            print(f"     ℹ️  规则被**前移**的组：{'、'.join(sorted(promoted))}"
+                  f" —— 因规则集包含关系，规则必须提前")
+        else:
+            print(f"  ✅ {len(gseq)} 个应用组逐位对齐")
     else:
-        print(f"  ✅ {len(gseq)} 个应用组逐位对齐")
+        print("  ❌ 有组的相对先后被打乱：")
+        for i in range(max(len(g_rest), len(s_rest))):
+            a_ = g_rest[i] if i < len(g_rest) else "—"
+            b_ = s_rest[i] if i < len(s_rest) else "—"
+            print(f"     {i+1:>2}. 组 {a_:<16} | 规则 {b_:<16} {'✅' if a_==b_ else '❌'}")
+        print("     ⇒ 仅当某规则集包含另一集的条目时，被包含者才可前移（如 YouTubeMusic 之于 YouTube）。")
+        z0_bad = True
 
     # ---- 先盘一遍启用的 DIRECT 规则集里到底有多少域名条目（ChinaMax 那类坑）----
     print("=" * 100)

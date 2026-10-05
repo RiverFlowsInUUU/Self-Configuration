@@ -331,11 +331,18 @@ def main():
 
     fails = []
 
-    # ── Z0. 应用段「组顺序 ↔ 规则顺序」必须逐位对齐（2026-10-05 立）────────────
+    # ── Z0. 应用段「组顺序 ↔ 规则顺序」一致性（2026-10-05 立 · 同日修正）────────
     # 为什么单立一条：两个列表由不同的手维护（组顺序看面板体验、规则顺序看匹配优先级），
     # 极易各改各的 —— 2026-10-05 实测就漂了 4 处（Google/YouTube/Telegram/Spotify）。
-    # 判据：把「既是组名、又被规则当策略引用」的组按**组出现顺序**排一遍，
-    #       与按**规则出现顺序**排一遍，两者必须相同。
+    #
+    # ⚠️ 判据修正（2026-10-05，用户实测指出）：**规则顺序不能要求与组顺序严格逐位相同**。
+    #    某些规则集之间存在**包含关系**，被包含者必须**前置**，否则永远轮不到它：
+    #    实例：`YouTube.list`（190 条）**内含** `YouTubeMusic.list` 的 UA 规则
+    #    （`USER-AGENT,*YouTubeMusic*` 等）⇒ YouTube Music 必须排在 YouTube **之前**，
+    #    而它的组在面板上排在 YouTube **之后** —— 两者**本就不该相同**。
+    #    ⇒ 判据改为：**组顺序必须是规则顺序的子序列**（规则可把某些组提前，但不得打乱
+    #       其余组的相对先后）。这样既能抓住「各改各的」造成的乱序，又容许必要的前置。
+    #
     # 豁免：`Proxy`（总入口，被 GitHub 规则指向，但不是自己的规则）、
     #       `AD`（广告拦截组，规则在 ③④ 位、属白名单/黑名单段，不属应用段）。
     EXEMPT = {"PROXY", "AD"}
@@ -348,17 +355,29 @@ def main():
                 rule_pols.append(p_)
     seq = [p_ for p_ in rule_pols if p_ in app_groups]
     gseq = [g for g in app_groups if g in seq]
-    print("── Z0 · 应用段「组顺序 ↔ 规则顺序」对齐")
-    if gseq != seq:
-        print("   ❌ 两个列表顺序不一致：")
-        for i in range(max(len(gseq), len(seq))):
-            a_ = gseq[i] if i < len(gseq) else "—"
-            b_ = seq[i] if i < len(seq) else "—"
-            print(f"      {i+1:>2}. 组 {a_:<16} | 规则 {b_:<16} {'✅' if a_==b_ else '❌'}")
-        print("   ⇒ 修法：让 [Rule] 应用段的先后与 [Proxy Group] 同名组的先后一致")
-        fails.append(("应用段顺序", "组/规则不对齐", None))
+
+    print("── Z0 · 应用段「组顺序 ↔ 规则顺序」一致性")
+    # 「前移」= 该组的规则位置早于它的组位置（规则集包含关系所致，合法）。
+    promoted = {g for g in gseq if seq.index(g) < gseq.index(g)}
+    # 去掉被前移的组后，两个列表必须**完全相同**（其余组的相对先后不得乱）。
+    g_rest = [g for g in gseq if g not in promoted]
+    s_rest = [g for g in seq if g not in promoted]
+    if g_rest == s_rest:
+        if promoted:
+            print(f"   ✅ 其余 {len(g_rest)} 个应用组顺序一致（{len(gseq)} 组）")
+            print(f"      ℹ️  规则被**前移**的组：{'、'.join(sorted(promoted))}"
+                  f" —— 组在面板上排在后面，规则因**规则集包含关系**必须提前")
+        else:
+            print(f"   ✅ {len(gseq)} 个应用组逐位对齐")
     else:
-        print(f"   ✅ {len(gseq)} 个应用组逐位对齐")
+        print("   ❌ 有组的相对先后被打乱（既非对齐、也非规则集包含所致的前移）：")
+        for i in range(max(len(g_rest), len(s_rest))):
+            a_ = g_rest[i] if i < len(g_rest) else "—"
+            b_ = s_rest[i] if i < len(s_rest) else "—"
+            print(f"      {i+1:>2}. 组 {a_:<16} | 规则 {b_:<16} {'✅' if a_==b_ else '❌'}")
+        print("   ⇒ 修法：让 [Rule] 应用段的先后与 [Proxy Group] 同名组的先后一致；")
+        print("      仅当某规则集**包含**另一规则集的条目时，被包含者才可前移（如 YouTubeMusic 之于 YouTube）。")
+        fails.append(("应用段顺序", "组/规则相对顺序不一致", None))
 
     # ── A. 国内探针必须 DIRECT ──────────────────────────────────────────────
     print("── A · 国内探针（期望命中 DIRECT）")
