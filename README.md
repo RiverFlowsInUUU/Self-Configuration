@@ -39,7 +39,7 @@
 | 🔎 `Google` · ▶️ `YouTube` · 🎶 `YouTube Music`<br>🎵 `Spotify` · ✈️ `Telegram` · 🐦 `Twitter` · 🪟 `Microsoft` | - | ✅ |
 | 🛰️ `Airport`（订阅槽位）| ✅ | ✅ |
 | 🛑 `AD` | ✅ | ✅ |
-| 🇭🇰 `Hong Kong` · `Taiwan` · 🇯🇵 `Japan` · 🇸🇬 `Singapore`<br>🇺🇸 `United States` · 🇦🇶 `Other Regions` | - | ✅ |
+| 🇭🇰 `Hong Kong` · 🇨🇳 `Taiwan` · 🇯🇵 `Japan` · 🇸🇬 `Singapore`<br>🇺🇸 `United States` · 🇦🇶 `Other Regions` | - | ✅ |
 
 ---
 
