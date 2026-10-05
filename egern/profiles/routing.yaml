@@ -243,6 +243,13 @@ policy_groups:
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTube.png
 - select:
+    name: Emby
+    # 影视服务器（自用枚举 4 个域名，见本仓自托管 `rules/emby.list`）。
+    policies:
+    - Proxy
+    flatten: true
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Emby.png
+- select:
     name: Telegram
     policies:
     - Proxy
@@ -500,6 +507,11 @@ rules:
     name: YouTube
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/YouTube/YouTube.list
     policy: YouTube
+    update_interval: 604800
+- rule_set:
+    name: Emby
+    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/emby.list
+    policy: Emby
     update_interval: 604800
 - rule_set:
     name: Telegram

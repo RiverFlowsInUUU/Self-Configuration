@@ -31,10 +31,10 @@
 
 ## 2 · 分组：已完全对齐
 
-现役两侧各 **21 个分组，名称与顺序逐位相同**（`routing_v3.4` 起实测逐行 diff 无差异，2026-09-29 随 v4.0 复核；2026-10-04 两侧同步删去 `WeChat` 组，2026-10-05 两侧同步删去 `Korea` 组与 `GitHub` 组）：
+现役两侧各 **22 个分组，名称与顺序逐位相同**（`routing_v3.4` 起实测逐行 diff 无差异，2026-09-29 随 v4.0 复核；2026-10-04 两侧同步删去 `WeChat` 组，2026-10-05 两侧同步删去 `Korea` 组与 `GitHub` 组）：
 
 ```
-Proxy · Smart · ChatGPT · Gemini · Claude · AI · YouTube · Telegram · YouTube Music
+Proxy · Smart · ChatGPT · Gemini · Claude · AI · YouTube · Emby · Telegram · YouTube Music
 Google · Spotify · Twitter · Airport · Microsoft · AD
 Hong Kong · Taiwan · Japan · Singapore · United States · Other Regions
 ```
@@ -43,7 +43,7 @@ Hong Kong · Taiwan · Japan · Singapore · United States · Other Regions
 Egern 用 `policies` + `flatten` + `filter`。地区组倍率筛选的正则两侧共用同一份
 （`(?<![\d.])0\.\d*[1-9]` 收所有倍率 < 1 的节点）。
 
-## 3 · 规则：24 条位位对应，三处引擎差异
+## 3 · 规则：25 条位位对应，三处引擎差异
 
 顺序两侧一致（白名单 → 广告 → 内网 → 应用组 → 国内兜底 → 地理 → 默认）。三处**不是疏漏、而是内核能力差异**：
 

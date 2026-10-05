@@ -68,6 +68,11 @@
       "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTube.png"
     },
     {
+      "name": "Emby",
+      "category": "媒体",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Emby.png"
+    },
+    {
       "name": "YouTube Music",
       "category": "媒体",
       "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTubeMusic.png"

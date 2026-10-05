@@ -54,7 +54,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 
 自上而下，第一条命中即决定去向。分流版两侧 24 条**逐位对齐**（仅第 3 节的三处引擎差异例外）。
 
-**分流版（两侧共用基准序，位 ①–㉔，共 24 条）**
+**分流版（两侧共用基准序，位 ①–㉕，共 25 条）**
 
 ⭐ **应用段（⑦–⑳）的顺序必须与 `[Proxy Group]` 同名组的先后逐位一致**（2026-10-05 立，
 由两内核 `audit_routing_coverage.py` 的 **Z0** 检查守）—— 看组顺序就知道规则顺序。
@@ -62,6 +62,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 | 位 | 内容 | 位 | 内容 |
 |:-:|:-----|:-:|:-----|
 | ① | **系统域白名单**：Surge 内置 `SYSTEM` ／ Egern `apple_system.list` → `DIRECT` | ⑬ | `YouTube.list` → `YouTube` |
+| ⑬b | `emby.list`（**本仓自托管**）→ `Emby` |
 | ② | 广告白名单 `surge-direct.list` → `DIRECT` | ⑭ | `Telegram.list` → `Telegram` |
 | ③④ | 两条广告清单 → `REJECT`(S) / `AD`(E) | ⑮ | `YouTubeMusic.list` → `YouTube Music` |
 | ⑤⑥ | 内网：Surge `LAN` · `private` ／ Egern `Lan.list` · `Private` | ⑯ | `Google.list` → `Google` |
