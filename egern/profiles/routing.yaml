@@ -30,8 +30,8 @@ hijack_dns:
 - '*'
 geoip_db_url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb
 asn_db_url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/GeoLite2-ASN.mmdb
-proxy_latency_test_url: http://cp.cloudflare.com/generate_204
-direct_latency_test_url: http://connectivitycheck.platform.hicloud.com/generate_204
+proxy_latency_test_url: http://www.gstatic.com/generate_204
+direct_latency_test_url: http://connect.rom.miui.com/generate_204
 real_ip_domains:
 # 这几个域名不做 Fake IP 映射，交给系统解析。
 # Windows/Apple 的推送与内网发现走的是「隧道外」的链路（include_apns: false），
@@ -287,6 +287,10 @@ policy_groups:
     - https://sub.example.com/api/v1/client/subscribe?token=REPLACE_WITH_YOUR_TOKEN
     urls_disabled:
     - https://sub.example.com/api/v1/client/subscribe?token=REPLACE_WITH_YOUR_TOKEN
+    # 订阅刷新间隔（与 Surge 侧 `update-interval=86400` 对齐）。
+    # ⚠️ Egern 官方未文档化该键的缺省值 ⇒ 显式写死，避免「刷新行为交给未知」
+    #    （仓规见 skill/reference/shared/troubleshoot-faq.md「规则集刷新统一一周」）。
+    interval: 86400
     hidden: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png
 - select:

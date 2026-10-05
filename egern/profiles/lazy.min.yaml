@@ -4,8 +4,8 @@ hijack_dns:
 - '*'
 geoip_db_url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb
 asn_db_url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/GeoLite2-ASN.mmdb
-proxy_latency_test_url: http://cp.cloudflare.com/generate_204
-direct_latency_test_url: http://connectivitycheck.platform.hicloud.com/generate_204
+proxy_latency_test_url: http://www.gstatic.com/generate_204
+direct_latency_test_url: http://connect.rom.miui.com/generate_204
 real_ip_domains:
 - '*.lan'
 - '*.local'
@@ -60,6 +60,7 @@ policy_groups:
     type: select
     urls:
     - https://sub.example.com/api/v1/client/subscribe?token=REPLACE_WITH_YOUR_TOKEN
+    interval: 86400
     hidden: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png
 - smart:

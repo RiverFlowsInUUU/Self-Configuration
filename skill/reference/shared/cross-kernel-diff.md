@@ -23,6 +23,9 @@
 | 默认出口 | `FINAL,<组>,dns-failed` | `- default: {policy: <组>}` | Surge 可带 `dns-failed`；Egern 无此参数 |
 | 解析阶段拒答 | `REJECT,pre-matching,extended-matching` | `dns.forward` 里 `value: reject` | ⚠️ 机制完全不同但**目的相同**：都在解析阶段掐断，不产生后续查询 |
 | 内置 LAN | `RULE-SET,LAN` | 无内置 → 引用 `Lan.list` | 实测差异之一，见第 3 节 |
+| 延迟测试端点 | `internet-test-url` = `connect.rom.miui.com`（国内 204）
+`proxy-test-url` = `www.gstatic.com`（境外，给 `smart` 打分） | `direct_latency_test_url` = `connect.rom.miui.com`
+`proxy_latency_test_url` = `www.gstatic.com` | **2026-10-05 起两内核同值**（此前 Egern 用 `cp.cloudflare.com` / `connectivitycheck.platform.hicloud.com`）；⚠️ 两个键在两侧都是**单值 URL**，官方均无 fallback 写法 |
 | 内置系统进程 | `RULE-SET,SYSTEM` | 引用本仓快照 `apple_system.list`（= 内置集的时点内容，缺两条 `PROCESS-NAME`） | 2026-09-24 起两侧同位各一套；Egern 侧没有进程名匹配能力，那两条接不住 |
 | 网络级暂停 | `[SSID Setting]` 段：`SSID:MyHome suspend=true`（匹配到名下 Surge 整机暂停、离开该网络自动恢复） | **无对等件**：只有 `rules` 的 `ssid` 条件项（该网络下命中流量走指定策略，隧道不暂停） | 刻意不移植：拿「全直连规则」硬凑会让两侧规则表分叉，且语义不等价（暂停 ≠ 直连） |
 
