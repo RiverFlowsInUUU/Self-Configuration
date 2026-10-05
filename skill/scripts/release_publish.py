@@ -287,6 +287,12 @@ def _blob_birth(root, kern, fam, path):
        它也是现役版在“号查不到”时的兜底。"""
     rel = path.replace(os.sep, '/')
     prof = f'{kern}/profiles/{fam}{".conf" if kern == "surge" else ".yaml"}'
+    # ⚠️ 文件不存在就别查 —— 否则下面 `--diff-filter=A` 会对一个不存在的路径返回
+    #    最近一次提交的日期（假值），把「本内核没有这一版」误报成一个日期。
+    #    2026-10-05 实测：`routing v1`/`v2` 只有 egern 侧有归档，surge 侧因此拿到
+    #    当天日期，把 v1/v2 成片算进 10-05，V7 报「一天 9 个版本」。
+    if not os.path.exists(os.path.join(root, rel)):
+        return None
     try:
         sha = git('rev-parse', f'HEAD:{rel}')
         log = git('log', '--reverse', '--format=%as', '--find-object=' + sha, '--', prof)
@@ -323,15 +329,22 @@ def number_birth(root, kern, fam, ver):
        退回 blob 口径。现役版全部有头注，故不影响；归档版走 `version_date`，本就不经这里。"""
     ext = '.conf' if kern == 'surge' else '.yaml'
     prof = f'{kern}/profiles/{fam}{ext}'
+    # ⚠️ 入参 `ver` 可能带 `v` 前缀（`parse_ver`/`active_versions` 返回的就是 `v2.0.3`），
+    #    而头注里是 `#! version=lazy_v2.0.3`（只有一个 v）⇒ 必须先剥掉前缀再拼，
+    #    否则 pattern 变成 `lazy_vv2.0.3`，永远匹配不到（2026-10-05 实测踩到）。
+    ver_bare = ver[1:] if ver.startswith('v') else ver
     try:
         log = git('log', '--reverse', '--format=%as', '-G',
-                  f'^#! version={fam}_{ver}$', '--', prof)
+                  f'^#! version={fam}_v{ver_bare}$', '--', prof)
         lines = [l for l in log.splitlines() if l.strip()]
         if lines:
             return lines[0]
     except subprocess.CalledProcessError:
         pass
-    return _blob_birth(root, kern, fam, prof)          # 兜底：现役文件 blob 诞生日
+    # ⚠️ 这里**不设 blob 兜底**：兜底是调用方的事 —— 现役版兜底到现役文件、归档版
+    #    兜底到归档快照。早先在这里统一兜底到「现役文件」，害得归档版查到的是**现役
+    #    文件**的最近改动日期（= 今天），把 v1/v2 成片算进 10-05（2026-10-05 实测）。
+    return None
 
 # ⚠️ 为什么用 `-G` 而不是 `-S`（防御性选择，不是当前 bug 修复）：
 #    `-G` 锚定整行；`-S` 是**子串**匹配 —— 若未来出现互为前缀的现役号（如 v4.1 与 v4.1.0
@@ -344,10 +357,18 @@ def number_birth(root, kern, fam, ver):
 #      `skill/reference/shared/boundaries.md` §2「不建日期口径专用闸门」。
 
 def version_date(root, kern, fam, ver):
-    """**归档版**内容的诞生日期：归档快照的 blob 在现役 profile 历史中首次出现的提交。
+    """版本诞生日期：先取「版本号首现日」，查不到才退回「快照/文件 blob 诞生日」。
 
-    归档快照是冻住的内容，与版本号政策无关 —— 保持原口径不变。"""
+    ⚠️ 2026-10-05 修正（实测事故）：原先归档版**只用** blob 口径，对「补归档」失灵 ——
+       懒人版 v2.0.2 生于 10-04，但当天没归档（当天懒人版没升号），归档动作发生在
+       10-05 ⇒ 快照 blob 诞生日 = 10-05，于是 v2.0.2 被算进 10-05 组，与 v2.0.3
+       撞成「一天两个版本」，V7 误判负。号首现日对此免疫：号是 10-04 出现的。
+    ⚠️ 兜底仍必要：早期版本（v1 / v2 / v3.0–v3.4）没有 `#! version=` 头注，
+       只能退回 blob 口径。"""
     ext = '.conf' if kern == 'surge' else '.yaml'
+    d = number_birth(root, kern, fam, ver)
+    if d:
+        return d
     arch = os.path.join(kern, 'profiles', 'config_old', f'{fam}_{ver}{ext}')
     return _blob_birth(root, kern, fam, arch)
 
