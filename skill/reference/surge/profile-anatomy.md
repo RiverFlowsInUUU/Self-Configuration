@@ -667,10 +667,10 @@ AD      = select, REJECT, icon-url=…/AdBlock.png
 | 层 | 组 | 类型 | 作用 |
 |:---|:---|:----:|:-----|
 | ① 总入口 | `Proxy` / `Smart` | `select` / `smart` | `Proxy` 是**手动**总出口（首项 `Smart`，带低倍率优先权重）；`Smart` 是自动全节点池 |
-| ② 应用（11 组） | `ChatGPT` / `Gemini` / `Claude` / `AI` / `Spotify` / `YouTubeMusic` / `YouTube` / `Google` / `Microsoft` / `Telegram` / `Twitter` | `select` | 都带 `include-other-group="Proxy"` —— 复制 `Proxy` 的**已解析成员**；首项各不相同：`Claude` `Taiwan` · `Google` `Gemini` · `Microsoft` `DIRECT` · `AI` 占位节点 `Node-B` · `Spotify` / `YouTubeMusic` `USA`（见下方 📌） |
+| ② 应用（11 组） | `ChatGPT` / `Gemini` / `Claude` / `AI` / `Spotify` / `YouTubeMusic` / `YouTube` / `Google` / `Microsoft` / `Telegram` / `Twitter` | `select` | 都带 `include-other-group="Proxy"` —— 复制 `Proxy` 的**已解析成员**；首项各不相同：`ChatGPT` / `Gemini` / `Spotify` / `YouTubeMusic` → **`United States`** · `Claude` `Taiwan` · `Google` `Gemini` · `Microsoft` `DIRECT` · `AI` 占位节点 `Node-B`（见下方 📌） |
 | ③ 订阅 | `Airport` | `select` | `policy-path` 订阅槽位，`hidden=true` |
 | ③ 开关 | `AD` | `select` | 独立手动开关，**不被规则引用**（见 §13.3） |
-| ④ 地区 | `Hong Kong` / `USA` / `Japan` / `Taiwan` / `Singapore` / `Other Regions` | `smart` | `policy-regex-filter` 按节点名筛；另带 `policy-priority` 低倍率优先（0.15） |
+| ④ 地区 | `Hong Kong` / `Taiwan` / `Japan` / `Singapore` / `United States` / `Other Regions` | `smart` | `policy-regex-filter` 按节点名筛；另带 `policy-priority` 低倍率优先（0.15） |
 | ⑤ 兜底 | `Final` | `select` | `include-other-group="Proxy"` |
 
 > 📌 **`AD` 的位置说明（别被分节编号误导）**：它在 `[Proxy Group]` 里排在 `Airport` 之后、
@@ -699,7 +699,7 @@ AD      = select, REJECT, icon-url=…/AdBlock.png
 | `AI` | **`Node-B`** → `Proxy` | 首项是 `[Proxy]` 里那条本机占位节点，其后才是节点池 |
 | `Claude` | **`Taiwan`** | Egern 的取向，Claude 对台湾线路较友好 |
 | `Google` | `Gemini` → `Proxy` | 首项是 `Gemini` 组 ⇒ 「Google 走 Gemini → Proxy」 |
-| `Spotify` / `YouTubeMusic` | **`USA`** | 媒体类的解锁地区（2026-09-26 定） |
+| `Spotify` / `YouTubeMusic` | **`United States`** | 媒体类的解锁地区（2026-09-26 定；组名由 `USA` 改名而来） |
 | `YouTube` | `Proxy` | 媒体类 |
 | `Telegram` / `Twitter` | `Proxy` | 社交类 |
 | `Microsoft` | **`DIRECT`** | 微软国内可直连，走代理反而慢 |

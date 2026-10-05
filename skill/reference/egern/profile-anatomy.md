@@ -63,7 +63,7 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 | 类型 | 作用 | 模板里的例子 |
 |---|---|---|
 | `select` | 手动选路 | `Proxy` / `Final` / 各类 App 组 |
-| `smart` | 智能选优：组内多轮测速，按延迟 / 抖动 / 可靠性综合打分自动选最稳节点 | `Hong Kong` / `USA` / `Japan`（这些地区组另配 `filter` 正则从订阅里筛节点 —— 归类是 `filter` 的职责，不是 `smart` 的） |
+| `smart` | 智能选优：组内多轮测速，按延迟 / 抖动 / 可靠性综合打分自动选最稳节点 | `Hong Kong` / `Taiwan` / `Japan`（这些地区组另配 `filter` 正则从订阅里筛节点 —— 归类是 `filter` 的职责，不是 `smart` 的） |
 | `fallback` | 故障转移：按 `policies` 顺序依次尝试，选第一个可用的节点 | 现版模板无 `fallback` 组（`ChatGPT` / `Gemini` 至 `routing_v2.4` 为该类型，`routing_v3` 起为 `select`） |
 | `external` | 从订阅 URL 拉取节点 | 模板里是 `sub.example.com?token=REPLACE_WITH_YOUR_TOKEN` 占位 |
 

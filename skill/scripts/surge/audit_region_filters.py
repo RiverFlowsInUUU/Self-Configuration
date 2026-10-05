@@ -51,7 +51,7 @@ from _surge_common import parse_conf, split_csv, strip_comment  # noqa: E402
 
 # 地区组的名字 —— 与 routing.conf 里的组名逐字对应（含 `Other Regions`）。
 # ⚠️ 若你在 routing.conf 里改了组名，这里也要改（脚本会报缺失，不会静默通过）。
-REGION_GROUPS = ["Hong Kong", "USA", "Japan", "Taiwan", "Singapore"]
+REGION_GROUPS = ["Hong Kong", "Taiwan", "Japan", "Singapore", "United States"]
 OTHER_GROUP = "Other Regions"
 
 # 刻意加在 Other Regions 负向断言末尾的"信息行过滤词"。

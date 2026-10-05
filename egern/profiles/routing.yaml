@@ -163,10 +163,10 @@ policy_groups:
     policies:
     - Smart
     - Hong Kong
-    - USA
-    - Singapore
     - Taiwan
     - Japan
+    - Singapore
+    - United States
     - Other Regions
     - Node-A
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Proxy.png
@@ -200,19 +200,21 @@ policy_groups:
 #   YouTube / Telegram / Twitter 默认 `Proxy`；Claude 默认 `Taiwan`；
 #   Google 默认 `Gemini`；Microsoft 默认 `DIRECT`。
 #   ⚠️ 本版有两处首项不是组名池：`AI` 首项是本文件的 `Node-B`（占位节点），
-#     `Spotify` / `YouTubeMusic` 首项是 `USA`。两侧（Surge / Egern）同写。
+#     `Spotify` / `YouTubeMusic` 首项是 `United States`。两侧（Surge / Egern）同写。
 # ================================================================
 - select:
     name: ChatGPT
-    # 规则 4（OpenAI.list → ChatGPT）直接指向本组 ⇒ 必须始终有出口，默认 Proxy。
+    # 规则 4（OpenAI.list → ChatGPT）直接指向本组 ⇒ 必须始终有出口，默认**美区**。
     policies:
+    - United States
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/openai.png
 - select:
     name: Gemini
-    # 规则 5（Gemini.list → Gemini）直接指向本组；且 `Google` 组首项即本组。
+    # 规则 5（Gemini.list → Gemini）直接指向本组；且 `Google` 组首项即本组。默认**美区**。
     policies:
+    - United States
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/gemini-color.png
@@ -236,17 +238,17 @@ policy_groups:
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/grok.png
 - select:
     name: Spotify
-    # 默认走 `USA`（与 `YouTubeMusic` 同）；Spotify 的解锁地区以美区为准。
+    # 默认走 `United States`（与 `YouTubeMusic` 同）；Spotify 的解锁地区以美区为准。
     policies:
-    - USA
+    - United States
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Spotify.png
 - select:
     name: YouTubeMusic
-    # 默认走 `USA`。
+    # 默认走 `United States`。
     policies:
-    - USA
+    - United States
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTubeMusic.png
@@ -319,14 +321,14 @@ policy_groups:
       "(?<![\\d.])0\\.\\d*[1-9]": 0.15
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/HongKong.png
 - smart:
-    name: USA
+    name: Taiwan
     policies:
     - Airport
     flatten: true
-    filter: (?i)🇺🇸|美国|United\s*States|America|\bUSA?\b|洛杉矶|硅谷|西雅图|芝加哥|达拉斯|凤凰城|阿什本|纽约|迈阿密|波士顿|休斯顿|亚特兰大|拉斯维加斯|圣地亚哥|盐湖城|奥斯汀|波特兰|丹佛|奥克兰|安大略|圣安娜|\b(?:LAX|SJC|SFO|SEA|ORD|JFK|DFW|IAD|PHX|ATL|BOS|MIA|EWR|LGA|IAH|HOU|DEN|OAK|ONT|SNA|LAS|PDX|DAL|SAN|SLC|MSP)\b
+    filter: (?i)🇹🇼|台湾|Taiwan|\b(?:TWN?|TPE|Taipei)\b
     priorities:
       "(?<![\\d.])0\\.\\d*[1-9]": 0.15
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/UnitedStates.png
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Taiwan.png
 - smart:
     name: Japan
     policies:
@@ -337,15 +339,6 @@ policy_groups:
       "(?<![\\d.])0\\.\\d*[1-9]": 0.15
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Japan.png
 - smart:
-    name: Taiwan
-    policies:
-    - Airport
-    flatten: true
-    filter: (?i)🇹🇼|台湾|Taiwan|\b(?:TWN?|TPE|Taipei)\b
-    priorities:
-      "(?<![\\d.])0\\.\\d*[1-9]": 0.15
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Taiwan.png
-- smart:
     name: Singapore
     policies:
     - Airport
@@ -355,9 +348,18 @@ policy_groups:
       "(?<![\\d.])0\\.\\d*[1-9]": 0.15
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Singapore.png
 - smart:
+    name: United States
+    policies:
+    - Airport
+    flatten: true
+    filter: (?i)🇺🇸|美国|United\s*States|America|\bUSA?\b|洛杉矶|硅谷|西雅图|芝加哥|达拉斯|凤凰城|阿什本|纽约|迈阿密|波士顿|休斯顿|亚特兰大|拉斯维加斯|圣地亚哥|盐湖城|奥斯汀|波特兰|丹佛|奥克兰|安大略|圣安娜|\b(?:LAX|SJC|SFO|SEA|ORD|JFK|DFW|IAD|PHX|ATL|BOS|MIA|EWR|LGA|IAH|HOU|DEN|OAK|ONT|SNA|LAS|PDX|DAL|SAN|SLC|MSP)\b
+    priorities:
+      "(?<![\\d.])0\\.\\d*[1-9]": 0.15
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/UnitedStates.png
+- smart:
     name: Other Regions
     # ================================================================ ⚠️ 维护陷阱
-    # 下面这段负向断言，把上面 5 个地区组（Hong Kong / USA / Japan / Taiwan / Singapore）
+    # 下面这段负向断言，把上面 5 个地区组（Hong Kong / Taiwan / Japan / Singapore / United States）
     # 的筛选关键词**逐字抄了一遍**，共 61 个。这是有意为之（负向断言要求"排除以上全部"），
     # 但代价是：**任何地区组新增/修改关键词，都必须同步改这里。**
     #

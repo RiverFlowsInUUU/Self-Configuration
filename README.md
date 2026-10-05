@@ -41,7 +41,7 @@
 | ✈️ `Telegram` · 🐦 `Twitter` | - | ✅ |
 | 🛰️ `Airport`（订阅槽位）| ✅ | ✅ |
 | 🛑 `AD` | ✅ | ✅ |
-| 🇭🇰 `Hong Kong` · 🇺🇸 `USA` · 🇯🇵 `Japan` · 🇨🇳 `Taiwan`<br>🇸🇬 `Singapore` · 🇦🇶 `Other Regions` | - | ✅ |
+| 🇭🇰 `Hong Kong` · `Taiwan` · 🇯🇵 `Japan` · 🇸🇬 `Singapore`<br>🇺🇸 `United States` · 🇦🇶 `Other Regions` | - | ✅ |
 | 🌐 `Final` | - | ✅ |
 
 ---

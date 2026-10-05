@@ -4,7 +4,7 @@
 
 为什么必须有这个脚本
 --------------------
-模板里 5 个地区组（Hong Kong / USA / Japan / Taiwan / Singapore）各自写自己的
+模板里 5 个地区组（Hong Kong / Taiwan / Japan / Singapore / United States）各自写自己的
 `filter` 正则，而 `Other Regions` 用一条**负向断言**（`^ (?! .* (?: 关键词 ) ) .+ $`）
 把它们的全部关键词**又抄了一遍**。这是负向断言的固有要求（"排除以上全部"必须逐字列出），
 Egern 也不支持 `filter` 引用别的 filter，所以**无法靠 YAML 变量消除这份拷贝**。
