@@ -12,7 +12,8 @@
     python skill/scripts/release_publish.py --apply             # 按计划发布全部缺失的 Release（需 --token 或环境变量 GITHUB_TOKEN）
 
 规矩（详见 skill/reference/shared/ops.md §6.9，断言在 skill/tests/check_releases.py）:
-    - tag = vYYYY-MM-DD（版本诞生日期）；资产文件名一律不带版本号（固定名）；
+    - tag = vYYYY-MM-DD（现役版取**版本号首现日** number_birth；归档版取快照 blob 诞生日）；
+      资产文件名一律不带版本号（固定名）；
     - Release 标题 = emoji + 日期 + 当日主题（DAY_THEMES 表）；
     - 正文按产品线分小节：每版本一行 **vX.Y(.Z)** 头 + 公众向要点（PUBLIC_NOTES 表）；
     - **说明是面向公众的产品更新日志**（参考 Apple 更新说明的正式产品语言），
@@ -65,6 +66,12 @@ DAY_THEMES = {
     '2026-10-04': ('🧹', '微信分组精简、Apple 规则集换源与直连白名单更名'),
     '2026-10-05': ('🧭', '韩国分组移除与配置注释现况化'),
 }
+
+# ⚠️ 归组口径（2026-10-05 起）："注释/文案改动不升号" —— 它与"一天一版"合起来的结果是，
+#    某天只改了懒人版**注释**（无功能/无配置键变动）时，懒人版**不升号、不入归档**，
+#    而分流版若有实质改动则正常升号；那张 Release 的**懒人版小节会并列"现役旧版本号"**
+#    与"分流版新版本号"，并在正文里说明懒人版仅注释更新。这是刻意的，不是漏写。
+#    断言：check_min_pair V7（一天一版）只看**升过号的**版本，注释改动不会凭空造出新版本。
 
 # 归组例外：个别版本的「版本号诞生日期」与「内容诞生日期」不同日，按内容事件归组。
 # 依据（0929 实证）：c593895（2026-09-26 19:29）一个提交同时给懒人版（v1.3）与分流版
@@ -222,12 +229,10 @@ PUBLIC_NOTES = {
         '修正了配置内关于 Apple 规则集的一处说明。分流行为无变化。此改动仅涉及 Surge 内核，Egern 内核仅同步版本号。',
         '防误杀直连白名单规则集随上游更名：`surge-white-guard.list` → `surge-direct.list`，订阅地址同步更新；同时新增一条放行域名，白名单由 43 条增至 44 条。这份清单排在两条广告清单之前，作用是放行会被广告规则误杀的域名（命中即直连）；地址变更本身不影响分流行为。',
         '配置注释不再标注规则集的固定条数：上游规则集每周更新，固定数字很快会过期，改由脚本现抓。分流行为无变化。',
+        '配置注释改为只描述当前状态，不再保留历代版本的沿革说明。配置更短、更好读，分流与防 DNS 泄露行为均无变化（注释更新不升版本号）。',
     ],
     ('routing', 'v4.0.4'): [
         '移除韩国分组：韩国节点并入「其他地区」分组仍可正常选用。该分组未被任何分流规则引用，仅作面板上的手动入口，因此分流行为无变化。分流版分组数量由 24 个减少至 23 个。',
-        '配置注释改为只描述当前状态，不再保留历代版本的沿革说明。配置更短、更好读，分流与防 DNS 泄露行为均无变化。',
-    ],
-    ('lazy', 'v2.0.3'): [
         '配置注释改为只描述当前状态，不再保留历代版本的沿革说明。配置更短、更好读，分流与防 DNS 泄露行为均无变化。',
     ],
 }
@@ -270,7 +275,10 @@ def archive_min(root, kern, fam, ver):
 def _blob_birth(root, kern, fam, path):
     """path（仓库内相对路径）所指 blob 首次进入该 profile 历史的提交日期。
 
-    历史重写查不到诞生提交时，兜底取该文件被加入 repo 的日期；再查不到返回 None。"""
+    历史重写查不到诞生提交时，兜底取该文件被加入 repo 的日期；再查不到返回 None。
+    ⚠️ 本函数仍是**归档版**（`config_old/` 快照）的正式口径 —— 快照是冻住的内容，
+       其 blob 首现日就是那版内容的诞生日，与是否升号无关。
+       它也是现役版在“号查不到”时的兜底。"""
     rel = path.replace(os.sep, '/')
     prof = f'{kern}/profiles/{fam}{".conf" if kern == "surge" else ".yaml"}'
     try:
@@ -288,16 +296,59 @@ def _blob_birth(root, kern, fam, path):
     except subprocess.CalledProcessError:
         return None
 
-def version_date(root, kern, fam, ver):
-    """该版本内容的诞生日期：归档快照的 blob 在现役 profile 历史中首次出现的提交。
+def number_birth(root, kern, fam, ver):
+    """该版本号（`#! version=<fam>_v<ver>`）**首次加进该 profile** 的日期 —— 只用于**现役版**。
 
-    （旧实现取"归档文件被加入 repo 的提交"= 退役提交，永远晚一个版本 —— 已废弃。）"""
+    为什么现役版需要它（2026-10-05 改口径）
+    ──────────────────────────────────────
+    本仓政策是“**注释/文案改动不升号**”（见 SKILL.md「归档机制」）。若某天只给懒人版
+    改了注释、版本号不动，那么“现役文件 blob 的诞生日”会跟着挪到那天 ⇒ 懒人版会被
+    拉进当天那张 Release（而它本属于旧版本），版本号与发布日期从此错位。
+    “版本号首现日”不受无号改动影响：号没变，日期就不变。
+
+    为什么要锚定正则、不能用 `-S`
+    ──────────────────────────────
+    `-S` 是**子串**匹配：`#! version=routing_v1` 会把 `routing_v1.0` / `v1.1` … 全部命中
+    （2026-10-05 实测：历史版本被成片错分到最新一天）。改写 `-G "^#! version=<号>$"`
+    （basic regex，`^$` 锚定整行）后逐版本正确。
+    ⚠️ `-G` 同时匹配“增加”与“删除”：升号那天旧号那一行被改掉也算一次命中。
+       因此取 `--reverse` 后的**第一条** = 首次出现（即加入那一次），不能取最后一条。
+    ⚠️ 兜底：早期版本（v1 / v2 / v3.0–v3.4）根本没有 `#! version=` 头注 ⇒ 查不到，
+       退回 blob 口径。现役版全部有头注，故不影响；归档版走 `version_date`，本就不经这里。"""
+    ext = '.conf' if kern == 'surge' else '.yaml'
+    prof = f'{kern}/profiles/{fam}{ext}'
+    try:
+        log = git('log', '--reverse', '--format=%as', '-G',
+                  f'^#! version={fam}_{ver}$', '--', prof)
+        lines = [l for l in log.splitlines() if l.strip()]
+        if lines:
+            return lines[0]
+    except subprocess.CalledProcessError:
+        pass
+    return _blob_birth(root, kern, fam, prof)          # 兜底：现役文件 blob 诞生日
+
+# ⚠️ 为什么用 `-G` 而不是 `-S`（防御性选择，不是当前 bug 修复）：
+#    `-G` 锚定整行；`-S` 是**子串**匹配 —— 若未来出现互为前缀的现役号（如 v4.1 与 v4.1.0
+#    共存过一段时间），`-S` 会把新号的首现日错记成旧号的首现日。当前两个产品线的现役号
+#    之间不存在这种关系（_v1 配 _v1.0 那类只存在于**归档**，而归档走 `version_date`、不经这里），
+#    所以今天两者结果相同（2026-10-05 实测全量对拍 0 处不符）。取 -G 是为了不对未来埋雷。
+#    ⚠️ 不要写“-S 会被闸门拦住”这种断言 —— 实测**没有**任何闸门能抓住它（2026-10-05 验证：
+#      把 -G 换成 -S 后 check_releases 仍 140 passed），只能靠这条注释与 -G 本身。
+
+def version_date(root, kern, fam, ver):
+    """**归档版**内容的诞生日期：归档快照的 blob 在现役 profile 历史中首次出现的提交。
+
+    归档快照是冻住的内容，与版本号政策无关 —— 保持原口径不变。"""
     ext = '.conf' if kern == 'surge' else '.yaml'
     arch = os.path.join(kern, 'profiles', 'config_old', f'{fam}_{ver}{ext}')
     return _blob_birth(root, kern, fam, arch)
 
 def build_days(root):
     """按版本诞生日期分组：一天 = 一个候选 Release。
+
+    ⚠️ 日期口径（2026-10-05 起，与「注释不升号」政策配套）：
+       现役版 = `number_birth`（版本号首现日）；归档版 = `version_date`（快照 blob 诞生日）。
+       理由与判据见 `number_birth` 的 docstring。
 
     返回按日期升序的 day 列表：
         {date, tag, emoji, theme, is_current,
@@ -326,7 +377,9 @@ def build_days(root):
                     kerns[kern] = None
                     continue
                 mn = full[:full.rindex(ext)] + f'.min{ext}'
-                date = _blob_birth(root, kern, fam, os.path.relpath(full, root)) if is_cur \
+                # 现役版：按“版本号首现日”定日期（注释改动不升号 ⇒ 日期不挪）；
+                # 归档版：按快照 blob 的诞生日定日期（内容冻住，与升号无关）。
+                date = number_birth(root, kern, fam, ver) if is_cur \
                     else version_date(root, kern, fam, ver)
                 kerns[kern] = {'full': os.path.relpath(full, root),
                                'min': os.path.relpath(mn, root), 'date': date}
