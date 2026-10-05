@@ -2,12 +2,12 @@
 
 > 这一页是组件清单：用了哪些规则集、各自从哪来、按什么顺序生效。
 > 两内核共用同一批远程规则集，**条数一律现抓**（本仓纪律：写死的数字必然过期）：
-> `python skill/tests/check_docs_sync.py` 会把本节与配置对拍。
+> `python skill/tests/sync_docs.py --check` 会把本节与配置对拍。
 > **Egern 独有 2 项** —— `Lan.list` 与 `apple_system.list`，各用来补 Surge 的一个内置集合（内置 `LAN` / `SYSTEM`），
 > 这是两内核引用 URL **不逐字相同**的唯一原因（其余全部相同）。
 >
 > 引用位口径（数的是 `rules` 段里指向规则集的条目，同一份规则集被两条规则各引用一次就占两位）：
-> 分流版 **23 条规则集引用**。
+> 分流版 **<!-- auto:ruleset-refs -->23<!-- /auto:ruleset-refs --> 条规则集引用**。
 > 懒人版 **9 条规则集引用**。
 > 这两个数以本文件与两侧 profile 的现算为准，别混。
 
