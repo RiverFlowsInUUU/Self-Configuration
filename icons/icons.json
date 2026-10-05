@@ -1,0 +1,156 @@
+{
+  "name": "Self-Configuration Icons",
+  "description": "Surge / Egern 配置模板的策略组图标集（由本仓 icons/ 目录派生）",
+  "icons": [
+    {
+      "name": "Proxy",
+      "category": "策略组",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Proxy.png"
+    },
+    {
+      "name": "Smart",
+      "category": "策略组",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Auto.png"
+    },
+    {
+      "name": "Direct",
+      "category": "策略组",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Final.png"
+    },
+    {
+      "name": "AdBlock",
+      "category": "策略组",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/AdBlock.png"
+    },
+    {
+      "name": "Airport",
+      "category": "策略组",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png"
+    },
+    {
+      "name": "Other Regions",
+      "category": "地区",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/WorldMap.png"
+    },
+    {
+      "name": "ChatGPT",
+      "category": "AI",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/openai.png"
+    },
+    {
+      "name": "OpenAI",
+      "category": "AI",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/openai.png"
+    },
+    {
+      "name": "Gemini",
+      "category": "AI",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/gemini-color.png"
+    },
+    {
+      "name": "Claude",
+      "category": "AI",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/claude-color.png"
+    },
+    {
+      "name": "Grok",
+      "category": "AI",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/grok.png"
+    },
+    {
+      "name": "Spotify",
+      "category": "媒体",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Spotify.png"
+    },
+    {
+      "name": "YouTube",
+      "category": "媒体",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTube.png"
+    },
+    {
+      "name": "YouTube Music",
+      "category": "媒体",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTubeMusic.png"
+    },
+    {
+      "name": "YouTubeMusic",
+      "category": "媒体",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTubeMusic.png"
+    },
+    {
+      "name": "GitHub",
+      "category": "开发",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/GitHub.png"
+    },
+    {
+      "name": "Google",
+      "category": "效率",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Google.png"
+    },
+    {
+      "name": "Microsoft",
+      "category": "效率",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Microsoft.png"
+    },
+    {
+      "name": "Telegram",
+      "category": "社交",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Telegram.png"
+    },
+    {
+      "name": "Twitter",
+      "category": "社交",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Twitter.png"
+    },
+    {
+      "name": "WeChat",
+      "category": "社交",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/WeChat.png"
+    },
+    {
+      "name": "Hong Kong",
+      "category": "地区",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/HongKong.png"
+    },
+    {
+      "name": "Taiwan",
+      "category": "地区",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Taiwan.png"
+    },
+    {
+      "name": "Japan",
+      "category": "地区",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Japan.png"
+    },
+    {
+      "name": "Singapore",
+      "category": "地区",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Singapore.png"
+    },
+    {
+      "name": "United States",
+      "category": "地区",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/UnitedStates.png"
+    },
+    {
+      "name": "USA",
+      "category": "地区",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/UnitedStates.png"
+    },
+    {
+      "name": "Korea",
+      "category": "地区",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Korea.png"
+    },
+    {
+      "name": "Surge",
+      "category": "客户端",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Surge.png"
+    },
+    {
+      "name": "Egern",
+      "category": "客户端",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Egern.png"
+    }
+  ]
+}
