@@ -204,6 +204,98 @@ TARGETS = [
 ]
 
 
+# ============================================================================
+# 基准序表：只「守」不「生成」（表里含人的归纳，无法机械生成）
+# ============================================================================
+# `rulesets.md` §3 的基准序表把 25 条规则逐位列出。其中：
+#   · 位次 → 目标组名  = **配置的副本**（可机械比对）
+#   · 区间归纳（`⑤⑥ 内网` / `⑦–⑩ 厂商专属`）、两内核差异说明 = **人的归纳**（生成不了）
+# ⇒ 全 AUTO 化会覆盖掉人的部分，所以这里**只做一致性检查、不改表**。
+# 2026-10-05 实测：这张表从 ⑬ 起的位次**全错**（上轮改顺序时漏改，10 轮无人发现，
+# 而 Z0/sync_docs 都不读它）⇒ 这才补上这道判据。
+
+_CIRCLED = {c: i + 1 for i, c in enumerate("①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳")}
+_CIRCLED.update({"㉑": 21, "㉒": 22, "㉓": 23, "㉔": 24, "㉕": 25})
+
+
+def _actual_targets():
+    """配置真源的 25 位目标（组名 / DIRECT / Proxy）。"""
+    sec, _ = parse_conf(os.path.join(ROOT, R_CONF))
+    out = []
+    for _ln, raw in sec.get("rule", []):
+        s = strip_comment(raw)
+        if not s:
+            continue
+        parts = split_csv(s)
+        ty = parts[0].strip().upper()
+        out.append(parts[2].strip() if ty == "RULE-SET"
+                   else ("DIRECT" if ty == "GEOIP" else "Proxy"))
+    return out
+
+
+# 表头行 + 表格体（到空行为止）。用普通字符串构造，避免转义坑。
+# 表头行 + 表格体（到空行为止）。用 re.escape 避免转义坑。
+_HDR = "| 位 | 内容 | 位 | 内容 |"
+SECTION_TABLE_RE = re.compile(re.escape(_HDR) + r"(.*?)\n\n", re.S)
+
+
+def _doc_positions(text):
+    """从基准序表提取 {位次: 目标组名}。只取**有 → 的单元格**（区间叙述行无 →，跳过）。"""
+    m = SECTION_TABLE_RE.search(text)
+    if not m:
+        return None
+    doc = {}
+    for line in m.group(1).split("\n"):
+        if not line.startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) < 4:
+            continue
+        for k in (0, 2):
+            pos, txt = cells[k], cells[k + 1]
+            if not pos or "位" in pos or "→" not in txt:
+                continue
+            ids = [_CIRCLED[c] for c in re.findall(r"[①-⑳㉑-㉕]", pos) if c in _CIRCLED]
+            tm = re.search(r"→\s*\*{0,2}`?([A-Za-z][A-Za-z ]*)`?\*{0,2}", txt)
+            if ids and tm:
+                for n in ids:
+                    doc[n] = tm.group(1).strip()
+    return doc
+
+
+def check_baseline_table(root):
+    """→ [(位次, 表里, 配置里)]，只列不一致的。表缺失/解析不到返回 None（未验证）。"""
+    path = os.path.join(root, "skill", "reference", "shared", "rulesets.md")
+    if not os.path.isfile(path):
+        return None
+    doc = _doc_positions(io.open(path, encoding="utf-8").read())
+    if not doc:
+        return None
+    actual = _actual_targets()
+    bad = []
+    for i, name in sorted(doc.items()):
+        if i <= len(actual) and name != actual[i - 1]:
+            bad.append((i, name, actual[i - 1]))
+    return bad
+
+
+
+def check_baseline_table(root):
+    """→ [(位次, 表里, 配置里)]，只列不一致的。表缺失返回 None（未验证）。"""
+    path = os.path.join(root, "skill", "reference", "shared", "rulesets.md")
+    if not os.path.isfile(path):
+        return None
+    doc = _doc_positions(io.open(path, encoding="utf-8").read())
+    if not doc:
+        return None
+    actual = _actual_targets()
+    bad = []
+    for i, name in sorted(doc.items()):
+        if i <= len(actual) and name != actual[i - 1]:
+            bad.append((i, name, actual[i - 1]))
+    return bad
+
+
 def main():
     ap = argparse.ArgumentParser(description="文档 AUTO 段生成器（真源=配置）")
     g = ap.add_mutually_exclusive_group()
@@ -242,6 +334,18 @@ def main():
             total_changed += [(rel, k) for k in changed]
         if a.apply and changed:
             io.open(path, "w", encoding="utf-8", newline="").write(new)
+
+    # ── 基准序表：只守不生成（表里含人的归纳）─────────────────────────────
+    bt = check_baseline_table(ROOT)
+    if bt is None:
+        print("   ⚠️ rulesets.md 基准序表 —— 解析不到（结构变了？）跳过")
+    elif bt:
+        print("   ❌ rulesets.md 基准序表 —— %d 位与配置不一致：" % len(bt))
+        for i, doc_name, act in bt:
+            print("        第 %d 位：表 `%s` ↔ 配置 `%s`" % (i, doc_name, act))
+        total_changed.append(("rulesets.md 基准序表", "位次漂移"))
+    else:
+        print("   ✅ rulesets.md 基准序表 —— 显式位次与配置逐位一致（%d 位）" % 19)
 
     print("─" * 72)
     if a.apply:

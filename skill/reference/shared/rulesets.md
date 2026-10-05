@@ -67,15 +67,19 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 
 | 位 | 内容 | 位 | 内容 |
 |:-:|:-----|:-:|:-----|
-| ① | **系统域白名单**：Surge 内置 `SYSTEM` ／ Egern `apple_system.list` → `DIRECT` | ⑬ | `YouTube.list` → `YouTube` |
-| ⑬b | `emby.list`（**本仓自托管**）→ `Emby` |
-| ② | 广告白名单 `surge-direct.list` → `DIRECT` | ⑭ | `Telegram.list` → `Telegram` |
-| ③④ | 两条广告清单 → `REJECT`(S) / `AD`(E) | ⑮ | `YouTubeMusic.list` → `YouTube Music` |
-| ⑤⑥ | 内网：Surge `LAN` · `private` ／ Egern `Lan.list` · `Private` | ⑯ | `Google.list` → `Google` |
-| ⑦–⑩ | 厂商专属：`OpenAI` · `Gemini` · `Anthropic` · `Claude` | ⑰ | `GitHub.list` → **`Proxy`**（无同名组） |
-| ⑪⑫ | `AI.list` ×2（Repcz + 本仓自托管）→ `AI` | ⑱–⑳ | `Spotify` · `Twitter` · `Microsoft` |
-|  |  | ㉑㉒ | `apple.txt` · `direct.txt` → `DIRECT` |
-|  |  | ㉓㉔ | `GEOIP,CN` → `DIRECT` ／ `FINAL` → `Proxy` |
+| ① | **系统域白名单**：Surge 内置 `SYSTEM` ／ Egern `apple_system.list` → `DIRECT` | ⑬ | `YouTubeMusic.list` → `YouTube Music` |
+| ② | 广告白名单 `surge-direct.list` → `DIRECT` | ⑭ | `GitHub.list` → **`Proxy`**（无同名组） |
+| ③④ | 两条广告清单 → `REJECT`(S) / `AD`(E) | ⑮ | `YouTube.list` → `YouTube` |
+| ⑤⑥ | 内网：Surge `LAN` · `private` ／ Egern `Lan.list` · `Private` | ⑯ | `emby.list`（**本仓自托管**）→ `Emby` |
+| ⑦–⑩ | 厂商专属：`OpenAI` · `Gemini` · `Anthropic` · `Claude` | ⑰ | `Google.list` → `Google` |
+| ⑪⑫ | `AI.list` ×2（Repcz + 本仓自托管）→ `AI` | ⑱ | `Telegram.list` → `Telegram` |
+|  |  | ⑲ | `Spotify.list` → `Spotify` |
+|  |  | ⑳ | `Twitter.list` → `Twitter` |
+|  |  | ㉑ | `Microsoft.list` → `Microsoft` |
+|  |  | ㉒ | `apple.txt` → `DIRECT` |
+|  |  | ㉓ | `direct.txt` → `DIRECT` |
+|  |  | ㉔ | `GEOIP,CN` → `DIRECT` |
+|  |  | ㉕ | `FINAL` → `Proxy` |
 
 | 位 | 内容 | 位 | 内容 |
 |:-:|:-----|:-:|:-----|
