@@ -667,7 +667,7 @@ AD      = select, REJECT, icon-url=…/AdBlock.png
 | 层 | 组 | 类型 | 作用 |
 |:---|:---|:----:|:-----|
 | ① 总入口 | `Proxy` / `Smart` | `select` / `smart` | `Proxy` 是**手动**总出口（首项 `Smart`，带低倍率优先权重）；`Smart` 是自动全节点池 |
-| ② 应用（11 组） | `ChatGPT` / `Gemini` / `Claude` / `AI` / `Spotify` / `YouTubeMusic` / `YouTube` / `Google` / `Microsoft` / `Telegram` / `Twitter` | `select` | 都带 `include-other-group="Proxy"` —— 复制 `Proxy` 的**已解析成员**；首项各不相同：`ChatGPT` / `Gemini` / `Spotify` / `YouTubeMusic` → **`United States`** · `Claude` `Taiwan` · `Google` `Gemini` · `Microsoft` `DIRECT` · `AI` 占位节点 `Node-B`（见下方 📌） |
+| ② 应用（11 组） | `ChatGPT` / `Gemini` / `Claude` / `AI` / `Google` / `YouTube` / `YouTube Music` / `Spotify` / `Telegram` / `Twitter` / `Microsoft` | `select` | 都带 `include-other-group="Proxy"` —— 复制 `Proxy` 的**已解析成员**；首项各不相同：`ChatGPT` / `Gemini` / `Spotify` / `YouTube Music` → **`United States`** · `Claude` `Taiwan` · `Google` `Gemini` · `Microsoft` `DIRECT` · `AI` 占位节点 `Node-B`（见下方 📌） |
 | ③ 订阅 | `Airport` | `select` | `policy-path` 订阅槽位，`hidden=true` |
 | ③ 开关 | `AD` | `select` | 独立手动开关，**不被规则引用**（见 §13.3） |
 | ④ 地区 | `Hong Kong` / `Taiwan` / `Japan` / `Singapore` / `United States` / `Other Regions` | `smart` | `policy-regex-filter` 按节点名筛；另带 `policy-priority` 低倍率优先（0.15） |
@@ -699,7 +699,7 @@ AD      = select, REJECT, icon-url=…/AdBlock.png
 | `AI` | **`Node-B`** → `Proxy` | 首项是 `[Proxy]` 里那条本机占位节点，其后才是节点池 |
 | `Claude` | **`Taiwan`** | Egern 的取向，Claude 对台湾线路较友好 |
 | `Google` | `Gemini` → `Proxy` | 首项是 `Gemini` 组 ⇒ 「Google 走 Gemini → Proxy」 |
-| `Spotify` / `YouTubeMusic` | **`United States`** | 媒体类的解锁地区（2026-09-26 定；组名由 `USA` 改名而来） |
+| `Spotify` / `YouTube Music` | **`United States`** | 媒体类的解锁地区（2026-09-26 定；组名由 `USA` 改名而来） |
 | `YouTube` | `Proxy` | 媒体类 |
 | `Telegram` / `Twitter` | `Proxy` | 社交类 |
 | `Microsoft` | **`DIRECT`** | 微软国内可直连，走代理反而慢 |
@@ -773,7 +773,7 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 | 2–4 | 广告白名单 / 广告拦截 ×2 | `DIRECT` / `REJECT` / `REJECT` | 同 lazy |
 | **5–6** | 内网：`LAN` / `private.txt` | `DIRECT`（`LAN` 带 `no-resolve`，`private.txt` 零 IP 不写） | 同 lazy |
 | **7–11** | AI 厂商：`OpenAI` / `Gemini` / `Anthropic` / `Claude` / `AI` | `ChatGPT` / `Gemini` / `Claude` / `Claude` / `AI` | **新增 5 条**（AI 细分） |
-| **12–14** | 媒体：`Spotify` / `YouTubeMusic` / `YouTube` | 同名组 | **新增 3 条** |
+| **12–14** | 媒体：`YouTube` / `YouTube Music` / `Spotify` | 同名组 | **新增 3 条** |
 | **15–19** | `Google` / `Telegram` / `Twitter` / `Microsoft`；`GitHub` → `Proxy` 直指 | 同名组（`Microsoft` 首项 `DIRECT`） | **新增 5 条**（2026-10-05：`Microsoft` 移到 `Twitter` 之后） |
 | 20 | Apple 域名集：`apple.txt` | `DIRECT`（零 IP **不写**开关） | 新增 |
 | 21–22 | `direct.txt` / `GEOIP,CN` | `DIRECT`（`direct.txt` 零 IP **不写**开关；`GEOIP` 带 `no-resolve`） | 同 lazy |

@@ -36,9 +36,7 @@
 | 🚀 `Proxy` | ✅ | ✅ |
 | ⚡ `Smart` | - | ✅ |
 | 🤖 `ChatGPT` · `Gemini` · `Claude` · `AI` | 仅 `AI` | ✅ |
-| 🎵 `Spotify` · 🎶 `YouTubeMusic` · ▶️ `YouTube` | - | ✅ |
-| 🔎 `Google` · 🪟 `Microsoft` | - | ✅ |
-| ✈️ `Telegram` · 🐦 `Twitter` | - | ✅ |
+| 🔎 `Google` · ▶️ `YouTube` · 🎶 `YouTube Music`<br>🎵 `Spotify` · ✈️ `Telegram` · 🐦 `Twitter` · 🪟 `Microsoft` | - | ✅ |
 | 🛰️ `Airport`（订阅槽位）| ✅ | ✅ |
 | 🛑 `AD` | ✅ | ✅ |
 | 🇭🇰 `Hong Kong` · `Taiwan` · 🇯🇵 `Japan` · 🇸🇬 `Singapore`<br>🇺🇸 `United States` · 🇦🇶 `Other Regions` | - | ✅ |

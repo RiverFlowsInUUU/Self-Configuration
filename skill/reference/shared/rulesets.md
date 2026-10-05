@@ -63,7 +63,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 | ③④ | 两条广告清单 → `REJECT`(S) / `AD`(E) | ㉑ | `direct.txt` → `DIRECT` |
 | ⑤⑥ | 内网：Surge `LAN` · `private` ／ Egern `Lan.list` · `Private` | ㉒㉓ | 国内 IP 判定 → **默认出口** |
 | ⑦–⑪ | 厂商专属在前：`OpenAI` · `Gemini` · `Anthropic` · `Claude`，再 `AI.list` | | |
-| ⑫⑬ | `Spotify` · `YouTubeMusic` | | |
+| ⑫⑬ | `Spotify` · `YouTube Music` | | |
 
 **懒人版**：两侧各 **10 条**、逐位同构（2026-09-24 起）。段序同上表把「应用段」收缩成一条 `AI` 的形态。
 
@@ -79,7 +79,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 4. **IP 类规则排最后，且必须带 `no-resolve` / `no_resolve`** —— 否则每个走到它的域名都会被强制本地解析一次，那正是泄露来源。详见 [`no-resolve-pairing.md`](no-resolve-pairing.md)。
 4b. ⭐ **规则级开关的取舍，四份 profile 共用一条原则**：**实测零 IP 条目的规则集不写，真含 IP 条目的必须写**。
     该开关只对规则集里的 IP 类条目起作用，纯域名集写上是空转 —— 本仓 2026-09-24 起把它从 12 条零 IP 规则上删掉。
-    ⚠️ 判据是「实测零 IP」不是「纯域名」（`YouTubeMusic` 有 UA、`Microsoft` 还有 PROCESS-NAME，同样零 IP），
+    ⚠️ 判据是「实测零 IP」不是「纯域名」（`YouTube Music` 有 UA、`Microsoft` 还有 PROCESS-NAME，同样零 IP），
     且这些 URL 没锁 commit ⇒ 每次由 `audit_ruleset_content.py`（Surge）/ `audit_ruleset_noresolve.py`（Egern）重测。
     **两内核落点不同**：Surge 能写在规则级，Egern 的 `no_resolve` 只适用 `geoip`/`ip_cidr`/`ip_cidr6`/`asn`，
     写在 `rule_set` 上不生效 ⇒ Egern 的这层防线在**规则集文件里**（条目级 `,no-resolve`）。

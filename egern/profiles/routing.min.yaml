@@ -104,19 +104,12 @@ policy_groups:
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/grok.png
 - select:
-    name: Spotify
+    name: Google
     policies:
-    - United States
+    - Gemini
     - Proxy
     flatten: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Spotify.png
-- select:
-    name: YouTubeMusic
-    policies:
-    - United States
-    - Proxy
-    flatten: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTubeMusic.png
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Google.png
 - select:
     name: YouTube
     policies:
@@ -124,12 +117,19 @@ policy_groups:
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTube.png
 - select:
-    name: Google
+    name: YouTube Music
     policies:
-    - Gemini
+    - United States
     - Proxy
     flatten: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Google.png
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTubeMusic.png
+- select:
+    name: Spotify
+    policies:
+    - United States
+    - Proxy
+    flatten: true
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Spotify.png
 - select:
     name: Telegram
     policies:
@@ -302,7 +302,7 @@ rules:
 - rule_set:
     name: YTM
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/YouTubeMusic/YouTubeMusic.list
-    policy: YouTubeMusic
+    policy: YouTube Music
     update_interval: 604800
 - rule_set:
     name: YouTube

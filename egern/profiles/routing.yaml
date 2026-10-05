@@ -200,7 +200,7 @@ policy_groups:
 #   YouTube / Telegram / Twitter 默认 `Proxy`；Claude 默认 `Taiwan`；
 #   Google 默认 `Gemini`；Microsoft 默认 `DIRECT`。
 #   ⚠️ 本版有两处首项不是组名池：`AI` 首项是本文件的 `Node-B`（占位节点），
-#     `Spotify` / `YouTubeMusic` 首项是 `United States`。两侧（Surge / Egern）同写。
+#     `Spotify` / `YouTube Music` 首项是 `United States`。两侧（Surge / Egern）同写。
 # ================================================================
 - select:
     name: ChatGPT
@@ -237,28 +237,6 @@ policy_groups:
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/grok.png
 - select:
-    name: Spotify
-    # 默认走 `United States`（与 `YouTubeMusic` 同）；Spotify 的解锁地区以美区为准。
-    policies:
-    - United States
-    - Proxy
-    flatten: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Spotify.png
-- select:
-    name: YouTubeMusic
-    # 默认走 `United States`。
-    policies:
-    - United States
-    - Proxy
-    flatten: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTubeMusic.png
-- select:
-    name: YouTube
-    policies:
-    - Proxy
-    flatten: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTube.png
-- select:
     name: Google
     # 首项 `Gemini` ⇒「Google 走 Gemini → Proxy」。
     policies:
@@ -266,6 +244,28 @@ policy_groups:
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Google.png
+- select:
+    name: YouTube
+    policies:
+    - Proxy
+    flatten: true
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTube.png
+- select:
+    name: YouTube Music
+    # 默认走 `United States`。
+    policies:
+    - United States
+    - Proxy
+    flatten: true
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTubeMusic.png
+- select:
+    name: Spotify
+    # 默认走 `United States`（与 `YouTube Music` 同）；Spotify 的解锁地区以美区为准。
+    policies:
+    - United States
+    - Proxy
+    flatten: true
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Spotify.png
 - select:
     name: Telegram
     policies:
@@ -499,7 +499,7 @@ rules:
 - rule_set:
     name: YTM
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/YouTubeMusic/YouTubeMusic.list
-    policy: YouTubeMusic
+    policy: YouTube Music
     update_interval: 604800
 - rule_set:
     name: YouTube
