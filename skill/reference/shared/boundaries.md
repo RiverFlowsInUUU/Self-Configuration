@@ -30,6 +30,7 @@
 | **「一天一版」只从 2026-10-04 起算** —— 此前的多版本日是历史，不回改、不追溯（09-24 分流版一天 8 个版本、09-26/27/28 各 3 个、09-29 各 2 个） | [`check_min_pair.py`](../../tests/check_min_pair.py) 的 `CADENCE_FROM` 就近注释 | 需要回溯修订历史版本号时（须连同 `config_old/` 与 Release 资产一起动） |
 | 不建「版本日期口径」专用闸门：`number_birth` 用 `-G`（整行锚定）而非 `-S`（子串），由就近注释守 | [`release_publish.py`](../../scripts/release_publish.py) 的 `number_birth` 就近注释（含实测：互换后闸门仍全绿） | 出现「版本被算进错误日期的 Release」的实际事故时（即现役号开始互为前缀、-G 与 -S 分叉） |
 | `GitHub` 不再单设分流组，`GitHub.list` 直指 `Proxy`（2026-10-05）—— 覆盖审计的 `github.com` 期望随之从 `{"GITHUB"}` 改为 `{"PROXY"}`，**即主动放弃「该文档有专属组」这条防线** | [`profile-anatomy.md`](../surge/profile-anatomy.md) §13.1 ／ [`rulesets.md`](rulesets.md) §4 | 需要「面板上单独调 GitHub 出口」时（重新建组，并把覆盖审计期望改回 `GITHUB`） |
+| 不建「同日日志堆叠」专用闸门（2026-10-05）—— 实测相似度判据不可行：跨产品线**正确**的共同变更相似度达 0.46~1.00，与「该合并却没合并」的 0.49 无法用阈值区分；同版本内该合并的条目相似度仅 0.04~0.18，任何阈值都会全漏。⇒ 改由纪律守（[`ops.md`](ops.md) §6.9 第三条硬要求 + SKILL.md 动线⑦） | `ops.md` §6.9 第三条硬要求（含实测数据） | 出现「读者按性质数不清当天改了几件事」的实际投诉时（届时考虑人工复核清单或结构化条目字段） |
 | `icons/icons-full.json`（大集成图标订阅）**引入对上游仓的外部引用**，与「本仓自包含」纪律（[`troubleshoot-faq.md`](troubleshoot-faq.md)）相冲 —— 用户明确要求两个 JSON：一个纯本仓、一个大集成 | [`rulesets.md`](rulesets.md) §5 素材表 | 上游 `jnlaoshu/MySelf` 或 `Koolson/Qure` 删仓 / 转私有导致引用失效时（届时删该 JSON 或改回自托管） |
 
 ## 3 · 不是缺陷的边界
