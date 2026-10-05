@@ -237,19 +237,17 @@ policy_groups:
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/grok.png
 - select:
-    name: Google
-    # 首项 `Gemini` ⇒「Google 走 Gemini → Proxy」。
-    policies:
-    - Gemini
-    - Proxy
-    flatten: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Google.png
-- select:
     name: YouTube
     policies:
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTube.png
+- select:
+    name: Telegram
+    policies:
+    - Proxy
+    flatten: true
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Telegram.png
 - select:
     name: YouTube Music
     # 默认走 `United States`。
@@ -259,12 +257,13 @@ policy_groups:
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTubeMusic.png
 - select:
-    name: Telegram
+    name: Google
+    # 首项 `Gemini` ⇒「Google 走 Gemini → Proxy」。
     policies:
+    - Gemini
     - Proxy
     flatten: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Telegram.png
-
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Google.png
 - select:
     name: Spotify
     # 默认走 `United States`（与 `YouTube Music` 同）；Spotify 的解锁地区以美区为准。
@@ -498,14 +497,14 @@ rules:
     policy: Proxy
     update_interval: 604800
 - rule_set:
-    name: Google
-    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Google/Google.list
-    policy: Google
-    update_interval: 604800
-- rule_set:
     name: YouTube
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/YouTube/YouTube.list
     policy: YouTube
+    update_interval: 604800
+- rule_set:
+    name: Telegram
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Telegram/Telegram.list
+    policy: Telegram
     update_interval: 604800
 - rule_set:
     name: YTM
@@ -513,9 +512,9 @@ rules:
     policy: YouTube Music
     update_interval: 604800
 - rule_set:
-    name: Telegram
-    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Telegram/Telegram.list
-    policy: Telegram
+    name: Google
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Google/Google.list
+    policy: Google
     update_interval: 604800
 - rule_set:
     name: Spotify
