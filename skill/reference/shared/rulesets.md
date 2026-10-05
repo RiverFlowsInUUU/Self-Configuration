@@ -58,17 +58,22 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 
 | 位 | 内容 | 位 | 内容 |
 |:-:|:-----|:-:|:-----|
-| ① | 白名单 `surge-direct.list` → `DIRECT` | ⑬–⑱ | `YouTube` · `Google` · `Microsoft` · `Telegram` · `Twitter` 各应用组；`GitHub` → **`Proxy` 直指** |
-| ②③ | 两条广告清单 → `REJECT`(S) / `AD`(E) | ⑲ | 系统域名集 → `DIRECT`：Surge 内置 `SYSTEM` ／ Egern `apple_system.list`（本仓快照） |
-| ④⑤ | 内网：Surge `LAN` · `private` ／ Egern `Lan.list` · `Private` | ⑳ | `apple.txt` → `DIRECT`（Apple 在中国大陆可直连的域名） |
-| ⑥–⑩ | 厂商专属在前：`OpenAI` · `Gemini` · `Anthropic` · `Claude`，再 `AI.list` | ㉑ | `direct.txt` → `DIRECT` |
-| ⑪⑫ | `Spotify` · `YouTubeMusic` | ㉒㉓ | 国内 IP 判定 → **默认出口** |
+| ① | **系统域白名单**：Surge 内置 `SYSTEM` ／ Egern `apple_system.list` → `DIRECT` | ⑭–⑲ | 应用组：`YouTube` · `Google` · `Telegram` · `Twitter` · `Microsoft`；`GitHub` → **`Proxy` 直指** |
+| ② | 广告白名单 `surge-direct.list` → `DIRECT` | ⑳ | `apple.txt` → `DIRECT` |
+| ③④ | 两条广告清单 → `REJECT`(S) / `AD`(E) | ㉑ | `direct.txt` → `DIRECT` |
+| ⑤⑥ | 内网：Surge `LAN` · `private` ／ Egern `Lan.list` · `Private` | ㉒㉓ | 国内 IP 判定 → **默认出口** |
+| ⑦–⑪ | 厂商专属在前：`OpenAI` · `Gemini` · `Anthropic` · `Claude`，再 `AI.list` | | |
+| ⑫⑬ | `Spotify` · `YouTubeMusic` | | |
 
 **懒人版**：两侧各 **10 条**、逐位同构（2026-09-24 起）。段序同上表把「应用段」收缩成一条 `AI` 的形态。
 
 ## 4 · 排序与选材约束（改动前逐条确认）
 
 1. **白名单必须排在最前**，且在两条广告清单之前 —— Jinx 与 AWAvenue 存在重叠域名，白名单排到后面会被误杀。
+   ⭐ **白名单是两层**（2026-10-05 起，用户口径「系统域优先级高于一切」）：
+   **1a 系统域白名单**（Surge 内置 `SYSTEM` ／ Egern `apple_system.list`）→ **1b 广告白名单**（`surge-direct.list`）。
+   ⚠️ 实测：`SYSTEM` 的 18 个域名与两条广告清单**零交集** ⇒ 提到最前不改变任何拦截结果；
+   而 `apple.txt` 与 AWAvenue 有 **1 条交集**（`iadsdk.apple.com`）⇒ 它**不**上提（否则会放行一条苹果广告 SDK 域）。
 2. **厂商专属规则（`OpenAI` / `Gemini` / `Anthropic` / `Claude`）排在 `AI.list` 之前** —— 否则 AI 域名先被 `AI.list` 接走，专属组形同虚设。
 3. **`GitHub.list` 排在 `direct.txt` 之前** —— 实测 `direct.txt` 收录了若干含 `github` 的域名（githubim.com / githubshare.com / hellogithub.com / kkgithub.com 等），它们会被 `GitHub.list` 的 `DOMAIN-KEYWORD,github` 命中；排到后面这几个就接不到。本条**直指 `Proxy`**（2026-10-05 起不再单设 `GitHub` 组）。（`github.com` 本身**不在** `direct.txt` 里。）
 4. **IP 类规则排最后，且必须带 `no-resolve` / `no_resolve`** —— 否则每个走到它的域名都会被强制本地解析一次，那正是泄露来源。详见 [`no-resolve-pairing.md`](no-resolve-pairing.md)。

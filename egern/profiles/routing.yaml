@@ -265,14 +265,6 @@ policy_groups:
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Google.png
 - select:
-    name: Microsoft
-    # 首项 `DIRECT`：微软服务直连优先（走代理反而慢）。
-    policies:
-    - DIRECT
-    - Proxy
-    flatten: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Microsoft.png
-- select:
     name: Telegram
     policies:
     - Proxy
@@ -294,6 +286,15 @@ policy_groups:
     - https://sub.example.com/api/v1/client/subscribe?token=REPLACE_WITH_YOUR_TOKEN
     hidden: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png
+- select:
+    name: Microsoft
+    # 首项 `DIRECT`：微软服务直连优先（走代理反而慢）。
+    policies:
+    - DIRECT
+    - Proxy
+    flatten: true
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Microsoft.png
+
 - select:
     name: AD
     policies:
@@ -390,6 +391,41 @@ policy_groups:
     - Proxy
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Final.png
 rules:
+# ---- 3e. 禁用条目（与 Surge 对齐）------------------------------------------
+# blackmatrix7 Proxy.list：改成**纯注释** = 不进 rules 数组、不占一位。
+# Egern 虽然有 `disabled: true`，但那条仍然算数组里的一个元素 ⇒ 会比 Surge 多占一位、
+# 把位 ⑲ 错开。Surge 的 `RULE-SET` 根本没有 disabled 字段（只认 no-resolve /
+# extended-matching / update-interval / pre-matching），想不生效只能注释。
+# 两边统一用注释写法，`skill/reference/shared/rulesets.md` §3 的「24 条逐位对齐」才成立。
+#   # - rule_set:
+#   #     name: Proxy
+#   #     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Proxy/Proxy.list
+#   #     policy: Proxy
+#   #     update_interval: 604800
+#   #     disabled: true
+# 位 ⑲ —— 对齐 Surge 内置的 `SYSTEM`：Egern 没有内置系统集，这里引用本仓自托管的时点快照
+#   （内容 = Surge 官方内置 `SYSTEM` 在 2026-09-24 的清单，删掉 Egern 不支持的两条
+#   `PROCESS-NAME`）。⚠️ 本仓自己维护 ⇒ 没有第三方刷新审计，Surge 大版本更新时人工比对一次。
+#   与下面那条 `apple.txt` 只重叠 9 条，重复无害（两条同为 DIRECT）；它独有 9 条 ——
+#   captive.apple.com / api.smoot.apple.com / api.smoot.apple.cn / .ls.apple.com /
+#   .push.apple.com / .push-apple.com.akadns.net / .ess.apple.com /
+#   .lcdn-locator.apple.com / .lcdn-registration.apple.com —— 是 Apple 的激活 / 推送 /
+#   定位基础主机，**只有 SYSTEM 接得住**（`direct.txt` 仅兜住其中的 api.smoot.apple.cn）。
+- rule_set:
+    name: System
+    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/apple_system.list
+    policy: DIRECT
+    update_interval: 604800
+# ★ Apple 规则集用 Loyalsoldier `apple.txt`（纯域名集，只含「在中国大陆可直连」的域）。
+#   不用 Apple 全量集（`Apple_All_No_Resolve.list`）的两个理由：
+#     ① 全量集含 13 条 IP-CIDR（在 no_resolve 语义下对域名请求不参与匹配）+ 23 条
+#        USER-AGENT（无 MITM 时 HTTPS 无效）+ 13 条 PROCESS-NAME（仅 Surge Mac 生效）
+#        —— 这些条目对 iOS 是死重量；
+#     ② 它把解析到境外的 Apple 域也强制直连（developer.apple.com、国际版 iCloud 端点、
+#        apple-cloudkit.com），国内反而更慢。
+#   `apple.txt` 与 `direct.txt` **同仓库、同 release、同格式**，刷新口径一致；零 IP
+#   ⇒ 按原则 4b **不写 `no_resolve`**。
+
 # 注：本模板 dns.upstreams / proxy_nameservers / bootstrap 均为 IP 字面量，解析器直接以 IP 访问，
 # 因此 rules 中不需要（也没有）钉 DNS 端点域名 / IP 的规则 —— 防 DNS 泄露不依赖它
 # （详见 skill/reference/egern/profile-anatomy.md 的「配置框架逐段详解」）。
@@ -480,11 +516,6 @@ rules:
     policy: Google
     update_interval: 604800
 - rule_set:
-    name: Microsoft
-    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Microsoft/Microsoft.list
-    policy: Microsoft
-    update_interval: 604800
-- rule_set:
     name: Telegram
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Telegram/Telegram.list
     policy: Telegram
@@ -494,40 +525,12 @@ rules:
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Twitter/Twitter.list
     policy: Twitter
     update_interval: 604800
-# ---- 3e. 禁用条目（与 Surge 对齐）------------------------------------------
-# blackmatrix7 Proxy.list：改成**纯注释** = 不进 rules 数组、不占一位。
-# Egern 虽然有 `disabled: true`，但那条仍然算数组里的一个元素 ⇒ 会比 Surge 多占一位、
-# 把位 ⑲ 错开。Surge 的 `RULE-SET` 根本没有 disabled 字段（只认 no-resolve /
-# extended-matching / update-interval / pre-matching），想不生效只能注释。
-# 两边统一用注释写法，`skill/reference/shared/rulesets.md` §3 的「24 条逐位对齐」才成立。
-#   # - rule_set:
-#   #     name: Proxy
-#   #     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Proxy/Proxy.list
-#   #     policy: Proxy
-#   #     update_interval: 604800
-#   #     disabled: true
-# 位 ⑲ —— 对齐 Surge 内置的 `SYSTEM`：Egern 没有内置系统集，这里引用本仓自托管的时点快照
-#   （内容 = Surge 官方内置 `SYSTEM` 在 2026-09-24 的清单，删掉 Egern 不支持的两条
-#   `PROCESS-NAME`）。⚠️ 本仓自己维护 ⇒ 没有第三方刷新审计，Surge 大版本更新时人工比对一次。
-#   与下面那条 `apple.txt` 只重叠 9 条，重复无害（两条同为 DIRECT）；它独有 9 条 ——
-#   captive.apple.com / api.smoot.apple.com / api.smoot.apple.cn / .ls.apple.com /
-#   .push.apple.com / .push-apple.com.akadns.net / .ess.apple.com /
-#   .lcdn-locator.apple.com / .lcdn-registration.apple.com —— 是 Apple 的激活 / 推送 /
-#   定位基础主机，**只有 SYSTEM 接得住**（`direct.txt` 仅兜住其中的 api.smoot.apple.cn）。
+
 - rule_set:
-    name: System
-    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/apple_system.list
-    policy: DIRECT
+    name: Microsoft
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Microsoft/Microsoft.list
+    policy: Microsoft
     update_interval: 604800
-# ★ Apple 规则集用 Loyalsoldier `apple.txt`（纯域名集，只含「在中国大陆可直连」的域）。
-#   不用 Apple 全量集（`Apple_All_No_Resolve.list`）的两个理由：
-#     ① 全量集含 13 条 IP-CIDR（在 no_resolve 语义下对域名请求不参与匹配）+ 23 条
-#        USER-AGENT（无 MITM 时 HTTPS 无效）+ 13 条 PROCESS-NAME（仅 Surge Mac 生效）
-#        —— 这些条目对 iOS 是死重量；
-#     ② 它把解析到境外的 Apple 域也强制直连（developer.apple.com、国际版 iCloud 端点、
-#        apple-cloudkit.com），国内反而更慢。
-#   `apple.txt` 与 `direct.txt` **同仓库、同 release、同格式**，刷新口径一致；零 IP
-#   ⇒ 按原则 4b **不写 `no_resolve`**。
 - rule_set:
     name: Apple
     match: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/apple.txt

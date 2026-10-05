@@ -63,7 +63,12 @@ Surge 的 `.conf` 按节组织，模板里与防泄露相关的节：
 
 三条不能错位的细节：
 
-1. 白名单必须在 REJECT 之前。"DIRECT 永远在 REJECT 前"这种一刀切不变量本身是错的 —— 白名单就是 DIRECT，且必须排在 REJECT 前。
+1. 白名单必须在 REJECT 之前。「DIRECT 永远在 REJECT 前」这种一刀切不变量本身是错的 —— 白名单就是 DIRECT，且必须排在 REJECT 前。
+   ⭐ **白名单是两层**（2026-10-05 起，用户口径「系统域优先级高于一切」）：
+   **1a 系统域白名单**（Surge 内置 `SYSTEM` ／ Egern `apple_system.list`，两内核都放**最前**）
+   → **1b 广告白名单**（`surge-direct.list`）。
+   ⚠️ 实测：`SYSTEM` 18 个域名与两条广告清单零交集 ⇒ 置顶不改变拦截结果；
+   `apple.txt` 与 AWAvenue 有 1 条交集（`iadsdk.apple.com`）⇒ 它**不上提**。
 2. 应用类规则必须排在 `direct.txt` 之前。否则域名恰好被国内清单收录的应用会被直连接走 —— 实测：`direct.txt` 收录了若干含 `github` 的域名（githubim.com / githubshare.com / hellogithub.com / kkgithub.com 等），`GitHub.list` 的 `DOMAIN-KEYWORD,github` 本可兜住它们，排到后面就分流失效。（`github.com` 本身**不在** `direct.txt` 里；该条现直指 `Proxy`。）
 3. `GEOIP` 必须带 `no-resolve`，且必须与 ⑤ 成对。见 [DNS 基础](dns-basics.md)。
 

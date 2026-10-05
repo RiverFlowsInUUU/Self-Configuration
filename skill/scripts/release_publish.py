@@ -231,9 +231,15 @@ PUBLIC_NOTES = {
         '配置注释不再标注规则集的固定条数：上游规则集每周更新，固定数字很快会过期，改由脚本现抓。分流行为无变化。',
         '配置注释改为只描述当前状态，不再保留历代版本的沿革说明。配置更短、更好读，分流与防 DNS 泄露行为均无变化（注释更新不升版本号）。',
     ],
+    ('lazy', 'v2.0.3'): [
+        '系统域名（Apple 激活、推送、定位与配对主机）提升为最高优先级规则，置于所有规则之前。此前它们在广告拦截之后，现改为最先判定。',
+        '本次调整不改变任何拦截结果：系统域清单与两条广告清单没有重叠域名。',
+    ],
     ('routing', 'v4.0.4'): [
         '移除韩国分组与 GitHub 分组：两个分组都不改变实际分流。韩国节点并入「其他地区」分组仍可正常选用；GitHub 的规则集保留，流量改为直接走主出口（与此前分组默认取向一致）。分流版分组数量由 24 个减少至 22 个。',
         '配置注释改为只描述当前状态，不再保留历代版本的沿革说明。配置更短、更好读，分流与防 DNS 泄露行为均无变化。',
+        '系统域名（Apple 激活、推送、定位与配对主机）提升为最高优先级规则，置于所有规则之前。本次调整不改变任何拦截结果：系统域清单与两条广告清单没有重叠域名。',
+        '规则顺序微调：微软规则集移到 Twitter 之后、Apple 域名集之前；微软分流组移到订阅槽位与广告开关之间。均为顺序调整，不改变分流结果。',
     ],
 }
 
@@ -379,10 +385,9 @@ def build_days(root):
                     kerns[kern] = None
                     continue
                 mn = full[:full.rindex(ext)] + f'.min{ext}'
-                # 现役版：按“版本号首现日”定日期（注释改动不升号 ⇒ 日期不挪）；
-                # 归档版：按快照 blob 的诞生日定日期（内容冻住，与升号无关）。
-                date = number_birth(root, kern, fam, ver) if is_cur \
-                    else version_date(root, kern, fam, ver)
+                # 现役版 / 归档版统一走 version_date —— 它先取「版本号首现日」，
+                # 查不到才退回 blob 口径（见其 docstring 的 2026-10-05 修正说明）。
+                date = version_date(root, kern, fam, ver)
                 kerns[kern] = {'full': os.path.relpath(full, root),
                                'min': os.path.relpath(mn, root), 'date': date}
             dates = sorted({i['date'] for i in kerns.values() if i and i['date']})

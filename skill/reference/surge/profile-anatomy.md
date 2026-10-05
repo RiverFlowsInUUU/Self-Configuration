@@ -754,12 +754,12 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 
 | # | 规则 | 策略 | 选项 | 为什么排这里 |
 |:-:|:-----|:----:|:-----|:-------------|
-| 1 | `RULE-SET,…,surge-direct.list` | `DIRECT` | — | **必须**在 REJECT 之前，否则形同虚设。它同时兜住两条黑名单的误杀 |
-| 2 | `RULE-SET,…,surge-ads.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 1 条（Jinx）。必须在 `direct.txt` / `GEOIP,CN` **之前** —— 否则国内广告域名被 `direct.txt` 接走 |
-| 3 | `RULE-SET,…,AWAvenue-Ads-Rule-Surge-RULE-SET.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 2 条（AWAvenue）。顺序与 Egern 对齐，见 §11.4 |
-| 4 | `RULE-SET,LAN` | `DIRECT` | `no-resolve` | 含 18 条 IP-CIDR，**必须** `no-resolve`。内网段排在应用之前，与 Egern 同位 |
-| 5 | `RULE-SET,…,private.txt` | `DIRECT` | `update-interval=604800` | 内网域名。实测零 IP ⇒ 按原则**不写** `no-resolve` |
-| 6 | `RULE-SET,SYSTEM` | `DIRECT` | — | Apple 激活 / 推送 / 配对，内置权威集合，**保底**。懒人版只此一条 Apple 相关（全量集 2026-09-24 起移出，见 §14.1） |
+| 1 | `RULE-SET,SYSTEM` | `DIRECT` | — | **系统域白名单（最高优先级，2026-10-05 起置顶）**：Apple 激活 / 推送 / 配对，内置权威集合，**保底**。实测其 18 个域名与两条广告清单零交集 ⇒ 置顶不改变拦截结果。懒人版只此一条 Apple 相关（全量集 2026-09-24 起移出，见 §14.1） |
+| 2 | `RULE-SET,…,surge-direct.list` | `DIRECT` | — | 广告白名单。**必须**在 REJECT 之前，否则形同虚设。它同时兜住两条黑名单的误杀 |
+| 3 | `RULE-SET,…,surge-ads.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 1 条（Jinx）。必须在 `direct.txt` / `GEOIP,CN` **之前** —— 否则国内广告域名被 `direct.txt` 接走 |
+| 4 | `RULE-SET,…,AWAvenue-Ads-Rule-Surge-RULE-SET.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 2 条（AWAvenue）。顺序与 Egern 对齐，见 §11.4 |
+| 5 | `RULE-SET,LAN` | `DIRECT` | `no-resolve` | 含 18 条 IP-CIDR，**必须** `no-resolve`。内网段排在应用之前，与 Egern 同位 |
+| 6 | `RULE-SET,…,private.txt` | `DIRECT` | `update-interval=604800` | 内网域名。实测零 IP ⇒ 按原则**不写** `no-resolve` |
 | 7 | `RULE-SET,…,AI.list` | `AI` | `update-interval=604800` | 实测零 IP（纯域名系）⇒ 不写 `no-resolve` |
 | 8 | `RULE-SET,…,direct.txt` | `DIRECT` | `update-interval=604800` | **主承重墙**，纯域名、零 IP（条数一律现抓）。见 §12 |
 | 9 | `GEOIP,CN,DIRECT` | `DIRECT` | `no-resolve` | IP 类规则，放最后 |
@@ -769,17 +769,21 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 
 | # | 规则 | 策略 | 与 lazy 的差异 |
 |:-:|:-----|:----:|:---------------|
-| 1–3 | 白名单 / 广告拦截 ×2 | `DIRECT` / `REJECT` / `REJECT` | 同 lazy |
-| **4–5** | 内网：`LAN` / `private.txt` | `DIRECT`（`LAN` 带 `no-resolve`，`private.txt` 零 IP 不写） | **提前到应用之前**（对齐 Egern 的 `Lan.list` / `private` 位置） |
-| **6–10** | AI 厂商：`OpenAI` / `Gemini` / `Anthropic` / `Claude` / `AI` | `ChatGPT` / `Gemini` / `Claude` / `Claude` / `AI` | **新增 4 条**（`AI.list` 位置下移） |
-| **11–13** | 媒体：`Spotify` / `YouTubeMusic` / `YouTube` | 同名组 | **新增 3 条** |
-| **14–18** | `Google` / `Microsoft` / `Telegram` / `Twitter` | 同名组 | **新增 4 条**（后两条置于 `Microsoft` 之后） |
-| 19–20 | 系统集 + Apple：`SYSTEM` / `apple.txt` | `DIRECT`（`apple.txt` 零 IP **不写**开关） | 懒人版只有 ⑲ 那条内置 `SYSTEM`；`apple.txt` 只留在分流版 |
-| 21–22 | `direct.txt` / `GEOIP,CN` | `DIRECT`（`direct.txt` 零 IP **不写**开关；`GEOIP,CN` **必须** `no-resolve`） | 同 lazy |
+| 1 | **系统域白名单**：`SYSTEM` | `DIRECT` | 同 lazy（2026-10-05 起置顶） |
+| 2–4 | 广告白名单 / 广告拦截 ×2 | `DIRECT` / `REJECT` / `REJECT` | 同 lazy |
+| **5–6** | 内网：`LAN` / `private.txt` | `DIRECT`（`LAN` 带 `no-resolve`，`private.txt` 零 IP 不写） | 同 lazy |
+| **7–11** | AI 厂商：`OpenAI` / `Gemini` / `Anthropic` / `Claude` / `AI` | `ChatGPT` / `Gemini` / `Claude` / `Claude` / `AI` | **新增 5 条**（AI 细分） |
+| **12–14** | 媒体：`Spotify` / `YouTubeMusic` / `YouTube` | 同名组 | **新增 3 条** |
+| **15–19** | `Google` / `Telegram` / `Twitter` / `Microsoft`；`GitHub` → `Proxy` 直指 | 同名组（`Microsoft` 首项 `DIRECT`） | **新增 5 条**（2026-10-05：`Microsoft` 移到 `Twitter` 之后） |
+| 20 | Apple 域名集：`apple.txt` | `DIRECT`（零 IP **不写**开关） | 新增 |
+| 21–22 | `direct.txt` / `GEOIP,CN` | `DIRECT`（`direct.txt` 零 IP **不写**开关；`GEOIP` 带 `no-resolve`） | 同 lazy |
 | **23** | `FINAL,Final,dns-failed` | `Final` 组 | **兜底从 `Proxy` 改为选择组** |
 | — | ~~游戏机主机名 3 条~~ | — | **已删除**（Egern 侧无对应规则，为对齐而移除；`lazy.conf` 同步没有，两侧只剩 `always-real-ip` 里的主机名） |
 
-> 📌 **三条顺序要点**：
+> 📌 **四条顺序要点**：
+> 0. ⭐ **系统域白名单（`SYSTEM`）置顶**（2026-10-05 起，用户口径「系统域优先级高于一切」）
+>    —— 它排在广告白名单与两条广告清单**之前**，是 `[Rule]` 的第 1 条。
+>    实测其 18 个域名与两条广告清单**零交集** ⇒ 置顶不改变拦截结果。
 > 1. **厂商专属规则必须排在通用 `AI.list` 之前** —— 否则 AI 域名先被 `AI.list` 接走，
 >    `ChatGPT` / `Gemini` / `Claude` 组永远轮不到。
 > 2. **`GitHub.list` 必须排在 `direct.txt` 之前** —— 实测 `direct.txt` 收录了若干含 `github`

@@ -129,13 +129,6 @@ policy_groups:
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Google.png
 - select:
-    name: Microsoft
-    policies:
-    - DIRECT
-    - Proxy
-    flatten: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Microsoft.png
-- select:
     name: Telegram
     policies:
     - Proxy
@@ -156,6 +149,13 @@ policy_groups:
     - https://sub.example.com/api/v1/client/subscribe?token=REPLACE_WITH_YOUR_TOKEN
     hidden: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png
+- select:
+    name: Microsoft
+    policies:
+    - DIRECT
+    - Proxy
+    flatten: true
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Microsoft.png
 - select:
     name: AD
     policies:
@@ -232,6 +232,11 @@ policy_groups:
     - Proxy
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Final.png
 rules:
+- rule_set:
+    name: System
+    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/apple_system.list
+    policy: DIRECT
+    update_interval: 604800
 - rule_set:
     name: Jinx-CN
     match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-direct.list
@@ -313,11 +318,6 @@ rules:
     policy: Google
     update_interval: 604800
 - rule_set:
-    name: Microsoft
-    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Microsoft/Microsoft.list
-    policy: Microsoft
-    update_interval: 604800
-- rule_set:
     name: Telegram
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Telegram/Telegram.list
     policy: Telegram
@@ -328,9 +328,9 @@ rules:
     policy: Twitter
     update_interval: 604800
 - rule_set:
-    name: System
-    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/apple_system.list
-    policy: DIRECT
+    name: Microsoft
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Microsoft/Microsoft.list
+    policy: Microsoft
     update_interval: 604800
 - rule_set:
     name: Apple

@@ -1,4 +1,4 @@
-#! version=lazy_v2.0.3
+#! version=lazy_v2.0.2
 # ============================================================================
 # lazy · 懒人版
 #
@@ -167,19 +167,7 @@ policy_groups:
 #   ⑤ AI 分流  ⑥ 直连集合（国内域名 / geoip CN）   ⑦ 兜底
 # ============================================================================
 rules:
-# ① 系统域白名单（**最高优先级**；见 SKILL.md 顺序铁律的「白名单」层）
-#    对齐 Surge 懒人版的内置 `SYSTEM`。Egern 没有内置系统集，这里引用本仓
-#    自托管快照 `rules/apple_system.list`（= Surge 内置 `SYSTEM` 的清单，
-#    删掉了 Egern 不支持的两条 `PROCESS-NAME`：`trustd` / `netbiosd`）。
-#    ⚠️ 本仓自己维护 ⇒ 没有第三方刷新审计，Surge 大版本更新时人工比对一次。
-#    ⚠️ 放最前的依据是「系统域优先级高于一切」；实测其域名与两条广告清单零交集。
-- rule_set:
-    name: System
-    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/apple_system.list
-    policy: DIRECT
-    update_interval: 604800
-
-# ② 广告白名单 —— **必须放最前面**：这些域名要抢在广告规则之前放行，
+# ① 白名单 —— **必须放最前面**：这些域名要抢在广告规则之前放行，
 #    否则会被下面的广告规则误杀。（白名单内容随上游更新，条数不写死）
 - rule_set:
     name: Jinx-CN
@@ -207,6 +195,17 @@ rules:
 - rule_set:
     name: Private
     match: https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/private.txt
+    policy: DIRECT
+    update_interval: 604800
+# ④ Apple 系统服务直连 —— 对齐 Surge 懒人版的内置 `SYSTEM`。Egern 没有内置系统集，
+#    这里引用本仓自托管的时点快照 `rules/apple_system.list`（= Surge 官方内置 `SYSTEM`
+#    的清单，删掉了 Egern 不支持的两条 `PROCESS-NAME`：`trustd` / `netbiosd`）。
+#    ⚠️ 本仓自己维护 ⇒ 没有第三方刷新审计，Surge 大版本更新时人工比对一次。
+#    它与下方 direct.txt 部分重叠（重复无害 —— 两条规则同为 DIRECT），独有的部分是
+#    APNs 推送 / 定位 / CDN 定位那几类。
+- rule_set:
+    name: System
+    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/apple_system.list
     policy: DIRECT
     update_interval: 604800
 # ⑤ AI 分流 —— 命中即走 AI 组（→ Proxy）。集源 Repcz/Tool，滚动维护，
