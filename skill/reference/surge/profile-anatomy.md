@@ -476,7 +476,7 @@ NAT 类型检测（STUN）、时间同步（NTP）、游戏机配对，都需要
 ⚠️ **两份配置都不再为它们单开规则**（2026-09-23，与 Egern 对齐 —— Egern 侧本就没有对应规则，
 `lazy` 一并删除）。`always-real-ip` 保留不变 —— 这些主机名照旧拿到真实 IP；
 未被域名规则接住的会走到 IP 类规则（`no-resolve` 对未解析的主机名**跳过**），
-最终落 `FINAL → Final`，解析由节点远端完成（远端解析更准）——
+最终落 `FINAL → Proxy`，解析由节点远端完成（远端解析更准）——
 **结果去向与原先三条规则一致**（同为代理链），差别只在不再单独占一节。
 
 ## 10 · `hijack-dns` 的边界
@@ -671,7 +671,7 @@ AD      = select, REJECT, icon-url=…/AdBlock.png
 | ③ 订阅 | `Airport` | `select` | `policy-path` 订阅槽位，`hidden=true` |
 | ③ 开关 | `AD` | `select` | 独立手动开关，**不被规则引用**（见 §13.3） |
 | ④ 地区 | `Hong Kong` / `Taiwan` / `Japan` / `Singapore` / `United States` / `Other Regions` | `smart` | `policy-regex-filter` 按节点名筛；另带 `policy-priority` 低倍率优先（0.15） |
-| ⑤ 兜底 | `Final` | `select` | `include-other-group="Proxy"` |
+| ⑤ 兜底 | ~~`Final`~~ | — | **2026-10-05 删除**：兜底由 `FINAL,Proxy,dns-failed` **直指 `Proxy`**（与懒人版拉平）—— 该组只有一个成员、面板上无从选择 |
 
 > 📌 **`AD` 的位置说明（别被分节编号误导）**：它在 `[Proxy Group]` 里排在 `Airport` 之后、
 > 这是**位置**，随 Egern 的组序（维护纪律），**不是功能归类**。
@@ -777,7 +777,7 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 | **15–19** | `Google` / `Telegram` / `Twitter` / `Microsoft`；`GitHub` → `Proxy` 直指 | 同名组（`Microsoft` 首项 `DIRECT`） | **新增 5 条**（2026-10-05：`Microsoft` 移到 `Twitter` 之后） |
 | 20 | Apple 域名集：`apple.txt` | `DIRECT`（零 IP **不写**开关） | 新增 |
 | 21–22 | `direct.txt` / `GEOIP,CN` | `DIRECT`（`direct.txt` 零 IP **不写**开关；`GEOIP` 带 `no-resolve`） | 同 lazy |
-| **23** | `FINAL,Final,dns-failed` | `Final` 组 | **兜底从 `Proxy` 改为选择组** |
+| **23** | `FINAL,Proxy,dns-failed` | `Proxy` 组 | 与懒人版一致（2026-10-05 起不再挂 `Final` 中间组） |
 | — | ~~游戏机主机名 3 条~~ | — | **已删除**（Egern 侧无对应规则，为对齐而移除；`lazy.conf` 同步没有，两侧只剩 `always-real-ip` 里的主机名） |
 
 > 📌 **四条顺序要点**：
@@ -973,11 +973,14 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 ⚠️ ②-c 是本项目**唯一一条跨配置**的断言。它挡的是「反正这是分流版，DNS 段差不多就行」
 这种想法 —— 两份配置允许出现的差异**只在** `[Proxy Group]` 与 `[Rule]` 的粒度上。
 
-### 16.6 兜底：lazy 指 `Proxy`，routing 指 `Final` 组
+### 16.6 兜底：两版都直指 `Proxy`（2026-10-05 起）
 
-`lazy.conf` 的 `FINAL,Proxy,dns-failed` **直接**指 `Proxy` 组。
-`routing.conf` 改成 `FINAL,Final,dns-failed`，多挂一层 `select` 组 —— 这样你在面板上
-还能改兜底去向，代价是零。
+两份**写法相同**：`FINAL,Proxy,dns-failed` —— **直接**指 `Proxy` 组，中间不挂任何组。
+
+⚠️ **2026-10-05 修正**：此前分流版写 `FINAL,Final,dns-failed`（多一层 `Final = select, Proxy`），
+理由记为「这样你在面板上还能改兜底去向」。**实测该理由不成立** —— 查全部 27 个历史版本，
+`Final` 组成员**始终只有 `Proxy` 一个**，单成员 `select` 组在面板上无从选择。
+⇒ 已删除该组，与懒人版拉平（Egern 侧同改：`default.policy` 由 `Final` 改直写 `Proxy`）。
 
 两者都**不做**「分流兜底的境内 / 境外切分」。国内直连靠 `direct.txt` + `GEOIP,CN`
 正面覆盖，不靠兜底。

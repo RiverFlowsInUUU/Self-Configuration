@@ -388,11 +388,6 @@ policy_groups:
     priorities:
       "(?<![\\d.])0\\.\\d*[1-9]": 0.15
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/WorldMap.png
-- select:
-    name: Final
-    policies:
-    - Proxy
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Final.png
 rules:
 # ---- 3e. 禁用条目（与 Surge 对齐）------------------------------------------
 # blackmatrix7 Proxy.list：改成**纯注释** = 不进 rules 数组、不占一位。
@@ -554,9 +549,14 @@ rules:
     match: CN
     policy: DIRECT
     no_resolve: true
+# ⑦ 兜底 —— 与懒人版同一写法：**中间不挂 `Final` 组**，`default` 的 `policy`
+#     直写 `Proxy`。`name` 只是日志标签（官方：用于日志和调试），保留 `Final`
+#     这个名字是为了历代日志读得通；真正决定去向的只有 `policy`。
+#     （2026-10-05：原 `Final` 兜底组已删 —— 它只有一个成员 `Proxy`，
+#       在面板上本就无从选择，留着无意义。）
 - default:
     name: Final
-    policy: Final
+    policy: Proxy
 # ================================================================ MITM（模板已移除）
 # ⚠️ 原配置这里带 `ca_p12` + `ca_passphrase` —— 那是**个人 MITM CA 的私钥**（PKCS#12）。
 #    它一旦公开，任何人都能用它解密你经 MITM 的 TLS 流量并签发任意证书，

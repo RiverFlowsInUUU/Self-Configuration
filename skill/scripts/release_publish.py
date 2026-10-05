@@ -243,6 +243,7 @@ PUBLIC_NOTES = {
         '地区分组按新顺序排列（香港 / 台湾 / 日本 / 新加坡 / 美国 / 其他地区），原「USA」分组更名为「United States」。ChatGPT 与 Gemini 分组的默认出口改为美区（此前跟随智能选优），与 Spotify、YouTube Music 一致。',
         '应用分组顺序调整：Google 移到 AI 之后，其后依次为 YouTube、YouTube Music、Spotify、Telegram、Twitter、Microsoft。「YouTubeMusic」分组更名为「YouTube Music」。均为面板顺序与命名调整，不改变分流结果。',
         'Telegram 的分组与规则集移到 Spotify 之前。顺序调整，不改变分流结果。',
+        '移除 `Final` 兜底分组：兜底改由规则直接指向 `Proxy`，与懒人版写法拉平。该分组只有一个成员、面板上本就无从选择，删除后分流行为与防 DNS 泄露能力均无变化。分流版分组数量由 23 个减少至 21 个。',
     ],
 }
 

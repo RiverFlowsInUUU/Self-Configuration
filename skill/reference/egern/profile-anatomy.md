@@ -62,13 +62,13 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 
 | 类型 | 作用 | 模板里的例子 |
 |---|---|---|
-| `select` | 手动选路 | `Proxy` / `Final` / 各类 App 组 |
+| `select` | 手动选路 | `Proxy` / 各类 App 组（`Final` 组 2026-10-05 已删） |
 | `smart` | 智能选优：组内多轮测速，按延迟 / 抖动 / 可靠性综合打分自动选最稳节点 | `Hong Kong` / `Taiwan` / `Japan`（这些地区组另配 `filter` 正则从订阅里筛节点 —— 归类是 `filter` 的职责，不是 `smart` 的） |
 | `fallback` | 故障转移：按 `policies` 顺序依次尝试，选第一个可用的节点 | 现版模板无 `fallback` 组（`ChatGPT` / `Gemini` 至 `routing_v2.4` 为该类型，`routing_v3` 起为 `select`） |
 | `external` | 从订阅 URL 拉取节点 | 模板里是 `sub.example.com?token=REPLACE_WITH_YOUR_TOKEN` 占位 |
 
 要点：
-- **组与组之间可以互相引用**（例如 `Final` 的成员是 `Proxy`，App 组的成员里混入地区组）。这种引用关系保留，是模板的正常结构。
+- **组与组之间可以互相引用**（例如 `Google` 的成员是 `Gemini`，App 组引用 `Proxy`）。这种引用关系保留，是模板的正常结构。
 - **`routing_v2.3` 起已无空组**：`ChatGPT` / `Gemini` 曾是 `policies: []` 的空组，而规则直接指向它们
   ⇒ **导入即静默断流**；现已填成 `[Proxy]` + `flatten: true`（`flatten` 在这里起什么作用，
   见下方「组清单与要点」起的逐段讲解）。
@@ -103,8 +103,9 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 **服务组**（默认策略与承接的规则集）见 [`shared/rulesets.md`](../shared/rulesets.md)。
 
 **`lazy` 的一处专属调整**（只属于它，不同步其他版本）：`AD` 组**只有 `REJECT`**（没有 `DIRECT` 兜底）。
-⚠️ 分流版的 `Final` 兜底组，`lazy` **没有** —— 2026-09-23 起它的 `default` 规则 `policy` 直写 `Proxy`，
-与 Surge 懒人版拉平（`Final` 不是 Egern 的内置关键字，内置只有 `DIRECT` / `REJECT`，所以那一层组本就可选）。
+⚠️ **两版的兜底写法现已完全一致**（2026-10-05 起）：`default` 规则的 `policy` 都**直写 `Proxy`**，
+中间不挂 `Final` 组（`Final` 不是 Egern 的内置关键字，内置只有 `DIRECT` / `REJECT`，那一层组本就可选）。
+`name: Final` 保留为**日志标签**，便于历代日志读通。
 
 ### 1.4 `rules` —— 匹配表与直连规则集
 
@@ -131,7 +132,7 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 
 `rules` 里**没有任何 `disabled` 条目**：原 `Proxy.list` 那条自 `routing_v3.2` 起改成**纯注释**、不再占规则位；内联 `domain_suffix: cn` 同期删除（`direct.txt` 已含 `DOMAIN-SUFFIX,cn`）。
 
-**默认出口链**：未命中任何规则集的域名 → `default` 规则（`policy: Final`）→ `Final` 组唯一成员是 `Proxy` → 走代理。这类流量由**节点远程解析**，不经过本地 `dns:` 段，日志里表现为 `default → Final → Proxy`。（`lazy` 无 `Final` 组，`policy` 直写 `Proxy`，日志里是 `default → Proxy`。）
+**默认出口链**：未命中任何规则集的域名 → `default` 规则（`policy: Proxy`，2026-10-05 起直写、不再挂 `Final` 组）→ 走代理。这类流量由**节点远程解析**，不经过本地 `dns:` 段，日志里表现为 `default → Final → Proxy`（`Final` 是 `name` 日志标签）。
 
 > ⚠️ 关键绑定：`geoip: CN`（`no_resolve: true`）**只对已经是 IP 的连接生效**，国内域名的直连**完全依赖那个纯域名国内规则集（`direct.txt`）**。两者绑定，动一条必须看另一条（详见 2.3 / 清单 17）。
 

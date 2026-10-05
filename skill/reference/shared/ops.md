@@ -186,7 +186,7 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 
 ### 4.4 `policy_groups:`：四类组与三个易踩的坑
 
-组分四类：入口（`Proxy` / `Final`）、应用组（`ChatGPT` / `Gemini` 等，现行版皆为 `select`，旧版才是 `fallback`）、智能组（`Smart` 与各地区组，皆 `smart`；地区组用 `filter` 正则筛名 + `flatten: true`；两者都带低倍率优先权重）、订阅槽位（`external` 组，`hidden: true`，当前版只有一个 `Airport`；旧版为 `Airport-A` / `Airport-B` 两槽、更早四槽）。
+组分三类：入口（`Proxy`）、应用组（`ChatGPT` / `Gemini` 等，现行版皆为 `select`，旧版才是 `fallback`）、智能组（`Smart` 与各地区组，皆 `smart`；地区组用 `filter` 正则筛名 + `flatten: true`；两者都带低倍率优先权重）、订阅槽位（`external` 组，`hidden: true`，当前版只有一个 `Airport`；旧版为 `Airport-A` / `Airport-B` 两槽、更早四槽）。
 
 必须知道的三条：
 
@@ -203,7 +203,7 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 | A | DNS 端点固定路由 | 已整体移除。端点全是 IP 字面量，解析器直接以 IP 访问，不需要在 `rules` 里钉。只有你自己把 DNS 端点写成主机名时，才需要补一条 `DIRECT` 路由，否则它落 `default → Proxy` |
 | B | 白名单 guard → 广告 → 内网 → 各应用规则集 | 顺序即优先级；`Proxy.list` 类"默认 `disabled: true`"的规则由 `Final` 兜底；AI 规则集 URL 钉 commit 防上游漂移；每条 `rule_set` 各自带 `update_interval`（现值两侧统一钉 `604800`，别只写第一条） |
 | C | Apple（`apple.txt`）→ `direct.txt` → `.cn` 后缀 → `geoip: CN` + `no_resolve` | 这就是 [成对交付篇的判据 A+B](no-resolve-pairing.md) 在本内核的落点：`geoip` 带 `no_resolve` 后不匹配域名，国内域名直连完全依赖 `direct.txt` 那条纯域名规则集，动一条必须看另一条。Apple 那条 2026-10-04 起引零 IP 的 `apple.txt`（与 `direct.txt` 同仓库同 release）；此前是 `Apple_All_No_Resolve.list` —— 它的**原版**藏 13 条裸 IP、会强制解析，所以当时必须锁定 `No_Resolve` 变体 |
-| D | `default: {name: Final, policy: Final}` | 未命中走代理，由节点远程解析、不经过 `dns` 段 —— 日志里的 `default → Final → Proxy` 是正常决策，不是泄露。`lazy` 没有 `Final` 这层组，`policy` 直写 `Proxy`；`name: Final` 只是日志标签 |
+| D | `default: {name: Final, policy: Proxy}` | 未命中走代理，由节点远程解析、不经过 `dns` 段 —— 日志里的 `default → Final → Proxy` 是正常决策，不是泄露。`lazy` 没有 `Final` 这层组，`policy` 直写 `Proxy`；`name: Final` 只是日志标签 |
 
 > **注意**　`no_resolve` 有三层，写之前先确认自己在哪一层：规则级（`geoip` / `ip_cidr` 的 `no_resolve`）、`rule_set` 级（在这里写不生效，这是坑）、条目级（`.list` 每条自带的 `,no-resolve`）。
 

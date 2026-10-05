@@ -228,11 +228,6 @@ policy_groups:
     priorities:
       "(?<![\\d.])0\\.\\d*[1-9]": 0.15
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/WorldMap.png
-- select:
-    name: Final
-    policies:
-    - Proxy
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Final.png
 rules:
 - rule_set:
     name: System
@@ -350,5 +345,5 @@ rules:
     no_resolve: true
 - default:
     name: Final
-    policy: Final
+    policy: Proxy
 default_proxy_group: Proxy
