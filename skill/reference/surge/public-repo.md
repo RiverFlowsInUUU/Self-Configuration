@@ -9,7 +9,7 @@ Self-Configuration/
 ├── README.md                    # 门面（人类看的唯一文档）：订阅地址 / 组表 / 隐私对照 / AI 指路
 ├── LICENSE                      # MIT
 ├── .gitattributes · .gitignore
-├── icons/                       # 26 个 PNG —— 两内核共用
+├── icons/                       # 图标 PNG + icons.json / icons-full.json —— 两内核共用
 ├── skill/                       # ★ AI 驱动的唯一知识库（无人类文档）
 │   ├── SKILL.md                 # 单一入口：底线与纪律 → §0 判内核 → 分支 A(Surge) / 分支 B(Egern)
 │   ├── reference/shared/        # 跨内核主题七篇：cross-kernel-diff · rulesets · hardening-checklist ·

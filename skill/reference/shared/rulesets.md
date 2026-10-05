@@ -96,11 +96,15 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 
 | 素材 | 用途 | 来源 |
 |:-----|:-----|:-----|
-| 26 个策略组图标 | 面板图标（两内核共用同一份） | [RiverFlowsInUUU/Rule](https://github.com/RiverFlowsInUUU/Rule) · [jnlaoshu/MySelf](https://github.com/jnlaoshu/MySelf) · [Koolson/Qure](https://github.com/Koolson/Qure) |
+| 策略组图标（`icons/*.png`，条数一律现抓：`ls icons/*.png \| wc -l`） | 面板图标（两内核共用同一份） | [RiverFlowsInUUU/Rule](https://github.com/RiverFlowsInUUU/Rule) · [jnlaoshu/MySelf](https://github.com/jnlaoshu/MySelf) · [Koolson/Qure](https://github.com/Koolson/Qure)。三者均已归档，**仅作署名归属**；实际使用的图标已**下载整合进本仓** `icons/`，运行时不依赖上游 |
+| `icons/icons.json` | 图标订阅（**纯本仓**，永不失效） | 本仓派生 |
+| `icons/icons-full.json` | 图标订阅（**大集成**＝本仓 + 上游全量） | 本仓 + 上述两个上游仓库，⚠️ 标「上游」的条目为**外部引用**、靠第三方在线 |
 | `GeoLite2-Country.mmdb` | Surge 侧 `GEOIP` 判定 | [adysec/IP_database](https://github.com/adysec/IP_database) |
 | `Country.mmdb` · `GeoLite2-ASN.mmdb` | Egern 侧 `geoip` / `asn` 判定 | [Loyalsoldier/geoip](https://github.com/Loyalsoldier/geoip) |
 
 本仓按 MIT 许可分发（根 `LICENSE`）；图标来源见上表。第三方规则集版权归其原作者。
+
+> ⚠️ **上游图标仓库的许可状态**：`RiverFlowsInUUU/Rule` · `jnlaoshu/MySelf` · `Koolson/Qure` 三者**均未声明 SPDX 许可**（GitHub 上 `license` 字段为空）且**均已归档**。因此本仓只把它们的图标「下载整合」作为素材来源（本仓自有文件按 MIT 分发），`icons-full.json` 里对上游的**外部引用**则属风险自担 —— 上游删仓/转私有即失效，见 [`boundaries.md`](boundaries.md) 的登记。
 
 ---
 

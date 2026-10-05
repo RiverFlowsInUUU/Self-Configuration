@@ -72,7 +72,7 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 - **`routing_v2.3` 起已无空组**：`ChatGPT` / `Gemini` 曾是 `policies: []` 的空组，而规则直接指向它们
   ⇒ **导入即静默断流**；现已填成 `[Proxy]` + `flatten: true`（`flatten` 在这里起什么作用，
   见下方「组清单与要点」起的逐段讲解）。
-- **图标**：模板用到的 26 个分流组图标（整合自 RiverFlowsInUUU/Rule、jnlaoshu/MySelf、Koolson/Qure 三个公开仓库）已统一下载进本仓库 `icons/`，全部以 `https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/<file>` 形式引用，**不再跨项目引用任何图标地址**。
+- **图标**：模板用到的全部策略组图标（条数现抓：`ls icons/*.png | wc -l`）（整合自 RiverFlowsInUUU/Rule、jnlaoshu/MySelf、Koolson/Qure 三个公开仓库）已统一下载进本仓库 `icons/`，全部以 `https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/<file>` 形式引用，**不再跨项目引用任何图标地址**。
 
 #### 组清单与要点（现役）
 
@@ -388,7 +388,7 @@ forward:
 
 - **`Foreign-DNS` 已删除**：迭代 f10 起它就无任何引用（forward 兜底改国内组后不再需要境外组）；`routing_v1` 曾**整组注释**保留为 A/B 备用，**`routing_v2` 起整段删除**。要恢复境外解析答案，需自行在 `upstreams` 里加回该组。风险提醒：若用它作兜底且代理未就绪，会掉进明文 `:53`。
 - **两条线 × 双形态**：可选只有 `egern/profiles/lazy.yaml`（**懒人版**，4 组 / 10 条规则）与 `egern/profiles/routing.yaml`（**分流版 · 推荐**，24 组 / 24 条），固定名四件，升版不改名。⚠️ 头注 `#! version=` 里的 `v` 是**文件版本**（三段制 X.Y.Z：Z=小修、Y=中改、X=大改，满 10 进 1，4.0.10 合法）；配置变动时变动前的旧配置归档进 `profiles/config_old/`（归档号 = 目录内此分工最新号的下一位，完整版与 `.min` 成对，现役头注同步升为下一位）；更早历史看 git（备份 tag：`pre-cleanup-20260927`）。
-- **图标整合进本仓库**：26 个图标源自已整合进 `icons/`，模板不再跨项目引用图标地址。来源归属见上表；本仓按 MIT 许可分发（根 `LICENSE`）。
+- **图标整合进本仓库**：图标已整合进 `icons/`，模板不再跨项目引用图标地址。来源归属见上表；本仓按 MIT 许可分发（根 `LICENSE`）。
 - **占位节点都被真实引用**：模板 `proxies` 带 2 条占位节点（`Node-A` → `Proxy` 末位、`Node-B` → `AI` 首项），不存在悬空引用（组间引用保留；`routing_v2.3` 起**已无空组**）。不用它们就整条删掉，并把对应组 `policies` 里的名字一并摘掉。
 - **与订阅解耦**：forward 不写任何节点 / 订阅域名，换订阅无需改动 DNS 段（清单 18 验证订阅耦合 4 → 0）。
 - **审计脚本报的 2 条 `LOW`（刻意为之，不是缺陷）**：`check_egern_dns.py` 对本模板的读数是 `0 high, 2 low`。两条都属「安全性 vs 可用性」的自觉取舍，不是配置错误：
@@ -511,7 +511,7 @@ S="skill/scripts"
 四条配置（两内核 × 两形态）对齐成同一个形状：2 条占位节点 + 1 个订阅槽位，每条节点都被一个组真实引用（`Node-A` → `Proxy`、`Node-B` → `AI`），不留悬空引用。不用它们就整条删掉，并把对应组 `policies` 里的名字一并摘掉。
 
 **Q7：图标为什么都收进本仓库 `icons/`？**
-为了避免模板跨项目引用图标地址（你的项目或别人的项目）。26 个图标已整合进 `icons/`，模板全部以本仓库原始地址引用，并保留来源署名。
+为了避免模板跨项目引用图标地址（你的项目或别人的项目）。图标已整合进 `icons/`，模板全部以本仓库原始地址引用，并保留来源署名。
 
 **Q8：两个模板文件有什么区别？**
 内容完全一致，仅注释差异。`egern/profiles/routing.yaml` 带注释（每段附原理），`egern/profiles/routing.min.yaml` 纯配置。按习惯取用其一（历史版本看 git）。

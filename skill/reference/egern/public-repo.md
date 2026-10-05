@@ -11,7 +11,7 @@
 ```
 README.md                                   # 门面（人类看的唯一文档）：订阅地址 + 分组表 + 隐私对照 + AI 指路
 LICENSE · .gitattributes · .gitignore
-icons/                                      # 26 个 PNG —— 两内核共用
+icons/                                      # 图标 PNG + icons.json / icons-full.json —— 两内核共用
 rules/                                      # 本仓自托管的规则集（当前 1 份：Egern 用的 apple_system.list）
 skill/                                      # ★ AI 驱动的唯一知识库
   SKILL.md                                  # 单一入口：底线与纪律 → §0 判内核 → 分支 A/B

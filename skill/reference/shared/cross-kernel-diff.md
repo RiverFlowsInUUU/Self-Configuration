@@ -113,7 +113,7 @@ Egern 侧删 `domain_suffix: cn` 并补上系统域名集。
 
 ## 7 · 合并后共享的东西
 
-- **图标**：26 个 png 合并为根级 `icons/` 一份，两侧模板都指向这里。
+- **图标**：全部 png 合并为根级 `icons/` 一份，两侧模板都指向这里；另附两个图标订阅 JSON（`icons.json` 纯本仓 · `icons-full.json` 大集成）。
 - **许可与 LICENSE 文件**：两侧相同，共享一份。
 - **规则集清单**：分流版 21 个远程规则集两侧**逐字共用**（同一批 URL，含两侧都注释掉的 `Proxy.list`）；
   Egern 另有 2 个独有项 —— `Lan.list`（补内置 `LAN`）与 `apple_system.list`（补内置 `SYSTEM`，本仓自托管）

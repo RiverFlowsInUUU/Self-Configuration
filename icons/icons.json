@@ -1,6 +1,6 @@
 {
   "name": "Self-Configuration Icons",
-  "description": "Surge / Egern 配置模板的策略组图标集（由本仓 icons/ 目录派生）",
+  "description": "Surge / Egern 配置模板的策略组图标集 —— 全部自托管于本仓 icons/，不依赖任何外部仓库",
   "icons": [
     {
       "name": "Proxy",

@@ -50,7 +50,7 @@ Self-Configuration/                          # 两内核合并后同仓（2026-0
 │   │   └── config_old/                      # 历史版本归档（成对快照，永不删除）
 │   └── （原 docs/ 与 DetailsReadme/ 已并入 skill/，2026-09-27，git 历史可查）
 ├── egern/                                   # 姊妹内核一侧（同构：profiles / skill/reference/egern）
-├── icons/                                   # 26 个策略组图标（仓库根，两内核共用、不跨项目引用）
+├── icons/                                   # 策略组图标 PNG + 两个图标订阅 JSON —— 仓库根，两内核共用、不跨项目引用
 ├── LICENSE · SECURITY.md · README.md        # 许可证 · 安全披露 · 门面（订阅入口 + 指路）
 └── skill/                                   # AI 知识库（本仓唯一文档区）
     ├── SKILL.md                             # AI 唯一入口：六条底线 / 归档机制 / 动线 / 分支索引
@@ -660,7 +660,7 @@ AD      = select, REJECT, icon-url=…/AdBlock.png
 > 再各自 include 订阅槽。`smart` 组也不能把别的组当子策略，只有 `include-other-group`
 > 能把订阅里的**具体节点**复制进来。
 
-**`routing.conf` —— 26 个组**
+**`routing.conf` —— 22 个组**
 
 组序与 Egern 当前版 **v3.4** **逐位对齐**（维护纪律，无自动判据）。
 
