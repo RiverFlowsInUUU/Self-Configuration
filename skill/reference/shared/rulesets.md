@@ -29,7 +29,8 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 | `AI.list` | → `AI`（通用 AI，必须排在上面三条**之后**） | ✅ | ✅ | [Repcz/Tool](https://github.com/Repcz/Tool)（分支头 · 活跃维护；2026-09-28 自 ACL4SSR 换入） |
 | `AI_Domains`（本仓自托管） | → `AI`（伴生域/宽后缀/基础设施域，**必须紧跟 `AI.list`**） | ✅ | ✅ | 本仓 `rules/AI.list`（静态整合 · 生成器 `skill/scripts/ai_domains_build.py`；条数与来源见该文件头部档案） |
 | `Spotify.list` · `YouTubeMusic.list` · `YouTube.list` | 各自应用组 | ✅ | ✅ | [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) |
-| `GitHub.list` · `Google.list` · `Microsoft.list` | 各自应用组 | ✅ | ✅ | 同上 |
+| `GitHub.list` | → **`Proxy` 直指**（2026-10-05 起不再单设 `GitHub` 组） | ✅ | ✅ | 同上 |
+| `Google.list` · `Microsoft.list` | 各自应用组 | ✅ | ✅ | 同上 |
 | `Telegram.list` · `Twitter.list` | 各自应用组 | ✅ | ✅ | 同上 |
 | `apple.txt` | Apple 在中国大陆可直连的域名 → `DIRECT` | ✅ 仅分流版 | ✅ 仅分流版 | [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules)，与 `direct.txt` **同仓库同 release 同格式**。**纯域名、零 IP**（条数随上游更新，一律现抓）⇒ 不写规则级开关（第 4 节 4b）。懒人版 2026-09-24 起不引用只留内置 `SYSTEM`；分流版 2026-10-04 起由 `Apple_All_No_Resolve.list`（1,616 条）换入 |
 | `Proxy.list` | 常用代理名单 | 注释态，不参与匹配 | 注释态，不参与匹配（2026-09-24 起与 Surge 同写法；原先是 `disabled: true`，那条仍占 `rules` 的一位） | 同上 |
@@ -57,7 +58,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 
 | 位 | 内容 | 位 | 内容 |
 |:-:|:-----|:-:|:-----|
-| ① | 白名单 `surge-direct.list` → `DIRECT` | ⑬–⑱ | `YouTube` · `GitHub` · `Google` · `Microsoft` · `Telegram` · `Twitter` 各应用组 |
+| ① | 白名单 `surge-direct.list` → `DIRECT` | ⑬–⑱ | `YouTube` · `Google` · `Microsoft` · `Telegram` · `Twitter` 各应用组；`GitHub` → **`Proxy` 直指** |
 | ②③ | 两条广告清单 → `REJECT`(S) / `AD`(E) | ⑲ | 系统域名集 → `DIRECT`：Surge 内置 `SYSTEM` ／ Egern `apple_system.list`（本仓快照） |
 | ④⑤ | 内网：Surge `LAN` · `private` ／ Egern `Lan.list` · `Private` | ⑳ | `apple.txt` → `DIRECT`（Apple 在中国大陆可直连的域名） |
 | ⑥–⑩ | 厂商专属在前：`OpenAI` · `Gemini` · `Anthropic` · `Claude`，再 `AI.list` | ㉑ | `direct.txt` → `DIRECT` |
@@ -69,7 +70,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 
 1. **白名单必须排在最前**，且在两条广告清单之前 —— Jinx 与 AWAvenue 存在重叠域名，白名单排到后面会被误杀。
 2. **厂商专属规则（`OpenAI` / `Gemini` / `Anthropic` / `Claude`）排在 `AI.list` 之前** —— 否则 AI 域名先被 `AI.list` 接走，专属组形同虚设。
-3. **`GitHub.list` 排在 `direct.txt` 之前** —— 实测 `direct.txt` 收录了若干含 `github` 的域名（githubim.com / githubshare.com / hellogithub.com / kkgithub.com 等），它们会被 `GitHub.list` 的 `DOMAIN-KEYWORD,github` 命中；排到后面这几个就接不到。（`github.com` 本身**不在** `direct.txt` 里。）
+3. **`GitHub.list` 排在 `direct.txt` 之前** —— 实测 `direct.txt` 收录了若干含 `github` 的域名（githubim.com / githubshare.com / hellogithub.com / kkgithub.com 等），它们会被 `GitHub.list` 的 `DOMAIN-KEYWORD,github` 命中；排到后面这几个就接不到。本条**直指 `Proxy`**（2026-10-05 起不再单设 `GitHub` 组）。（`github.com` 本身**不在** `direct.txt` 里。）
 4. **IP 类规则排最后，且必须带 `no-resolve` / `no_resolve`** —— 否则每个走到它的域名都会被强制本地解析一次，那正是泄露来源。详见 [`no-resolve-pairing.md`](no-resolve-pairing.md)。
 4b. ⭐ **规则级开关的取舍，四份 profile 共用一条原则**：**实测零 IP 条目的规则集不写，真含 IP 条目的必须写**。
     该开关只对规则集里的 IP 类条目起作用，纯域名集写上是空转 —— 本仓 2026-09-24 起把它从 12 条零 IP 规则上删掉。

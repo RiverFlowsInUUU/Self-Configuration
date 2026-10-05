@@ -59,7 +59,8 @@ BLACKLIST = {'amazonaws.com', 'cloudflare.com', 'wp.com', 'imgix.net', 'sentry.i
 # challenges.cloudflare.com（AI 服务人机验证，上游已收且该收）/ openaicom.imgix.net（OpenAI 专属）等
 # 父域在黑名单、子域却该收的条目。
 # ① 通用基础设施的个别主机：支付(stripe) / 遥测(sentry) / 对象存储(s3) / 图片 CDN(imgix) / 邮件投递(sendgrid)
-# ② 撞本仓 GitHub、微软分流组的共享域 —— AI 组排在其前，收了会静默改写这些域的出口
+# ② 撞本仓 GitHub / 微软分流规则的共享域 —— AI 组排在其前，收了会静默改写这些域的出口
+#    （GitHub 规则 2026-10-05 起直指 `Proxy`、不再单设组；黑名单仍保留，因为 AI 组排在它之前）
 BLACKLIST_EXACT = {
     'js.stripe.com', 'o207216.ingest.sentry.io', 'workos.imgix.net', 'ct.sendgrid.net',
     'anysphere-binaries.s3.us-east-1.amazonaws.com',
@@ -222,7 +223,7 @@ def main():
         '#    (zed/augment/chorus/udify) + JetBrains/Apple Intelligence + Grok 登录域。',
         '#    ⚠️ 该集设计前提是「置于微软/Apple/通用代理规则之前」，故意收录共享登录/token 域',
         '#    (js.stripe.com / login.live.com 等)以保证账号风控一致 —— 与本仓取舍不同，故用',
-        '#    BLACKLIST_EXACT 点名剔除其中会撞本仓 GitHub/微软分流、或属通用基础设施的 9 个主机。',
+        '#    BLACKLIST_EXACT 点名剔除其中会撞本仓 GitHub/微软分流规则、或属通用基础设施的 9 个主机。',
         '#',
         '# ============ 整合纪律 ============',
         '# · 零 IP 条目：所有 IP-CIDR/IP-ASN 一律丢弃(纯域名集不触发解析，无 DNS 泄露面)',

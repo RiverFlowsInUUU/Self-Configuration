@@ -122,12 +122,6 @@ policy_groups:
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTube.png
 - select:
-    name: GitHub
-    policies:
-    - Proxy
-    flatten: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/GitHub.png
-- select:
     name: Google
     policies:
     - Gemini
@@ -311,7 +305,7 @@ rules:
 - rule_set:
     name: Github
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/GitHub/GitHub.list
-    policy: GitHub
+    policy: Proxy
     update_interval: 604800
 - rule_set:
     name: Google

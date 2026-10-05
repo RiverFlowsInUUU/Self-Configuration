@@ -667,7 +667,7 @@ AD      = select, REJECT, icon-url=…/AdBlock.png
 | 层 | 组 | 类型 | 作用 |
 |:---|:---|:----:|:-----|
 | ① 总入口 | `Proxy` / `Smart` | `select` / `smart` | `Proxy` 是**手动**总出口（首项 `Smart`，带低倍率优先权重）；`Smart` 是自动全节点池 |
-| ② 应用（12 组） | `ChatGPT` / `Gemini` / `Claude` / `AI` / `Spotify` / `YouTubeMusic` / `YouTube` / `GitHub` / `Google` / `Microsoft` / `Telegram` / `Twitter` | `select` | 都带 `include-other-group="Proxy"` —— 复制 `Proxy` 的**已解析成员**；首项各不相同：`Claude` `Taiwan` · `Google` `Gemini` · `Microsoft` `DIRECT` · `AI` 占位节点 `Node-B` · `Spotify` / `YouTubeMusic` `USA`（见下方 📌） |
+| ② 应用（11 组） | `ChatGPT` / `Gemini` / `Claude` / `AI` / `Spotify` / `YouTubeMusic` / `YouTube` / `Google` / `Microsoft` / `Telegram` / `Twitter` | `select` | 都带 `include-other-group="Proxy"` —— 复制 `Proxy` 的**已解析成员**；首项各不相同：`Claude` `Taiwan` · `Google` `Gemini` · `Microsoft` `DIRECT` · `AI` 占位节点 `Node-B` · `Spotify` / `YouTubeMusic` `USA`（见下方 📌） |
 | ③ 订阅 | `Airport` | `select` | `policy-path` 订阅槽位，`hidden=true` |
 | ③ 开关 | `AD` | `select` | 独立手动开关，**不被规则引用**（见 §13.3） |
 | ④ 地区 | `Hong Kong` / `USA` / `Japan` / `Taiwan` / `Singapore` / `Other Regions` | `smart` | `policy-regex-filter` 按节点名筛；另带 `policy-priority` 低倍率优先（0.15） |
@@ -702,8 +702,8 @@ AD      = select, REJECT, icon-url=…/AdBlock.png
 | `Spotify` / `YouTubeMusic` | **`USA`** | 媒体类的解锁地区（2026-09-26 定） |
 | `YouTube` | `Proxy` | 媒体类 |
 | `Telegram` / `Twitter` | `Proxy` | 社交类 |
-| `GitHub` | `Proxy` | 开发者服务 |
 | `Microsoft` | **`DIRECT`** | 微软国内可直连，走代理反而慢 |
+| —（`GitHub`） | `Proxy`（**规则直指**） | 开发者服务；2026-10-05 起不再单设组，`GitHub.list` 直接 `policy: Proxy` |
 
 ### 13.2 不能用组的地方
 
@@ -773,7 +773,7 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 | **4–5** | 内网：`LAN` / `private.txt` | `DIRECT`（`LAN` 带 `no-resolve`，`private.txt` 零 IP 不写） | **提前到应用之前**（对齐 Egern 的 `Lan.list` / `private` 位置） |
 | **6–10** | AI 厂商：`OpenAI` / `Gemini` / `Anthropic` / `Claude` / `AI` | `ChatGPT` / `Gemini` / `Claude` / `Claude` / `AI` | **新增 4 条**（`AI.list` 位置下移） |
 | **11–13** | 媒体：`Spotify` / `YouTubeMusic` / `YouTube` | 同名组 | **新增 3 条** |
-| **14–18** | `GitHub` / `Google` / `Microsoft` / `Telegram` / `Twitter` | 同名组 | **新增 5 条**（后两条置于 `Microsoft` 之后） |
+| **14–18** | `Google` / `Microsoft` / `Telegram` / `Twitter` | 同名组 | **新增 4 条**（后两条置于 `Microsoft` 之后） |
 | 19–20 | 系统集 + Apple：`SYSTEM` / `apple.txt` | `DIRECT`（`apple.txt` 零 IP **不写**开关） | 懒人版只有 ⑲ 那条内置 `SYSTEM`；`apple.txt` 只留在分流版 |
 | 21–22 | `direct.txt` / `GEOIP,CN` | `DIRECT`（`direct.txt` 零 IP **不写**开关；`GEOIP,CN` **必须** `no-resolve`） | 同 lazy |
 | **23** | `FINAL,Final,dns-failed` | `Final` 组 | **兜底从 `Proxy` 改为选择组** |
@@ -785,7 +785,8 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 > 2. **`GitHub.list` 必须排在 `direct.txt` 之前** —— 实测 `direct.txt` 收录了若干含 `github`
 >    的域名（githubim.com / githubshare.com / hellogithub.com / kkgithub.com 等），它们会被
 >    `GitHub.list` 的 `DOMAIN-KEYWORD,github` 命中；排到后面这几个会走 DIRECT。
->    （`github.com` 本身**不在** `direct.txt` 里，它走 GitHub 组由覆盖审计断言守。）
+>    ⚠️ 本条**直接指向 `Proxy`**（2026-10-05 起不再单设 `GitHub` 组，规则集仍保留）；
+>    `github.com` 本身**不在** `direct.txt` 里，它走代理由覆盖审计断言守。
 > 3. **内网段排在应用段之前** —— 这处位置是**对齐 Egern v3.2 的结果**：
 >    内网清单里的域名不在任何应用清单中，IP 段又带 `no-resolve` 不触发解析
 >    ⇒ 提前与否语义等价，只为两侧顺序逐行一致。

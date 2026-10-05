@@ -197,7 +197,7 @@ policy_groups:
 #     而不是 Surge 各应用组的「节点平铺」。本版即按此对齐。
 #
 #   首项 = 默认取向，逐组与 Surge 一致：ChatGPT / Gemini / AI / Spotify / YTMusic /
-#   YouTube / GitHub / Telegram / Twitter 默认 `Proxy`；Claude 默认 `Taiwan`；
+#   YouTube / Telegram / Twitter 默认 `Proxy`；Claude 默认 `Taiwan`；
 #   Google 默认 `Gemini`；Microsoft 默认 `DIRECT`。
 #   ⚠️ 本版有两处首项不是组名池：`AI` 首项是本文件的 `Node-B`（占位节点），
 #     `Spotify` / `YouTubeMusic` 首项是 `USA`。两侧（Surge / Egern）同写。
@@ -256,12 +256,6 @@ policy_groups:
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTube.png
-- select:
-    name: GitHub
-    policies:
-    - Proxy
-    flatten: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/GitHub.png
 - select:
     name: Google
     # 首项 `Gemini` ⇒「Google 走 Gemini → Proxy」。
@@ -474,10 +468,11 @@ rules:
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/YouTube/YouTube.list
     policy: YouTube
     update_interval: 604800
+# GitHub —— 规则集仍引用（`GitHub.list`），但**不再单独成组**：本条直接指向 `Proxy`。
 - rule_set:
     name: Github
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/GitHub/GitHub.list
-    policy: GitHub
+    policy: Proxy
     update_interval: 604800
 - rule_set:
     name: Google

@@ -98,7 +98,7 @@ FOREIGN_PROBES_ROUTING = {
     "chat.openai.com":   {"CHATGPT"},
     "api.anthropic.com": {"CLAUDE"},
     "gemini.google.com": {"GEMINI"},
-    "github.com":        {"GITHUB"},
+    "github.com":        {"PROXY"},
     "www.google.com":    {"GOOGLE"},
     "www.youtube.com":   {"YOUTUBE"},
     "t.me":              {"TELEGRAM"},

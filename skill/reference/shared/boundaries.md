@@ -29,6 +29,7 @@
 | 历史 release notes（`release_publish.PUBLIC_NOTES`）保留**发布当时**的条数，不回改 | 该值记录发布时点的事实（v3.9 条目即此例）；自 v2.0.1／v4.0.1 起新条目已改为「当前版本信息统一只保留在文件头注」 | 需修订历史记录本身（发布勘误） |
 | **「一天一版」只从 2026-10-04 起算** —— 此前的多版本日是历史，不回改、不追溯（09-24 分流版一天 8 个版本、09-26/27/28 各 3 个、09-29 各 2 个） | [`check_min_pair.py`](../../tests/check_min_pair.py) 的 `CADENCE_FROM` 就近注释 | 需要回溯修订历史版本号时（须连同 `config_old/` 与 Release 资产一起动） |
 | 不建「版本日期口径」专用闸门：`number_birth` 用 `-G`（整行锚定）而非 `-S`（子串），由就近注释守 | [`release_publish.py`](../../scripts/release_publish.py) 的 `number_birth` 就近注释（含实测：互换后闸门仍全绿） | 出现「版本被算进错误日期的 Release」的实际事故时（即现役号开始互为前缀、-G 与 -S 分叉） |
+| `GitHub` 不再单设分流组，`GitHub.list` 直指 `Proxy`（2026-10-05）—— 覆盖审计的 `github.com` 期望随之从 `{"GITHUB"}` 改为 `{"PROXY"}`，**即主动放弃「该文档有专属组」这条防线** | [`profile-anatomy.md`](../surge/profile-anatomy.md) §13.1 ／ [`rulesets.md`](rulesets.md) §4 | 需要「面板上单独调 GitHub 出口」时（重新建组，并把覆盖审计期望改回 `GITHUB`） |
 
 ## 3 · 不是缺陷的边界
 
