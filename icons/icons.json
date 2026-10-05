@@ -103,6 +103,11 @@
       "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Twitter.png"
     },
     {
+      "name": "Twitter (old)",
+      "category": "社交",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Twitter-old.png"
+    },
+    {
       "name": "WeChat",
       "category": "社交",
       "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/WeChat.png"
