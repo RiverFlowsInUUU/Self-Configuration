@@ -782,8 +782,10 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 > 📌 **三条顺序要点**：
 > 1. **厂商专属规则必须排在通用 `AI.list` 之前** —— 否则 AI 域名先被 `AI.list` 接走，
 >    `ChatGPT` / `Gemini` / `Claude` 组永远轮不到。
-> 2. **`GitHub.list` 必须排在 `direct.txt` 之前** —— `github.com` 同时被国内直连清单收录，
->    排到后面就接不到它，"应用的代理取向"直接失效。
+> 2. **`GitHub.list` 必须排在 `direct.txt` 之前** —— 实测 `direct.txt` 收录了若干含 `github`
+>    的域名（githubim.com / githubshare.com / hellogithub.com / kkgithub.com 等），它们会被
+>    `GitHub.list` 的 `DOMAIN-KEYWORD,github` 命中；排到后面这几个会走 DIRECT。
+>    （`github.com` 本身**不在** `direct.txt` 里，它走 GitHub 组由覆盖审计断言守。）
 > 3. **内网段排在应用段之前** —— 这处位置是**对齐 Egern v3.2 的结果**：
 >    内网清单里的域名不在任何应用清单中，IP 段又带 `no-resolve` 不触发解析
 >    ⇒ 提前与否语义等价，只为两侧顺序逐行一致。
