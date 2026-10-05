@@ -90,6 +90,7 @@ def build_gates():
         ('Egern DNS 双份', [PY, 'skill/scripts/egern/check_egern_dns.py',
                             'egern/profiles/lazy.yaml', 'egern/profiles/routing.yaml'], {}),
         ('.min 漂移', [PY, 'skill/tests/make_min.py', '--check'], {}),
+        ('地区组判别力', [PY, 'skill/tests/check_region_filters.py'], {}),
     ]
     return gates
 

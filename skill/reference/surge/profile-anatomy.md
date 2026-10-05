@@ -290,7 +290,7 @@ Node-B = hysteria2, 203.0.113.11, 52341, password=REPLACE_WITH_YOUR_PASSWORD, sn
 
 两类的**订阅节点引用面不同**（这是两版真正的设计差）：懒人版里订阅节点直接进
 `Proxy` / `AI`（`include-other-group="Airport"`）；分流版里订阅节点只进
-`Smart` / 7 个地区组，其余应用组的成员表不变。
+`Smart` / 6 个地区组，其余应用组的成员表不变。
 
 > ⚠️ **命名不是装饰，是功能**（只影响分流版的地区组）—— 地区组用 `policy-regex-filter`
 > 按**节点名**筛节点。叫 `HK-01` 会进 `Hong Kong` 组，叫 `香港一号` 也会，叫 `node1`
@@ -670,7 +670,7 @@ AD      = select, REJECT, icon-url=…/AdBlock.png
 | ② 应用（12 组） | `ChatGPT` / `Gemini` / `Claude` / `AI` / `Spotify` / `YouTubeMusic` / `YouTube` / `GitHub` / `Google` / `Microsoft` / `Telegram` / `Twitter` | `select` | 都带 `include-other-group="Proxy"` —— 复制 `Proxy` 的**已解析成员**；首项各不相同：`Claude` `Taiwan` · `Google` `Gemini` · `Microsoft` `DIRECT` · `AI` 占位节点 `Node-B` · `Spotify` / `YouTubeMusic` `USA`（见下方 📌） |
 | ③ 订阅 | `Airport` | `select` | `policy-path` 订阅槽位，`hidden=true` |
 | ③ 开关 | `AD` | `select` | 独立手动开关，**不被规则引用**（见 §13.3） |
-| ④ 地区 | `Hong Kong` / `USA` / `Japan` / `Taiwan` / `Singapore` / `Korea` / `Other Regions` | `smart` | `policy-regex-filter` 按节点名筛；另带 `policy-priority` 低倍率优先（0.15） |
+| ④ 地区 | `Hong Kong` / `USA` / `Japan` / `Taiwan` / `Singapore` / `Other Regions` | `smart` | `policy-regex-filter` 按节点名筛；另带 `policy-priority` 低倍率优先（0.15） |
 | ⑤ 兜底 | `Final` | `select` | `include-other-group="Proxy"` |
 
 > 📌 **`AD` 的位置说明（别被分节编号误导）**：它在 `[Proxy Group]` 里排在 `Airport` 之后、
@@ -851,7 +851,7 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 | [`skill/tests/check_links.py`](../../tests/check_links.py) | markdown 相对链接与锚点（改标题后**静默失效**的那一类问题） | ❌ |
 
 > 📌 第 4 个（`audit_region_filters.py`）是分流版带来的：`Other Regions` 用的负向断言
-> 把另外 6 个地区组的关键词**抄了一遍**（68 个 token），而 Surge 的 `filter`
+> 把另外 5 个地区组的关键词**抄了一遍**（61 个 token），而 Surge 的 `filter`
 > 只吃字面正则、不支持变量 ⇒ 结构上消灭不掉这份拷贝。
 > **兜底做法是给拷贝配一个比对器，并给比对器配一个判负样本** ——
 > 见 [`skill/reference/surge/pitfalls.md` 坑 16](pitfalls.md)。

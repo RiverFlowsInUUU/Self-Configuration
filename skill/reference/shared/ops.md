@@ -107,7 +107,7 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 | 边界 | 说明 |
 |:-----|:-----|
 | 空地区组 | 节点名不含关键词则该组为空，指向它的规则会断流。导入后到面板确认 |
-| `Smart` 权重 = 低倍率优先 | 全部 smart 组（`Smart` + 7 个地区组）带 `policy-priority` 0.15：默认出口优先落低倍率节点（省钱但可能稍慢），与 Egern 对齐；不想要就把这项权重去掉 |
+| `Smart` 权重 = 低倍率优先 | 全部 smart 组（`Smart` + 6 个地区组）带 `policy-priority` 0.15：默认出口优先落低倍率节点（省钱但可能稍慢），与 Egern 对齐；不想要就把这项权重去掉 |
 | `https` 类型节点不支持 UDP 中继 | 别让承担 UDP 的组落到它们 |
 | Apple 无独立策略组 | 走 `Apple` 规则 → DIRECT；要"给 Apple 挑地区"得自己复制 select 组 |
 | 段内顺序 | 与 Egern 逐位对齐（维护纪律）；"先写引用别人的，后写被引用的"，Surge 允许前向引用 |
@@ -187,7 +187,7 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 
 1. `flatten: true` 把组名展开成组内全部具体节点，让 `fallback` / `smart` 做节点级尝试。`fallback` 不给 `flatten` 时，`policies: [Proxy]` 只有一个候选单位，等于没有故障转移。官方明确 `flatten` 在 `select` / `auto_test` / `smart` / `fallback` / `load_balance` 五种类型通用。
 2. `fallback` 不做延迟择优，按顺序取第一个可用。想固定地区，把目标写首位；想自动挑最快，改 `smart`。`ChatGPT` / `Gemini` 在旧版曾是空组 `[]` 而规则直指它们，导入即静默断流；当前版已填 `[Proxy]` + `flatten`，且这两组自 `routing_v3` 起已由 `fallback` 改为 `select`。
-3. 低倍率优先改由**权重**承担：全部 smart 组（`Smart` + 7 个地区组）写 `policy-priority` / `priorities` 系数 0.15，两内核同值同正则；`Proxy` 首项即 `Smart`，默认出口因此优先落低倍率节点，低倍率不可用或过慢时**自动让位**（不再是"只在低倍率小池里硬选"，v4.0.2 起原 `MAX` 组并入）。该正则曾写错（只认字面 `0.01` / `0.1`，误收 `10.1`、漏收 `0.5`），现版用带左边界的负向后行断言。改任何地区组 filter 关键词，必须同步 `Other Regions` 的负向断言（`audit_region_filters.py` 守）。
+3. 低倍率优先改由**权重**承担：全部 smart 组（`Smart` + 6 个地区组）写 `policy-priority` / `priorities` 系数 0.15，两内核同值同正则；`Proxy` 首项即 `Smart`，默认出口因此优先落低倍率节点，低倍率不可用或过慢时**自动让位**。该正则须带左边界以免误收 `10.1` / 漏收 `0.5`。改任何地区组 filter 关键词，必须同步 `Other Regions` 的负向断言（`audit_region_filters.py` 守）。
 
 `lazy` 特有：只有 `Proxy` / `AI` / `AD` 三组；`Proxy` 组 `policies` 为空，必须自己填节点名；`AD` 子策略只有 `REJECT`（无 `DIRECT` 兜底）。临时放行单个域名，在 `rules` 更前面加一条 `DIRECT` 规则，别整组切走。
 

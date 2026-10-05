@@ -64,6 +64,7 @@ policy_groups:
     - Singapore
     - Taiwan
     - Japan
+    - Korea
     - Other Regions
     - Node-A
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Proxy.png
@@ -214,6 +215,15 @@ policy_groups:
       "(?<![\\d.])0\\.\\d*[1-9]": 0.15
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Singapore.png
 - smart:
+    name: Korea
+    policies:
+    - Airport
+    flatten: true
+    filter: (?i)🇰🇷|韩国|首尔|仁川|Korea|South\s*Korea|\b(?:KOR|KR|ICN|SEL)\b
+    priorities:
+      "(?<![\\d.])0\\.\\d*[1-9]": 0.15
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Korea.png
+- smart:
     name: Other Regions
     policies:
     - Airport
@@ -224,6 +234,7 @@ policy_groups:
         🇯🇵|日本|东京|大阪|Japan|\b(?:JPN?|NRT|HND|KIX|FUK|NGO|OSA|CTS|SDJ|OKA)\b|
         🇸🇬|新加坡|狮城|Singapore|\b(?:SGP?|SIN)\b|
         🇹🇼|台湾|Taiwan|\b(?:TWN?|TPE|Taipei)\b|
+        🇰🇷|韩国|首尔|仁川|Korea|South\s*Korea|\b(?:KOR|KR|ICN|SEL)\b|
         🇺🇸|美国|United\s*States|America|\bUSA?\b|
         洛杉矶|硅谷|西雅图|芝加哥|达拉斯|凤凰城|阿什本|纽约|迈阿密|波士顿|休斯顿|亚特兰大|拉斯维加斯|圣地亚哥|盐湖城|奥斯汀|波特兰|丹佛|奥克兰|安大略|圣安娜|
         \b(?:LAX|SJC|SFO|SEA|ORD|JFK|DFW|IAD|PHX|ATL|BOS|MIA|EWR|LGA|IAH|HOU|DEN|OAK|ONT|SNA|LAS|PDX|DAL|SAN|SLC|MSP)\b|

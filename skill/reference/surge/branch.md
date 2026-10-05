@@ -67,7 +67,7 @@ Egern（见分支 B）、Shadowrocket（`dns-server` 语义不同）。
 |---|---|---|
 | [`audit_ruleset_content.py`](../../scripts/surge/audit_ruleset_content.py) | ① 远程规则集里有没有**不带 `no-resolve` 的 IP 条目**；② 判给 DIRECT 的规则集**域名条目总量**是否够（判据是数域名条目，**不是**看规则集名字） | ✅ |
 | [`audit_routing_coverage.py`](../../scripts/surge/audit_routing_coverage.py) | 拿真实域名**走一遍** `[Rule]`，看最终命中哪条。期望表按 profile 自动切换；**不得**放宽成"只要不是 DIRECT" | ✅ |
-| [`audit_region_filters.py`](../../scripts/surge/audit_region_filters.py) | 分流配置里 7 个地区组的 `policy-regex-filter` 关键词是否同步（负向断言那份拷贝）、是否互斥、类型是否 `smart`。见坑 16 | ❌ |
+| [`audit_region_filters.py`](../../scripts/surge/audit_region_filters.py) | 分流配置里 6 个地区组的 `policy-regex-filter` 关键词是否同步（负向断言那份拷贝）、是否互斥、类型是否 `smart`。见坑 16 | ❌ |
 
 ⚠️ **分流配置（按应用 / 按地区分组）另有三条 Surge 特有的硬约束**，
 与 Egern 等客户端的写法**不通用**：

@@ -363,7 +363,7 @@ def add(level, cid, msg, detail=""):
 Other Regions = smart, …, policy-regex-filter=(?xi)^(?!.*(?:🇭🇰|香港|…|群组)).+$
 ```
 
-**问题**：那个 `(?:...)` 里的关键词，是**把另外 6 个地区组的关键词逐字抄了一遍**。
+**问题**：那个 `(?:...)` 里的关键词，是**把另外 5 个地区组的关键词逐字抄了一遍**。
 Surge 的 filter 不支持引用变量（filter 是字面正则），所以这份拷贝**在配置层面消灭不掉**。
 
 **漏同步的后果 —— 它不会报任何错**：
@@ -397,8 +397,18 @@ Surge 的 filter 不支持引用变量（filter 是字面正则），所以这�
 ### 关键：给审计器配一个**判负** fixture
 
 只测"好配置通过"是不够的 —— 那证明不了脚本有判别力。
-`skill/tests/surge/fixtures/bad_region_filter.conf` 刻意把 Hong Kong 组的关键词
-与 `Other Regions` 搞不同步，**期望审计器报出并判负**。
+两侧各一份**故意损坏**的 fixture（把 `Hong Kong` 组的 filter 末尾注入一个未同步的
+关键词 `港区`，其余逐字同步），**期望审计器报出并判负**：
+
+| 内核 | fixture | 期望 |
+|:--|:--|:--|
+| Surge | `skill/tests/surge/fixtures/bad_region_filter.conf` | `audit_region_filters.py` 退出码 1 |
+| Egern | `skill/tests/egern/fixtures/bad_region_filter.yaml` | `audit_region_filters.py` 退出码 1 |
+
+由 `skill/tests/check_region_filters.py` 守（同时在 `verify_all.py` 与 CI 里跑）。
+⚠️ 它不只断言退出码：还断言输出里出现定位标记 —— 因为审计器**崩了也是退出码 1**
+（见 `_surge_common.force_utf8_stdout` 记录的事故），只看退出码区分不开
+「报出这一条」与「崩在别处」。
 
 > 📌 **通用教训**：当一份数据必须在两处保持一致、而**结构上又消灭不掉拷贝**时
 > （语言不支持引用、格式不允许变量），正确做法是**给这份拷贝配一个比对器**，

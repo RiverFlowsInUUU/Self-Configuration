@@ -91,12 +91,12 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 ⇒ 效果是应用组拿到**节点级候选**，与 Surge `select, include-other-group="Proxy"` 的节点平铺同形。
 
 **低倍率优先（原 `MAX` 组，v4.0.2 并入）** —— 不再单设 `MAX` 组，改为在**所有 smart 组**
-（`Smart` + 7 个地区组）上写 `priorities: {"(?<![\d.])0\.\d*[1-9]": 0.15}`：
+（`Smart` + 6 个地区组）上写 `priorities: {"(?<![\d.])0\.\d*[1-9]": 0.15}`：
 低倍率节点比当前最优节点**慢 6.7 倍以内**（= 1 ÷ 0.15）仍然胜出，超出或不可用则自动让位给池内其它节点。
-与 Surge 的 `policy-priority` 同值同正则 —— 调这个口径要两侧 8 个组一起改。
+与 Surge 的 `policy-priority` 同值同正则 —— 调这个口径要两侧 7 个组一起改。
 
 **地区组** —— 「按正则把节点归类」是 **`filter`** 干的，不是 `smart` 本身；
-`smart` 只负责在筛出来的节点里选最优。`Other Regions` 的负向断言把其余 6 个地区组的
+`smart` 只负责在筛出来的节点里选最优。`Other Regions` 的负向断言把其余 5 个地区组的
 关键词**逐字抄了一遍** —— 改任何一组的关键词都要同步改它，
 用 [`skill/scripts/egern/audit_region_filters.py`](../../scripts/egern/audit_region_filters.py) 校验（漏改会被它拦下）。
 
@@ -266,7 +266,7 @@ forward:
 | `check_egern_dns.py` | ✅ **0 high / 2 low / 24 ok（退出码 0）** | 见下方「f3.1 判据修正」；24 这个数对应 `routing_v2` 起的全部版本（`routing_v1` 是 30 ok。`routing_v2` 时代两版 `rules` 均为 24 条、都不含 DNS 端点路由规则 ⇒ 6 项差在**逐端点**：`routing_v1` 多 `223.6.6.6` / `1.12.12.12` 两个国内端点，各计一条 `upstreams` 与一条 `proxy_nameservers` 的「IP 字面量」OK（+4）、再各计一条判据 B 的「直连可达」（+2）。⚠️ 现役 `rules` 为 24 条（2026-10-04 删去 `WeChat` 前为 25 条），规则集引用不落 DNS 判据，ok 计数仍恒 24。原见 `docs/07-文件版本沿革.md`，该文件已随仓库精简移除） |
 | `audit_routing_coverage.py` | ✅ 15/15 国内探针 `DIRECT` | 分流正确性不受脱敏影响 |
 | `audit_dns_forward.py --drill` | ✅ 通过（退出码 0） | `forward` value 单值、订阅耦合 0 |
-| `audit_region_filters.py` | ✅ 6 个地区组关键词全部同步（退出码 0） | 负向断言与地区组 filter 逐字一致 |
+| `audit_region_filters.py` | ✅ 5 个地区组关键词全部同步（退出码 0） | 负向断言与地区组 filter 逐字一致 |
 | `audit_ruleset_refresh.py --strict` | ✅ 604800 × 22 条全部钉住（退出码 0） | 唯一会**真的**让规则集停在旧版的写法是非正值 |
 
 **f3.1 判据修正（2026-09-20）** —— 曾有一段时间发布模板**过不了** `check_egern_dns.py`：

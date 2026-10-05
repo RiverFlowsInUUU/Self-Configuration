@@ -4,11 +4,11 @@
 
 审什么
 ──────
-`surge/profiles/routing.conf` 里有 7 个地区组，它们的关键词是**两份拷贝**：
+`surge/profiles/routing.conf` 里有 6 个地区组，它们的关键词是**两份拷贝**：
 
-  · 6 个地区组各自写自己的 `policy-regex-filter`（正向断言）；
+  · 5 个地区组各自写自己的 `policy-regex-filter`（正向断言）；
   · `Other Regions` 的 `policy-regex-filter` 是**负向断言**，
-    把这 6 个组的关键词**逐字又抄了一遍**（`^(?!.*(?:...)).+$` 形态）。
+    把这 5 个组的关键词**逐字又抄了一遍**（`^(?!.*(?:...)).+$` 形态）。
 
 官方 Surge 的 filter 不支持引用变量（filter 只能是字面正则），
 所以这份拷贝**在配置层面消灭不掉** —— 只能靠本脚本守。
@@ -22,13 +22,13 @@
 为什么不能靠"肉眼扫一遍"
 ────────────────────────
 关键词里有 emoji（🇭🇰 / 🇯🇵 …）、中文、`\b` 边界、`(?:...)` 非捕获组，
-肉眼比对 91 个 token 一定会漏。而漏一个不会报任何错。
+肉眼比对几十个 token 一定会漏。而漏一个不会报任何错。
 
 判据（三条，都必须是"绝对"而非"近似"）
 ─────────────────────────────────────
   ① 每个地区组的正向 filter 里的关键词 token，必须**逐字出现**在 Other Regions 的
      负向断言里（集合包含，不是模糊匹配）。
-  ② 反向也要查：Other Regions 的负向断言里**不应有**任何不来自这 6 个组的
+  ② 反向也要查：Other Regions 的负向断言里**不应有**任何不来自这些地区组的
      多余关键词 —— 多余就意味着排除得过宽，某些节点会从所有组里消失。
      ⚠️ 例外：末尾那串「信息行过滤词」（倍率 / 剩余 / 到期 …）是**刻意多加**的，
         它不属于任何地区组，用来把订阅里的信息行节点排除掉。脚本按"白名单"放行。
@@ -49,9 +49,9 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _surge_common import parse_conf, split_csv, strip_comment  # noqa: E402
 
-# 7 个地区组的名字 —— 与 routing.conf 里的组名逐字对应。
+# 地区组的名字 —— 与 routing.conf 里的组名逐字对应（含 `Other Regions`）。
 # ⚠️ 若你在 routing.conf 里改了组名，这里也要改（脚本会报缺失，不会静默通过）。
-REGION_GROUPS = ["Hong Kong", "USA", "Japan", "Taiwan", "Singapore", "Korea"]
+REGION_GROUPS = ["Hong Kong", "USA", "Japan", "Taiwan", "Singapore"]
 OTHER_GROUP = "Other Regions"
 
 # 刻意加在 Other Regions 负向断言末尾的"信息行过滤词"。
@@ -173,7 +173,7 @@ def main():
 
     fails, oks = [], []
 
-    # ── 前置：7 个组必须都在 ────────────────────────────────────────────────
+    # ── 前置：全部地区组必须都在 ──────────────────────────────────────────────────
     want = REGION_GROUPS + [OTHER_GROUP]
     missing = [g for g in want if g not in filters]
     if missing:
@@ -217,7 +217,7 @@ def main():
             + "  ⇒ 排除得过宽，含这些词的节点会从**所有**地区组里消失")
     if not extra:
         oks.append(f"`{OTHER_GROUP}` 的 {len(neg)} 个关键词全部有出处"
-                   f"（{len(declared)} 个来自 6 个地区组 + {len(INFO_WORDS)} 个信息行过滤词）")
+                   f"（{len(declared)} 个来自 {len(REGION_GROUPS)} 个地区组 + {len(INFO_WORDS)} 个信息行过滤词）")
 
     # ── ③ 地区组之间关键词不得重叠 ─────────────────────────────────────────
     overlap_found = False
@@ -229,7 +229,7 @@ def main():
                 fails.append(f"`{g1}` 与 `{g2}` 的关键词重叠：{' / '.join(sorted(dup))}"
                              f"  ⇒ 同一节点会落进两个地区组")
     if not overlap_found:
-        oks.append("6 个地区组的关键词两两不重叠")
+        oks.append(f"{len(REGION_GROUPS)} 个地区组的关键词两两不重叠")
 
     # ── ④ 类型必须都是 smart（不是 select/url-test）────────────────────────
     bad_type = [g for g in want if types.get(g) != "smart"]
@@ -238,7 +238,7 @@ def main():
             fails.append(f"地区组 `{g}` 的类型是 `{types.get(g)}`，应为 `smart`"
                          f"（smart 才会对组内节点逐个测速选优）")
     else:
-        oks.append("7 个地区组类型全部是 smart")
+        oks.append(f"{len(want)} 个地区组类型全部是 smart")
 
     # ── 输出 ────────────────────────────────────────────────────────────────
     print(f"\n地区组正则一致性审计 · {os.path.basename(a.profile)}")

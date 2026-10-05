@@ -235,7 +235,7 @@ python skill/tests/make_min.py            # 计划模式：四份 .min 应全部
 |:----:|:-----|
 | ✈️ **分流版的 `Airport` 组** | `policy-path=<订阅 URL>`，token 为占位符。不填则只能靠 `[Proxy]` 的本机节点（地区组按节点名关键词筛选，也能用） |
 | 🌏 **地区组可能为空** | 靠 `policy-regex-filter` 匹配节点名里的地区关键词。没筛到节点时 Surge **不会**拒绝加载，但指向它的规则会断流。导入后到面板确认哪几个组是空的 |
-| 🔁 **改地区关键词要改两处** | `Other Regions` 的负向断言把另外 6 个地区组的关键词抄了一遍。改完立刻跑 `python skill/scripts/surge/audit_region_filters.py surge/profiles/routing.conf` |
+| 🔁 **改地区关键词要改两处** | `Other Regions` 的负向断言把另外 5 个地区组的关键词抄了一遍。改完立刻跑 `python skill/scripts/surge/audit_region_filters.py surge/profiles/routing.conf` |
 | 🚫 **`pre-matching` 策略不能写组** | 必须是字面量 `REJECT` 族，写成策略组会导致 **Surge 拒绝加载整份配置** |
 
 ### Egern 侧

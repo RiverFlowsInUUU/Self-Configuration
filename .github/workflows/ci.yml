@@ -55,6 +55,11 @@ jobs:
         # 旧写法「计划模式 + git diff」两半都恒空/恒 0，是永远绿的空操作（豆包审查实锤）。
         run: python skill/tests/make_min.py --check
 
+      - name: Region-filter auditor discriminating power (negative fixtures)
+        # 拿两份故意损坏的 fixture 证明地区组审计器**真的会拦住**漏同步，
+        # 而不是只会对现役配置打一片 ✅（只测“好配置通过”证明不了判别力）。
+        run: python skill/tests/check_region_filters.py
+
       - name: Encoding gate (cp936)
         # Windows 中文环境（ACP=936）下子进程 stdout 走管道时 Python 用 cp936 编码 ——
         # 脚本 print 一个非 GBK 字符（✅/❌/⚠️/⇒）就 UnicodeEncodeError 并以**退出码 1** 结束。
