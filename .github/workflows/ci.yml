@@ -55,6 +55,17 @@ jobs:
         # 旧写法「计划模式 + git diff」两半都恒空/恒 0，是永远绿的空操作（豆包审查实锤）。
         run: python skill/tests/make_min.py --check
 
+      - name: Profile structure (section uniqueness / order)
+        # 2026-10-05 事故：一次行号切片编辑把 [Host]/[URL Rewrite] 复制成两份、
+        # [Rule] 内容被整段复制（RULE-SET 9→17 条），而**全部 11 道闸门照常全绿**
+        # （DNS 审计只审 DNS 键；min 对拍因两份都坏而通过）。本闸门把"人眼读文件"变成判据。
+        run: python skill/tests/check_structure.py
+
+      - name: Docs ↔ config sync (copied lists & promised numbers)
+        # 文档里抄了一份「组清单」（cross-kernel-diff）与两枚「承诺数字」（README badge）。
+        # 漏同步不报错、页面静默说谎 —— 实测已踩过三次（组清单漏改 / emoji 丢失 / 引用数过期）。
+        run: python skill/tests/check_docs_sync.py
+
       - name: Region-filter auditor discriminating power (negative fixtures)
         # 拿两份故意损坏的 fixture 证明地区组审计器**真的会拦住**漏同步，
         # 而不是只会对现役配置打一片 ✅（只测“好配置通过”证明不了判别力）。

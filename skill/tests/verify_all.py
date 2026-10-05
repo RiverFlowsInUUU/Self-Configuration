@@ -91,6 +91,8 @@ def build_gates():
                             'egern/profiles/lazy.yaml', 'egern/profiles/routing.yaml'], {}),
         ('.min 漂移', [PY, 'skill/tests/make_min.py', '--check'], {}),
         ('地区组判别力', [PY, 'skill/tests/check_region_filters.py'], {}),
+        ('profile 结构', [PY, 'skill/tests/check_structure.py'], {}),
+        ('文档-配置同步', [PY, 'skill/tests/check_docs_sync.py'], {}),
     ]
     return gates
 

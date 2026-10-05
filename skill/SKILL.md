@@ -152,8 +152,10 @@ Surge **拒绝加载整份配置**；Egern 侧没有对应机制，它的等价�
    python skill/scripts/egern/check_egern_dns.py egern/profiles/lazy.yaml egern/profiles/routing.yaml
    python skill/tests/make_min.py --check          # 漂移检查：四份 .min 应全部「已同步」
    python skill/tests/check_region_filters.py      # 地区组审计器的判别力（判负 fixture 必被拦住）
+   python skill/tests/check_structure.py           # profile 结构：段唯一 + 段序合法（防编辑事故）
+   python skill/tests/check_docs_sync.py           # 文档抄写的组清单/承诺数字 ↔ 配置真源
    python skill/tests/check_releases.py            # 需网络/gh；离线或限流时 SKIP（退出码 3，不算失败）
-   ↑ 以上收尾闸门可一键替代：python skill/tests/verify_all.py（并行跑全部 11 道，出汇总表；
+   ↑ 以上收尾闸门可一键替代：python skill/tests/verify_all.py（并行跑全部 13 道，出汇总表；
      SKIP 项以 ⚠️ 明示「未验证 ≠ 绿」）
 ⑥ 本地 commit → **停在推送前**。`git push` 永远是独立确认项：用户说「换掉 / 改吧 /
    找个新的」只授权改动本身，讨论与调研阶段的产物一律停在本地 + 汇报表格；
