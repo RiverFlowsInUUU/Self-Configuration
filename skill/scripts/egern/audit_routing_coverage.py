@@ -176,6 +176,33 @@ def main():
     doc = yaml.safe_load(io.open(a.profile, encoding="utf-8"))
     cache = {}
 
+    # ---- Z0：应用段「组顺序 ↔ 规则顺序」必须逐位对齐（2026-10-05 立）----
+    # 同 Surge 侧：两个列表由不同的手维护，极易各改各的。豁免 `Proxy`（总入口）与
+    # `AD`（广告拦截组，规则在 ③④ 位、属白名单/黑名单段，不属应用段）。
+    EXEMPT = {"PROXY", "AD"}
+    app_groups = [list(g.values())[0]["name"] for g in (doc.get("policy_groups") or [])
+                  if list(g.values())[0]["name"].upper() not in EXEMPT]
+    rule_pols = []
+    for r in (doc.get("rules") or []):
+        if "rule_set" in r:
+            pol = (r["rule_set"].get("policy") or "").strip()
+            if pol and pol not in rule_pols:
+                rule_pols.append(pol)
+    seq = [x for x in rule_pols if x in app_groups]
+    gseq = [g for g in app_groups if g in seq]
+    print()
+    print("【Z0】应用段「组顺序 ↔ 规则顺序」对齐")
+    print("-" * 100)
+    z0_bad = gseq != seq
+    if z0_bad:
+        print("  ❌ 两个列表顺序不一致：")
+        for i in range(max(len(gseq), len(seq))):
+            a_ = gseq[i] if i < len(gseq) else "—"
+            b_ = seq[i] if i < len(seq) else "—"
+            print(f"     {i+1:>2}. 组 {a_:<16} | 规则 {b_:<16} {'✅' if a_==b_ else '❌'}")
+    else:
+        print(f"  ✅ {len(gseq)} 个应用组逐位对齐")
+
     # ---- 先盘一遍启用的 DIRECT 规则集里到底有多少域名条目（ChinaMax 那类坑）----
     print("=" * 100)
     print("【一】启用的 rule_set 的域名/IP 构成（DIRECT 规则集域名条目≈0 ⇒ 兜不住国内域名）")

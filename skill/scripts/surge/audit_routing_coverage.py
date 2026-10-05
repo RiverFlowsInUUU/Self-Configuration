@@ -201,6 +201,16 @@ class Matcher:
             arg = parts[1].strip() if len(parts) > 1 else ""
             self.rules.append({"lineno": lineno, "type": t, "arg": arg,
                                "policy": pol, "parts": parts})
+        # [Proxy Group] 的组名，按文件出现顺序（Z0 对齐检查用）
+        self.group_names = []
+        for _ln, raw in sections.get("proxy group", []):
+            s = strip_comment(raw)
+            if not s or "=" not in s:
+                continue
+            nm, rhs = s.split("=", 1)
+            parts = split_csv(rhs)
+            if parts and parts[0].strip().lower() in ("select", "smart", "external"):
+                self.group_names.append(nm.strip())
         self._sets = {}          # ident -> {"DOMAIN": set(), "SUFFIX": set(), ...}
 
     # -- 规则集懒加载 ---------------------------------------------------------
@@ -321,6 +331,35 @@ def main():
 
     fails = []
 
+    # ── Z0. 应用段「组顺序 ↔ 规则顺序」必须逐位对齐（2026-10-05 立）────────────
+    # 为什么单立一条：两个列表由不同的手维护（组顺序看面板体验、规则顺序看匹配优先级），
+    # 极易各改各的 —— 2026-10-05 实测就漂了 4 处（Google/YouTube/Telegram/Spotify）。
+    # 判据：把「既是组名、又被规则当策略引用」的组按**组出现顺序**排一遍，
+    #       与按**规则出现顺序**排一遍，两者必须相同。
+    # 豁免：`Proxy`（总入口，被 GitHub 规则指向，但不是自己的规则）、
+    #       `AD`（广告拦截组，规则在 ③④ 位、属白名单/黑名单段，不属应用段）。
+    EXEMPT = {"PROXY", "AD"}
+    app_groups = [g for g in m.group_names if g.upper() not in EXEMPT]
+    rule_pols = []
+    for r in m.rules:
+        if r.get("type") == "RULE-SET":
+            p_ = (r.get("policy") or "").strip()
+            if p_ and p_ not in rule_pols:
+                rule_pols.append(p_)
+    seq = [p_ for p_ in rule_pols if p_ in app_groups]
+    gseq = [g for g in app_groups if g in seq]
+    print("── Z0 · 应用段「组顺序 ↔ 规则顺序」对齐")
+    if gseq != seq:
+        print("   ❌ 两个列表顺序不一致：")
+        for i in range(max(len(gseq), len(seq))):
+            a_ = gseq[i] if i < len(gseq) else "—"
+            b_ = seq[i] if i < len(seq) else "—"
+            print(f"      {i+1:>2}. 组 {a_:<16} | 规则 {b_:<16} {'✅' if a_==b_ else '❌'}")
+        print("   ⇒ 修法：让 [Rule] 应用段的先后与 [Proxy Group] 同名组的先后一致")
+        fails.append(("应用段顺序", "组/规则不对齐", None))
+    else:
+        print(f"   ✅ {len(gseq)} 个应用组逐位对齐")
+
     # ── A. 国内探针必须 DIRECT ──────────────────────────────────────────────
     print("── A · 国内探针（期望命中 DIRECT）")
     ok_dom = 0
@@ -386,7 +425,7 @@ def main():
 
     print("─" * 62)
     total = (len(DOMESTIC_PROBES) + len(expectations)
-             + len(FALSE_POSITIVE_PROBES) + len(apple_probes))
+             + len(FALSE_POSITIVE_PROBES) + len(apple_probes) + 1)   # +1 = Z0 对齐检查
     print(f"result: {total - len(fails)} passed, {len(fails)} failed")
     if fails:
         print("❌ 未通过")

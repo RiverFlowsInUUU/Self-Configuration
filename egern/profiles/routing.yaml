@@ -486,29 +486,8 @@ rules:
     name: AI_Domains
     match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/AI.list
     policy: AI
-    update_interval: 604800
-- rule_set:
-    name: Telegram
-    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Telegram/Telegram.list
-    policy: Telegram
-    update_interval: 604800
-
-- rule_set:
-    name: Spotify
-    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Spotify/Spotify.list
-    policy: Spotify
-    update_interval: 604800
-- rule_set:
-    name: YTM
-    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/YouTubeMusic/YouTubeMusic.list
-    policy: YouTube Music
-    update_interval: 604800
-- rule_set:
-    name: YouTube
-    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/YouTube/YouTube.list
-    policy: YouTube
-    update_interval: 604800
 # GitHub —— 规则集仍引用（`GitHub.list`），但**不再单独成组**：本条直接指向 `Proxy`。
+    update_interval: 604800
 - rule_set:
     name: Github
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/GitHub/GitHub.list
@@ -520,11 +499,30 @@ rules:
     policy: Google
     update_interval: 604800
 - rule_set:
+    name: YouTube
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/YouTube/YouTube.list
+    policy: YouTube
+    update_interval: 604800
+- rule_set:
+    name: YTM
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/YouTubeMusic/YouTubeMusic.list
+    policy: YouTube Music
+    update_interval: 604800
+- rule_set:
+    name: Telegram
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Telegram/Telegram.list
+    policy: Telegram
+    update_interval: 604800
+- rule_set:
+    name: Spotify
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Spotify/Spotify.list
+    policy: Spotify
+    update_interval: 604800
+- rule_set:
     name: Twitter
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Twitter/Twitter.list
     policy: Twitter
     update_interval: 604800
-
 - rule_set:
     name: Microsoft
     match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Microsoft/Microsoft.list
