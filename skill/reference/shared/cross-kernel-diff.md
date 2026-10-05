@@ -32,7 +32,7 @@
 
 ```
 Proxy · Smart · ChatGPT · Gemini · Claude · AI · Google · YouTube · YouTube Music
-Spotify · Telegram · Twitter · Airport · Microsoft · AD
+Telegram · Spotify · Twitter · Airport · Microsoft · AD
 Hong Kong · Taiwan · Japan · Singapore · United States · Other Regions · Final
 ```
 

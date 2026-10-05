@@ -242,6 +242,7 @@ PUBLIC_NOTES = {
         '规则顺序微调：微软规则集移到 Twitter 之后、Apple 域名集之前；微软分流组移到订阅槽位与广告开关之间。均为顺序调整，不改变分流结果。',
         '地区分组按新顺序排列（香港 / 台湾 / 日本 / 新加坡 / 美国 / 其他地区），原「USA」分组更名为「United States」。ChatGPT 与 Gemini 分组的默认出口改为美区（此前跟随智能选优），与 Spotify、YouTube Music 一致。',
         '应用分组顺序调整：Google 移到 AI 之后，其后依次为 YouTube、YouTube Music、Spotify、Telegram、Twitter、Microsoft。「YouTubeMusic」分组更名为「YouTube Music」。均为面板顺序与命名调整，不改变分流结果。',
+        'Telegram 的分组与规则集移到 Spotify 之前。顺序调整，不改变分流结果。',
     ],
 }
 
