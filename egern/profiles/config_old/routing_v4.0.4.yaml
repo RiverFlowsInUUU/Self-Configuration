@@ -1,4 +1,4 @@
-#! version=routing_v4.0.5
+#! version=routing_v4.0.4
 # ================================================================ routing（正式版 · 推荐）
 # 结构（与 Surge `routing.conf` 逐行对齐，内容与顺序均对拍）：
 #   ① `dns.forward` 由单条 catch-all 扩为 4 层：
@@ -314,16 +314,6 @@ policy_groups:
     - REJECT
     - DIRECT
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/AdBlock.png
-# Apple 更新（OTA）—— 系统更新下载走哪个出口。
-# 首项 `DIRECT` 即默认取向：更新包体积大，直连通常比绕代理更快、也不吃订阅流量。
-# `REJECT` 是备选项：不想让设备自动下载更新时，面板上一键切过去即可。
-# ⚠️ 本组**默认 DIRECT 就是「不拦」**，与 `AD` 组默认 REJECT 的取向相反 —— 这是刻意的。
-- select:
-    name: Apple Update
-    policies:
-    - DIRECT
-    - REJECT
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Apple.png
 # ================================================================ 地区组（6 个）
 # ⚠️ 每个地区组都带 `priorities`（系数 0.15 = 低倍率优先），与 `Smart` 及 Surge 侧逐字同值；
 #    凡 smart 组都必须带它，要调这个口径就一起调。语义见上方 `Smart` 的注释。
@@ -421,6 +411,19 @@ rules:
 #   #     policy: Proxy
 #   #     update_interval: 604800
 #   #     disabled: true
+# 位 ⑲ —— 对齐 Surge 内置的 `SYSTEM`：Egern 没有内置系统集，这里引用本仓自托管的时点快照
+#   （内容 = Surge 官方内置 `SYSTEM` 在 2026-09-24 的清单，删掉 Egern 不支持的两条
+#   `PROCESS-NAME`）。⚠️ 本仓自己维护 ⇒ 没有第三方刷新审计，Surge 大版本更新时人工比对一次。
+#   与下面那条 `apple.txt` 只重叠 9 条，重复无害（两条同为 DIRECT）；它独有 9 条 ——
+#   captive.apple.com / api.smoot.apple.com / api.smoot.apple.cn / .ls.apple.com /
+#   .push.apple.com / .push-apple.com.akadns.net / .ess.apple.com /
+#   .lcdn-locator.apple.com / .lcdn-registration.apple.com —— 是 Apple 的激活 / 推送 /
+#   定位基础主机，**只有 SYSTEM 接得住**（`direct.txt` 仅兜住其中的 api.smoot.apple.cn）。
+- rule_set:
+    name: System
+    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/apple_system.list
+    policy: DIRECT
+    update_interval: 604800
 # ★ Apple 规则集用 Loyalsoldier `apple.txt`（纯域名集，只含「在中国大陆可直连」的域）。
 #   不用 Apple 全量集（`Apple_All_No_Resolve.list`）的两个理由：
 #     ① 全量集含 13 条 IP-CIDR（在 no_resolve 语义下对域名请求不参与匹配）+ 23 条
@@ -449,34 +452,6 @@ rules:
     name: AWAvenue-Ads
     match: https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Surge-RULE-SET.list
     policy: AD
-    update_interval: 604800
-# 位 ④ —— Apple 更新（OTA）：排在 `System` 之前、广告拦截之后。
-#  为什么在 `System` 之前：两集有 **3 条重叠**（`configuration.apple.com` /
-#    `mesu.apple.com` / `xp.apple.com`）。`System` 会把它们接成 `DIRECT`，
-#    于是本组**永远轮不到**这三条 ⇒ 必须前置（规则集包含关系所致的前移）。
-#  ⚠️ 本集实测 **78 条、100% 域名类、零 IP** ⇒ Egern 的 `no_resolve` 对 `rule_set`
-#    本就不生效，此处无需处理（原则写在规则集文件侧，见 rulesets.md §4.4b）。
-#  ⚠️ 与两条广告清单实测**零交集** ⇒ 落在它们之后不会被误拦。
-- rule_set:
-    name: SystemOTA
-    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/SystemOTA/SystemOTA.list
-    policy: Apple Update
-    update_interval: 604800
-# 位 ⑤ —— 系统域白名单（对齐 Surge 内置的 `SYSTEM`：Egern 没有内置系统集，这里引用本仓自托管的时点快照
-#   （内容 = Surge 官方内置 `SYSTEM` 在 2026-09-24 的清单，删掉 Egern 不支持的两条
-#   `PROCESS-NAME`）。⚠️ 本仓自己维护 ⇒ 没有第三方刷新审计，Surge 大版本更新时人工比对一次。
-#   ⚠️ **落点依据（2026-10-06 变更）**：原口径是「系统域优先级高于一切 ⇒ 置顶」，
-#      现改为**不置顶、落在 `SystemOTA` 之后、内网之前**，依据是：与两条广告清单
-#      **零交集**（排前后拦截结果相同）、与 `SystemOTA` 有 3 条重叠（排后面才能让更新组接管）。
-#   与下面那条 `apple.txt` 只重叠 9 条，重复无害（两条同为 DIRECT）；它独有 9 条 ——
-#   captive.apple.com / api.smoot.apple.com / api.smoot.apple.cn / .ls.apple.com /
-#   .push.apple.com / .push-apple.com.akadns.net / .ess.apple.com /
-#   .lcdn-locator.apple.com / .lcdn-registration.apple.com —— 是 Apple 的激活 / 推送 /
-#   定位基础主机，**只有 SYSTEM 接得住**（`direct.txt` 仅兜住其中的 api.smoot.apple.cn）。
-- rule_set:
-    name: System
-    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/apple_system.list
-    policy: DIRECT
     update_interval: 604800
 - rule_set:
     name: Lan

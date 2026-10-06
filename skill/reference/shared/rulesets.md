@@ -7,8 +7,8 @@
 > 这是两内核引用 URL **不逐字相同**的唯一原因（其余全部相同）。
 >
 > 引用位口径（数的是 `rules` 段里指向规则集的条目，同一份规则集被两条规则各引用一次就占两位）：
-> 分流版 **<!-- auto:ruleset-refs -->23<!-- /auto:ruleset-refs --> 条规则集引用**。
-> 懒人版 **9 条规则集引用**。
+> 分流版 **<!-- auto:ruleset-refs -->24<!-- /auto:ruleset-refs --> 条规则集引用**。
+> 懒人版 **10 条规则集引用**。
 > 这两个数以本文件与两侧 profile 的现算为准，别混。
 
 ## 1 · 共用规则集
@@ -23,6 +23,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 | `surge-direct.list` | 白名单（精确域名） | `DIRECT` | `DIRECT` | [Jinx](https://github.com/RiverFlowsInUUU/Jinx) |
 | `surge-ads.list` | 广告拦截主清单 | `REJECT`（`pre-matching`） | `AD` 组 | [Jinx](https://github.com/RiverFlowsInUUU/Jinx) |
 | `AWAvenue-Ads-Rule-Surge-RULE-SET.list` | 广告拦截第 2 条 | `REJECT`（`pre-matching`） | `AD` 组 | [TG-Twilight/AWAvenue-Ads-Rule](https://github.com/TG-Twilight/AWAvenue-Ads-Rule) |
+| `SystemOTA.list` | Apple 系统更新（OTA） | `Apple Update` 组 | `Apple Update` 组 | [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) |
 | `private.txt` | 特殊 TLD 与路由器域（`.lan` `.local` `miwifi.com`） | `DIRECT`（实测零 IP ⇒ 不写规则级开关） | `DIRECT`（分流版 v3 起补） | [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules) |
 | `direct.txt` | 国内域名（纯域名、零 IP；**条数一律现抓**）**主承重墙** | `DIRECT`（同上，不写开关） | `DIRECT` | [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules) |
 | `OpenAI.list` | → `ChatGPT` | ✅ | ✅ | [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) |
@@ -54,50 +55,47 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 
 ## 3 · 匹配顺序
 
-自上而下，第一条命中即决定去向。分流版两侧 24 条**逐位对齐**（仅第 3 节的三处引擎差异例外）。
+自上而下，第一条命中即决定去向。分流版两侧 26 条**逐位对齐**（仅第 3 节的三处引擎差异例外）。
 
-**分流版（两侧共用基准序，位 ①–㉕，共 25 条）**
+**分流版（两侧共用基准序，位 ①–㉖，共 26 条）**
 
 ⭐ **应用段顺序与 `[Proxy Group]` 同名组的先后保持一致**（2026-10-05 立，由两内核
 `audit_routing_coverage.py` 的 **Z0** 检查守）。
 ⚠️ **但规则可被「前移」，且这是必要的**：当某规则集**包含**另一集的条目时，被包含者必须前置，
-否则永远轮不到它。实例：`YouTube.list`（190 条）**内含** `YouTubeMusic.list` 的 UA 规则
-（`USER-AGENT,*YouTubeMusic*` 等）⇒ **`YouTubeMusic.list` 必须排在 `YouTube.list` 之前**，
-而它的组在面板上排在 `YouTube` 之后。Z0 因此判「允许前移、不许乱序」。
+否则永远轮不到它。两处实例（均由 Z0 按「允许前移、不许乱序」处理）：
+  · `YouTube.list`（190 条）**内含** `YouTubeMusic.list` 的 UA 规则（`USER-AGENT,*YouTubeMusic*` 等）
+    ⇒ `YouTubeMusic.list` 必须排在 `YouTube.list` 之前，而它的组在面板上排在 `YouTube` 之后；
+  · `SystemOTA.list` 与 `SYSTEM` 有 **3 条重叠**（`configuration.apple.com` / `mesu.apple.com` / `xp.apple.com`）
+    ⇒ 位 ④ 的 `SystemOTA` 必须排在位 ⑤ 的 `SYSTEM` 之前，否则那 3 条永远被 `SYSTEM` 接走。
 
 | 位 | 内容 | 位 | 内容 |
 |:-:|:-----|:-:|:-----|
-| ① | **系统域白名单**：Surge 内置 `SYSTEM` ／ Egern `apple_system.list` → `DIRECT` | ⑬ | `YouTubeMusic.list` → `YouTube Music` |
-| ② | 广告白名单 `surge-direct.list` → `DIRECT` | ⑭ | `GitHub.list` → **`Proxy`**（无同名组） |
-| ③④ | 两条广告清单 → `REJECT`(S) / `AD`(E) | ⑮ | `YouTube.list` → `YouTube` |
-| ⑤⑥ | 内网：Surge `LAN` · `private` ／ Egern `Lan.list` · `Private` | ⑯ | `emby.list`（**本仓自托管**）→ `Emby` |
-| ⑦–⑩ | 厂商专属：`OpenAI` · `Gemini` · `Anthropic` · `Claude` | ⑰ | `Google.list` → `Google` |
-| ⑪⑫ | `AI.list` ×2（Repcz + 本仓自托管）→ `AI` | ⑱ | `Telegram.list` → `Telegram` |
-|  |  | ⑲ | `Spotify.list` → `Spotify` |
-|  |  | ⑳ | `Twitter.list` → `Twitter` |
-|  |  | ㉑ | `Microsoft.list` → `Microsoft` |
-|  |  | ㉒ | `apple.txt` → `DIRECT` |
-|  |  | ㉓ | `direct.txt` → `DIRECT` |
-|  |  | ㉔ | `GEOIP,CN` → `DIRECT` |
-|  |  | ㉕ | `FINAL` → `Proxy` |
+| ① | 广告白名单 `surge-direct.list` → `DIRECT` | ⑭ | `YouTubeMusic.list` → `YouTube Music` |
+| ② | 广告拦截 `surge-ads.list` → `REJECT`(S) / `AD`(E) | ⑮ | `GitHub.list` → **`Proxy`**（无同名组） |
+| ③ | 广告拦截 `AWAvenue-Ads-Rule-...list` → `REJECT`(S) / `AD`(E) | ⑯ | `YouTube.list` → `YouTube` |
+| ④ | `SystemOTA.list` → `Apple Update` | ⑰ | `emby.list`（**本仓自托管**）→ `Emby` |
+| ⑤ | **系统域白名单**：Surge 内置 `SYSTEM` ／ Egern `apple_system.list` → `DIRECT` | ⑱ | `Google.list` → `Google` |
+| ⑥ | 内网 `LAN`（Surge 内置）／ `Lan.list` → `DIRECT` | ⑲ | `Telegram.list` → `Telegram` |
+| ⑦ | 内网 `private.txt` → `DIRECT` | ⑳ | `Spotify.list` → `Spotify` |
+| ⑧ | 厂商专属 `OpenAI.list` → `ChatGPT` | ㉑ | `Twitter.list` → `Twitter` |
+| ⑨ | 厂商专属 `Gemini.list` → `Gemini` | ㉒ | `Microsoft.list` → `Microsoft` |
+| ⑩ | 厂商专属 `Anthropic.list` → `Claude` | ㉓ | `apple.txt` → `DIRECT` |
+| ⑪ | 厂商专属 `Claude.list` → `Claude` | ㉔ | `direct.txt` → `DIRECT` |
+| ⑫ | `AI.list`（Repcz）→ `AI` | ㉕ | `GEOIP,CN` → `DIRECT` |
+| ⑬ | `AI.list`（**本仓自托管**）→ `AI` | ㉖ | `FINAL` → `Proxy` |
 
-| 位 | 内容 | 位 | 内容 |
-|:-:|:-----|:-:|:-----|
-| ① | **系统域白名单**：Surge 内置 `SYSTEM` ／ Egern `apple_system.list` → `DIRECT` | ⑭–⑲ | 应用组：`YouTube` · `Google` · `Telegram` · `Twitter` · `Microsoft`；`GitHub` → **`Proxy` 直指** |
-| ② | 广告白名单 `surge-direct.list` → `DIRECT` | ⑳ | `apple.txt` → `DIRECT` |
-| ③④ | 两条广告清单 → `REJECT`(S) / `AD`(E) | ㉑ | `direct.txt` → `DIRECT` |
-| ⑤⑥ | 内网：Surge `LAN` · `private` ／ Egern `Lan.list` · `Private` | ㉒㉓ | 国内 IP 判定 → **默认出口** |
-| ⑦–⑪ | 厂商专属在前：`OpenAI` · `Gemini` · `Anthropic` · `Claude`，再 `AI.list` | | |
-| ⑫⑬ | `Spotify` · `YouTube Music` | | |
-
-**懒人版**：两侧各 **10 条**、逐位同构（2026-09-24 起）。段序同上表把「应用段」收缩成一条 `AI` 的形态。
+**懒人版**：两侧各 **11 条**、逐位同构。段序同上表把「应用段」收缩成一条 `AI` 的形态，
+即：广告白名单 → 两条广告 → `SystemOTA` → `SYSTEM` → `LAN` · `private` → `AI.list` ×2 → `direct.txt` → `GEOIP,CN` → `FINAL`。
 
 ## 4 · 排序与选材约束（改动前逐条确认）
 
-1. **白名单必须排在最前**，且在两条广告清单之前 —— Jinx 与 AWAvenue 存在重叠域名，白名单排到后面会被误杀。
-   ⭐ **白名单是两层**（2026-10-05 起，用户口径「系统域优先级高于一切」）：
-   **1a 系统域白名单**（Surge 内置 `SYSTEM` ／ Egern `apple_system.list`）→ **1b 广告白名单**（`surge-direct.list`）。
-   ⚠️ 实测：`SYSTEM` 的 18 个域名与两条广告清单**零交集** ⇒ 提到最前不改变任何拦截结果；
+1. **白名单必须排在两条广告清单之前** —— Jinx 与 AWAvenue 存在重叠域名，白名单排到后面会被误杀。
+   ⭐ **白名单是两层，但两层不再连写**（2026-10-06 起变更）：
+   **① 广告白名单**（`surge-direct.list`，位 ①，在广告清单之前）·
+   **⑤ 系统域白名单**（Surge 内置 `SYSTEM` ／ Egern `apple_system.list`，位 ⑤，在广告清单**之后**）。
+   ⚠️ **变更依据**：`SYSTEM` 的 18 个域名与两条广告清单**零交集**（裸域名与后缀覆盖均为 0，
+   2026-10-06 复测仍成立）⇒ 排前或排后**拦截结果完全相同**；而它与 `SystemOTA.list` 有 **3 条重叠**
+   ⇒ 排在位 ④ 之后才能让 `Apple Update` 组接管那 3 条。⇒ 顺序对结果无影响时，「让功能组生效」优先。
    而 `apple.txt` 与 AWAvenue 有 **1 条交集**（`iadsdk.apple.com`）⇒ 它**不**上提（否则会放行一条苹果广告 SDK 域）。
 2. **厂商专属规则（`OpenAI` / `Gemini` / `Anthropic` / `Claude`）排在 `AI.list` 之前** —— 否则 AI 域名先被 `AI.list` 接走，专属组形同虚设。
 3. **`GitHub.list` 排在 `direct.txt` 之前** —— 实测 `direct.txt` 收录了若干含 `github` 的域名（githubim.com / githubshare.com / hellogithub.com / kkgithub.com 等），它们会被 `GitHub.list` 的 `DOMAIN-KEYWORD,github` 命中；排到后面这几个就接不到。本条**直指 `Proxy`**（2026-10-05 起不再单设 `GitHub` 组）。（`github.com` 本身**不在** `direct.txt` 里。）

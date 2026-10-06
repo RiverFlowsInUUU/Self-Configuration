@@ -52,22 +52,25 @@ Surge 的 `.conf` 按节组织，模板里与防泄露相关的节：
 两版共享同一条顺序铁律，自上而下、首个命中生效：
 
 ```
-① 白名单 guard（防误杀，DIRECT）
-② 广告拦截（REJECT 字面量，pre-matching）
-③ 内网 / LAN
-④ …（routing 版：应用规则插在中间，见 3.5）
-⑤ 域名类国内直连（direct.txt 等）
-⑥ IP 类（GEOIP,CN,DIRECT,no-resolve）
-⑦ FINAL 兜底（dns-failed 一并标注）
+① 广告白名单 guard（防误杀，DIRECT）
+②③ 广告拦截（REJECT 字面量，pre-matching）×2
+④ Apple 更新（`SystemOTA` → `Apple Update` 组）
+⑤ 系统域白名单（`SYSTEM` → DIRECT）
+⑥⑦ 内网 / LAN
+⑧…（routing 版：应用规则插在中间，见 3.5）
+⑳ 域名类国内直连（direct.txt 等）
+㉕ IP 类（GEOIP,CN,DIRECT,no-resolve）
+㉖ FINAL 兜底（dns-failed 一并标注）
 ```
 
 三条不能错位的细节：
 
-1. 白名单必须在 REJECT 之前。「DIRECT 永远在 REJECT 前」这种一刀切不变量本身是错的 —— 白名单就是 DIRECT，且必须排在 REJECT 前。
-   ⭐ **白名单是两层**（2026-10-05 起，用户口径「系统域优先级高于一切」）：
-   **1a 系统域白名单**（Surge 内置 `SYSTEM` ／ Egern `apple_system.list`，两内核都放**最前**）
-   → **1b 广告白名单**（`surge-direct.list`）。
-   ⚠️ 实测：`SYSTEM` 18 个域名与两条广告清单零交集 ⇒ 置顶不改变拦截结果；
+1. **广告白名单必须在 REJECT 之前**。「DIRECT 永远在 REJECT 前」这种一刀切不变量本身是错的 —— 白名单就是 DIRECT，且必须排在 REJECT 前。
+   ⭐ **白名单是两层，但两层不再连写**（2026-10-06 起变更）：
+   **① 广告白名单**（`surge-direct.list`，位 ①）· **⑤ 系统域白名单**
+   （Surge 内置 `SYSTEM` ／ Egern `apple_system.list`，位 ⑤，在广告清单**之后**）。
+   ⚠️ 变更依据：`SYSTEM` 18 个域名与两条广告清单零交集（排前后结果相同）；
+   与 `SystemOTA.list` 有 3 条重叠 ⇒ 排在位 ④ 之后才能让 `Apple Update` 组接管那 3 条；
    `apple.txt` 与 AWAvenue 有 1 条交集（`iadsdk.apple.com`）⇒ 它**不上提**。
 2. 应用类规则必须排在 `direct.txt` 之前。否则域名恰好被国内清单收录的应用会被直连接走 —— 实测：`direct.txt` 收录了若干含 `github` 的域名（githubim.com / githubshare.com / hellogithub.com / kkgithub.com 等），`GitHub.list` 的 `DOMAIN-KEYWORD,github` 本可兜住它们，排到后面就分流失效。（`github.com` 本身**不在** `direct.txt` 里；该条现直指 `Proxy`。）
 3. `GEOIP` 必须带 `no-resolve`，且必须与 ⑤ 成对。见 [DNS 基础](dns-basics.md)。

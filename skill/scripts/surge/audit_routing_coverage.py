@@ -143,21 +143,36 @@ FALSE_POSITIVE_PROBES = [
 #    两套期望的差别只在**懒人版 2026-09-24 起不引用 Apple 规则集**：
 #      · `courier.push.apple.com` 与 `gs-loc.apple.com` 由内置 `SYSTEM` 接住
 #        （`push.apple.com` 是后缀条目、`gs-loc` 是精确条目 —— 见 BUILTIN_SET_SNAPSHOTS）；
-#      · `www.apple.com` / `swcdn.apple.com` 由 `direct.txt` 的 Apple 精确条目接住；
+#      · `www.apple.com` 由 `direct.txt` 的 Apple 精确条目接住；
 #      · `apps.apple.com` / `itunes.apple.com` **只有**分流版那条 Apple 规则集里有 ⇒ 归分流版。
 #        懒人版按设计让这类走代理（写进 lazy.conf §4 的取舍里），所以不进懒人版期望。
+#      · `swcdn.apple.com` **2026-10-06 起从本表移出**：它同时被 `SystemOTA.list` 收录 ⇒
+#        现命中 `Apple Update` 组（默认 DIRECT），改由 `APPLE_OTA_PROBES` 断言。
 #    ⚠️ 2026-10-04 换源（`Apple_All_No_Resolve.list` -> `apple.txt`，1,616 条 -> 165 条纯域名）：
 #       `apple.txt` 只含「在中国大陆可直连」的域，原先靠全量集才直连的 `developer.apple.com` /
 #       `gateway.icloud.com`（连同国际版 iCloud 端点、`apple-cloudkit.com`、裸 `apple.com`）
 #       **按设计改走代理** ⇒ 已从 ROUTING 期望里移出。要改回直连就得另补 `icloud.txt` 之类。
 APPLE_PROBES_ROUTING = [
-    "www.apple.com", "swcdn.apple.com", "gs-loc.apple.com",
+    "www.apple.com", "gs-loc.apple.com",
     "courier.push.apple.com", "apps.apple.com", "itunes.apple.com",
 ]
 APPLE_PROBES_LAZY = [
-    "www.apple.com", "swcdn.apple.com", "gs-loc.apple.com", "courier.push.apple.com",
+    "www.apple.com", "gs-loc.apple.com", "courier.push.apple.com",
 ]
 APPLE_PROBES = APPLE_PROBES_ROUTING          # t5-keep: 「兼容旧提法」的别名，删否由维护者点名（本仓无人用这个旧提法）
+
+# ⭐ OTA 探针（2026-10-06 立）：这些是 `SystemOTA.list` 独有的系统更新域，
+#    必须命中 `Apple Update` 组（而不是 DIRECT、也不是被广告规则 REJECT）。
+#    ⚠️ 为什么要单立：位 ④ 的 `SystemOTA` 必须排在位 ⑤ 的 `SYSTEM` **之前** ——
+#       两集有 3 条重叠（`configuration` / `mesu` / `xp` .apple.com），`SYSTEM` 会把它们接成
+#       `DIRECT`。顺序一旦被改回去（比如有人又把系统域“置顶”），`Apple Update` 组就静默失效。
+#       `swcdn.apple.com` 就是这样的探针：它同时被 `SystemOTA.list` 与 `apple.txt` 收录，
+#       在旧顺序下命中 `SYSTEM`/`apple.txt` 判 DIRECT（**旧期望就是这么写的**）。
+#    ⇒ 判据：命中策略必须等于 `Apple Update`（组名硬断言）。
+APPLE_OTA_PROBES = [
+    "swcdn.apple.com", "mesu.apple.com", "xp.apple.com", "ocsp.apple.com",
+]
+OTA_GROUP = "APPLE UPDATE"
 
 
 def apple_probes_for(path):
@@ -442,9 +457,26 @@ def main():
             print(f"   ❌ {d:<32} → {pol}（Apple 服务应直连）")
     print(f"   {ok_ap}/{len(apple_probes)} 命中 DIRECT\n")
 
+    # ── E. OTA 探针必须命中 `Apple Update` 组（2026-10-06 立）────────────────
+    #    守住位 ④ 在 `SYSTEM` 之前这个顺序：改回去就静默失效（详见 APPLE_OTA_PROBES 注释）。
+    print(f"── E · OTA 探针（期望命中 `Apple Update` 组）")
+    ok_ota = 0
+    for d in APPLE_OTA_PROBES:
+        r = m.match(d)
+        pol = r["policy"] if r else "（无规则命中）"
+        if pol.strip().upper() == OTA_GROUP:
+            ok_ota += 1
+            if a.show_all:
+                print(f"   ✅ {d:<32} → {pol}   (第 {r['lineno']} 行)")
+        else:
+            fails.append((d, pol, r))
+            print(f"   ❌ {d:<32} → {pol}（期望 `Apple Update`；"
+                  f"若成了 DIRECT 说明 `SystemOTA` 被排到 `SYSTEM` 之后）")
+    print(f"   {ok_ota}/{len(APPLE_OTA_PROBES)} 命中 `Apple Update`\n")
+
     print("─" * 62)
     total = (len(DOMESTIC_PROBES) + len(expectations)
-             + len(FALSE_POSITIVE_PROBES) + len(apple_probes) + 1)   # +1 = Z0 对齐检查
+             + len(FALSE_POSITIVE_PROBES) + len(apple_probes) + len(APPLE_OTA_PROBES) + 1)   # +1 = Z0 对齐检查
     print(f"result: {total - len(fails)} passed, {len(fails)} failed")
     if fails:
         print("❌ 未通过")

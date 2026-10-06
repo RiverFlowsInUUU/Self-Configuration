@@ -82,13 +82,12 @@ policy_groups:
     policies:
     - REJECT
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/AdBlock.png
-- select:
-    name: Apple Update
-    policies:
-    - DIRECT
-    - REJECT
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Apple.png
 rules:
+- rule_set:
+    name: System
+    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/apple_system.list
+    policy: DIRECT
+    update_interval: 604800
 - rule_set:
     name: Jinx-CN
     match: https://raw.githubusercontent.com/RiverFlowsInUUU/Jinx/main/surge-direct.list
@@ -103,16 +102,6 @@ rules:
     name: AWAvenue-Ads
     match: https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Surge-RULE-SET.list
     policy: AD
-    update_interval: 604800
-- rule_set:
-    name: SystemOTA
-    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/SystemOTA/SystemOTA.list
-    policy: Apple Update
-    update_interval: 604800
-- rule_set:
-    name: System
-    match: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/rules/apple_system.list
-    policy: DIRECT
     update_interval: 604800
 - rule_set:
     name: Lan

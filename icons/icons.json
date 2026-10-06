@@ -23,6 +23,11 @@
       "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/AdBlock.png"
     },
     {
+      "name": "Apple Update",
+      "category": "策略组",
+      "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Apple.png"
+    },
+    {
       "name": "Airport",
       "category": "策略组",
       "url": "https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png"

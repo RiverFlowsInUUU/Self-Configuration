@@ -750,40 +750,48 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 
 `[Rule]` 是**有序的** —— 自上而下匹配，**第一条命中即决定去向**。
 
-**`lazy.conf` —— 10 条**
+**`lazy.conf` —— 11 条**
 
 | # | 规则 | 策略 | 选项 | 为什么排这里 |
 |:-:|:-----|:----:|:-----|:-------------|
-| 1 | `RULE-SET,SYSTEM` | `DIRECT` | — | **系统域白名单（最高优先级，2026-10-05 起置顶）**：Apple 激活 / 推送 / 配对，内置权威集合，**保底**。实测其 18 个域名与两条广告清单零交集 ⇒ 置顶不改变拦截结果。懒人版只此一条 Apple 相关（全量集 2026-09-24 起移出，见 §14.1） |
-| 2 | `RULE-SET,…,surge-direct.list` | `DIRECT` | — | 广告白名单。**必须**在 REJECT 之前，否则形同虚设。它同时兜住两条黑名单的误杀 |
-| 3 | `RULE-SET,…,surge-ads.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 1 条（Jinx）。必须在 `direct.txt` / `GEOIP,CN` **之前** —— 否则国内广告域名被 `direct.txt` 接走 |
-| 4 | `RULE-SET,…,AWAvenue-Ads-Rule-Surge-RULE-SET.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 2 条（AWAvenue）。顺序与 Egern 对齐，见 §11.4 |
-| 5 | `RULE-SET,LAN` | `DIRECT` | `no-resolve` | 含 18 条 IP-CIDR，**必须** `no-resolve`。内网段排在应用之前，与 Egern 同位 |
-| 6 | `RULE-SET,…,private.txt` | `DIRECT` | `update-interval=604800` | 内网域名。实测零 IP ⇒ 按原则**不写** `no-resolve` |
-| 7 | `RULE-SET,…,AI.list` | `AI` | `update-interval=604800` | 实测零 IP（纯域名系）⇒ 不写 `no-resolve` |
-| 8 | `RULE-SET,…,direct.txt` | `DIRECT` | `update-interval=604800` | **主承重墙**，纯域名、零 IP（条数一律现抓）。见 §12 |
-| 9 | `GEOIP,CN,DIRECT` | `DIRECT` | `no-resolve` | IP 类规则，放最后 |
-| 10 | `FINAL,Proxy,dns-failed` | `Proxy` | `dns-failed` | 兜底 |
+| 1 | `RULE-SET,…,surge-direct.list` | `DIRECT` | — | 广告白名单。**必须**在 REJECT 之前，否则形同虚设。它同时兜住两条黑名单的误杀 |
+| 2 | `RULE-SET,…,surge-ads.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 1 条（Jinx）。必须在 `direct.txt` / `GEOIP,CN` **之前** —— 否则国内广告域名被 `direct.txt` 接走 |
+| 3 | `RULE-SET,…,AWAvenue-Ads-Rule-Surge-RULE-SET.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 2 条（AWAvenue）。顺序与 Egern 对齐，见 §11.4 |
+| 4 | `RULE-SET,…,SystemOTA.list` | `Apple Update` | `update-interval=604800` | Apple 系统更新（OTA）。**必须排在 5 号 `SYSTEM` 之前**：两集有 3 条重叠（`configuration` / `mesu` / `xp` .apple.com），`SYSTEM` 会把它们接成 DIRECT ⇒ 本组永远轮不到。实测 78 条、100% 域名类、零 IP ⇒ 不写开关；与两条广告清单零交集 |
+| 5 | `RULE-SET,SYSTEM` | `DIRECT` | — | **系统域白名单（位 ⑤，2026-10-06 起不再置顶）**：Apple 激活 / 推送 / 配对，内置权威集合，**保底**。实测其 18 个域名与两条广告清单零交集 ⇒ 排前后拦截结果相同。懒人版无其它 Apple 规则集 |
+| 6 | `RULE-SET,LAN` | `DIRECT` | `no-resolve` | 含 18 条 IP-CIDR，**必须** `no-resolve`。内网段排在应用之前，与 Egern 同位 |
+| 7 | `RULE-SET,…,private.txt` | `DIRECT` | `update-interval=604800` | 内网域名。实测零 IP ⇒ 按原则**不写** `no-resolve` |
+| 8 | `RULE-SET,…,AI.list`（Repcz） | `AI` | `update-interval=604800` | 实测零 IP（纯域名系）⇒ 不写 `no-resolve` |
+| 9 | `RULE-SET,…/Self-Configuration/main/rules/AI.list` | `AI` | `update-interval=604800` | 本仓自托管整合集（伴生域 / 宽后缀），与 8 号同指 `AI` 组 |
+| 10 | `RULE-SET,…,direct.txt` | `DIRECT` | `update-interval=604800` | **主承重墙**，纯域名、零 IP（条数一律现抓）。见 §12 |
+| 11 | `GEOIP,CN,DIRECT` | `DIRECT` | `no-resolve` | IP 类规则，放最后 |
+| 12 | `FINAL,Proxy,dns-failed` | `Proxy` | `dns-failed` | 兜底 |
 
-**`routing.conf` —— 24 条（内容与顺序逐行对齐 Egern 侧现役）**
+**`routing.conf` —— 26 条（内容与顺序逐行对齐 Egern 侧现役）**
 
 | # | 规则 | 策略 | 与 lazy 的差异 |
 |:-:|:-----|:----:|:---------------|
-| 1 | **系统域白名单**：`SYSTEM` | `DIRECT` | 同 lazy（2026-10-05 起置顶） |
-| 2–4 | 广告白名单 / 广告拦截 ×2 | `DIRECT` / `REJECT` / `REJECT` | 同 lazy |
-| **5–6** | 内网：`LAN` / `private.txt` | `DIRECT`（`LAN` 带 `no-resolve`，`private.txt` 零 IP 不写） | 同 lazy |
-| **7–11** | AI 厂商：`OpenAI` / `Gemini` / `Anthropic` / `Claude` / `AI` | `ChatGPT` / `Gemini` / `Claude` / `Claude` / `AI` | **新增 5 条**（AI 细分） |
-| **12–14** | 媒体：`YouTube` / `YouTube Music` / `Telegram` / `Spotify` | 同名组 | **新增 3 条** |
-| **15–19** | `Google` / `Telegram` / `Twitter` / `Microsoft`；`GitHub` → `Proxy` 直指 | 同名组（`Microsoft` 首项 `DIRECT`） | **新增 5 条**（2026-10-05：`Microsoft` 移到 `Twitter` 之后） |
-| 20 | Apple 域名集：`apple.txt` | `DIRECT`（零 IP **不写**开关） | 新增 |
-| 21–22 | `direct.txt` / `GEOIP,CN` | `DIRECT`（`direct.txt` 零 IP **不写**开关；`GEOIP` 带 `no-resolve`） | 同 lazy |
-| **23** | `FINAL,Proxy,dns-failed` | `Proxy` 组 | 与懒人版一致（2026-10-05 起不再挂 `Final` 中间组） |
+| 1 | 广告白名单：`surge-direct.list` | `DIRECT` | 同 lazy |
+| 2–3 | 广告拦截 ×2 | `REJECT` | 同 lazy |
+| 4 | **Apple 更新**：`SystemOTA.list` | `Apple Update` 组 | **新增**（与 lazy 同位） |
+| 5 | **系统域白名单**：`SYSTEM` | `DIRECT` | 同 lazy（2026-10-06 起不再置顶） |
+| **6–7** | 内网：`LAN` / `private.txt` | `DIRECT`（`LAN` 带 `no-resolve`，`private.txt` 零 IP 不写） | 同 lazy |
+| **8–12** | AI 厂商：`OpenAI` / `Gemini` / `Anthropic` / `Claude` / `AI` | `ChatGPT` / `Gemini` / `Claude` / `Claude` / `AI` | **新增 5 条**（AI 细分） |
+| **13** | 本仓自托管 `AI.list` | `AI` | **新增**（伴生域 / 宽后缀） |
+| **14** | 媒体：`YouTubeMusic` | `YouTube Music` | **新增**（因包含关系前移，见 §14 要点 4） |
+| **15–22** | `GitHub`→`Proxy` · `YouTube` · `emby` · `Google` · `Telegram` · `Spotify` · `Twitter` · `Microsoft` | 同名组（`Microsoft` 首项 `DIRECT`） | **新增 8 条**（应用分流） |
+| 23 | Apple 域名集：`apple.txt` | `DIRECT`（零 IP **不写**开关） | 新增 |
+| 24–25 | `direct.txt` / `GEOIP,CN` | `DIRECT`（`direct.txt` 零 IP **不写**开关；`GEOIP` 带 `no-resolve`） | 同 lazy |
+| **26** | `FINAL,Proxy,dns-failed` | `Proxy` 组 | 与懒人版一致（2026-10-05 起不再挂 `Final` 中间组） |
 | — | ~~游戏机主机名 3 条~~ | — | **已删除**（Egern 侧无对应规则，为对齐而移除；`lazy.conf` 同步没有，两侧只剩 `always-real-ip` 里的主机名） |
 
-> 📌 **四条顺序要点**：
-> 0. ⭐ **系统域白名单（`SYSTEM`）置顶**（2026-10-05 起，用户口径「系统域优先级高于一切」）
->    —— 它排在广告白名单与两条广告清单**之前**，是 `[Rule]` 的第 1 条。
->    实测其 18 个域名与两条广告清单**零交集** ⇒ 置顶不改变拦截结果。
+> 📌 **五条顺序要点**：
+> 0. ⭐ **`SystemOTA` 必须排在 `SYSTEM` 之前**（2026-10-06 立）—— 两集有 3 条重叠
+>    （`configuration.apple.com` / `mesu.apple.com` / `xp.apple.com`），`SYSTEM` 会先把它们接成 `DIRECT`，
+>    排在后面 `Apple Update` 组就永远轮不到那 3 条。属「规则集包含关系所致的前移」，Z0 按允许前移处理。
+> 1. ⭐ **系统域白名单（`SYSTEM`）不再置顶**（2026-10-06 起）—— 落在位 ⑤（`SystemOTA` 之后、内网之前）。
+>    原口径「系统域优先级高于一切 ⇒ 置顶」已废止：实测其 18 个域名与两条广告清单**零交集**，
+>    排前或排后**拦截结果完全相同** ⇒ 让位给需要前置的 `Apple Update`。
 > 1. **厂商专属规则必须排在通用 `AI.list` 之前** —— 否则 AI 域名先被 `AI.list` 接走，
 >    `ChatGPT` / `Gemini` / `Claude` 组永远轮不到。
 > 2. **`GitHub.list` 必须排在 `direct.txt` 之前** —— 实测 `direct.txt` 收录了若干含 `github`
@@ -794,6 +802,10 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 > 3. **内网段排在应用段之前** —— 这处位置是**对齐 Egern v3.2 的结果**：
 >    内网清单里的域名不在任何应用清单中，IP 段又带 `no-resolve` 不触发解析
 >    ⇒ 提前与否语义等价，只为两侧顺序逐行一致。
+> 4. **`YouTubeMusic.list` 必须排在 `YouTube.list` 之前**（因规则集**包含**关系前移，
+>    与上一条 `SystemOTA` 之于 `SYSTEM` 同性质）：`YouTube.list`（190 条）内含
+>    `YouTubeMusic.list` 的 UA 规则（`USER-AGENT,*YouTubeMusic*` 等），排后面就永远轮不到。
+>    而它的组在面板上排在 `YouTube` **之后** —— Z0 因此判「允许前移、不许乱序」。
 
 ### 14.1 Apple 规则集曾经必须用 `No_Resolve` 版的原因
 
