@@ -320,10 +320,11 @@ policy_groups:
 - select:
     name: Microsoft
     # 首项 `DIRECT`：微软服务直连优先（走代理反而慢）。
+    # ⚠️ 只要两个节点（2026-10-06 用户要求）：`DIRECT` 与 `Proxy`。
+    #    **不写** `flatten` ⇒ 成员就是这两个组名，面板二选一，不摊平成节点池。
     policies:
     - DIRECT
     - Proxy
-    flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Microsoft.png
 
 # Apple 更新（OTA）—— 系统更新下载走哪个出口。

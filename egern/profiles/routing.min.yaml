@@ -172,7 +172,6 @@ policy_groups:
     policies:
     - DIRECT
     - Proxy
-    flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Microsoft.png
 - select:
     name: Apple Update
