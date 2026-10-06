@@ -36,14 +36,11 @@
 | 🚀 `Proxy` | ✅ | ✅ |
 | ⚡ `Smart` | - | ✅ |
 | 🤖 `ChatGPT` · `Gemini` · `Claude` · `AI` | 仅 `AI` | ✅ |
-| ▶️ `YouTube` · 🎬 `Emby` · 🔎 `Google` | - | ✅ |
-| ✈️ `Telegram` · 🐦 `Twitter` · 🪟 `Microsoft` | - | ✅ |
-| 🎶 `YouTube Music` · 🎵 `Spotify` | - | ✅ |
+| ▶️ `YouTube` · 🎬 `Emby` · 🔎 `Google`<br>✈️ `Telegram` · 🐦 `Twitter` · 🪟 `Microsoft`<br>🎶 `YouTube Music` · 🎵 `Spotify` | - | ✅ |
 | 🛰️ `Airport`（订阅槽位）| ✅ | ✅ |
 | 🍎 `Apple Update` | - | ✅ |
 | 🛑 `AD` | ✅ | ✅ |
-| 🇭🇰 `Hong Kong` · 🇨🇳 `Taiwan` · 🇯🇵 `Japan` | - | ✅ |
-| 🇸🇬 `Singapore` · 🇺🇸 `United States` · 🇦🇶 `Other Regions` | - | ✅ |
+| 🇭🇰 `Hong Kong` · 🇨🇳 `Taiwan` · 🇯🇵 `Japan`<br>🇸🇬 `Singapore` · 🇺🇸 `United States` · 🇦🇶 `Other Regions` | - | ✅ |
 
 ---
 
