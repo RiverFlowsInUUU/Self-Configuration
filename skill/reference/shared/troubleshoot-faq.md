@@ -242,7 +242,7 @@ python skill/tests/make_min.py            # 计划模式：四份 .min 应全部
 
 | 项目 | 说明 |
 |:----:|:-----|
-| 🧩 **`lazy` 两处占位至少填一处** | 它也有隐藏订阅槽位 `Airport`，另带 2 条占位节点（`Node-A` → `Proxy`、`Node-B` → `AI`）；两者都不填则所有走代理的流量不通 |
+| 🧩 **`lazy` 两处占位至少填一处** | 它也有隐藏订阅槽位 `Airport`，另带 2 条占位节点（`Node-A` → `Proxy`、`Node-B` → `AI`）；两者都不填则所有走代理的流量不通（**分流版无此问题**：只填订阅即可） |
 | ✈️ **分流版填 1 处订阅槽位** | 单一隐藏组 `Airport`（`routing_v3` 起把 A/B 合并为单入口） |
 | 📜 **历史版本看 git** | 订阅地址用固定名，升版只改文件内容与头注 `#! version=`，不改名；当前版永远只有顶层那四件。配置变动时，变动前的旧配置归档进 `profiles/config_old/`：归档版本号 = 该目录内此分工最新号的下一位（2026-09-29 起三段制 X.Y.Z：Z=小修、Y=中改、X=大改，每位满 10 进 1，4.0.10 合法；历史两段号不回改），完整版与 `.min` 成对，现役头注同步升为下一位；更早历史看 git（备份 tag：`pre-cleanup-20260927`） |
 | 🔒 **`proxy_nameservers` 一设就跳过 `forward`** | 这是硬覆盖。设了它之后，写在 `forward` 里的节点域名规则就是**死代码**（Egern [`坑 18`](../egern/pitfalls.md)） |
@@ -306,8 +306,8 @@ FAQ 从两侧 [`profile-anatomy`](../surge/profile-anatomy.md) · [`profile-anat
 **Q：iOS 上怎么用？**（Surge）
 Surge iOS 不支持本地文件配置 —— 把 profile 托管到可访问地址（Gist / 自己仓库）再 URL 导入。图标地址已是绝对 URL，不依赖本地路径。Egern 同理走订阅地址。
 
-**Q：模板为什么只带 2 条占位节点？**（Egern）
-四份配置对齐成「2 条节点 + 1 个订阅槽」同一个形状，且每条节点都被一个组真实引用（`Node-A` → `Proxy`、`Node-B` → `AI`），不留悬空引用。只用订阅就填订阅槽位的 URL；不想要这两条就整条删掉，并把对应组 `policies` 里的名字一并摘掉。
+**Q：分流版还需要手工填节点吗？**（Egern）
+不需要 —— 2026-10-06 起分流版 `proxies` 为空、`policy_groups` 也不含任何字面量节点名，只填 `Airport` 订阅滑槽的 URL 即可。此前版本带 2 条占位节点（`Node-A` / `Node-B`），需替换或连同组里的名字一并摘掉。懒人版 `lazy.yaml` 仍带占位节点。
 
 **Q：为什么 `forward` 塌缩成一条兜底、不写节点域名？**（Egern）
 配了 `proxy_nameservers` 后代理 DNS 跳过 `forward`（节点域名根本不走这里）；兜底 value 单值时，顺序与域名清单都无意义。写节点域名只会随订阅变化变成死代码。

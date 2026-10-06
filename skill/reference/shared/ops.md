@@ -14,7 +14,7 @@ Surge 的 `.conf` 按节组织，模板里与防泄露相关的节：
 | 节 | 作用 | 防泄露相关 |
 |:---|:-----|:-----------|
 | `[General]` | 全局开关 | DNS 段全部键都在这里：`dns-server`、`encrypted-dns-server`、`hijack-dns`、`always-real-ip`、测试端点等 |
-| `[Proxy]` | 静态节点 | 仅 `lazy` 有（占位节点）；`routing` 的节点来自订阅 |
+| `[Proxy]` | 静态节点 | 仅 `lazy` 有（占位节点）；`routing` **段为空**，节点全来自订阅（2026-10-06 起） |
 | `[Proxy Group]` | 策略组 | 出口选择逻辑 |
 | `[Rule]` | 规则 | 顺序即优先级，见 3.4 |
 | `[URL Rewrite]` / `[Header Rewrite]` 等 | 附加功能 | 与防泄露无关，可整节删 |
@@ -126,7 +126,7 @@ Hong Kong = smart, include-all-proxies=true, include-other-group="Airport", poli
 
 必须替换（逐键语义见 [`surge/reference/profile-anatomy.md`](../surge/profile-anatomy.md)）：
 
-- `lazy` 的 `[Proxy]` 占位节点；
+- `lazy` 的 `[Proxy]` 占位节点（`routing` 此段已空，无需替换）；
 - `routing` 的 `Airport` 组 `policy-path` 占位订阅地址；
 - 两份 `[SSID Setting]` 段里的 `SSID:MyHome` —— `MyHome` 是照官方示例留的占位网络名，不替换就匹配不到任何 Wi-Fi，「回家自动暂停」静默不生效。该段只有 Surge 侧有，Egern 无对等件（见 [`cross-kernel-diff.md`](cross-kernel-diff.md) §1「网络级暂停」）。
 
@@ -186,7 +186,7 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 
 ### 4.3 `proxies:` 与节点形态
 
-- 模板 `proxies` 带 2 条占位节点（`Node-A` / `Node-B`），`server` 都写成 IP 字面量。
+- 分流版模板 `proxies` **为空**（节点全来自订阅，2026-10-06 起）；懒人版模板带 2 条占位节点（`Node-A` / `Node-B`），`server` 都写成 IP 字面量。
 - 自己填节点时，`server` 能写 IP 就写 IP：写域名必然产生一次"本机 + 直连 + 明文"解析（代理还没通）。这是从根上消除节点域名解析面的唯一办法；中转 `prev_hop` 同理，且无需为节点域名改 `forward`。
 
 ### 4.4 `policy_groups:`：四类组与三个易踩的坑
@@ -222,8 +222,8 @@ Egern 的 YAML 顶层：`ipv6`、`vif_only`、`hijack_dns`、`geoip_db_url` / `a
 
 ### 4.7 必须替换与环境
 
-- 必填：`Airport`（旧版 `Airport-A` / `Airport-B`）订阅组的 `url(s)` 占位，换成你的订阅地址。当前版所有分流组已填好 —— 填完这一个占位就能直接导入（分流版 `AI` 首项是 `Node-B`，不填节点就在面板里把它切到订阅节点）。
-- 可选：`proxies` 里那 2 条占位节点换成你的自建节点（`server` 尽量 IP），或整条删掉并把组里的名字一并摘掉。
+- 必填：`Airport`（旧版 `Airport-A` / `Airport-B`）订阅组的 `url(s)` 占位，换成你的订阅地址。当前版所有分流组已填好 —— **分流版填完这一个占位就能直接导入**（节点全来自订阅）。
+- 懒人版另可选：`proxies` 里那 2 条占位节点换成你的自建节点（`server` 尽量 IP），或整条删掉并把组里的名字一并摘掉。
 - 运行审计脚本需要 Python 3 + PyYAML（本仓唯一第三方依赖）。
 - 官方文档入口：DNS `https://egernapp.com/docs/configuration/dns` · rules 字段 `https://egernapp.com/docs/configuration/rules` · 顶层字段全表 `https://egernapp.com/docs/configuration/example`（两处页键名不一致，以 example 页为准）。
 

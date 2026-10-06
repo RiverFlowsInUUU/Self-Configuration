@@ -88,7 +88,7 @@ Egern 用 `policies` + `flatten` + `filter`。地区组倍率筛选的正则两�
 | 默认出口 | `FINAL,Proxy,dns-failed` | `default` 规则 `policy: Proxy`（两侧都无 `Final` 中间组，2026-09-23 拉平） |
 | 分组数 | 4 | 4 |
 | 组的构成 | `Proxy` / `AI` / `AD` + 隐藏订阅槽位 `Airport` | 同左（`Airport` 为 `external` + `hidden: true`） |
-| 本机占位节点 | 2 条：`Node-A` → `Proxy`、`Node-B` → `AI` | 2 条同名同归属，协议同为 `hysteria2` |
+| 本机占位节点（懒人版） | 2 条：`Node-A` → `Proxy`、`Node-B` → `AI` | 2 条同名同归属，协议同为 `hysteria2` |
 
 分流版做过逐行对齐，**懒人版历史上没有** —— 2026-09-23 补齐三项（`dns.forward` 四层、`Private` 规则集、
 `AI` 组的 `flatten: true`）并把 Egern 的兜底组 `Final` 整块移除（`default.policy` 直写 `Proxy`）；

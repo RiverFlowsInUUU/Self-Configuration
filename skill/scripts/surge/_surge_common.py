@@ -98,7 +98,7 @@ def strip_comment(raw):
 def split_csv(value):
     """按逗号切分一行，**尊重双引号**（Surge 允许 `"a, b"` 这种带逗号的项）。
 
-    `smart, "Node-A", "Node-B", icon-url=...` -> ['smart', 'Node-A', 'Node-B', 'icon-url=...']
+    `select, Smart, Select, icon-url=...` -> ['select', 'Smart', 'Select', 'icon-url=...']
     """
     out, buf, in_q = [], [], None
     for ch in value:
