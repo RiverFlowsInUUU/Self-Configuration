@@ -31,11 +31,11 @@
 
 ## 2 · 分组：已完全对齐
 
-现役两侧各 **<!-- auto:group-count -->23<!-- /auto:group-count --> 个分组，名称与顺序逐位相同**（`routing_v3.4` 起实测逐行 diff 无差异，2026-09-29 随 v4.0 复核；2026-10-04 两侧同步删去 `WeChat` 组，2026-10-05 两侧同步删去 `Korea` 组与 `GitHub` 组，2026-10-06 两侧同步新增 `Apple Update` 组）：
+现役两侧各 **<!-- auto:group-count -->24<!-- /auto:group-count --> 个分组，名称与顺序逐位相同**（`routing_v3.4` 起实测逐行 diff 无差异，2026-09-29 随 v4.0 复核；2026-10-04 两侧同步删去 `WeChat` 组，2026-10-05 两侧同步删去 `Korea` 组与 `GitHub` 组，2026-10-06 两侧同步新增 `Apple Update` 组）：
 
 ```
 <!-- auto:group-list -->
-Proxy · Smart · ChatGPT · Gemini · Claude · AI · YouTube · Emby · Google
+Proxy · Smart · Select · ChatGPT · Gemini · Claude · AI · YouTube · Emby · Google
 Telegram · YouTube Music · Spotify · Twitter · Airport · Microsoft · Apple Update
 AD · Hong Kong · Taiwan · Japan · Singapore · United States · Other Regions
 <!-- /auto:group-list -->

@@ -59,7 +59,6 @@ policy_groups:
     name: Proxy
     policies:
     - Smart
-    - Select
     - Hong Kong
     - Taiwan
     - Japan
@@ -76,12 +75,6 @@ policy_groups:
     priorities:
       "(?<![\\d.])0\\.\\d*[1-9]": 0.15
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Auto.png
-- select:
-    name: Select
-    policies:
-    - Airport
-    flatten: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Static.png
 - select:
     name: ChatGPT
     policies:

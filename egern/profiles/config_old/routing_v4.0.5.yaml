@@ -1,4 +1,4 @@
-#! version=routing_v4.0.6
+#! version=routing_v4.0.5
 # ================================================================ routing（正式版 · 推荐）
 # 结构（与 Surge `routing.conf` 逐行对齐，内容与顺序均对拍）：
 #   ① `dns.forward` 由单条 catch-all 扩为 4 层：
@@ -162,7 +162,6 @@ policy_groups:
     # `select, Smart, …, "Node-A"` 同形。
     policies:
     - Smart
-    - Select
     - Hong Kong
     - Taiwan
     - Japan
@@ -186,21 +185,6 @@ policy_groups:
     priorities:
       "(?<![\\d.])0\\.\\d*[1-9]": 0.15
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Auto.png
-- select:
-    name: Select
-    # 显性选择节点池。与 `Smart` 同为「订阅全节点池」，但**不带任何权重**：
-    #   · 不写 `priorities` ⇒ 成员**不按倍率加权**，就是订阅里的全部节点原样列出；
-    #   · 用途是**手动指定**某一个节点，而不是让内核自动选优 —— 面板上逐个可见、可直接点。
-    #   `flatten: true` 与 `Smart` 同理（Surge `include-other-group="Airport"` 的对应物）：
-    #     少了它，候选只剩「Airport」这一个组单位，看不到也点不到具体节点。
-    # 与 `Smart` 并列为 `Proxy` 的成员（位序紧跟在 `Smart` 之后）。
-    #
-    # ⚠️ 本组是**唯一**不写 `priorities` 的策略组 —— 本文件其它组都写，见地区组注释。
-    #    这是刻意的：给「显性选择」保留一个无偏好的干净池子。
-    policies:
-    - Airport
-    flatten: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Static.png
 # ================================================================ 应用组（本段 12 个）
 # ⚠️ 本段 12 个全部是 `select` + `flatten: true` —— 与 Surge 的 `select, include-other-group="Proxy"` 逐个等价。
 #
