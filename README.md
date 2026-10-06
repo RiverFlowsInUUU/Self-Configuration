@@ -39,7 +39,7 @@
 | ▶️ `YouTube` · 🎬 `Emby` · 🔎 `Google` · ✈️ `Telegram`<br>🎶 `YouTube Music` · 🎵 `Spotify` · 🐦 `Twitter` · 🪟 `Microsoft` | - | ✅ |
 | 🛰️ `Airport`（订阅槽位）| ✅ | ✅ |
 | 🛑 `AD` | ✅ | ✅ |
-| 🍎 `Apple Update` | ✅ | ✅ |
+| 🍎 `Apple Update` | - | ✅ |
 | 🇭🇰 `Hong Kong` · 🇨🇳 `Taiwan` · 🇯🇵 `Japan` · 🇸🇬 `Singapore`<br>🇺🇸 `United States` · 🇦🇶 `Other Regions` | - | ✅ |
 
 ---

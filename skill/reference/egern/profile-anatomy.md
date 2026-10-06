@@ -123,15 +123,18 @@ Egern 的分流组**按类型做键**，而不是平铺的 `name` 字段。一�
 3. **国内域名规则集（Loyalsoldier `direct.txt`）** —— **纯域名**规则集，零 IP 条目（十几万条；上游每周更新，条数一律现抓、不写死），是「国内域名直连」的主力。纯域名规则只做字符串匹配、不触发解析，因此无需 `no_resolve`；「已经是 IP 的连接」由下方 `geoip: CN` 兜住。
 > （历史上这里还有一条 `domain_suffix: cn` —— 把整个 `.cn` TLD 再钉一次，**不依赖规则集是否加载成功**；
 > 2026-09-24 起分流版与懒人版都不再需要：`direct.txt` 本身含 `DOMAIN-SUFFIX,cn`。）
-> 另有一条本仓自托管的 `apple_system.list` —— **位 ⑤**的系统域名集（2026-10-06 起不再置顶，
-> 落在 `SystemOTA` 之后、内网之前），补 Egern 没有内置 `SYSTEM` 的缺口。
-> 位 ④ 的 `SystemOTA.list` → `Apple Update` 组必须排在它之前：两集有 3 条重叠。
+> 另有一条本仓自托管的 `apple_system.list` —— **位 ③**的系统域名集（2026-10-06 起不再置顶，
+> 落在两条广告拦截之后、内网之前），补 Egern 没有内置 `SYSTEM` 的缺口。
+> ⚠️ 懒人版**不设 `Apple Update` 组**（仅分流版有）：OTA 域名在懒人版由本集合接成 `DIRECT`。
 > （`direct.txt` 已覆盖绝大多数国内域名）。它与上面 3 条规则集合起来，构成 `rules` 的全部直连来源。
 
 **规则的实际匹配顺序**（`rules` 按声明顺序求值，第一条命中即决定去向）：
 
-> 广告白名单 → 广告拦截（`Jinx` + `AWAvenue`）→ Apple 更新（`SystemOTA`）→ 系统域（`apple_system`）
+> 广告白名单 → 广告拦截（`Jinx` + `AWAvenue`）→ 系统域（`apple_system`）
 > → 内网（`Lan` + `private`）→ 应用（13 条）→ Apple（`apple.txt`）→ 国内域名 → 国内 IP（`geoip: CN`）→ 兜底（`default`）
+>
+> ⚠️ 上表为**分流版**；懒人版段序相同但**不含 `SystemOTA`**（`Apple Update` 组仅分流版有），
+> 共 11 条规则。
 
 `rules` 里**没有任何 `disabled` 条目**：原 `Proxy.list` 那条自 `routing_v3.2` 起改成**纯注释**、不再占规则位；内联 `domain_suffix: cn` 同期删除（`direct.txt` 已含 `DOMAIN-SUFFIX,cn`）。
 

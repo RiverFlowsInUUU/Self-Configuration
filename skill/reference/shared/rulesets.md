@@ -8,7 +8,7 @@
 >
 > 引用位口径（数的是 `rules` 段里指向规则集的条目，同一份规则集被两条规则各引用一次就占两位）：
 > 分流版 **<!-- auto:ruleset-refs -->24<!-- /auto:ruleset-refs --> 条规则集引用**。
-> 懒人版 **10 条规则集引用**。
+> 懒人版 **9 条规则集引用**。
 > 这两个数以本文件与两侧 profile 的现算为准，别混。
 
 ## 1 · 共用规则集
@@ -23,7 +23,7 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 | `surge-direct.list` | 白名单（精确域名） | `DIRECT` | `DIRECT` | [Jinx](https://github.com/RiverFlowsInUUU/Jinx) |
 | `surge-ads.list` | 广告拦截主清单 | `REJECT`（`pre-matching`） | `AD` 组 | [Jinx](https://github.com/RiverFlowsInUUU/Jinx) |
 | `AWAvenue-Ads-Rule-Surge-RULE-SET.list` | 广告拦截第 2 条 | `REJECT`（`pre-matching`） | `AD` 组 | [TG-Twilight/AWAvenue-Ads-Rule](https://github.com/TG-Twilight/AWAvenue-Ads-Rule) |
-| `SystemOTA.list` | Apple 系统更新（OTA） | `Apple Update` 组 | `Apple Update` 组 | [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) |
+| `SystemOTA.list` | Apple 系统更新（OTA） | `Apple Update` 组 | `Apple Update` 组 | [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script)（**仅分流版引用**） |
 | `private.txt` | 特殊 TLD 与路由器域（`.lan` `.local` `miwifi.com`） | `DIRECT`（实测零 IP ⇒ 不写规则级开关） | `DIRECT`（分流版 v3 起补） | [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules) |
 | `direct.txt` | 国内域名（纯域名、零 IP；**条数一律现抓**）**主承重墙** | `DIRECT`（同上，不写开关） | `DIRECT` | [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules) |
 | `OpenAI.list` | → `ChatGPT` | ✅ | ✅ | [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) |
@@ -85,7 +85,8 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
 | ⑬ | `AI.list`（**本仓自托管**）→ `AI` | ㉖ | `FINAL` → `Proxy` |
 
 **懒人版**：两侧各 **11 条**、逐位同构。段序同上表把「应用段」收缩成一条 `AI` 的形态，
-即：广告白名单 → 两条广告 → `SystemOTA` → `SYSTEM` → `LAN` · `private` → `AI.list` ×2 → `direct.txt` → `GEOIP,CN` → `FINAL`。
+且**不含位 ④ `SystemOTA`**（`Apple Update` 组仅分流版有），即：
+广告白名单 → 两条广告 → `SYSTEM` → `LAN` · `private` → `AI.list` ×2 → `direct.txt` → `GEOIP,CN` → `FINAL`。
 
 ## 4 · 排序与选材约束（改动前逐条确认）
 
@@ -94,8 +95,9 @@ Egern 的规则集**内联在 `rules` 段的 `rule_set` 条目里**，没有独�
    **① 广告白名单**（`surge-direct.list`，位 ①，在广告清单之前）·
    **⑤ 系统域白名单**（Surge 内置 `SYSTEM` ／ Egern `apple_system.list`，位 ⑤，在广告清单**之后**）。
    ⚠️ **变更依据**：`SYSTEM` 的 18 个域名与两条广告清单**零交集**（裸域名与后缀覆盖均为 0，
-   2026-10-06 复测仍成立）⇒ 排前或排后**拦截结果完全相同**；而它与 `SystemOTA.list` 有 **3 条重叠**
-   ⇒ 排在位 ④ 之后才能让 `Apple Update` 组接管那 3 条。⇒ 顺序对结果无影响时，「让功能组生效」优先。
+   2026-10-06 复测仍成立）⇒ 排前或排后**拦截结果完全相同** ⇒ 不再占用「最前」这个语义位置。
+   （分流版另有位 ④ `SystemOTA`：它与 `SYSTEM` 有 3 条重叠 ⇒ 必须排在 `SYSTEM` 之前，
+   否则 `Apple Update` 组永远轮不到那 3 条。`Apple Update` **仅分流版提供**。）
    而 `apple.txt` 与 AWAvenue 有 **1 条交集**（`iadsdk.apple.com`）⇒ 它**不**上提（否则会放行一条苹果广告 SDK 域）。
 2. **厂商专属规则（`OpenAI` / `Gemini` / `Anthropic` / `Claude`）排在 `AI.list` 之前** —— 否则 AI 域名先被 `AI.list` 接走，专属组形同虚设。
 3. **`GitHub.list` 排在 `direct.txt` 之前** —— 实测 `direct.txt` 收录了若干含 `github` 的域名（githubim.com / githubshare.com / hellogithub.com / kkgithub.com 等），它们会被 `GitHub.list` 的 `DOMAIN-KEYWORD,github` 命中；排到后面这几个就接不到。本条**直指 `Proxy`**（2026-10-05 起不再单设 `GitHub` 组）。（`github.com` 本身**不在** `direct.txt` 里。）

@@ -50,6 +50,9 @@ Egern 用 `policies` + `flatten` + `filter`。地区组倍率筛选的正则两�
 
 顺序两侧一致（广告白名单 → 广告拦截 → Apple 更新 → 系统域 → 内网 → 应用组 → 国内兜底 → 地理 → 默认）。三处**不是疏漏、而是内核能力差异**：
 
+⚠️ 上表的「Apple 更新」位（④）**仅分流版有**：懒人版不设 `Apple Update` 组，其位序为
+「广告白名单 → 广告拦截 ×2 → 系统域 → 内网 → AI → 国内 → 地理 → 默认」（11 条）。
+
 | 位 | Surge | Egern | 性质 |
 |:-:|:------|:------|:-----|
 | ⑥ | `RULE-SET,LAN`（内置） | `Lan.list`（blackmatrix7） | 内置规则集的有无 |
@@ -77,15 +80,15 @@ Egern 用 `policies` + `flatten` + `filter`。地区组倍率筛选的正则两�
 |:--|:-----------------|:-------------------|
 | 规则条数 | 11 | 11 |
 | 广告拦在哪一层 | `pre-matching` + `extended-matching` → **DNS 与 TCP-SYN 阶段** | `dns.forward` 两条 `value: reject` → 同样在**解析阶段**拒答（2026-09-23 补齐） |
-| 系统域名集 | ✅ 内置 `SYSTEM`（位 ⑤，在 `SystemOTA` 之后） | ✅ 本仓快照 `apple_system.list`（缺两条 `PROCESS-NAME`；同位） |
-| Apple 更新集 | ✅ `SystemOTA.list` → `Apple Update`（位 ④） | ✅ 同源同组同位 |
+| 系统域名集 | ✅ 内置 `SYSTEM`（位 ④，在两条广告拦截之后） | ✅ 本仓快照 `apple_system.list`（缺两条 `PROCESS-NAME`；同位） |
+| Apple 更新集 | ❌ 无（`Apple Update` 组**仅分流版有**；OTA 域名由 `SYSTEM` 接成 DIRECT） | ❌ 同左 |
 | 远程 Apple 规则集 | ❌ 无（2026-09-24 删，只留内置 `SYSTEM`） | ❌ 无（Apple 流量部分由 `direct.txt` 兜住，`iCloud` 系走节点） |
 | 内网两条 | ✅ `LAN`（内置）+ `private.txt` | ✅ `Lan.list` + `Private`（2026-09-23 补，与分流版同源同策略） |
 | `.cn` 后缀兜底 | ❌ 无 | ❌ 无（2026-09-24 删：`direct.txt` 本身含 `DOMAIN-SUFFIX,cn`） |
 | 内网规则位置 | 排在 `AI` 之前（2026-09-24 与 Egern 拉平） | `Lan` / `Private` 排在 `AI` 之前 |
 | 默认出口 | `FINAL,Proxy,dns-failed` | `default` 规则 `policy: Proxy`（两侧都无 `Final` 中间组，2026-09-23 拉平） |
-| 分组数 | 5 | 5 |
-| 组的构成 | `Proxy` / `AI` / `Apple Update` / `AD` + 隐藏订阅槽位 `Airport` | 同左（`Airport` 为 `external` + `hidden: true`） |
+| 分组数 | 4 | 4 |
+| 组的构成 | `Proxy` / `AI` / `AD` + 隐藏订阅槽位 `Airport` | 同左（`Airport` 为 `external` + `hidden: true`） |
 | 本机占位节点 | 2 条：`Node-A` → `Proxy`、`Node-B` → `AI` | 2 条同名同归属，协议同为 `hysteria2` |
 
 分流版做过逐行对齐，**懒人版历史上没有** —— 2026-09-23 补齐三项（`dns.forward` 四层、`Private` 规则集、
