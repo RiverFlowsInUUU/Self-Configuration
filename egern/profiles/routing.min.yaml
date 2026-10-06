@@ -75,7 +75,6 @@ policy_groups:
     - Taiwan
     - Japan
     - Singapore
-    - Other Regions
     - Select
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/openai.png
@@ -86,7 +85,6 @@ policy_groups:
     - Taiwan
     - Japan
     - Singapore
-    - Other Regions
     - Select
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/gemini-color.png
@@ -97,7 +95,6 @@ policy_groups:
     - Japan
     - Singapore
     - United States
-    - Other Regions
     - Select
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/claude-color.png
@@ -109,7 +106,6 @@ policy_groups:
     - Japan
     - Singapore
     - United States
-    - Other Regions
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/grok.png
 - select:
@@ -141,14 +137,20 @@ policy_groups:
     name: YouTube Music
     policies:
     - United States
-    - Proxy
+    - Taiwan
+    - Japan
+    - Singapore
+    - Select
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTubeMusic.png
 - select:
     name: Spotify
     policies:
     - United States
-    - Proxy
+    - Taiwan
+    - Japan
+    - Singapore
+    - Select
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Spotify.png
 - select:

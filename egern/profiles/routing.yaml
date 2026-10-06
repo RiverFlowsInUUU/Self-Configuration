@@ -197,9 +197,12 @@ policy_groups:
 #   Google 默认 `Gemini`；Microsoft 默认 `DIRECT`；AI 默认 `Select`。
 #
 #   ⚠️ AI 族四组（`ChatGPT` / `Gemini` / `Claude` / `AI`）**刻意不含 `Hong Kong`**：
-#      它们的节点池改为**逐地区组列出**（Taiwan / Japan / Singapore / United States /
-#      Other Regions + `Select`），而不是 `policies: [Proxy]` —— 后者会把 `Hong Kong`
-#      一并带进来（2026-10-06 用户要求）。`Select` 提供全节点手动指定作为兜底。
+#      它们的节点池改为**逐地区组列出**，而不是 `policies: [Proxy]` —— 后者会把
+#      `Hong Kong` 一并带进来（2026-10-06 用户要求）。`Select` 提供手动指定兜底。
+#
+#   ⭐ **仓级规矩（2026-10-06）：`Other Regions` 只能出现在 `Proxy` 的成员里。**
+#      其它任何组都不得把它当子节点 —— 它是个"大杂烩"池，混进应用组会让出口落到
+#      无法预期的地区。`Select` 已覆盖"想手动挑任意节点"的需求。
 #   ⚠️ 本版有两处首项不是组名池：`Spotify` / `YouTube Music` 首项是 `United States`。
 #     两侧（Surge / Egern）同写。
 # ================================================================
@@ -212,7 +215,6 @@ policy_groups:
     - Taiwan
     - Japan
     - Singapore
-    - Other Regions
     - Select
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/openai.png
@@ -225,7 +227,6 @@ policy_groups:
     - Taiwan
     - Japan
     - Singapore
-    - Other Regions
     - Select
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/gemini-color.png
@@ -238,7 +239,6 @@ policy_groups:
     - Japan
     - Singapore
     - United States
-    - Other Regions
     - Select
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/claude-color.png
@@ -251,7 +251,6 @@ policy_groups:
     - Japan
     - Singapore
     - United States
-    - Other Regions
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/grok.png
 - select:
@@ -284,17 +283,25 @@ policy_groups:
 - select:
     name: YouTube Music
     # 默认走 `United States`。
+    # ⚠️ 不含 `Other Regions`（2026-10-06 用户要求）：逐地区组列出 + `Select` 兜底。
     policies:
     - United States
-    - Proxy
+    - Taiwan
+    - Japan
+    - Singapore
+    - Select
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTubeMusic.png
 - select:
     name: Spotify
     # 默认走 `United States`（与 `YouTube Music` 同）；Spotify 的解锁地区以美区为准。
+    # ⚠️ 不含 `Other Regions`（2026-10-06 用户要求）：逐地区组列出 + `Select` 兜底。
     policies:
     - United States
-    - Proxy
+    - Taiwan
+    - Japan
+    - Singapore
+    - Select
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Spotify.png
 - select:
