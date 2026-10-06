@@ -40,7 +40,7 @@
 | 🛰️ `Airport`（订阅槽位）| ✅ | ✅ |
 | 🍎 `Apple Update` | - | ✅ |
 | 🛑 `AD` | ✅ | ✅ |
-| 🇭🇰 `Hong Kong` · 🇨🇳 `Taiwan` · 🇯🇵 `Japan`<br>🇸🇬 `Singapore` · 🇺🇸 `United States` · 🇦🇶 `Other Regions` | - | ✅ |
+| 🇭🇰 `Hong Kong` · 🇨🇳 `Taiwan` · 🇯🇵 `Japan`<br>🇸🇬 `Singapore` · 🇺🇸 `United States`<br>🇦🇶 `Other Regions` | - | ✅ |
 
 ---
 
