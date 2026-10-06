@@ -259,7 +259,7 @@ policy_groups:
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/grok.png
 - select:
     name: YouTube
-    # ⚠️ 逐地区组列出（不用 `policies: [Proxy]`）：后者会把 `Hong Kong` / `Other Regions` 带进来。
+    # ⚠️ 逐地区组列出（不用 `policies: [Proxy]`）：后者会把 `Other Regions` 带进来。
     #    **不写 `flatten`** ⇒ 成员是地区组名，与 Surge 同形。
     policies:
     - Smart
@@ -276,6 +276,7 @@ policy_groups:
     # ⚠️ 逐地区组列出（不用 `policies: [Proxy]`）：后者会把 `Hong Kong` / `Other Regions` 带进来。
     #    **不写 `flatten`** ⇒ 成员是地区组名，与 Surge 同形。
     policies:
+    - Smart
     - Hong Kong
     - Taiwan
     - Japan

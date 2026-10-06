@@ -119,6 +119,7 @@ policy_groups:
 - select:
     name: Emby
     policies:
+    - Smart
     - Hong Kong
     - Taiwan
     - Japan
