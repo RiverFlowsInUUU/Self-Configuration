@@ -37,8 +37,8 @@
 | ⚡ `Smart` | - | ✅ |
 | 🤖 `ChatGPT` · `Gemini` · `Claude` · `AI` | 仅 `AI` | ✅ |
 | ▶️ `YouTube` · 🎬 `Emby` · 🔎 `Google` | - | ✅ |
-| ✈️ `Telegram` · 🎶 `YouTube Music` · 🎵 `Spotify` | - | ✅ |
-| 🐦 `Twitter` · 🪟 `Microsoft` | - | ✅ |
+| ✈️ `Telegram` · 🐦 `Twitter` · 🪟 `Microsoft` | - | ✅ |
+| 🎶 `YouTube Music` · 🎵 `Spotify` | - | ✅ |
 | 🛰️ `Airport`（订阅槽位）| ✅ | ✅ |
 | 🍎 `Apple Update` | - | ✅ |
 | 🛑 `AD` | ✅ | ✅ |
