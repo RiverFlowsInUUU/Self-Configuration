@@ -192,41 +192,66 @@ policy_groups:
 #     「Proxy」这**一个组单位**（≈ Surge 的 `select, Proxy`，要先点进去再选），
 #     而不是 Surge 各应用组的「节点平铺」。本版即按此对齐。
 #
-#   首项 = 默认取向，逐组与 Surge 一致：ChatGPT / Gemini / AI / Spotify / YTMusic /
+#   首项 = 默认取向，逐组与 Surge 一致：ChatGPT / Gemini / Spotify / YTMusic /
 #   YouTube / Telegram / Twitter 默认 `Proxy`；Claude 默认 `Taiwan`；
-#   Google 默认 `Gemini`；Microsoft 默认 `DIRECT`。
+#   Google 默认 `Gemini`；Microsoft 默认 `DIRECT`；AI 默认 `Select`。
+#
+#   ⚠️ AI 族四组（`ChatGPT` / `Gemini` / `Claude` / `AI`）**刻意不含 `Hong Kong`**：
+#      它们的节点池改为**逐地区组列出**（Taiwan / Japan / Singapore / United States /
+#      Other Regions + `Select`），而不是 `policies: [Proxy]` —— 后者会把 `Hong Kong`
+#      一并带进来（2026-10-06 用户要求）。`Select` 提供全节点手动指定作为兜底。
 #   ⚠️ 本版有两处首项不是组名池：`Spotify` / `YouTube Music` 首项是 `United States`。
 #     两侧（Surge / Egern）同写。
 # ================================================================
 - select:
     name: ChatGPT
     # 规则 4（OpenAI.list → ChatGPT）直接指向本组 ⇒ 必须始终有出口，默认**美区**。
+    # ⚠️ 不含 `Hong Kong`：逐地区组列出，而非 `policies: [Proxy]`（后者会带进 HK）。
     policies:
     - United States
-    - Proxy
+    - Taiwan
+    - Japan
+    - Singapore
+    - Other Regions
+    - Select
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/openai.png
 - select:
     name: Gemini
     # 规则 5（Gemini.list → Gemini）直接指向本组；且 `Google` 组首项即本组。默认**美区**。
+    # ⚠️ 不含 `Hong Kong`（同 ChatGPT）。
     policies:
     - United States
-    - Proxy
+    - Taiwan
+    - Japan
+    - Singapore
+    - Other Regions
+    - Select
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/gemini-color.png
 - select:
     name: Claude
-    # 默认走台湾（Claude 对台湾线路较友好）；Taiwan 之后是 Proxy 的全节点池。
+    # 默认走台湾（Claude 对台湾线路较友好）；其后是各地区组 + `Select`。
+    # ⚠️ 不含 `Hong Kong`（同 ChatGPT）。
     policies:
     - Taiwan
-    - Proxy
+    - Japan
+    - Singapore
+    - United States
+    - Other Regions
+    - Select
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/claude-color.png
 - select:
     name: AI
-    # 与其余应用组同形：默认跟随 `Proxy` 摊平的整池节点（`Proxy` 首项是 `Smart`）。
+    # 首项 `Select`（全节点池、无权重），其后是各地区组；**不含 `Hong Kong`**。
     policies:
-    - Proxy
+    - Select
+    - Taiwan
+    - Japan
+    - Singapore
+    - United States
+    - Other Regions
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/grok.png
 - select:

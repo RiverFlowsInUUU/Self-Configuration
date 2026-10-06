@@ -72,27 +72,44 @@ policy_groups:
     name: ChatGPT
     policies:
     - United States
-    - Proxy
+    - Taiwan
+    - Japan
+    - Singapore
+    - Other Regions
+    - Select
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/openai.png
 - select:
     name: Gemini
     policies:
     - United States
-    - Proxy
+    - Taiwan
+    - Japan
+    - Singapore
+    - Other Regions
+    - Select
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/gemini-color.png
 - select:
     name: Claude
     policies:
     - Taiwan
-    - Proxy
+    - Japan
+    - Singapore
+    - United States
+    - Other Regions
+    - Select
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/claude-color.png
 - select:
     name: AI
     policies:
-    - Proxy
+    - Select
+    - Taiwan
+    - Japan
+    - Singapore
+    - United States
+    - Other Regions
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/grok.png
 - select:
