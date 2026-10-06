@@ -200,6 +200,10 @@ policy_groups:
 #      它们的节点池改为**逐地区组列出**，而不是 `policies: [Proxy]` —— 后者会把
 #      `Hong Kong` 一并带进来（2026-10-06 用户要求）。`Select` 提供手动指定兜底。
 #
+#   ⭐ 应用组统一写成：`[默认首项,] Smart, Taiwan, Japan, Singapore, United States, Select`
+#      `Smart` 作**首选**（自动选优）—— AI / YouTube / Telegram / Twitter 首项；
+#      `Google` 次项（首项是 `Gemini`）。
+#
 #   ⭐ **仓级规矩（2026-10-06）：`Other Regions` 只能出现在 `Proxy` 的成员里。**
 #      其它任何组都不得把它当子节点 —— 它是个"大杂烩"池，混进应用组会让出口落到
 #      无法预期的地区。`Select` 已覆盖"想手动挑任意节点"的需求。
@@ -247,6 +251,7 @@ policy_groups:
     # 首项 `Select`（全节点池、无权重），其后是各地区组；**不含 `Hong Kong`**。
     # ⚠️ **不写 `flatten`**（同 ChatGPT）。
     policies:
+    - Smart
     - Select
     - Taiwan
     - Japan
@@ -258,6 +263,7 @@ policy_groups:
     # ⚠️ 逐地区组列出（不用 `policies: [Proxy]`）：后者会把 `Hong Kong` / `Other Regions` 带进来。
     #    **不写 `flatten`** ⇒ 成员是地区组名，与 Surge 同形。
     policies:
+    - Smart
     - Taiwan
     - Japan
     - Singapore
@@ -283,6 +289,7 @@ policy_groups:
     #    **不写 `flatten`** ⇒ 成员是组名，与 Surge 同形。
     policies:
     - Gemini
+    - Smart
     - Taiwan
     - Japan
     - Singapore
@@ -294,6 +301,7 @@ policy_groups:
     # ⚠️ 逐地区组列出（不用 `policies: [Proxy]`）：后者会把 `Hong Kong` / `Other Regions` 带进来。
     #    **不写 `flatten`** ⇒ 成员是地区组名，与 Surge 同形。
     policies:
+    - Smart
     - Taiwan
     - Japan
     - Singapore
@@ -327,6 +335,7 @@ policy_groups:
     # ⚠️ 逐地区组列出（不用 `policies: [Proxy]`）：后者会把 `Hong Kong` / `Other Regions` 带进来。
     #    **不写 `flatten`** ⇒ 成员是地区组名，与 Surge 同形。
     policies:
+    - Smart
     - Taiwan
     - Japan
     - Singapore

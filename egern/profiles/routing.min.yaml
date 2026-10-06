@@ -98,6 +98,7 @@ policy_groups:
 - select:
     name: AI
     policies:
+    - Smart
     - Select
     - Taiwan
     - Japan
@@ -107,6 +108,7 @@ policy_groups:
 - select:
     name: YouTube
     policies:
+    - Smart
     - Taiwan
     - Japan
     - Singapore
@@ -126,6 +128,7 @@ policy_groups:
     name: Google
     policies:
     - Gemini
+    - Smart
     - Taiwan
     - Japan
     - Singapore
@@ -135,6 +138,7 @@ policy_groups:
 - select:
     name: Telegram
     policies:
+    - Smart
     - Taiwan
     - Japan
     - Singapore
@@ -162,6 +166,7 @@ policy_groups:
 - select:
     name: Twitter
     policies:
+    - Smart
     - Taiwan
     - Japan
     - Singapore
