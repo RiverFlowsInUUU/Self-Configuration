@@ -210,48 +210,48 @@ policy_groups:
     name: ChatGPT
     # 规则 4（OpenAI.list → ChatGPT）直接指向本组 ⇒ 必须始终有出口，默认**美区**。
     # ⚠️ 不含 `Hong Kong`：逐地区组列出，而非 `policies: [Proxy]`（后者会带进 HK）。
+    # ⚠️ **不写 `flatten`** ⇒ 与 Surge 同形：成员是**地区组名**，面板上点的是组，不是节点。
     policies:
     - United States
     - Taiwan
     - Japan
     - Singapore
     - Select
-    flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/openai.png
 - select:
     name: Gemini
     # 规则 5（Gemini.list → Gemini）直接指向本组；且 `Google` 组首项即本组。默认**美区**。
     # ⚠️ 不含 `Hong Kong`（同 ChatGPT）。
+    # ⚠️ **不写 `flatten`**（同 ChatGPT）。
     policies:
     - United States
     - Taiwan
     - Japan
     - Singapore
     - Select
-    flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/gemini-color.png
 - select:
     name: Claude
     # 默认走台湾（Claude 对台湾线路较友好）；其后是各地区组 + `Select`。
     # ⚠️ 不含 `Hong Kong`（同 ChatGPT）。
+    # ⚠️ **不写 `flatten`**（同 ChatGPT）。
     policies:
     - Taiwan
     - Japan
     - Singapore
     - United States
     - Select
-    flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/claude-color.png
 - select:
     name: AI
     # 首项 `Select`（全节点池、无权重），其后是各地区组；**不含 `Hong Kong`**。
+    # ⚠️ **不写 `flatten`**（同 ChatGPT）。
     policies:
     - Select
     - Taiwan
     - Japan
     - Singapore
     - United States
-    flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/grok.png
 - select:
     name: YouTube
@@ -290,7 +290,6 @@ policy_groups:
     - Japan
     - Singapore
     - Select
-    flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTubeMusic.png
 - select:
     name: Spotify
@@ -302,7 +301,6 @@ policy_groups:
     - Japan
     - Singapore
     - Select
-    flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Spotify.png
 - select:
     name: Twitter

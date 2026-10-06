@@ -76,7 +76,6 @@ policy_groups:
     - Japan
     - Singapore
     - Select
-    flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/openai.png
 - select:
     name: Gemini
@@ -86,7 +85,6 @@ policy_groups:
     - Japan
     - Singapore
     - Select
-    flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/gemini-color.png
 - select:
     name: Claude
@@ -96,7 +94,6 @@ policy_groups:
     - Singapore
     - United States
     - Select
-    flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/claude-color.png
 - select:
     name: AI
@@ -106,7 +103,6 @@ policy_groups:
     - Japan
     - Singapore
     - United States
-    flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/grok.png
 - select:
     name: YouTube
@@ -141,7 +137,6 @@ policy_groups:
     - Japan
     - Singapore
     - Select
-    flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTubeMusic.png
 - select:
     name: Spotify
@@ -151,7 +146,6 @@ policy_groups:
     - Japan
     - Singapore
     - Select
-    flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Spotify.png
 - select:
     name: Twitter
