@@ -196,9 +196,8 @@ policy_groups:
 #   YouTube / Telegram / Twitter 默认 `Proxy`；Claude 默认 `Taiwan`；
 #   Google 默认 `Gemini`；Microsoft 默认 `DIRECT`；AI 默认 `Select`。
 #
-#   ⚠️ AI 族四组（`ChatGPT` / `Gemini` / `Claude` / `AI`）**刻意不含 `Hong Kong`**：
-#      它们的节点池改为**逐地区组列出**，而不是 `policies: [Proxy]` —— 后者会把
-#      `Hong Kong` 一并带进来（2026-10-06 用户要求）。`Select` 提供手动指定兜底。
+#   ⚠️ **只有 AI 族四组**（`ChatGPT` / `Gemini` / `Claude` / `AI`）**不含 `Hong Kong`**
+#      （2026-10-06 用户要求）；其余应用组**照常带 `Hong Kong`**，位置紧随首项之后。
 #
 #   ⭐ 应用组统一写成：`[默认首项,] Smart, Taiwan, Japan, Singapore, United States, Select`
 #      `Smart` 作**首选**（自动选优）—— AI / YouTube / Telegram / Twitter 首项；
@@ -264,6 +263,7 @@ policy_groups:
     #    **不写 `flatten`** ⇒ 成员是地区组名，与 Surge 同形。
     policies:
     - Smart
+    - Hong Kong
     - Taiwan
     - Japan
     - Singapore
@@ -276,6 +276,7 @@ policy_groups:
     # ⚠️ 逐地区组列出（不用 `policies: [Proxy]`）：后者会把 `Hong Kong` / `Other Regions` 带进来。
     #    **不写 `flatten`** ⇒ 成员是地区组名，与 Surge 同形。
     policies:
+    - Hong Kong
     - Taiwan
     - Japan
     - Singapore
@@ -290,6 +291,7 @@ policy_groups:
     policies:
     - Gemini
     - Smart
+    - Hong Kong
     - Taiwan
     - Japan
     - Singapore
@@ -302,6 +304,7 @@ policy_groups:
     #    **不写 `flatten`** ⇒ 成员是地区组名，与 Surge 同形。
     policies:
     - Smart
+    - Hong Kong
     - Taiwan
     - Japan
     - Singapore
@@ -311,9 +314,9 @@ policy_groups:
 - select:
     name: YouTube Music
     # 默认走 `United States`。
-    # ⚠️ 不含 `Other Regions`（2026-10-06 用户要求）：逐地区组列出 + `Select` 兜底。
     policies:
     - United States
+    - Hong Kong
     - Taiwan
     - Japan
     - Singapore
@@ -322,9 +325,9 @@ policy_groups:
 - select:
     name: Spotify
     # 默认走 `United States`（与 `YouTube Music` 同）；Spotify 的解锁地区以美区为准。
-    # ⚠️ 不含 `Other Regions`（2026-10-06 用户要求）：逐地区组列出 + `Select` 兜底。
     policies:
     - United States
+    - Hong Kong
     - Taiwan
     - Japan
     - Singapore
@@ -336,6 +339,7 @@ policy_groups:
     #    **不写 `flatten`** ⇒ 成员是地区组名，与 Surge 同形。
     policies:
     - Smart
+    - Hong Kong
     - Taiwan
     - Japan
     - Singapore

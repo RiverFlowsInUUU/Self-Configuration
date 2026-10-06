@@ -109,6 +109,7 @@ policy_groups:
     name: YouTube
     policies:
     - Smart
+    - Hong Kong
     - Taiwan
     - Japan
     - Singapore
@@ -118,6 +119,7 @@ policy_groups:
 - select:
     name: Emby
     policies:
+    - Hong Kong
     - Taiwan
     - Japan
     - Singapore
@@ -129,6 +131,7 @@ policy_groups:
     policies:
     - Gemini
     - Smart
+    - Hong Kong
     - Taiwan
     - Japan
     - Singapore
@@ -139,6 +142,7 @@ policy_groups:
     name: Telegram
     policies:
     - Smart
+    - Hong Kong
     - Taiwan
     - Japan
     - Singapore
@@ -149,6 +153,7 @@ policy_groups:
     name: YouTube Music
     policies:
     - United States
+    - Hong Kong
     - Taiwan
     - Japan
     - Singapore
@@ -158,6 +163,7 @@ policy_groups:
     name: Spotify
     policies:
     - United States
+    - Hong Kong
     - Taiwan
     - Japan
     - Singapore
@@ -167,6 +173,7 @@ policy_groups:
     name: Twitter
     policies:
     - Smart
+    - Hong Kong
     - Taiwan
     - Japan
     - Singapore
