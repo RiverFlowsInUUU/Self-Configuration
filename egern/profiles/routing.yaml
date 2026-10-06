@@ -140,10 +140,9 @@ policy_groups:
 - select:
     name: Proxy
     # 成员 = 各组名，首项 `Smart`（全节点池 + 低倍率优先，默认出口）。
-    # 本组**不带** `flatten`，与 Surge 的 `select, Smart, Select, …` 同形。
+    # 本组**不带** `flatten`，与 Surge 的 `select, Smart, …` 同形。
     policies:
     - Smart
-    - Select
     - Hong Kong
     - Taiwan
     - Japan
@@ -166,21 +165,6 @@ policy_groups:
     priorities:
       "(?<![\\d.])0\\.\\d*[1-9]": 0.15
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Auto.png
-- select:
-    name: Select
-    # 显性选择节点池。与 `Smart` 同为「订阅全节点池」，但**不带任何权重**：
-    #   · 不写 `priorities` ⇒ 成员**不按倍率加权**，就是订阅里的全部节点原样列出；
-    #   · 用途是**手动指定**某一个节点，而不是让内核自动选优 —— 面板上逐个可见、可直接点。
-    #   `flatten: true` 与 `Smart` 同理（Surge `include-other-group="Airport"` 的对应物）：
-    #     少了它，候选只剩「Airport」这一个组单位，看不到也点不到具体节点。
-    # 与 `Smart` 并列为 `Proxy` 的成员（位序紧跟在 `Smart` 之后）。
-    #
-    # ⚠️ 本组是**唯一**不写 `priorities` 的策略组 —— 本文件其它组都写，见地区组注释。
-    #    这是刻意的：给「显性选择」保留一个无偏好的干净池子。
-    policies:
-    - Airport
-    flatten: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Static.png
 # ================================================================ 应用组（本段 12 个）
 # ⚠️ 本段 12 个全部是 `select` + `flatten: true` —— 与 Surge 的 `select, include-other-group="Proxy"` 逐个等价。
 #
@@ -194,18 +178,18 @@ policy_groups:
 #
 #   首项 = 默认取向，逐组与 Surge 一致：ChatGPT / Gemini / Spotify / YTMusic /
 #   YouTube / Telegram / Twitter 默认 `Proxy`；Claude 默认 `Taiwan`；
-#   Google 默认 `Gemini`；Microsoft 默认 `DIRECT`；AI 默认 `Select`。
+#   Google 默认 `Gemini`；Microsoft 默认 `DIRECT`；AI 默认 `Smart`。
 #
 #   ⚠️ **只有 AI 族四组**（`ChatGPT` / `Gemini` / `Claude` / `AI`）**不含 `Hong Kong`**
 #      （2026-10-06 用户要求）；其余应用组**照常带 `Hong Kong`**，位置紧随首项之后。
 #
-#   ⭐ 应用组统一写成：`[默认首项,] Smart, Taiwan, Japan, Singapore, United States, Select`
-#      `Smart` 作**首选**（自动选优）—— AI / YouTube / Telegram / Twitter 首项；
+#   ⭐ 应用组统一写成：`[默认首项,] Smart, Hong Kong, Taiwan, Japan, Singapore, United States`
+#      `Smart` 作**首选**（自动选优）—— AI / YouTube / Emby / Telegram / Twitter 首项；
 #      `Google` 次项（首项是 `Gemini`）。
 #
 #   ⭐ **仓级规矩（2026-10-06）：`Other Regions` 只能出现在 `Proxy` 的成员里。**
 #      其它任何组都不得把它当子节点 —— 它是个"大杂烩"池，混进应用组会让出口落到
-#      无法预期的地区。`Select` 已覆盖"想手动挑任意节点"的需求。
+#      无法预期的地区。
 #   ⚠️ 本版有两处首项不是组名池：`Spotify` / `YouTube Music` 首项是 `United States`。
 #     两侧（Surge / Egern）同写。
 # ================================================================
@@ -219,7 +203,6 @@ policy_groups:
     - Taiwan
     - Japan
     - Singapore
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/openai.png
 - select:
     name: Gemini
@@ -231,11 +214,10 @@ policy_groups:
     - Taiwan
     - Japan
     - Singapore
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/gemini-color.png
 - select:
     name: Claude
-    # 默认走台湾（Claude 对台湾线路较友好）；其后是各地区组 + `Select`。
+    # 默认走台湾（Claude 对台湾线路较友好）；其后是各地区组。
     # ⚠️ 不含 `Hong Kong`（同 ChatGPT）。
     # ⚠️ **不写 `flatten`**（同 ChatGPT）。
     policies:
@@ -243,15 +225,13 @@ policy_groups:
     - Japan
     - Singapore
     - United States
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/claude-color.png
 - select:
     name: AI
-    # 首项 `Select`（全节点池、无权重），其后是各地区组；**不含 `Hong Kong`**。
+    # 首项 `Smart`（自动选优），其后是各地区组；**不含 `Hong Kong`**。
     # ⚠️ **不写 `flatten`**（同 ChatGPT）。
     policies:
     - Smart
-    - Select
     - Taiwan
     - Japan
     - Singapore
@@ -268,7 +248,6 @@ policy_groups:
     - Japan
     - Singapore
     - United States
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTube.png
 - select:
     name: Emby
@@ -282,7 +261,6 @@ policy_groups:
     - Japan
     - Singapore
     - United States
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Emby.png
 - select:
     name: Google
@@ -297,7 +275,6 @@ policy_groups:
     - Japan
     - Singapore
     - United States
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Google.png
 - select:
     name: Telegram
@@ -310,7 +287,6 @@ policy_groups:
     - Japan
     - Singapore
     - United States
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Telegram.png
 - select:
     name: YouTube Music
@@ -321,7 +297,6 @@ policy_groups:
     - Taiwan
     - Japan
     - Singapore
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTubeMusic.png
 - select:
     name: Spotify
@@ -332,7 +307,6 @@ policy_groups:
     - Taiwan
     - Japan
     - Singapore
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Spotify.png
 - select:
     name: Twitter
@@ -345,7 +319,6 @@ policy_groups:
     - Japan
     - Singapore
     - United States
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Twitter.png
 # 单一订阅入口 Airport，对齐 Surge 的单个隐藏 Airport；下方 Smart 与各服务组统一引用它。
 - external:

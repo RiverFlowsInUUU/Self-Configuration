@@ -46,7 +46,6 @@ policy_groups:
     name: Proxy
     policies:
     - Smart
-    - Select
     - Hong Kong
     - Taiwan
     - Japan
@@ -63,19 +62,12 @@ policy_groups:
       "(?<![\\d.])0\\.\\d*[1-9]": 0.15
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Auto.png
 - select:
-    name: Select
-    policies:
-    - Airport
-    flatten: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Static.png
-- select:
     name: ChatGPT
     policies:
     - United States
     - Taiwan
     - Japan
     - Singapore
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/openai.png
 - select:
     name: Gemini
@@ -84,7 +76,6 @@ policy_groups:
     - Taiwan
     - Japan
     - Singapore
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/gemini-color.png
 - select:
     name: Claude
@@ -93,13 +84,11 @@ policy_groups:
     - Japan
     - Singapore
     - United States
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/claude-color.png
 - select:
     name: AI
     policies:
     - Smart
-    - Select
     - Taiwan
     - Japan
     - Singapore
@@ -114,7 +103,6 @@ policy_groups:
     - Japan
     - Singapore
     - United States
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTube.png
 - select:
     name: Emby
@@ -125,7 +113,6 @@ policy_groups:
     - Japan
     - Singapore
     - United States
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Emby.png
 - select:
     name: Google
@@ -137,7 +124,6 @@ policy_groups:
     - Japan
     - Singapore
     - United States
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Google.png
 - select:
     name: Telegram
@@ -148,7 +134,6 @@ policy_groups:
     - Japan
     - Singapore
     - United States
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Telegram.png
 - select:
     name: YouTube Music
@@ -158,7 +143,6 @@ policy_groups:
     - Taiwan
     - Japan
     - Singapore
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTubeMusic.png
 - select:
     name: Spotify
@@ -168,7 +152,6 @@ policy_groups:
     - Taiwan
     - Japan
     - Singapore
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Spotify.png
 - select:
     name: Twitter
@@ -179,7 +162,6 @@ policy_groups:
     - Japan
     - Singapore
     - United States
-    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Twitter.png
 - external:
     name: Airport
