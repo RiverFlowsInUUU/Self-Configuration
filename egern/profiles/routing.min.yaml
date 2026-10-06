@@ -159,6 +159,12 @@ policy_groups:
     hidden: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png
 - select:
+    name: Apple Update
+    policies:
+    - DIRECT
+    - REJECT
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Apple.png
+- select:
     name: Microsoft
     policies:
     - DIRECT
@@ -171,12 +177,6 @@ policy_groups:
     - REJECT
     - DIRECT
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/AdBlock.png
-- select:
-    name: Apple Update
-    policies:
-    - DIRECT
-    - REJECT
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Apple.png
 - smart:
     name: Hong Kong
     policies:

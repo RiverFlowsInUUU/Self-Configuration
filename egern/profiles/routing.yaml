@@ -299,6 +299,16 @@ policy_groups:
     interval: 86400
     hidden: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png
+# Apple 更新（OTA）—— 系统更新下载走哪个出口。
+# 首项 `DIRECT` 即默认取向：更新包体积大，直连通常比绕代理更快、也不吃订阅流量。
+# `REJECT` 是备选项：不想让设备自动下载更新时，面板上一键切过去即可。
+# ⚠️ 本组**默认 DIRECT 就是「不拦」**，与 `AD` 组默认 REJECT 的取向相反 —— 这是刻意的。
+- select:
+    name: Apple Update
+    policies:
+    - DIRECT
+    - REJECT
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Apple.png
 - select:
     name: Microsoft
     # 首项 `DIRECT`：微软服务直连优先（走代理反而慢）。
@@ -314,16 +324,6 @@ policy_groups:
     - REJECT
     - DIRECT
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/AdBlock.png
-# Apple 更新（OTA）—— 系统更新下载走哪个出口。
-# 首项 `DIRECT` 即默认取向：更新包体积大，直连通常比绕代理更快、也不吃订阅流量。
-# `REJECT` 是备选项：不想让设备自动下载更新时，面板上一键切过去即可。
-# ⚠️ 本组**默认 DIRECT 就是「不拦」**，与 `AD` 组默认 REJECT 的取向相反 —— 这是刻意的。
-- select:
-    name: Apple Update
-    policies:
-    - DIRECT
-    - REJECT
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Apple.png
 # ================================================================ 地区组（6 个）
 # ⚠️ 每个地区组都带 `priorities`（系数 0.15 = 低倍率优先），与 `Smart` 及 Surge 侧逐字同值；
 #    凡 smart 组都必须带它，要调这个口径就一起调。语义见上方 `Smart` 的注释。

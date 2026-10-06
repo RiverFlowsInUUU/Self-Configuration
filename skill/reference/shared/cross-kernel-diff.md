@@ -36,9 +36,8 @@
 ```
 <!-- auto:group-list -->
 Proxy · Smart · ChatGPT · Gemini · Claude · AI · YouTube · Emby · Google
-Telegram · YouTube Music · Spotify · Twitter · Airport · Microsoft · AD
-Apple Update · Hong Kong · Taiwan · Japan · Singapore · United States
-Other Regions
+Telegram · YouTube Music · Spotify · Twitter · Airport · Apple Update · Microsoft
+AD · Hong Kong · Taiwan · Japan · Singapore · United States · Other Regions
 <!-- /auto:group-list -->
 ```
 
