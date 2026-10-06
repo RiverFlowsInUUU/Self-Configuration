@@ -107,27 +107,39 @@ policy_groups:
 - select:
     name: YouTube
     policies:
-    - Proxy
-    flatten: true
+    - Taiwan
+    - Japan
+    - Singapore
+    - United States
+    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTube.png
 - select:
     name: Emby
     policies:
-    - Proxy
-    flatten: true
+    - Taiwan
+    - Japan
+    - Singapore
+    - United States
+    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Emby.png
 - select:
     name: Google
     policies:
     - Gemini
-    - Proxy
-    flatten: true
+    - Taiwan
+    - Japan
+    - Singapore
+    - United States
+    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Google.png
 - select:
     name: Telegram
     policies:
-    - Proxy
-    flatten: true
+    - Taiwan
+    - Japan
+    - Singapore
+    - United States
+    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Telegram.png
 - select:
     name: YouTube Music
@@ -150,8 +162,11 @@ policy_groups:
 - select:
     name: Twitter
     policies:
-    - Proxy
-    flatten: true
+    - Taiwan
+    - Japan
+    - Singapore
+    - United States
+    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Twitter.png
 - external:
     name: Airport

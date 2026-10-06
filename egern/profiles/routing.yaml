@@ -255,30 +255,50 @@ policy_groups:
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/grok.png
 - select:
     name: YouTube
+    # ⚠️ 逐地区组列出（不用 `policies: [Proxy]`）：后者会把 `Hong Kong` / `Other Regions` 带进来。
+    #    **不写 `flatten`** ⇒ 成员是地区组名，与 Surge 同形。
     policies:
-    - Proxy
-    flatten: true
+    - Taiwan
+    - Japan
+    - Singapore
+    - United States
+    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/YouTube.png
 - select:
     name: Emby
     # 影视服务器（自用枚举 4 个域名，见本仓自托管 `rules/emby.list`）。
+    # ⚠️ 逐地区组列出（不用 `policies: [Proxy]`）：后者会把 `Hong Kong` / `Other Regions` 带进来。
+    #    **不写 `flatten`** ⇒ 成员是地区组名，与 Surge 同形。
     policies:
-    - Proxy
-    flatten: true
+    - Taiwan
+    - Japan
+    - Singapore
+    - United States
+    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Emby.png
 - select:
     name: Google
-    # 首项 `Gemini` ⇒「Google 走 Gemini → Proxy」。
+    # 首项 `Gemini` ⇒「Google 走 Gemini → 各地区组」。
+    # ⚠️ 逐地区组列出（不用 `policies: [Proxy]`）：后者会把 `Hong Kong` / `Other Regions` 带进来。
+    #    **不写 `flatten`** ⇒ 成员是组名，与 Surge 同形。
     policies:
     - Gemini
-    - Proxy
-    flatten: true
+    - Taiwan
+    - Japan
+    - Singapore
+    - United States
+    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Google.png
 - select:
     name: Telegram
+    # ⚠️ 逐地区组列出（不用 `policies: [Proxy]`）：后者会把 `Hong Kong` / `Other Regions` 带进来。
+    #    **不写 `flatten`** ⇒ 成员是地区组名，与 Surge 同形。
     policies:
-    - Proxy
-    flatten: true
+    - Taiwan
+    - Japan
+    - Singapore
+    - United States
+    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Telegram.png
 - select:
     name: YouTube Music
@@ -304,9 +324,14 @@ policy_groups:
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Spotify.png
 - select:
     name: Twitter
+    # ⚠️ 逐地区组列出（不用 `policies: [Proxy]`）：后者会把 `Hong Kong` / `Other Regions` 带进来。
+    #    **不写 `flatten`** ⇒ 成员是地区组名，与 Surge 同形。
     policies:
-    - Proxy
-    flatten: true
+    - Taiwan
+    - Japan
+    - Singapore
+    - United States
+    - Select
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Twitter.png
 # 单一订阅入口 Airport，对齐 Surge 的单个隐藏 Airport；下方 Smart 与各服务组统一引用它。
 - external:
