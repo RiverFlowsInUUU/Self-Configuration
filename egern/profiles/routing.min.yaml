@@ -159,18 +159,18 @@ policy_groups:
     hidden: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png
 - select:
-    name: Apple Update
-    policies:
-    - DIRECT
-    - REJECT
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Apple.png
-- select:
     name: Microsoft
     policies:
     - DIRECT
     - Proxy
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Microsoft.png
+- select:
+    name: Apple Update
+    policies:
+    - DIRECT
+    - REJECT
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Apple.png
 - select:
     name: AD
     policies:

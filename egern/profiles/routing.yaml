@@ -299,6 +299,15 @@ policy_groups:
     interval: 86400
     hidden: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png
+- select:
+    name: Microsoft
+    # 首项 `DIRECT`：微软服务直连优先（走代理反而慢）。
+    policies:
+    - DIRECT
+    - Proxy
+    flatten: true
+    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Microsoft.png
+
 # Apple 更新（OTA）—— 系统更新下载走哪个出口。
 # 首项 `DIRECT` 即默认取向：更新包体积大，直连通常比绕代理更快、也不吃订阅流量。
 # `REJECT` 是备选项：不想让设备自动下载更新时，面板上一键切过去即可。
@@ -309,15 +318,6 @@ policy_groups:
     - DIRECT
     - REJECT
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Apple.png
-- select:
-    name: Microsoft
-    # 首项 `DIRECT`：微软服务直连优先（走代理反而慢）。
-    policies:
-    - DIRECT
-    - Proxy
-    flatten: true
-    icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Microsoft.png
-
 - select:
     name: AD
     policies:
