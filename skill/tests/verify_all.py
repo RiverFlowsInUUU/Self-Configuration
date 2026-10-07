@@ -92,6 +92,7 @@ def build_gates():
         ('.min 漂移', [PY, 'skill/tests/make_min.py', '--check'], {}),
         ('地区组判别力', [PY, 'skill/tests/check_region_filters.py'], {}),
         ('profile 结构', [PY, 'skill/tests/check_structure.py'], {}),
+        ('smart 权重口径', [PY, 'skill/tests/check_priority_weight.py'], {}),
         ('文档 AUTO 同步', [PY, 'skill/tests/sync_docs.py', '--check'], {}),
     ]
     return gates

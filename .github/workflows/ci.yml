@@ -61,6 +61,8 @@ jobs:
         # （DNS 审计只审 DNS 键；min 对拍因两份都坏而通过）。本闸门把"人眼读文件"变成判据。
         run: python skill/tests/check_structure.py
 
+      - name: Policy-priority weight consistency
+        run: python skill/tests/check_priority_weight.py
       - name: Docs AUTO sync (generated from config)
         # 文档里「抄了配置」的清单与数字，改成由 `<!-- auto:KEY -->` 标记 + 生成器维护：
         # 改配置后跑 `sync_docs.py --apply` 即自动重写；本步 `--check` 守「有没有忘跑」。
