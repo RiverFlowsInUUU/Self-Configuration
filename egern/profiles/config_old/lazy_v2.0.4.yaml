@@ -1,4 +1,4 @@
-#! version=lazy_v2.0.5
+#! version=lazy_v2.0.4
 # ============================================================================
 # lazy · 懒人版
 #
@@ -16,8 +16,9 @@
 #     版本号写在首行 `#! version=lazy_v…`。分流版是另一条线（`routing.yaml`），
 #     历代版本各自保留以备对照，演变过程看 git 历史与 profiles/config_old/ 归档。
 #
-# ⚠️ 导入前必读：本文件带 1 个**占位订阅**（`Airport` 的 `urls`）—— 填它即可，
-#     节点全部来自订阅。不填时兜底那一跳（`Proxy` 组本身）是断的，
+# ⚠️ 导入前必读：本文件带 2 条**占位节点**（`Node-A` → `Proxy`、`Node-B` → `AI`）
+#     和 1 个**占位订阅**（`Airport` 的 `urls`）。两个组都是「自己那条节点 + 订阅节点」，
+#     所以两者至少填一项；都不填时兜底那一跳（`Proxy` 组本身）是断的，
 #     也就是**所有走代理的流量都不通**。
 #     ⚠️ 懒人版的 `AI` **不引用 `Proxy`**，它和 `Proxy` 各自直接吃订阅池（与分流版同取向）。
 # ============================================================================
@@ -93,17 +94,24 @@ dns:
   - 0.0.0.0
   - 127.0.0.1
 # ============================================================================
-# 节点：本文件不写死任何节点，全部来自订阅
+# 节点：2 条占位，Node-A 归 Proxy、Node-B 归 AI
 # ============================================================================
-# 要加自己的节点就照这样写进 `proxies`：
-#   - hysteria2:
-#       name: <节点名>
-#       server: <IP 字面量，不产生"解析节点域名"这次查询>
-#       port: <端口>
-#       auth: <密码>          # ≙ Surge 的 `password`
-#       sni: <SNI>
-# ⚠️ 写成域名必然产生一次"本机 + 直连 + 明文"解析（代理还没通）—— 能写 IP 就写 IP。
-proxies: []
+# ⚠️ 占位节点，请替换为你的真实信息。203.0.113.0/24 是 RFC 5737 保留的文档用地址段，
+#    不会指向任何真实主机。server 写成 IP 字面量：节点不产生"解析节点域名"这次查询。
+#    协议 / 字段名与 Surge 懒人版那两条 hysteria2 一一对应（`auth` ≙ Surge 的 `password`）。
+proxies:
+- hysteria2:
+    name: Node-A
+    server: 203.0.113.10
+    port: 52341
+    auth: REPLACE_WITH_YOUR_PASSWORD
+    sni: REPLACE_WITH_YOUR_SNI
+- hysteria2:
+    name: Node-B
+    server: 203.0.113.11
+    port: 52341
+    auth: REPLACE_WITH_YOUR_PASSWORD
+    sni: REPLACE_WITH_YOUR_SNI
 # ============================================================================
 # 策略组：3 个分流组 + 1 个订阅槽位
 # ============================================================================
@@ -125,18 +133,19 @@ policy_groups:
     hidden: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Airport.png
 # 自动选优出口：smart 按真实连接的首字节延迟、TCP 重传丢包、UDP 响应延迟给成员
-# 打分（5 分钟一轮重测），自动择优。成员只有订阅里的节点（本文件不写死节点）；
+# 打分（5 分钟一轮重测），自动择优。成员 = 自己那条占位节点在前 + 订阅里的节点；
 # `flatten: true` 把 Airport 的成员摊进本组逐个打分，而不是把整组当一个成员
 # —— 少了它，smart 的候选只剩「Airport」这一个组单位，自动选优直接退化。
 - smart:
     name: Proxy
     policies:
+    - Node-A
     - Airport
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/Proxy.png
-# AI 流量出口：订阅里的节点。
+# AI 流量出口：另一条占位节点 + 订阅里的节点。
 # 本配置只保留这一个总入口，分流版的 ChatGPT / Gemini / Claude 等专用组全部并入此处。
-# ⚠️ 本组**不引用 Proxy**（订阅节点两组各自摊平，互不依赖）。
+# ⚠️ 本组**不引用 Proxy**（刻意与分流版一样的分工：两条节点各归一组，订阅节点两组共用）。
 # flatten: true —— 把 Airport 的**成员**摊进本组逐个打分，而不是把整组当一个成员；
 # 少了它，面板候选只剩「Airport」这一个组单位。2026-09-28 smart → select：AI 出口必须
 # 手动钉死 —— 自动打分会让出口 IP 在订阅池里漂移，而 Google/OpenAI 的账号风控对
@@ -144,6 +153,7 @@ policy_groups:
 - select:
     name: AI
     policies:
+    - Node-B
     - Airport
     flatten: true
     icon: https://raw.githubusercontent.com/RiverFlowsInUUU/Self-Configuration/main/icons/openai.png
